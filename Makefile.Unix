@@ -2,6 +2,9 @@
 # $Id$
 #
 # $Log$
+# Revision 1.12  1998/07/16 17:45:18  jba
+# Moved productDescriptionShell code from libUnix to alh. (libUnix removed)
+#
 # Revision 1.11  1998/06/22 18:42:10  jba
 # Merged the new alh-options created at DESY MKS group:
 #  -D Disable Writing, -S Passive Mode, -T AlarmLogDated, -P Printing
@@ -75,6 +78,7 @@ SRCS.c =  ../acknowledge.c  \
 		../line.c \
 		../mask.c \
 		../process.c \
+		../productDescriptionShell.c \
 		../property.c \
 		../scroll.c \
 		../showmask.c \
@@ -109,6 +113,7 @@ OBJS =  acknowledge.o  \
 		line.o \
 		mask.o \
 		process.o \
+		productDescriptionShell.o \
 		property.o \
 		scroll.o \
 		showmask.o \

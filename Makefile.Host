@@ -48,6 +48,7 @@ alh_SRCS =  acknowledge.c  \
 		line.c \
 		mask.c \
 		process.c \
+		productDescriptionShell.c \
 		property.c \
 		scroll.c \
 		showmask.c \
