@@ -38,7 +38,7 @@ static char *sccsId = "@(#) $Id$";
 #include "alh.h"
 #include "ax.h"
 
-extern int _passive_flag;
+extern int _DB_call_flag;
 
 typedef struct {
 	char *label;
@@ -54,6 +54,8 @@ struct noAckWindow {
 	Widget noAckOneHourToggleButton;
 };
 
+static char buff[100];
+
 /* forward declarations */
 static void noAckDismissCallback(Widget widget,XtPointer calldata,XtPointer cbs);
 static void noAckHelpCallback(Widget widget,XtPointer calldata,XtPointer cbs);
@@ -62,7 +64,8 @@ static void noAckCreateDialog(ALINK*area);
 static void noAckUpdateDialogWidgets(struct noAckWindow *noAckWindow);
 static void noAckOneHourTimerGroupCallback(XtPointer data, XtIntervalId *id);
 static void noAckOneHourTimerChanCallback(XtPointer data, XtIntervalId *id);
-
+static void alForceNoAckChan(CLINK *clink, int setNewNoAckTimer);
+static void alForceNoAckGroup(GLINK *glink, int setNewNoAckTimer);
 
 /******************************************************
   noAckUpdateDialog
@@ -318,23 +321,6 @@ XtPointer cbs)
 		XtVaSetValues(noAckWindow->menuButton, XmNset, FALSE, NULL);
 }
 
-/***********************************************
-  noAcKSet
-************************************************/
-static void noAckSet(GCLINK *gclink,int linkType,int value)
-{
-	char buff[80];
-
-	if (linkType==GROUP) {
-	    alForceGroupMask((GLINK *)gclink,ALARMACK,value);
-  	} else {
-		alForceChanMask((CLINK *)gclink,ALARMACK,value);
-	}
-	if (value) sprintf(buff,"Set noAck and one hour timer --- %-28s\n",gclink->pgcData->name);
-	else sprintf(buff,"Set ack and cancel one hour timer  --- %-28s\n",gclink->pgcData->name);
-	alLogOpMod(buff);
-	gclink->modified = 1;
-}
 
 /***************************************************
   noAckOneHourTimerChanCallback
@@ -344,7 +330,10 @@ static void noAckOneHourTimerChanCallback(XtPointer data, XtIntervalId *id)
 	CLINK * clink = (CLINK *)data;
 
 	clink->pchanData->noAckTimerId=0;;
-	noAckSet((GCLINK*)clink,CHANNEL,0);
+	alForceNoAckChan(clink,0);
+	sprintf(buff,"Set Ack after expiration of NoAck one hour timer  --- %s\n",
+		clink->pchanData->name);
+	alLogOpMod(buff);
 	clink->pmainGroup->modified = TRUE;
 	axUpdateDialogs(clink->pmainGroup->area);
 }
@@ -357,7 +346,10 @@ static void noAckOneHourTimerGroupCallback(XtPointer data, XtIntervalId *id)
 	GLINK * glink = (GLINK *)data;
 
 	glink->pgroupData->noAckTimerId=0;;
-	noAckSet((GCLINK*)glink,GROUP,0);
+	alForceNoAckGroup(glink,0);
+	sprintf(buff,"Set Ack after expiration of NoAck one hour timer  --- %s\n",
+		glink->pgroupData->name);
+	alLogOpMod(buff);
 	glink->pmainGroup->modified = TRUE;
 	axUpdateDialogs(glink->pmainGroup->area);
 }
@@ -368,13 +360,15 @@ static void noAckOneHourTimerGroupCallback(XtPointer data, XtIntervalId *id)
 static void noAckActivateCallback(Widget widget,XtPointer link,
 XtPointer call_data)
 {
-    int seconds = 3600; /* 1 hour */
+    /*int seconds = 3600;*/ /* 1 hour */
+    int seconds = 30;
 	ALINK *area;
     GCLINK *gclink;
     struct gcData *gcdata;
 	int linkType;
 	struct timerData *timerData;
     XtTimerCallbackProc proc;
+	int setNewNoAckTimer;
 
 	XtVaGetValues(widget, XmNuserData, &area, NULL);
 	gclink =(GCLINK *)getSelectionLinkArea(area);
@@ -388,15 +382,88 @@ XtPointer call_data)
             (unsigned long)(1000*seconds),
             (XtTimerCallbackProc)proc,
             (XtPointer)gclink);
-		noAckSet(gclink,linkType,1);
+		setNewNoAckTimer = 1;
+		sprintf(buff,"Set NoAck and start NoAck one hour timer --- %s\n",gcdata->name);
+		alLogOpMod(buff);
     } else {
         if (gcdata->noAckTimerId) {
             XtRemoveTimeOut(gcdata->noAckTimerId);
             gcdata->noAckTimerId = 0;
-			noAckSet(gclink,linkType,0);
         }
+		setNewNoAckTimer = 0;
+		sprintf(buff,"Set Ack and cancel NoAck one hour timer  --- %s\n",gcdata->name);
+		alLogOpMod(buff);
     }
+	if (linkType==GROUP) {
+	    alForceNoAckGroup((GLINK *)gclink,setNewNoAckTimer);
+  	} else {
+		alForceNoAckChan((CLINK *)gclink,setNewNoAckTimer);
+	}
+	gclink->modified = 1;
 	gclink->pmainGroup->modified = 1;
     axUpdateDialogs(area);
+}
+
+
+/************************************************************************* 
+	alForceNoAckChan
+ **********************************************************************/
+static void alForceNoAckChan(CLINK *clink, int setNewNoAckTimer)
+{
+	MASK mask;
+
+	mask = clink->pchanData->curMask;
+
+	if (setNewNoAckTimer) {
+		if (clink->pchanData->noAckTimerId){
+			XtRemoveTimeOut(clink->pchanData->noAckTimerId);
+			clink->pchanData->noAckTimerId = 0;
+		}
+		mask.Ack = 1; /* NOACK */
+	} else { /* timer callback */
+		if (clink->pchanData->noAckTimerId) return; 
+		mask.Ack = 0; /* ACK */
+	}
+
+	alChangeChanMask(clink,mask);
+
+	if(_DB_call_flag)  alLog2DBMask(clink->pchanData->name);
+}
+
+/************************************************************************* 
+	alForceNoAckGroup
+ **********************************************************************/
+static void alForceNoAckGroup(GLINK *glink, int setNewNoAckTimer)
+{
+	GLINK *group;
+	CLINK *clink;
+	SNODE *pt;
+	/*
+	 * for all channels in this group
+	 */
+	pt = sllFirst(&(glink->chanList));
+	while (pt) {
+		clink = (CLINK *)pt;
+		alForceNoAckChan(clink,setNewNoAckTimer);
+		pt = sllNext(pt);
+	}
+	/*
+	 * for all subgroups
+	 */
+	pt = sllFirst(&(glink->subGroupList));
+	while (pt) {
+		group = (GLINK *)pt;
+		if (setNewNoAckTimer) {
+			if (group->pgroupData->noAckTimerId){
+				XtRemoveTimeOut(group->pgroupData->noAckTimerId);
+				group->pgroupData->noAckTimerId = 0;
+			}
+			alForceNoAckGroup(group,setNewNoAckTimer);
+		} else {
+			if (!group->pgroupData->noAckTimerId)
+				alForceNoAckGroup(group,setNewNoAckTimer);
+		}
+		pt = sllNext(pt);
+	}
 }
 
