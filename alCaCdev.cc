@@ -4,30 +4,37 @@ static char *sccsId = "@(#) $Id$";
   cdev access routines
 ******************************************************************/
 
-#include <cdevSystem.h>
-#include <cdevRequestObject.h>
-#include <cdevDevice.h>
-#include <cdevGroup.h>
-#include <cdevErrCode.h>
-#include <cdevClock.h>
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <ctype.h>
+
+#include <X11/Intrinsic.h>
+
+#include "cdevSystem.h"
+#include "cdevRequestObject.h"
+#include "cdevDevice.h"
+#include "cdevGroup.h"
+#include "cdevErrCode.h"
+#include "cdevClock.h"
 
 extern "C" {
 #include "alarm.h"
 #include "fdmgr.h"
 #include "cadef.h"
 
+#include "alh.h"
+
+extern XtAppContext appContext;
 extern void 	alChannelForceEvent	(void *, short);
 extern void 	alGroupForceEvent	(void *, short);
-extern void 	alLogConnection		(char *, char *);
 extern void 	alNewEvent		(int, int, int, int, char *, void *);
 extern void 	registerCA		(void *, int, int);
+extern void		alUpdateAreas();
+extern void		errMsg(const char *fmt, ...);
 }
 
+static void alFdmgrAddCdev (int fd, int opened, void *);
 
 //------------------------------
 // Need the following external definitions
@@ -320,13 +327,39 @@ void	alCaStop()
 /******************************************************************************
   add alarm event handler for a channel
   ******************************************************************************/
-void	alCaSearchName(char *name, chid *pchid)
+void alCaConnectChannel(char *name, chid * pchid, void *)
 {
   cdevSignal	*signal = new cdevSignal (name);
   toBeConnectedCount++;
   
   if (signal->request().getState() == CDEV_INVALID)
-    alLogConnection (name, "alCdevSearchName: request object is invalid");
+    errMsg("alCaConnectChannel: request object is invalid for PV %s\n",name);
+  *pchid = (chid)signal;
+}
+
+/******************************************************************************
+  add alarm event handler for a force PV
+  ******************************************************************************/
+void alCaConnectForcePV(char *name, chid * pchid, void *)
+{
+  cdevSignal	*signal = new cdevSignal (name);
+  toBeConnectedCount++;
+  
+  if (signal->request().getState() == CDEV_INVALID)
+    errMsg("alCaConnectForcePV: request object is invalid for force PV %s\n",name);
+  *pchid = (chid)signal;
+}
+
+/******************************************************************************
+  add alarm event handler for a severity PV
+  ******************************************************************************/
+void alCaConnectSevrPV(char *name, chid * pchid, void *)
+{
+  cdevSignal	*signal = new cdevSignal (name);
+  toBeConnectedCount++;
+  
+  if (signal->request().getState() == CDEV_INVALID)
+    errMsg("alCaConnectSevrPV: request object is invalid for severity PV %s\n",name);
   *pchid = (chid)signal;
 }
 
@@ -349,7 +382,7 @@ void	alCaClearEvent	(evid *pevid)
   if (monitor)
   {
     if (monitor->stop() != CDEV_SUCCESS)
-      alLogConnection(ca_name((*pevid)->chan), "alCaClearEvent: error cancelling monitor");
+      errMsg("alCaClearEvent: error cancelling monitor for %s\n",ca_name((*pevid)->chan));
     delete monitor;
   }
   *pevid = NULL;
@@ -405,20 +438,19 @@ void	alCaAddEvent	(chid 	chid,
 }
 
 
-/******************************************************************************
-  add change connection event for sevrPV
-  ******************************************************************************/
-void	alCaAddSevrPVEvent	(chid, void *)
-{
-  // this doesn't apply to cdev device/attributes --severity is
-  // retrieved via tag in callback object.
-}
-
+///******************************************************************************
+//  add change connection event for sevrPV
+//  ******************************************************************************/
+//void	alCaAddSevrPVEvent	(chid, void *)
+//{
+//  // this doesn't apply to cdev device/attributes --severity is
+//  // retrieved via tag in callback object.
+//}
+//
 /******************************************************************************
   alCaAddForcePVEvent
   ******************************************************************************/
 void    alCaAddForcePVEvent	(chid 	chid,
-                                 char 	*,
                                  void 	*link,
                                  evid 	*pevid,
                                  int 	type)
@@ -430,7 +462,7 @@ void    alCaAddForcePVEvent	(chid 	chid,
 
   if (!signal)
   {
-    alLogConnection("alCaAddForcePVEvent:"," null cdevSignal pointer");
+    errMsg("alCaAddForcePVEvent: null cdevSignal pointer\n");
     return;
   }
 
@@ -441,12 +473,12 @@ void    alCaAddForcePVEvent	(chid 	chid,
     func = alCaGroupForceEvent;
   else if (type == CHANNEL)
     func = alCaChannelForceEvent;
-  else alLogConnection (buff, "alCaAddForcePVEvent: Invalid type error");
+  else errMsg ("alCaAddForcePVEvent: Invalid type error\n");
 
   ctx.insert ("value", 0);
   
   if (monitor->start (func, link, ctx) != CDEV_SUCCESS)
-    alLogConnection(buff, "alCaAddForcePVEvent: error starting monitor");
+    errMsg("alCaAddForcePVEvent: error starting monitor\n");
   
   *pevid = (evid)monitor;
 }
@@ -461,7 +493,7 @@ void	alCaPutGblAck (chid chid, short *psevr)
   
   if (!signal)
   {
-    alLogConnection("alCaPutGblAck"," null cdevSignal pointer");
+    errMsg("alCaPutGblAck: null cdevSignal pointer\n");
     return;
   }
 
@@ -470,12 +502,35 @@ void	alCaPutGblAck (chid chid, short *psevr)
   if (signal->request().device().sendNoBlock (buff, out, 0) != CDEV_SUCCESS)
   {
     sprintf (buff, "%s ack %s", signal->device(), signal->attribute());
-    alLogConnection (buff, "alCaPutGblAck: error sending acknowledgement");
+    errMsg ("alCaPutGblAck: error sending acknowledgement\n");
   }
 }
 
 /******************************************************************************
-  alCaPutSev
+  alCaPutGblAckT
+  ******************************************************************************/
+void	alCaPutGblAckT(chid chid, short *pstate)
+{
+  cdevSignal	*signal = (cdevSignal *)chid;
+  cdevData 	out;
+  
+  if (!signal)
+  {
+    errMsg("alCaPutGblAck: null cdevSignal pointer\n");
+    return;
+  }
+
+  sprintf (buff, "ackt %s", signal->attribute());
+  out.insert ("value", *pstate);
+  if (signal->request().device().sendNoBlock (buff, out, 0) != CDEV_SUCCESS)
+  {
+    sprintf (buff, "%s ack %s", signal->device(), signal->attribute());
+    errMsg ("alCaPutGblAckT: error sending acknowledgement\n");
+  }
+}
+
+/******************************************************************************
+  alCaPutSevValue
   ******************************************************************************/
 void	alCaPutSevrValue (chid chid, short *psevr)
 {
@@ -485,7 +540,7 @@ void	alCaPutSevrValue (chid chid, short *psevr)
   
   if (!signal)
   {
-    alLogConnection("alCaPutSevrValue","null cdevSignal pointer");
+    errMsg("alCaPutSevrValue: null cdevSignal pointer\n");
     return;
   }
 
@@ -494,8 +549,7 @@ void	alCaPutSevrValue (chid chid, short *psevr)
   out.insert ("value", *psevr);
   if (request->sendNoBlock (out, 0) != CDEV_SUCCESS)
   {
-    sprintf (buff, "%s set %s", signal->device(), signal->attribute());
-    alLogConnection (buff, "alCaPutSevrValue: error writing severity");
+    errMsg ("alCaPutSevrValue: error writing severity %s set %s\n", signal->device(), signal->attribute());
   }
 }
 
@@ -532,13 +586,12 @@ static void alCaNewAlarmEvent (int 			status,
   switch (status)
   {
       case CDEV_RECONNECTED:
-        alLogConnection (buff, " Reconnected (Channel  PVname)");
+        errMsg ("Reconnected (Channel  PVname)\n");
 
       case CDEV_SUCCESS:
       {
         char	valstr[MAX_STRING_SIZE+1];
         char	*pstr;
-        double	value;
         int 	sevr;
         int 	stat;
         int	changed = 0;
@@ -606,14 +659,11 @@ static void alCaGroupForceEvent (int 		status,
   
   if (cdev_finished) return;
   
-  sprintf
-    (buff, "%s--(%s %s)",
-     (char *)monitor->data(), req.device().name(), req.message());
-
   switch(status)
   {
       case CDEV_RECONNECTED:
-        alLogConnection(buff, "Reconnected   (Force Gp PVName)");
+        errMsg("Reconnected   (Force Gp PVName) %s--(%s %s)\n",
+     (char *)monitor->data(), req.device().name(), req.message());
         
       case CDEV_SUCCESS:
         short value;
@@ -624,15 +674,18 @@ static void alCaGroupForceEvent (int 		status,
         break;
         
       case CDEV_NOACCESS:
-        alLogConnection(buff, "No read access (Force Gp PVname)");
+        errMsg("No read access (Force Gp PVname) %s--(%s %s)\n",
+     (char *)monitor->data(), req.device().name(), req.message());
         break;
         
       case CDEV_DISCONNECTED:
-        alLogConnection(buff, "Not Connected (Force Gp PVName)");
+        errMsg("Not Connected (Force Gp PVName) %s--(%s %s)\n",
+     (char *)monitor->data(), req.device().name(), req.message());
         break;
         
       default:
-        alLogConnection(buff, "Error while monitoring (Force Gp PVName)");
+        errMsg("Error while monitoring (Force Gp PVName) %s--(%s %s)\n",
+     (char *)monitor->data(), req.device().name(), req.message());
         break;
   }
 
@@ -658,7 +711,8 @@ static void alCaChannelForceEvent (int 			status,
   switch(status)
   {
       case CDEV_RECONNECTED:
-        alLogConnection(buff, "Reconnected   (Force Ch PVName)");
+        errMsg("Reconnected   (Force Ch PVName) %s--(%s %s)\n",
+     (char *)monitor->data(), req.device().name(), req.message());
         
       case CDEV_SUCCESS:
         short value;
@@ -669,15 +723,18 @@ static void alCaChannelForceEvent (int 			status,
         break;
         
       case CDEV_NOACCESS:
-        alLogConnection(buff, "No read access (Force Ch PVname)");
+        errMsg("No read access (Force Ch PVname) %s--(%s %s)\n",
+     (char *)monitor->data(), req.device().name(), req.message());
         break;
         
       case CDEV_DISCONNECTED:
-        alLogConnection(buff, "Not Connected (Force Ch PVName)");
+        errMsg("Not Connected (Force Ch PVName) %s--(%s %s)\n",
+     (char *)monitor->data(), req.device().name(), req.message());
         break;
         
       default:
-        alLogConnection(buff, "Error while monitoring (Force Ch PVName)");
+        errMsg("Error while monitoring (Force Ch PVName) %s--(%s %s)\n",
+     (char *)monitor->data(), req.device().name(), req.message());
         break;
   }
 
@@ -690,13 +747,14 @@ static void alCaChannelForceEvent (int 			status,
 ******************************************************************************/
 static void alFdmgrAddCdev (int fd, int opened, void *)
 {
+  void *pfdctx=0;
   registerCA (pfdctx, fd, opened);
 }
 
 /******************************************************************************
  alCaUpdate
 ******************************************************************************/
-static void     alCaUpdate(XtPointer cd, XtIntervalId *id)
+static void     alCaUpdate(XtPointer , XtIntervalId *)
 {
 #ifdef DEBUG
   fprintf (stderr, "cdevSystem::poll()\n");
