@@ -230,6 +230,9 @@ Wed Jun  2 13:16:33 CDT 1999
 Mon Jun  7 09:20:02 CDT 1999
 	Modified definition of netscape path.
 
+date: 1999/07/08 14:35:02;  author: lange;
+	+= CMLOG support
+
 Mon Jun 21 15:15:03 CDT 1999
 	Start cleanup of axRunW.c file.
 
@@ -238,4 +241,39 @@ Tue Jun 22 11:12:51 CDT 1999
 
 Wed Jul 14 16:24:06 CDT 1999
 	Updates to handle global acks and ackt fields and related changes.
+
+date:1999/07/21 23:02:10
+	Cdev and Exceed changes.
+	Bug fixes for command line options.
+	Corrected cmlog function names.
+
+date: 1999/07/22 21:30:42
+	Fixed usage text.
+	Two CMLOG fixes
+	Fixed the context setting for value.
+	Force new alarm processing when channel is initally disconnected.
+
+date: 1999/07/23 14:38:52;  author: lange;
+	+= -filter, -mainwindow; fixed cmdline option error output
+
+date: 1999/07/26 15:32:25;  author: lange;
+	Small CMLOG related changes
+	Changed CMLOG browser call to allow args
+	GetChannelLine() bugfix
+	Update current mask string
+
+date: 1999/07/28 21:26:19;  author: jba; 
+	Message area text changes.
+	Don't log the initial connection.
+
+date: 1999/08/13 19:43:46;  author: lange; cmlogrc.ALH 
+	changed host tag, added more tags
+
+date: 1998/06/01 18:33:24;  author: evans; alh.ico
+	Modified the icon.
+
+Wed Oct  6 16:13:50 CDT 1999
+	Process forcePV ca value event only if value has changed.
+
+
 

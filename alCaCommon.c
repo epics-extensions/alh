@@ -255,6 +255,7 @@ void alChannelForceEvent(CLINK *clink,short value)
 	cdata = clink->pchanData;
 	if (strlen(cdata->forcePVName) <= (size_t) 1) return;
 
+	if (cdata->PVValue == value) return;
 	cdata->PVValue = value;
 	if (value == cdata->forcePVValue) {
 		alChangeChanMask(clink, cdata->forcePVMask);
@@ -282,6 +283,7 @@ void     alGroupForceEvent(GLINK *glink,short value)
 	gdata = glink->pgroupData;
 	if (strlen(gdata->forcePVName) <= (size_t) 1) return;
 
+	if (cdata->PVValue == value) return;
 	gdata->PVValue = value;
 	if (value == gdata->forcePVValue) {
 		alChangeGroupMask(glink, gdata->forcePVMask);

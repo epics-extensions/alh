@@ -39,13 +39,13 @@ typedef struct countFilter {
 /* group/channel data structure */
 struct gcData {
 	char *name;		/* group name */
-	char *forcePVName;	/* force PV name */
-	char *sevrPVName;	/* severity PV name */
-	short PVValue;		/* PV value */
+	char *forcePVName;	/* forcePV name */
+	char *sevrPVName;	/* severityPV name */
+	short PVValue;		/* forcePV value */
 
-	short forcePVValue;	/* PV value for force mask */
+	short forcePVValue;	/* forcePV value for force mask */
 
-	short resetPVValue;	/* PV value for reset mask */
+	short resetPVValue;	/* forcePV value for reset mask */
 	MASK forcePVMask;	/* force Mask */
 	char *alias;	 	/* alias text */
 	char *command;	 	/* command text */
@@ -60,13 +60,13 @@ struct gcData {
 /* group data structure */
 struct groupData {
 	char *name;		/* group name */
-	char *forcePVName;	/* force PV name */
-	char *sevrPVName;	/* severity PV name */
-	short PVValue;		/* PV value */
+	char *forcePVName;	/* forcePV name */
+	char *sevrPVName;	/* severityPV name */
+	short PVValue;		/* forcePV current value */
 
-	short forcePVValue;		/* PV value for force mask */
+	short forcePVValue;		/* forcePV value for force mask */
 
-	short resetPVValue;		/* PV value for reset mask */
+	short resetPVValue;		/* forcePV value for reset mask */
 	MASK forcePVMask;		/* force Mask */
 	char *alias;	 	/* alias text */
 	char *command;	 		/* command text */
@@ -85,13 +85,13 @@ struct groupData {
 /* channel data structure */
 struct chanData {
 	char *name; 		/* channel name, or device/attribute */
-	char *forcePVName;	/* force PV name */
-	char *sevrPVName;	/* severity PV name */
-	short PVValue;		/* PV value */
+	char *forcePVName;	/* forcePV name */
+	char *sevrPVName;	/* severityPV name */
+	short PVValue;		/* forcePV current value */
 
-	short forcePVValue;		/* PV value for force mask */
-	short resetPVValue;		/* PV value for reset mask */
-	MASK forcePVMask;		/* forced mask setting */
+	short forcePVValue;		/* forcePV value for force mask */
+	short resetPVValue;		/* forcePV value for reset mask */
+	MASK forcePVMask;		/* forcePV force mask setting */
 	char *alias;	 	/* alias text */
 	char *command;			/* command text */
 
