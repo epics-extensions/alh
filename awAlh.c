@@ -650,10 +650,12 @@ static void alhHelpCallback(Widget widget,XtPointer calldata,XtPointer cbs)
 
 	switch (item){
 
+#ifdef ALH_HELP_URL
 	case MENU_HELP_HELP:
 
 		callBrowser(ALH_HELP_URL);
 		break;
+#endif
 
 	case MENU_HELP_ABOUT:
 
