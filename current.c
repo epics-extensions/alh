@@ -52,15 +52,21 @@ void currentAlarmHistoryWindow(ALINK *area,Widget menuButton)
 	static Widget popup_shell,title,button;
 	Widget previous;
 	Atom         WM_DELETE_WINDOW;
-
 	int i;
+	char   *app_name;
 
 	if (!popup_shell) {
+		app_name = (char*) calloc(1,strlen(programName)+6);
+		strcpy(app_name, programName);
+		strcat(app_name, "-hist");
 
-		popup_shell = XtAppCreateShell(
-		    "Alarm Handler: Current Alarm History",
-		    programName,
+		popup_shell = XtAppCreateShell( app_name, programName,
 		    applicationShellWidgetClass, display, NULL, 0);
+
+		free(app_name);
+
+		XtVaSetValues(popup_shell,
+		    XmNtitle, "Alarm Handler: Current Alarm History", NULL);
 
 		/*  create current alarm view window */
 		/*

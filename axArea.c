@@ -385,23 +385,41 @@ static ALINK *setupArea(ALINK *areaOld)
 ******************************************************/
 void createMainWindowWidgets(ALINK *area)
 {
-	char   *actTitle={
-		"Alarm Configuration Tool"	};
-	char   *alhTitle={
-		"Alarm Handler"	};
+	char   *actTitle = "Alarm Configuration Tool";
+	char   *alhTitle = "Alarm Handler";
 	XmString    str;
 	Widget dialog;
+	char   *app_name;
+	char   *title_str;
+
 	if (area->toplevel) return;
 
 	/* create toplevel shell */
-	area->toplevel = XtAppCreateShell(programName, programName,
+	app_name = (char*) calloc(1,strlen(programName)+6);
+	strcpy(app_name, programName);
+	strcat(app_name, "-main");
+
+	area->toplevel = XtAppCreateShell(app_name, programName,
 	    applicationShellWidgetClass, display, NULL, 0);
 
+	free(app_name);
+
 	if (area->programId == ACT){
-		XtVaSetValues(area->toplevel, XmNtitle, actTitle, NULL);
+	   title_str = (char*) calloc(1,strlen(actTitle)+strlen(area->blinkString)+3);
+	   strcpy(title_str, actTitle);
 	} else {
-		XtVaSetValues(area->toplevel, XmNtitle, alhTitle, NULL);
+	   title_str = (char*) calloc(1,strlen(alhTitle)+strlen(area->blinkString)+3);
+	   strcpy(title_str, alhTitle);
 	}
+	strcat(title_str, ": ");
+	strcat(title_str, area->blinkString);
+
+	XtVaSetValues(area->toplevel,
+	    XmNtitle,     title_str,
+	    XmNiconName,  area->blinkString,
+	    NULL);
+
+	free(title_str);
 
 	/* Create form_main for toplevel */
 	area->form_main = XtVaCreateManagedWidget("form_main",
@@ -411,11 +429,9 @@ void createMainWindowWidgets(ALINK *area)
 
 	pixelData(area->form_main,NULL);
 
-
 	if (!ALH_pixmap) axMakePixmap(area->form_main);
 
 	XtVaSetValues(area->toplevel, XmNiconPixmap, ALH_pixmap, NULL);
-
 
 	/* Modify the window manager menu "close" callback */
 	{

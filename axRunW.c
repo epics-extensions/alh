@@ -257,13 +257,20 @@ void createRuntimeWindow(ALINK *area)
 	char   *alhTitle={
 		"Alarm Handler"	};
 	XmString str;
+	char   *app_name;
 
 	if (!area->runtimeToplevel){
 		/*
 		           * create toplevel setup window
 		           */
-		area->runtimeToplevel = XtAppCreateShell( programName, programName,
+		app_name = (char*) calloc(1,strlen(programName)+5);
+		strcpy(app_name, programName);
+		strcat(app_name, "-run");
+
+		area->runtimeToplevel = XtAppCreateShell( app_name, programName,
 		    applicationShellWidgetClass, display, NULL, 0);
+
+		free(app_name);
 
 		XtVaSetValues(area->runtimeToplevel, XmNtitle, alhTitle, NULL);
 
@@ -282,7 +289,7 @@ void createRuntimeWindow(ALINK *area)
 
 		XtVaSetValues(area->runtimeToplevel,
 		    XmNiconPixmap,          ALH_pixmap,
-		    XmNiconName,            "ALHicon",
+		    XmNiconName,            area->blinkString,
 		    XmNallowShellResize,    TRUE,
 		    XmNuserData,            (XtPointer)area,
 		    NULL);
@@ -345,7 +352,7 @@ void createRuntimeWindow(ALINK *area)
 	/*  update blinkButton string */
 	str = XmStringCreateSimple(area->blinkString);
 	XtVaSetValues(area->blinkButton,
-	    XmNlabelString,            str,
+	    XmNlabelString,         str,
 	    NULL);
 	XmStringFree(str);
 
