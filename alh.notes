@@ -446,3 +446,13 @@ Thu Jul 22 11:02:33 CDT 2004 ALH_1_2_17
 
 Mon Aug  2 09:24:36 CDT 2004 ALH_1_2_18
 	Modified save of ca alarm event data to save only at a disconnect event.
+
+Tue Aug 10 10:48:18 CDT 2004 ALH_1_2_19beta1
+	Skip restoring saved alarm data at initial connection.
+	Popup error msg for unconnected SEVRPV, FORCEPV, ACKPV, HEARTBEATPV
+	Popup error msg when no read access for FORCEPV
+	Popup error msg when no write access for SEVRPV, ACKPV, HEARTBEATPV
+	Popup error msg when no read or write  access for alarm channels
+	Added ca clear channel for Acknowledge PV.
+	Popup error msg for invalid SEVRPV, FORCEPV, ACKPV, HEARTBEATPV input
+
