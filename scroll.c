@@ -185,7 +185,6 @@ void fileViewWindow(Widget w,int option,Widget menuButton)
 		        break;
 
 	case OPMOD_FILE:
-		fclose(fo);                /* close old file */
 		strcpy(filename,psetup.opModFile);
 		if ((fp = fopen(filename, "r+")) == NULL) {
 			if ((fp = fopen(filename, "r")) != NULL) {
