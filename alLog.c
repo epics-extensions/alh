@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.8  1998/05/12 18:22:41  evans
+ Initial changes for WIN32.
+
  Revision 1.7  1997/08/27 22:03:31  jba
  Fixed parm order.
 
@@ -91,7 +94,6 @@ alLogSetupSaveConfigFile(filename)			Log setup save config file
 
 #include <stdio.h>
 #include <time.h>
-#include <unistd.h>
 
 #include <alh.h>
 #include <alLib.h>

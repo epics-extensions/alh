@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.5  1998/05/12 18:22:42  evans
+ Initial changes for WIN32.
+
  Revision 1.4  1997/09/12 19:30:14  jba
  Added test for treeSym.
 
@@ -125,7 +128,7 @@ static void treeView(glink, command, treeSym, viewFilter)
 
 #ifdef __STDC__
 
-static void treeView( GLINK *glink, int command, char *treeSym, int (viewFilter)());
+static void treeView( GLINK *glink, int command, char *treeSym, int (*viewFilter)());
 
 #else
 
@@ -226,7 +229,7 @@ static void treeView(glink, command, treeSym, viewFilter)
      if (length >= MAX_TREE_DEPTH) return;
 
      if (glink->pgroupData->treeSym &&
-         (length+1) > strlen(glink->pgroupData->treeSym) )  {
+         (length+1) > (int)strlen(glink->pgroupData->treeSym) )  {
           free(glink->pgroupData->treeSym);
           glink->pgroupData->treeSym = 0 ;
      }

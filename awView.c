@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.13  1998/05/12 18:22:44  evans
+ Initial changes for WIN32.
+
  Revision 1.12  1997/09/12 19:37:07  jba
  Bug fixes for tree and group window views.
 
@@ -77,9 +80,6 @@ static char *sccsId = "@(#)awView.c	1.14\t10/22/93";
  */
 
 #include <time.h>
-
-#include <Xm/Xm.h>
-
 #include <fdmgr.h>
 
 #include <alh.h>
@@ -627,7 +627,7 @@ void redraw(subWindow,rowNumber)
 
      /* adjust view offset if more groups will fit on display */
      if (subWindow->viewOffset && subWindow->viewRowCount &&
-          subWindow->viewOffset + subWindow->viewRowCount  > subWindow->viewConfigCount ){
+          (int)subWindow->viewOffset + subWindow->viewRowCount  > subWindow->viewConfigCount ){
 
           subWindow->viewOffset = Mmax(subWindow->viewConfigCount - subWindow->viewRowCount,0);
           row = 0;

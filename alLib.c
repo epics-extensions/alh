@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.17  1998/05/12 18:22:40  evans
+ Initial changes for WIN32.
+
  Revision 1.16  1997/10/27 17:28:00  jba
  Moved write of sevr to sevrPVs and now write only when changed.
 
@@ -946,8 +949,7 @@ x2.Cancel = x1.Cancel | x2.Cancel;
   alarmCountFilter_callback
 ******************************************************/
 
-static void alarmCountFilter_callback(pdata)
-     void *pdata;
+static void alarmCountFilter_callback(void *pdata)
 {
      COUNTFILTER *countFilter=pdata;
      time_t alarmTime;
@@ -1027,7 +1029,7 @@ void alNewAlarm(stat,sev,value,clink)
                     timeout.tv_sec = countFilter->inputSeconds;
                     timeout.tv_usec = 0;
                     countFilter->timeoutId= (void *)fdmgr_add_timeout(pfdctx,
-                         &timeout,alarmCountFilter_callback,countFilter);
+                         &timeout,alarmCountFilter_callback,(void *)countFilter);
                }
                countFilter->curCount=1;
                countFilter->alarmTime=alarmTime;

@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.14  1998/05/12 18:22:45  evans
+ Initial changes for WIN32.
+
  Revision 1.13  1997/09/12 19:37:32  jba
  Added some prototypes.
 
@@ -310,8 +313,8 @@ void alLogSetupSaveConfigFile( char *filename);
   alView.c   function prototypes
 *********************************************************************/
 
-int alViewAdjustGroupW( GLINK *glink, int (viewFilter)());
-int alViewAdjustTreeW( GLINK *glink, int command, int (viewFilter)());
+int alViewAdjustGroupW( GLINK *glink, int (*viewFilter)());
+int alViewAdjustTreeW( GLINK *glink, int command, int (*viewFilter)());
 GCLINK *alViewNextTreeW( GLINK  *glink, int *plinkType);
 GCLINK *alViewNextGroupW( GCLINK  *link, int *plinkType);
 GCLINK *alViewNthTreeW( GLINK *glinkStart, int *plinkType, int n);
@@ -415,7 +418,7 @@ void alReplaceGroupForceEvent( GLINK *glink, char *str);
 void alReplaceChanForceEvent( CLINK *clink, char *str);
 void alProcessCA(void);         /* process CA events */
 void alCaPutGblAck(CLINK *clink);
-
+void alCaPutSevrValue(char *sevrPVName,chid sevrchid,int sevr);
 
 /********************************************************************
   alConfig.c   function prototypes

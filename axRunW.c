@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.11  1998/05/12 18:22:46  evans
+ Initial changes for WIN32.
+
  Revision 1.10  1997/04/17 18:01:12  jba
  Added calls to free allocated memory.
 
@@ -160,6 +163,8 @@ static void okCallback(widget,area,cbs)
 
 #include <stdio.h>
 
+#include <fdmgr.h>
+
 #include <Xm/Xm.h>
 #include <Xm/AtomMgr.h>
 #include <Xm/Form.h>
@@ -172,8 +177,6 @@ static void okCallback(widget,area,cbs)
 #include <alh.h>
 #include <axArea.h>
 #include <ax.h>
-
-#include <fdmgr.h>
 
 #ifdef __STDC__
 

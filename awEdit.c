@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.7  1998/05/12 18:22:44  evans
+ Initial changes for WIN32.
+
  Revision 1.6  1997/09/12 19:36:41  jba
  Changes to get cut/paste working.
  Bug fixes for tree and group window views.
@@ -104,7 +107,7 @@ struct clipInfo {
 } clipData = { 0, 0 };
 
 #define KEEP 0
-#define DELETE 1
+#define ALH_DELETE 1
 
 
 
@@ -477,7 +480,7 @@ void editPasteLink(area, newLink, linkType)
 
      treeWindow = area->treeWindow;
 
-     editUndoSet( NULL, linkType, (GCLINK *)newLink, MENU_EDIT_UNDO_CUT_NOSELECT, DELETE);
+     editUndoSet( NULL, linkType, (GCLINK *)newLink, MENU_EDIT_UNDO_CUT_NOSELECT, ALH_DELETE);
 
      if (linkType == GROUP){
           

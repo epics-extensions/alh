@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.5  1998/05/12 18:22:49  evans
+ Initial changes for WIN32.
+
  Revision 1.4  1995/10/20 16:50:43  jba
  Modified Action menus and Action windows
  Renamed ALARMCOMMAND to SEVRCOMMAND
@@ -41,6 +44,24 @@ static char *sccsId = "@(#)help.c	1.12\t10/1/93";
 #include <Xm/PushB.h>
 #include <Xm/CascadeB.h>
 #include <Xm/RowColumn.h>
+
+/* WIN32 differences */
+#ifdef WIN32
+/* Needs to be included before XlibXtra.h for Exceed 5 */
+# include <stdio.h>
+/* Hummingbird extra functions including lprintf
+ *   Needs to be included after Intrinsic.h for Exceed 5
+ *   (Intrinsic.h is included in xtParams.h) */
+# include <X11/XlibXtra.h>
+/* This is done in Exceed 6 but not in Exceed 5
+ *   Need it to define printf as lprintf for Windows
+ *   (as opposed to Console) apps */
+# ifdef _WINDOWS
+#  ifndef printf
+#   define printf lprintf
+#  endif
+# endif
+#endif /* #ifdef WIN32 */
 
 #include <ax.h>
 

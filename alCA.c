@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.12  1998/05/12 18:22:38  evans
+ Initial changes for WIN32.
+
  Revision 1.11  1997/10/27 17:27:59  jba
  Moved write of sevr to sevrPVs and now write only when changed.
 
@@ -1200,19 +1203,19 @@ char *PVname;
             caName,
             alhName,
             PVname,
-            ca_message_text[CA_EXTRACT_MSG_NO(status)]);
+            ca_message(status));
 
     else {
     /*
          printf(" %s: [%s]\n",
           PVname,
-          ca_message_text[CA_EXTRACT_MSG_NO(status)]);
+          ca_message(status));
     */
     printf("CA failure in %s called from %s for %s\nMessage: [%s]\n",
         caName,
         alhName,
         PVname,
-        ca_message_text[CA_EXTRACT_MSG_NO(status)]);
+        ca_message(status));
     }
 }
 

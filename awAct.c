@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.7  1998/05/12 18:22:43  evans
+ Initial changes for WIN32.
+
  Revision 1.6  1997/09/12 19:31:19  jba
  Change to get cut/paste clipboard working.
 
@@ -89,11 +92,11 @@ extern ALINK *alhArea;
 
 /* prototypes for static routines */
 #ifdef __STDC__
-static void actFileCallback( Widget widget, int item, XmAnyCallbackStruct *cbs);
-static void actEditCallback( Widget widget, int item, XmAnyCallbackStruct *cbs);
-static void actInsertCallback( Widget widget, int item, XmAnyCallbackStruct *cbs);
-static void actViewCallback( Widget widget, int item, XmAnyCallbackStruct *cbs);
-static void actHelpCallback( Widget widget, int item, XmAnyCallbackStruct *cbs);
+static void actFileCallback(Widget widget, XtPointer calldata, XtPointer cbs);
+static void actEditCallback(Widget widget, XtPointer calldata, XtPointer cbs);
+static void actInsertCallback(Widget widget, XtPointer calldata, XtPointer cbs);
+static void actViewCallback(Widget widget, XtPointer calldata, XtPointer cbs);
+static void actHelpCallback(Widget widget, XtPointer calldata, XtPointer cbs);
 static int checkActiveSelection(ALINK *area);
 static int checkActiveSelectionMainGroup(ALINK *area);
 #else
@@ -107,7 +110,7 @@ static int checkActiveSelectionMainGroup();
 #endif /*__STDC__*/
 
 #define KEEP 0
-#define DELETE 1
+#define ALH_DELETE 1
 
 
 
@@ -270,12 +273,10 @@ Widget actCreateMenu(parent, user_data)
   actFileCallback
 ******************************************************/
 
-static void actFileCallback(widget, item, cbs)
-     Widget widget;
-     int item;
-     XmAnyCallbackStruct *cbs;
+static void actFileCallback(Widget widget, XtPointer calldata, XtPointer cbs)
 {
      ALINK  *area;
+     int item=(int)calldata;
 
      XtVaGetValues(widget, XmNuserData, &area, NULL);
 
@@ -379,11 +380,9 @@ static void actFileCallback(widget, item, cbs)
   actEditCallback
 ******************************************************/
 
-static void actEditCallback(widget, item, cbs)
-     Widget widget;
-     int item;
-     XmAnyCallbackStruct *cbs;
+static void actEditCallback(Widget widget, XtPointer calldata, XtPointer cbs)
 {
+     int item=(int)calldata;
      ALINK  *area;
      GCLINK *link;
      GCLINK *next;
@@ -413,7 +412,7 @@ static void actEditCallback(widget, item, cbs)
         case MENU_EDIT_CLEAR_OK:
 
              editUndoSet((GCLINK *)sllFirst(area->pmainGroup),
-                         GROUP, NULL, MENU_EDIT_UNDO_CLEAR, DELETE);
+                         GROUP, NULL, MENU_EDIT_UNDO_CLEAR, ALH_DELETE);
      
              area->managed = FALSE;
              area->pmainGroup->p1stgroup = NULL;
@@ -431,7 +430,7 @@ static void actEditCallback(widget, item, cbs)
 
              editClipboardSet(link, linkType);
 
-             editUndoSet(link, linkType, NULL, MENU_EDIT_UNDO_PASTE, DELETE);
+             editUndoSet(link, linkType, NULL, MENU_EDIT_UNDO_PASTE, ALH_DELETE);
      
              editCutLink(area,link,linkType);
 
@@ -605,15 +604,12 @@ static void actEditCallback(widget, item, cbs)
   actInsertCallback
 ******************************************************/
 
-static void actInsertCallback(widget, item, cbs)
-     Widget widget;
-     int item;
-     XmAnyCallbackStruct *cbs;
+static void actInsertCallback(Widget widget, XtPointer calldata, XtPointer cbs)
 {
+     int item=(int)calldata;
      ALINK   *area;
      GCLINK   *link;
      int linkType;
-
 
      XtVaGetValues(widget, XmNuserData, &area, NULL);
 
@@ -666,11 +662,9 @@ static void actInsertCallback(widget, item, cbs)
 /******************************************************
   actViewCallback
 ******************************************************/
-static void actViewCallback(widget, item, cbs)
-     Widget widget;
-     int item;
-     XmAnyCallbackStruct *cbs;
+static void actViewCallback(Widget widget, XtPointer calldata, XtPointer cbs)
 {
+     int item=(int)calldata;
      ALINK   *area;
      void   *link;
      struct subWindow *treeWindow;
@@ -727,11 +721,9 @@ static void actViewCallback(widget, item, cbs)
 ******************************************************/
 
 
-static void actHelpCallback(widget, item, cbs)
-     Widget widget;
-     int item;
-     XmAnyCallbackStruct *cbs;
+static void actHelpCallback(Widget widget, XtPointer calldata, XtPointer cbs)
 {
+     int item=(int)calldata;
      ALINK  *area;
 
      XtVaGetValues(widget, XmNuserData, &area, NULL);

@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.15  1998/05/12 18:22:39  evans
+ Initial changes for WIN32.
+
  Revision 1.14  1997/09/12 21:23:53  jba
  Bufg fix for beep severity line placement.
 
@@ -1357,7 +1360,6 @@ void spawnStatCommandList(pList,stat,stat_prev)
     int stat_prev;
 {
     struct statCommand *statCommand;
-    int direction;
 
     statCommand=(struct statCommand *)ellFirst(pList);
     if ( statCommand && stat != stat_prev) {

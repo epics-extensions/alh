@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.6  1998/05/12 18:22:42  evans
+ Initial changes for WIN32.
+
  Revision 1.5  1997/09/09 22:20:03  jba
  Changed HELP selections on menu.
 
@@ -59,6 +62,8 @@
 #ifndef INCalhh
 #define INCalhh
 
+#include <stdio.h>
+
 #include <Xm/Xm.h>
 #include <Xm/RowColumn.h>
 
@@ -66,6 +71,27 @@
 
 #include <dbDefs.h>
 
+/* WIN32 differences */
+#ifdef WIN32
+/* Hummingbird extra functions including lprintf
+ *   Needs to be included after Intrinsic.h for Exceed 5
+ *   (Intrinsic.h is included in xtParams.h) */
+# include <X11/XlibXtra.h>
+/* Needed for access */
+# include <io.h>
+/* This is done in Exceed 6 but not in Exceed 5
+ *   Need it to define printf as lprintf for Windows
+ *   (as opposed to Console) apps */
+# ifdef _WINDOWS
+#  ifndef printf
+#   define printf lprintf
+#  endif
+# endif
+#else /* #ifdef WIN32 */
+/* WIN32 does not have unistd.h */
+# include <unistd.h>
+#endif /* #ifdef WIN32 */
+ 
 static char *alhhSccsId = "@(#)alh.h	1.10\t10/8/93";
 
 /* default  file names */
@@ -215,7 +241,7 @@ typedef  void (*FUNPTR)();      /* define void function pointer */
 
 typedef struct {
     char *label;
-    void (*callback)();
+    void (*callback)(Widget, void *, void *);
     XtPointer data;
 } ActionAreaItem;
 
@@ -258,12 +284,6 @@ Widget toggle_button,toggle_button1;
 
 
 /*************************************************************************/
-
-
-extern void XmMenuPosition();
-extern void exit();
-
-
 
 /*
  * SOME CONVENIENCE ROUTINES

@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.4  1998/05/12 18:22:48  evans
+ Initial changes for WIN32.
+
  Revision 1.3  1995/02/28 16:43:40  jba
  ansi c changes
 
@@ -49,6 +52,29 @@ static char *sccsId = "@(#)clipboardOps.c	1.4\t9/9/93";
 
 
 #include "clipboardOps.h"
+
+/* WIN32 differences */
+#ifdef WIN32
+/* Hummingbird extra functions including lprintf
+ *   Needs to be included after Intrinsic.h for Exceed 5
+ *   (Intrinsic.h is included in xtParams.h) */
+# include <X11/XlibXtra.h>
+/* Needed for access */
+# include <io.h>
+/* This is done in Exceed 6 but not in Exceed 5
+ *   Need it to define printf as lprintf for Windows
+ *   (as opposed to Console) apps */
+# ifdef _WINDOWS
+#  ifndef printf
+#   define printf lprintf
+#  endif
+# endif
+#else /* #ifdef WIN32 */
+/* WIN32 does not have unistd.h */
+# include <unistd.h>
+/* WIN32 does not have utsname.h */
+# include <sys/utsname.h>
+#endif /* #ifdef WIN32 */
 
 
 

@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.7  1998/05/12 18:22:47  evans
+ Initial changes for WIN32.
+
  Revision 1.6  1997/09/12 19:37:51  jba
  Removed comments.
 
@@ -182,7 +185,7 @@ static void scrollBarMovedCallback(widget,subWindow,cbs)
      XmScrollBarCallbackStruct *cbs;
 {
 
-     if (subWindow->viewOffset == cbs->value) return;
+     if ((int)subWindow->viewOffset == cbs->value) return;
 
      subWindow->viewOffset = cbs->value;
      redraw(subWindow,0);

@@ -458,7 +458,6 @@ static void propCreateDialog(area)
      Widget propDialogShell, propDialog, severityPVnameTextW;
      Widget rowcol, form, maskFrameW;
      Widget nameLabelW, nameTextW;
-     Widget guidanceScrolledW;
      Widget forcePVlabel, severityPVlabel;
      Widget alarmMaskToggleButtonW[ALARM_NMASK];
      Widget forceMaskToggleButtonW[ALARM_NMASK];
@@ -1205,7 +1204,6 @@ static void propApplyCallback(widget, propWindow, cbs)
      int linkType;
      MASK mask;
      struct guideLink *guideLink;
-     SNODE *pt;
 /* PROPERTY UNDO WORKS BUT NOT IMPLEMENTED YET
      GCLINK *undoLink=NULL;
      int undoLinkType;

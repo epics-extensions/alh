@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.11  1998/05/12 18:22:48  evans
+ Initial changes for WIN32.
+
  Revision 1.10  1997/09/12 19:38:27  jba
  Bug fixes for Save and SaveAs.
 
@@ -75,12 +78,15 @@ static char *sccsId = "@(#)file.c	1.14\t2/3/94";
 
 #include <stdlib.h>
 #include <stdio.h>
+#ifndef WIN32
+/* WIN32 does not have dirent.h used by opendir, closedir */
 #include <dirent.h>
+#endif
 #include <ctype.h>
 
-#include <Xm/Xm.h>
-
 #include <fdmgr.h>
+
+#include <Xm/Xm.h>
 
 #include <alh.h>
 #include <alLib.h>
@@ -234,18 +240,23 @@ int checkFilename(filename,fileType)
      int        fileType;
 {
      FILE *tt;
+     
+#ifndef WIN32
      DIR *directory;
-
+#endif
+     
      if ( filename[0] == '\0') return 2;
 
      if ( DEBUG == 1 )
           printf("\nFilename is %s \n", filename);
 
+#ifndef WIN32
      directory = opendir(filename);
      if (directory) {
           closedir(directory);
           return 1;
      }
+#endif     
 
      switch (fileType) {
           case FILE_CONFIG:
@@ -534,10 +545,17 @@ void fileSetupInit( widget, argc, argv)
  
      /* set config file directory using environment variable ALARMHANDLER */
      psetup.configDir = (char *)getenv("ALARMHANDLER");
+#ifdef WIN32
+     if (psetup.configDir){
+          createDialog(widget,XmDIALOG_WARNING,psetup.configDir,
+               ": ALARMHANDLER directory not found");
+     }
+#else     
      if (psetup.configDir && !opendir(psetup.configDir)){
           createDialog(widget,XmDIALOG_WARNING,psetup.configDir,
                ": ALARMHANDLER directory not found");
      }
+#endif     
 
      /* get optional command line parameters */
      input_error = FALSE;
@@ -551,10 +569,17 @@ void fileSetupInit( widget, argc, argv)
                   break;
              case 'f':
                   psetup.configDir = optarg;
+#ifdef WIN32
+                  if (psetup.configDir){
+                       createDialog(widget,XmDIALOG_WARNING,psetup.configDir,
+                            ": Config directory not found");
+                  }
+#else
                   if (psetup.configDir && !opendir(psetup.configDir)){
                        createDialog(widget,XmDIALOG_WARNING,psetup.configDir,
                             ": Config directory not found");
                   }
+#endif		  
                   strncpy(psetup.configFile,psetup.configDir,NAMEDEFAULT_SIZE);
                   strcat(psetup.configFile,"/");
                   if (!psetup.logDir){
@@ -567,10 +592,17 @@ void fileSetupInit( widget, argc, argv)
                   break;
              case 'l':
                   psetup.logDir = optarg;
+#ifdef WIN32
+                  if (psetup.logDir){
+                       createDialog(widget,XmDIALOG_WARNING,psetup.logDir,
+                            ": Config directory not found");
+                  }
+#else
                   if (psetup.logDir && !opendir(psetup.logDir)){
                        createDialog(widget,XmDIALOG_WARNING,psetup.logDir,
                             ": Config directory not found");
                   }
+#endif		  
                   strncpy(psetup.logFile,psetup.logDir,NAMEDEFAULT_SIZE-1);
                   strcat(psetup.logFile,"/");
                   strncpy(psetup.opModFile,psetup.logDir,NAMEDEFAULT_SIZE-1);
