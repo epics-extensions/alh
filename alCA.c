@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.16  1998/06/09 17:10:48  evans
+ Fixed a typo in the exception handler.
+
  Revision 1.15  1998/06/09 16:46:56  evans
  Changed exception handler to quit ater 25 exceptions to avoid swamping
  the interface.
@@ -1419,7 +1422,7 @@ static void alCAException(struct exception_handler_args args)
 	errMsg("alCAException: Channel Access Exception:\n"
 	  "Too many exceptions [%d]\n"
 	  "No more will be handled\n"
-	  "Please fix the problem and restart ALH\n",
+	  "Please fix the problem and restart ALH",
 	  MAX_EXCEPTIONS);
 	ca_add_exception_event(NULL, NULL);
 	return;
