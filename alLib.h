@@ -29,6 +29,8 @@ typedef struct countFilter {
 	int    inputSeconds;
 	short  stat;        /* channel status from CA */
 	short  sev;         /* current severity */
+	short  acks;		/* highest unack severity */
+	short  ackt;		/* acknowledge transients? */
 	char   value[MAX_STRING_SIZE];	/* channel value from CA */
 	int    curCount;
 	int    alarmTime;
