@@ -249,7 +249,7 @@ void alLogOpModMessage(int messageCode,GCLINK* gclink,const char* fmt,...)
 	    gcdata->name,
 	    (gcdata->alias ? gdata->alias : "N/A"),
 	    cm_text,
-	    alhArea->blinkString);
+	    (alhArea ? alhArea->blinkString : "N/A"));
     }
 #endif
 
@@ -298,7 +298,7 @@ void alLogOpModAckMessage(int messageCode,GCLINK* gclink,const char* fmt,...)
         gcdata->pname,
         (gcdata->alias ? gcdata->alias : "N/A"),
         cm_text,
-        alhArea->blinkString);
+        (alhArea ? alhArea->blinkString : "N/A"));
     }
 #endif
 
