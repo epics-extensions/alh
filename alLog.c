@@ -74,8 +74,8 @@ int alarmLogFileOffsetBytes = 0;  /* alarm log file current offset in bytes */
 char alarmLogFileEndString[] = "           ";  /* alarm log file end of data string */
 int alarmLogFileStringLength = 158;  /* alarm log file record length*/
 
-FILE *fo;       /* write opmod file pointer */
-FILE *fl;       /* write alarm log file pointer */
+FILE *fo=0;       /* write opmod file pointer */
+FILE *fl=0;       /* write alarm log file pointer */
 
 char buff[260];
 extern char * alhAlarmSeverityString[];
