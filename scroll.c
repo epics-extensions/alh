@@ -848,13 +848,14 @@ void browser_fileViewWindow(Widget w,int option,Widget menuButton)
 			ac++;
 			XtSetArg(al[ac], XmNtopAttachment, (XtArgVal) XmATTACH_FORM); 
 			ac++;
-			XtSetArg(al[ac], XmNlabelString, XmStringCreateLtoR("Search:",
-			    XmFONTLIST_DEFAULT_TAG)); 
+			str= XmStringCreateLtoR("Search:",XmFONTLIST_DEFAULT_TAG);
+			XtSetArg(al[ac], XmNlabelString, str);
 			ac++;
 			XtSetArg(al[ac], XmNalignment, (XtArgVal) XmALIGNMENT_CENTER); 
 			ac++;
 			findLabel = XtCreateManagedWidget("findLabel", xmLabelWidgetClass, 
 			    findBox, al, ac);
+		    XmStringFree(str);
 			ac = 0;
 			XtSetArg(al[ac], XmNleftAttachment, (XtArgVal) XmATTACH_FORM); 
 			ac++;
@@ -877,27 +878,30 @@ void browser_fileViewWindow(Widget w,int option,Widget menuButton)
 			findButtonBox=XtCreateManagedWidget("findButtonBox", xmRowColumnWidgetClass,
 			    findPane, al, ac);
 			ac = 0;
-			XtSetArg(al[ac], XmNlabelString,
-			    XmStringCreateLtoR("Forward", XmFONTLIST_DEFAULT_TAG)); 
+			str= XmStringCreateLtoR("Forward",XmFONTLIST_DEFAULT_TAG);
+			XtSetArg(al[ac], XmNlabelString,str);
 			ac++;
 			findForwardButton = XtCreateManagedWidget("findForwardButton",
 			    xmPushButtonWidgetClass, findButtonBox, al, ac);
 			XtAddCallback(findForwardButton, XmNactivateCallback, (XtCallbackProc)findForward, 
 			    app_shell);
+			XmStringFree(str);
 			ac = 0;
-			XtSetArg(al[ac], XmNlabelString, 
-			    XmStringCreateLtoR("Reverse", XmFONTLIST_DEFAULT_TAG)); 
+			str= XmStringCreateLtoR("Reverse",XmFONTLIST_DEFAULT_TAG);
+			XtSetArg(al[ac], XmNlabelString, str);
 			ac++;
 			findReverseButton = XtCreateManagedWidget("findReverseButton",
 			    xmPushButtonWidgetClass, findButtonBox, al, ac);
 			XtAddCallback(findReverseButton,XmNactivateCallback,(XtCallbackProc)findReverse,app_shell);
+			XmStringFree(str);
 			ac = 0;
-			XtSetArg(al[ac], XmNlabelString,
-			    XmStringCreateLtoR("Dismiss", XmFONTLIST_DEFAULT_TAG)); 
+			str= XmStringCreateLtoR("Dismiss",XmFONTLIST_DEFAULT_TAG);
+			XtSetArg(al[ac], XmNlabelString, str);
 			ac++;
 			findDismissButton = XtCreateManagedWidget("findDismissButton",
 			    xmPushButtonWidgetClass, findButtonBox, al, ac);
 			XtAddCallback(findDismissButton, XmNactivateCallback, (XtCallbackProc)findDismiss, NULL);
+			XmStringFree(str);
 			ac = 0;
 			XtSetArg(al[ac], XmNmarginHeight, &margin_height); 
 			ac++;

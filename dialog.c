@@ -362,6 +362,8 @@ static void logMessageString(Widget w, XtPointer clientdata, XtPointer calldata)
 	while (XmStringGetNextSegment(context,&lstring,&tag,&direction,&separator)){
 		alLogOpMod(lstring);
 		XtFree(lstring);
+		XtFree(tag);
+		XtFree(direction);
 	}
 	XmStringFree(cstring);
 	XmStringFreeContext(context);

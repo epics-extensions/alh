@@ -202,6 +202,7 @@ int getUserInfo();
 ***************************************************/
 void exit_quit(Widget w, XtPointer clientdata, XtPointer calldata)
 {
+	struct subWindow  *subWindow;
 	ALINK *area = (ALINK *)clientdata;
 	GLINK *proot=0;
 	if(_message_broadcast_flag && amIsender) {
@@ -233,8 +234,24 @@ void exit_quit(Widget w, XtPointer clientdata, XtPointer calldata)
 	}
 
 	if (programId==ACT) editClipboardSet(0,0);
-	if (area  && area->pmainGroup) free(area->pmainGroup);
-	if (area) free(area);
+	if (area){
+		if (area->treeWindow){
+            subWindow=area->treeWindow;
+      		if (subWindow->lines) free(subWindow->lines);
+     		free(area->treeWindow);
+    	}
+		if (area->groupWindow){
+            subWindow=area->groupWindow;
+      		if (subWindow->lines) free(subWindow->lines);
+      		free(area->groupWindow);
+    	}
+		if (area->propWindow) free(area->propWindow);
+		if (area->forceMaskWindow) free(area->forceMaskWindow);
+		if (area->forcePVWindow) free(area->forcePVWindow);
+		if (area->maskWindow) free(area->maskWindow);
+		if (area->pmainGroup) free(area->pmainGroup);
+		free(area);
+	}
 	XtDestroyWidget(topLevelShell);
 	XFreeFont(display,font_info);
 #ifndef WIN32
