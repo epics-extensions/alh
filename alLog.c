@@ -1,13 +1,16 @@
 /*
  $Log$
- Revision 1.3  1995/10/20 16:50:00  jba
- Modified Action menus and Action windows
- Renamed ALARMCOMMAND to SEVRCOMMAND
- Added STATCOMMAND facility
- Added ALIAS facility
- Added ALARMCOUNTFILTER facility
- Make a few bug fixes.
+ Revision 1.4  1996/03/25 15:42:59  jba
+ Removed unused alOpenLogFiles routine.
 
+ * Revision 1.3  1995/10/20  16:50:00  jba
+ * Modified Action menus and Action windows
+ * Renamed ALARMCOMMAND to SEVRCOMMAND
+ * Added STATCOMMAND facility
+ * Added ALIAS facility
+ * Added ALARMCOUNTFILTER facility
+ * Make a few bug fixes.
+ *
  * Revision 1.2  1994/06/22  21:16:40  jba
  * Added cvs Log keyword
  *
@@ -58,7 +61,6 @@ static char *sccsId = "@@(#)alLog.c	1.12\t12/15/93";
 	PUBLIC	Routines for logging messages:
 --------------------------------------------------------------------------------------------
 
-alOpenLogFiles()					Open default files
 alLogAlarm(cdata,stat,sev,h_unackStat,h_unackSevr)	Log new alarms
 alLogAckChan(cline)					Log acknowledged channel
 alLogAckGroup(gline)					Log acknowledged group
@@ -127,40 +129,6 @@ char buff[260],*str;
 extern char * alarmSeverityString[];
 extern char * alarmStatusString[];
 
-
-
-/***********************************************************************
- * open default log files
- ***********************************************************************/
-void alOpenLogFiles()
-{
-
-/*
- * open default log files
- */
-        fl = fopen(psetup.logFile,"a");
-        if (fl == NULL) {
-            fprintf(stderr,"main: can't open file  %s\n",psetup.logFile);
-	    exit(-1);
-        }
-
-        fo = fopen(psetup.opModFile,"a");
-        if (fo == NULL) {
-            fprintf(stderr,"main: can't open file %s\n",psetup.opModFile);
-            exit(-1);
-        }
-
-        timeofday = time(0L);
-        str = ctime(&timeofday);
-        *(str + strlen(str)-1) = '\0';
-/*
-        sprintf(buff,"%-26s Start--- %s\n",str,psetup.configFile);
-*/
-        sprintf(buff,"%-26s Start--- \n",str);
-        fprintf(fo,"%s",buff);
-	fflush(fo);
-
-}
 
 
 /***********************************************************************
