@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.10  1997/02/28 23:29:20  jba
+ Fixed INCLUDE file bug which caused counts and alarms to be incorrect.
+
  Revision 1.9  1996/08/22 20:03:01  jba
  "Save as" now writes out ALARMCOUNTFILTER data
 
@@ -311,11 +314,6 @@ int caConnect;
      	    /*printf("Illegal line: %s\n",buf);*/
     	    }
     }
-    /*
-     *  pendio and add change connection events
-     */
-
-    if (caConnect) alCaStartEvents((SLIST *)pmainGroup);
 
     fclose(fp);
     return;
@@ -473,6 +471,7 @@ static void GetIncludeLine(buf,pglink,caConnect,pmainGroup)
      glink->parent = parent_link;
           alAddGroup(parent_link,glink);
           *pglink = glink;
+          *pglink = parent_link;
 
 }
 

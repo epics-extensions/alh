@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.11  1997/02/28 23:29:22  jba
+ Fixed INCLUDE file bug which caused counts and alarms to be incorrect.
+
  Revision 1.10  1996/09/20 15:06:18  jba
  BEEPSEVERITY bug fix.
 
@@ -322,8 +325,14 @@ void setupConfig(filename, program, areaOld)
 
      /* Read the config file  or create a minimal config file  */
      if (filename[0] != '\0'){
-          if ( program == ALH) alGetConfig(pmainGroup,filename,CA_CONNECT_YES);
+          if ( program == ALH) {
+               alGetConfig(pmainGroup,filename,CA_CONNECT_YES);
+
+               /* pendio and add change connection events */
+               alCaStartEvents((SLIST *)pmainGroup);
+          }
           else alGetConfig(pmainGroup,filename,CA_CONNECT_NO);
+
 
           strcpy(psetup.configFile,filename);
      } else{
