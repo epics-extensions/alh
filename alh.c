@@ -34,12 +34,14 @@ XFontStruct *font_info;
 
 void main(int argc,char *argv[])
 {
-
-	/* WIN32 initialization */
-#ifdef WIN32	
+	/* OS specific initialization */
+#ifdef WIN32
 	HCLXmInit();
 #endif
-
+#ifdef HP_UX
+        _main();
+#endif
+ 
 	/*  Xt initialize the application */
 	topLevelShell = XtAppInitialize(&appContext, "Alarm", NULL, 0, &argc, argv,
 	    fallbackResources, NULL, 0);

@@ -31,9 +31,7 @@ int printerInit(char *,int);
 int put2printer(char *,int,char *,int);
 int compressMsg(char * msg, char *compress_buff);
 
-int main(argc,argv)
-int argc;
-char *argv[];
+int main(int argc,char *argv[])
 {
 int sev; /* define color for printer */
 struct msqid_ds infoBuf;  
@@ -43,6 +41,10 @@ int port;
 int bytes=250;
 int socket;
 
+	/* OS specific initialization */
+#ifdef HP_UX
+        _main();
+#endif
 	if (argc != 5) {
 		fprintf(stderr,"usage:%s TCPName TCPport Key ColorModel\nColor model={bw,bw_bold,oki_bold,hp_color}\n",argv[0]);
 		exit(1);
