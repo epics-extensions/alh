@@ -25,9 +25,9 @@ static char *versionhsccsId = "@(#) $Id$";
 
 #define ALH_VERSION       1
 #define ALH_REVISION      2
-#define ALH_MODIFICATION  9
+#define ALH_MODIFICATION 10
 
-#define ALH_VERSION_STRING "ALH Version 1.2.9"
+#define ALH_VERSION_STRING "ALH Version 1.2.10"
 
 #define ALH_CREDITS_STRING  \
           "Developed at Argonne National Laboratory\n\n" \
