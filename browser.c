@@ -1,10 +1,69 @@
-/* browser.c */
-
 /*
  * $Id$
- */ 
+
+*****************************************************************
+                          COPYRIGHT NOTIFICATION
+*****************************************************************
+
+THE FOLLOWING IS A NOTICE OF COPYRIGHT, AVAILABILITY OF THE CODE,
+AND DISCLAIMER WHICH MUST BE INCLUDED IN THE PROLOGUE OF THE CODE
+AND IN ALL SOURCE LISTINGS OF THE CODE.
+
+(C)  COPYRIGHT 1993 UNIVERSITY OF CHICAGO
+
+Argonne National Laboratory (ANL), with facilities in the States of
+Illinois and Idaho, is owned by the United States Government, and
+operated by the University of Chicago under provision of a contract
+with the Department of Energy.
+
+Portions of this material resulted from work developed under a U.S.
+Government contract and are subject to the following license:  For
+a period of five years from March 30, 1993, the Government is
+granted for itself and others acting on its behalf a paid-up,
+nonexclusive, irrevocable worldwide license in this computer
+software to reproduce, prepare derivative works, and perform
+publicly and display publicly.  With the approval of DOE, this
+period may be renewed for two additional five year periods.
+Following the expiration of this period or periods, the Government
+is granted for itself and others acting on its behalf, a paid-up,
+nonexclusive, irrevocable worldwide license in this computer
+software to reproduce, prepare derivative works, distribute copies
+to the public, perform publicly and display publicly, and to permit
+others to do so.
+
+*****************************************************************
+                                DISCLAIMER
+*****************************************************************
+
+NEITHER THE UNITED STATES GOVERNMENT NOR ANY AGENCY THEREOF, NOR
+THE UNIVERSITY OF CHICAGO, NOR ANY OF THEIR EMPLOYEES OR OFFICERS,
+MAKES ANY WARRANTY, EXPRESS OR IMPLIED, OR ASSUMES ANY LEGAL
+LIABILITY OR RESPONSIBILITY FOR THE ACCURACY, COMPLETENESS, OR
+USEFULNESS OF ANY INFORMATION, APPARATUS, PRODUCT, OR PROCESS
+DISCLOSED, OR REPRESENTS THAT ITS USE WOULD NOT INFRINGE PRIVATELY
+OWNED RIGHTS.
+
+*****************************************************************
+LICENSING INQUIRIES MAY BE DIRECTED TO THE INDUSTRIAL TECHNOLOGY
+DEVELOPMENT CENTER AT ARGONNE NATIONAL LABORATORY (630-252-2000).
+*/
+/*****************************************************************************
+ *
+ *     Original Author : Kenneth Evans, Jr.
+ *
+ *****************************************************************************
+*/
+
+/* Note that there are separate WIN32 and UNIX versions */
 
 #define DEBUG 0
+
+#ifndef WIN32
+/*************************************************************************/
+/*************************************************************************/
+/* Netscape UNIX Version                                                        */ 
+/*************************************************************************/
+/*************************************************************************/
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -35,13 +94,11 @@ static int ignoreXError(Display *display, XErrorEvent *xev);
 /* Global variables */
 extern Display *display;
 
-/*******************************************************************
- callBrowser
- *******************************************************************/
+/**************************** callBrowser ********************************/
 int callBrowser(char *url)
-/* Returns non-zero on success, 0 on failure */
-/* url is the URL that Mosaic is to display  */
-/*   or "quit" to terminate Mosaic           */
+  /* Returns non-zero on success, 0 on failure      */
+  /* url is the URL that the browser is to display  */
+  /*   or "quit" to terminate the browser           */
 {
     int (*oldhandler)(Display *, XErrorEvent *);
     static Window netscapew=(Window)0;
@@ -107,9 +164,7 @@ int callBrowser(char *url)
 #endif    
     return 2;
 }
-/*******************************************************************
- checkNetscapeWindow
- *******************************************************************/
+/**************************** checkNetscapeWindow ************************/
 static Window checkNetscapeWindow(Window w)
   /* Checks if this window is the Netscape window and returns the window
    * if it is or 0 otherwise */    
@@ -138,10 +193,7 @@ static Window checkNetscapeWindow(Window w)
     if(version) XFree((void *)version);
     return wfound;
 }
-
-/*******************************************************************
- execute
- *******************************************************************/
+/**************************** execute ************************************/
 static int execute(char *s)
 /* From O'Reilly, Vol. 1, p. 438 */
 {
@@ -163,10 +215,7 @@ static int execute(char *s)
     signal(SIGQUIT,qstat);
     return(status);
 }
-
-/*******************************************************************
- findNetscapeWindow
- *******************************************************************/
+/**************************** findNetscapeWindow *************************/
 static Window findNetscapeWindow(void)
 {
     int screen=DefaultScreen(display);
@@ -191,10 +240,7 @@ static Window findNetscapeWindow(void)
     if(children) XFree((void *)children);
     return wfound;
 }
-
-/*******************************************************************
- ignoreXError
- *******************************************************************/
+/**************************** ignoreXError *******************************/
 static int ignoreXError(Display *display, XErrorEvent *xev)
 {
 #if DEBUG
@@ -203,3 +249,159 @@ static int ignoreXError(Display *display, XErrorEvent *xev)
     return 0;
 }
 
+#else     /*ifndef WIN32 */
+/*************************************************************************/
+/*************************************************************************/
+/* WIN32 Version                                                        */ 
+/*************************************************************************/
+/*************************************************************************/
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <process.h>
+#include <string.h>
+#include <errno.h>
+
+/* void medmPrintf(int priority, char *format, ...); */
+
+int callBrowser(char *url);
+
+/**************************** callBrowser (WIN32) ************************/
+int callBrowser(char *url)
+  /* Returns non-zero on success, 0 on failure */
+  /* Should use the default browser            */
+  /* Does nothing with "quit"                  */
+{
+    static int first=1;
+    static char *ComSpec;
+    char command[BUFSIZ];
+    int status;
+    
+  /* Handle quit */
+    if(!strcmp(url,"quit")) {
+      /* For compatibility, but do nothing */
+	return(3);
+    }
+    
+  /* Get ComSpec for the command shell (should be defined) */
+    if (first) {
+	first=0;
+	ComSpec = getenv("ComSpec");
+    }
+    if (!ComSpec) return(0);     /* Abort with no message like the UNIX version*/
+  /* Spawn the process that handles a url */
+#if 0
+  /* Works, command window that goes away */
+    sprintf(command,"start \"%s\"",url);
+    status = _spawnl(_P_WAIT, ComSpec, ComSpec, "/C", command, NULL);
+
+  /* Works, command window that goes away */
+    sprintf(command,"start \"%s\"",url);
+    status = _spawnl(_P_DETACH, ComSpec, ComSpec, "/C", command, NULL);
+
+  /* Works, command window that goes away */
+    sprintf(command,"\"%s\"",url);
+    status = _spawnl(_P_NOWAIT, "c:\\windows\\command\\start.exe",
+      "c:\\windows\\command\\start.exe", command, NULL);
+
+  /* Works, command window that goes away */
+    sprintf(command,"\"%s\"",url);
+    status = _spawnl(_P_WAIT, ComSpec, "start", command, NULL);
+
+  /* Works, command window that goes away */
+    sprintf(command,"start \"%s\"",url);
+    status = _spawnl(_P_NOWAIT, ComSpec, ComSpec, "/C", command, NULL);
+
+  /* Doesn't work on 95 (No such file or directory), works on NT */
+    sprintf(command,"start \"%s\"",url);
+    status = _spawnl(_P_NOWAIT, ComSpec, "/C", command, NULL);
+
+  /* Works on 95, not NT, no command window
+   *   No start.exe for NT */
+    sprintf(command,"\"%s\"",url);
+    status = _spawnlp(_P_DETACH, "start", "start", command, NULL);
+
+  /* Doesn't work on 95 */
+    sprintf(command,"\"start %s\"",url);
+    status = _spawnl(_P_DETACH, ComSpec, ComSpec, "/C", command, NULL);
+#else
+  /* This seems to work on 95 and NT, with a command box on 95
+   *   It may have trouble if the URL has spaces */
+    sprintf(command,"start %s",url);
+    status = _spawnl(_P_DETACH, ComSpec, ComSpec, "/C", command, NULL);
+#endif    
+    if(status == -1) {
+	char *errstring=strerror(errno);
+
+	printf("\ncallBrowser: Cannot start browser:\n"
+	  "%s %s\n"
+	  "  %s\n",ComSpec,command,errstring);
+/* 	perror("callBrowser:"); */
+	return(0);
+    }
+    return(1);
+}
+#endif     /* #ifndef WIN32 */
+
+#if 0
+/*************************************************************************/
+/*************************************************************************/
+/* Mosaic Version                                                        */ 
+/*************************************************************************/
+/*************************************************************************/
+
+#ifndef MOSAICPATH
+/* #define MOSAICPATH "/usr/bin/X11/mosaic" */
+/* #define MOSAICPATH "/opt/local/bin/mosaic" */
+#define MOSAICPATH "mosaic"
+#endif
+
+/**************************** callBrowser ********************************/
+int callBrowser(char *url)
+/* Returns non-zero on success, 0 on failure */
+/* url is the URL that Mosaic is to display  */
+/*   or "quit" to terminate Mosaic           */
+{
+    static pid_t pid=0;
+    char filename[32];
+    FILE *file;
+    char path[BUFSIZ];
+    char *envstring;
+    
+    signal(SIGCHLD,SIG_IGN);
+    
+/* Handle quit */
+    if(!strcmp(url,"quit")) {
+	if (pid) {
+	    sprintf(filename,"/tmp/Mosaic.%d",pid);
+	    unlink(filename);
+	    kill(pid,SIGTERM);
+	    pid=0;
+	}
+	return 3;
+    }
+/* If Mosaic is not up, exec it */
+    if ((!pid) || kill(pid,0)) {
+	if (!(pid=fork())) {
+	    envstring=getenv("MOSAICPATH");
+	    if(!envstring) {
+		sprintf(path,"%s",MOSAICPATH);
+	    }
+	    else {
+		sprintf(path,"%s",envstring);
+	    }
+	    execlp(path,path,url,(char *)0);
+	    perror(path);
+	    _exit(127);
+	}
+	return 1;
+    }
+/* Mosaic is up, send message through file */
+    sprintf(filename,"/tmp/Mosaic.%d",pid);
+    if (!(file=fopen(filename,"w"))) return 0;
+    fprintf(file,"goto\n%s\n",url);
+    fclose(file);
+    kill(pid,SIGUSR1);
+    return 2;
+}
+#endif
