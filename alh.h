@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.5  1997/09/09 22:20:03  jba
+ Changed HELP selections on menu.
+
  Revision 1.4  1995/11/13 22:31:15  jba
  Added beepseverity command, ansi changes and other changes.
 
@@ -170,13 +173,8 @@ static char *alhhSccsId = "@(#)alh.h	1.10\t10/8/93";
 #define MENU_INSERT_FILE		10803
 #define MENU_INSERT_SETTINGS	10804
 
-#define MENU_HELP_CONTEXT	10900
-#define MENU_HELP_WINDOWS	10901
-#define MENU_HELP_KEYS		10902
-#define MENU_HELP_INDEX		10903
-#define MENU_HELP_HELP		10904
-#define MENU_HELP_TUTORIAL	10905
-#define MENU_HELP_VERSION	10906
+#define MENU_HELP_TOPICS	10900
+#define MENU_HELP_ABOUT	10906
 
 
 
