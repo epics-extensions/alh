@@ -18,8 +18,6 @@
   Routines for modifying noAck mask for 1 hour.
 **********************************************************************/
 
-static char *sccsId = "@(#) $Id$";
-
 #include <stdlib.h>
 
 #include <Xm/Xm.h>
@@ -286,21 +284,19 @@ static void noAckHelpCallback(Widget widget,XtPointer calldata,XtPointer cbs)
 {
 	char *message1 = 
 	"Set group or channel ack/noAck mask to noAck for one hour and then\n"
-    "reset it to initial (config file) value after the hour is over.\n"
-	"  \n"
+	"reset it to initial (config file) value after the hour is over.\n\n"
 	"Setting the 'noAck for One Hour' button to ON means setting the ack/noAck\n"
 	"mask to noAck for the selected channel or for all channels in the\n"
 	"selected group and creating a one hour timer. When the timer expires\n"
-	"the ack/noAck masks will be set to the initial value from the config file.\n"
-	"  \n"
+	"the ack/noAck masks will be set to the initial value from the config file.\n\n"
+	;
+	char * message2 =
 	"Setting the 'noAck for One Hour' button to OFF means setting the ack/noAck\n"
 	"mask to the initial value from the config file for the celected channel or\n"
-	"for all channels in the selected group and removing the one hour timer.\n"
-	"  \n"
+	"for all channels in the selected group and removing the one hour timer.\n\n"
 	"Press the Dismiss button to close the dialog window.\n"
 	"Press the Help    button to get this help description window.\n"
 	;
-	char * message2 = "  ";
 
 	createDialog(widget,XmDIALOG_INFORMATION, message1,message2);
 
