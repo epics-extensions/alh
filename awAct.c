@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.8  1998/07/07 20:51:01  jba
+ Added alh versioning.
+
  Revision 1.7  1998/05/12 18:22:43  evans
  Initial changes for WIN32.
 
@@ -86,9 +89,11 @@ static char *sccsId = "@(#)awAct.c	1.16\t12/15/93";
 #include "alLib.h"
 #include "axArea.h"
 #include "epicsVersion.h"
+#include "version.h"
 
 /* external variables */
 extern ALINK *alhArea;
+extern char alhVersionString[60];
 
 /* prototypes for static routines */
 #ifdef __STDC__
@@ -731,13 +736,15 @@ static void actHelpCallback(Widget widget, XtPointer calldata, XtPointer cbs)
      switch (item){
 
         case MENU_HELP_ABOUT:
-             createDialog(area->form_main,XmDIALOG_INFORMATION,"\nAlarm Configuration Tool\n\nDeveloped at Argonne National Laboratory\n\nAuthors: Ben-Chin Cha, Janet Anderson, Mark Anderson, and Marty Kraimer\n\n", EPICS_VERSION_STRING);
+             createDialog(area->form_main,XmDIALOG_INFORMATION,
+                  "\nAlarm Configuration Tool\n\n" ALH_CREDITS_STRING ,alhVersionString);
 
              break;
 
         default:
 
-             createDialog(area->form_main,XmDIALOG_INFORMATION,"Help is not available in this release."," ");
+             createDialog(area->form_main,XmDIALOG_INFORMATION,
+                  "Help is not available in this release."," ");
              break;
      }
 }

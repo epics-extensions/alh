@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.8  1998/07/07 20:51:01  jba
+ Added alh versioning.
+
  Revision 1.7  1998/06/02 19:40:47  evans
  Changed from using Fgmgr to using X to manage events and file
  descriptors.  (Fdmgr didn't work on WIN32.)  Uses XtAppMainLoop,
@@ -82,6 +85,7 @@ static char *sccsId = "@(#)alh.c	1.23\t12/15/93";
 
 #include <alh.h>
 #include <epicsVersion.h>
+#include <version.h>
 #include <fallback.h>
 #include <sllLib.h>
 #include <axArea.h>
@@ -91,6 +95,7 @@ static char *sccsId = "@(#)alh.c	1.23\t12/15/93";
 int DEBUG = 0;
 int ALARM_COUNTER = 0;
 SLIST *areaList;
+char alhVersionString[60];
 extern XtAppContext appContext;
 extern Display *display;
 
@@ -105,6 +110,7 @@ void main(argc, argv)
      int argc;
      char *argv[];
 {
+
      /* WIN32 initialization */
 #ifdef WIN32	
      HCLXmInit();
@@ -127,14 +133,17 @@ void main(argc, argv)
      /* setup area and configuration */
      fileSetupInit(topLevelShell,argc,argv);
 
+     sprintf(alhVersionString,"ALH Version %d.%d.%d  (%s)",
+        ALH_VERSION,ALH_REVISION,ALH_MODIFICATION,EPICS_VERSION_STRING);
+
      /* display alh credits window */
-#if  IWantGreetings &&  XmVersion && XmVersion >= 1002
-     productDescriptionShell = createAndPopupProductDescriptionShell(appContext,
+#if  IWantGreetings
+    productDescriptionShell = createAndPopupProductDescriptionShell( appContext,
           topLevelShell,
           "  ALH  ", NULL, ALH_pixmap,
           "\nAlarm Handler\n Alarm Configuration Tool\n",NULL,
-          EPICS_VERSION_STRING,
-          "\nDeveloped at Argonne National Laboratory\nAuthors: Ben-Chin Cha, Janet Anderson,\n         Mark Anderson, and Marty Kraimer\n",
+          ALH_CREDITS_STRING ,
+          alhVersionString,
           NULL, -1,-1,3);
 #else
      productDescriptionShell = 0;

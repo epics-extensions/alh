@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.12  1998/07/07 20:51:02  jba
+ Added alh versioning.
+
  Revision 1.11  1998/06/22 18:42:12  jba
  Merged the new alh-options created at DESY MKS group:
   -D Disable Writing, -S Passive Mode, -T AlarmLogDated, -P Printing
@@ -132,6 +135,7 @@ void awUpdateRowWidgets(line)                 Update line widgets
 #include "alLib.h"
 #include "sllLib.h"
 #include "epicsVersion.h"
+#include "version.h"
 
 #include <Xm/Xm.h>
 #include <Xm/ArrowB.h>
@@ -148,6 +152,7 @@ void awUpdateRowWidgets(line)                 Update line widgets
 #include <Xm/ToggleBG.h>
 
 /* external variables */
+extern char alhVersionString[60];
 extern char *bg_char[];
 extern Pixel bg_pixel[];
 extern Pixel channel_bg_pixel;
@@ -726,14 +731,15 @@ static void alhHelpCallback( Widget widget, XtPointer calldata, XtPointer cbs)
 
         case MENU_HELP_ABOUT:
 
-             /* if (productDescriptionShell)  XtPopup(productDescriptionShell,XtGrabNone); */
-             createDialog(area->form_main,XmDIALOG_INFORMATION,"\nAlarm Handler\n\nDeveloped at Argonne National Laboratory\n\nAuthors: Ben-Chin Cha, Janet Anderson, Mark Anderson, and Marty Kraimer\n\n", EPICS_VERSION_STRING);
+             createDialog(area->form_main,XmDIALOG_INFORMATION,
+                  "\nAlarm Handler\n\n" ALH_CREDITS_STRING ,alhVersionString);
 
              break;
 
         default:
 
-             createDialog(area->form_main,XmDIALOG_INFORMATION,"Help is not available in this release."," ");
+             createDialog(area->form_main,XmDIALOG_INFORMATION,
+                  "Help is not available in this release."," ");
              break;
      }
 }
