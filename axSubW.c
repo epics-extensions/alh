@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.6  1997/09/12 19:37:51  jba
+ Removed comments.
+
  Revision 1.5  1995/05/31 20:34:15  jba
  Added name selection and arrow functions to Group window
 
@@ -562,14 +565,6 @@ void exposeResizeCallback(widget, subWindow, cbs)
      }
 
      if (subWindow->viewRowCount <= 0) return;
-/*
-printf (" subWindow=%d\n",subWindow);
-printf ("      viewHeight =%d \n",subWindow->viewHeight);
-printf ("      marginHeight=%d\n",subWindow->marginHeight);
-printf ("      viewRowCount=%d\n",subWindow->viewRowCount);
-printf ("      rowHeight=%d\n",subWindow->rowHeight);
-printf ("      oldViewRowCount=%d\n",subWindow->oldViewRowCount);
-*/
 
      redraw(subWindow,0);
 
