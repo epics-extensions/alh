@@ -564,7 +564,7 @@ void alNewEvent(int stat,int sevr,int acks,int ackt,char *value,CLINK *clink)
 	struct chanData *cdata;
 	COUNTFILTER *countFilter;
 	time_t alarmTime;
-	int newAckt;
+	unsigned newAckt;
 
 	cdata = clink->pchanData;
 
