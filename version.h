@@ -21,13 +21,11 @@
 #ifndef INCversionh
 #define INCversionh 1
 
-static char *versionhsccsId = "@(#) $Id$";
-
 #define ALH_VERSION       1
 #define ALH_REVISION      2
-#define ALH_MODIFICATION 12
+#define ALH_MODIFICATION 13
 
-#define ALH_VERSION_STRING "ALH Version 1.2.12"
+#define ALH_VERSION_STRING "ALH Version 1.2.13"
 
 #define ALH_CREDITS_STRING  \
           "Developed at Argonne National Laboratory\n\n" \
