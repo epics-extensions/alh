@@ -1,8 +1,11 @@
 /*
  $Log$
- Revision 1.6  1995/05/31 20:50:37  jba
- Added test for change in severity before spawn of ALARMCOMMAND
+ Revision 1.7  1995/06/01 15:15:18  jba
+ Removed some comments
 
+ * Revision 1.6  1995/05/31  20:50:37  jba
+ * Added test for change in severity before spawn of ALARMCOMMAND
+ *
  * Revision 1.5  1995/05/30  15:55:10  jba
  * Added ALARMCOMMAND facility
  *
@@ -863,8 +866,7 @@ x2.Cancel = x1.Cancel | x2.Cancel;
 
 
 /*********************************************************** 
-        ***before calling this function make sure***
-        ***sev  is different from sevr_prev      ***
+     alNewAlarm
 ************************************************************/
 void alNewAlarm(stat,sev,value,clink)
 int stat,sev;
@@ -892,13 +894,8 @@ int direction;
         stat_prev = cdata->curStat;
         sevr_prev = cdata->curSevr;
 
-/*
-if (sev == sevr_prev) printf ("alNewAlarm:### WARNING####  sev == sevr_prev for %s",cdata->name);
-*/
-
         cdata->curStat = stat;
         cdata->curSevr = sev;
-/*	cdata->value = value;*/
 	strcpy(cdata->value,value);
 
         viewCount = awViewViewCount((void *)clink);
@@ -911,8 +908,6 @@ if (sev == sevr_prev) printf ("alNewAlarm:### WARNING####  sev == sevr_prev for 
 		h_unackSevr = cdata->unackSevr;
 		h_unackStat = cdata->unackStat;
 		}
-
-/*       if ( sev == sevr_prev ) return; */
 
 	if (DEBUG >=3) ALARM_COUNTER++;
 	
