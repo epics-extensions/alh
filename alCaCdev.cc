@@ -83,12 +83,6 @@ static void alCaGroupForceEvent         (int, void *, cdevRequestObject &, cdevD
 static void SevrChangeConnEvent (int, void *, cdevRequestObject &, cdevData &);
 static void alCaUpdate(XtPointer cd, XtIntervalId *id);
 
-static void alCaChannelConnectionEvent(int,void *,cdevRequestObject &,cdevData &); 
-static void alCaForcePVConnectionEvent(int,void *,cdevRequestObject &,cdevData &); 
-static void alCaSevrPVConnectionEvent(int,void *,cdevRequestObject &,cdevData &);  
-static void alCaChannelAccessRightsEvent(struct access_rights_handler_args args);
-static void alCaForcePVAccessRightsEvent(struct access_rights_handler_args args);
-static void alCaSevrPVAccessRightsEvent(struct access_rights_handler_args args);
 
 
 // ==========================================================================
@@ -379,6 +373,20 @@ void alCaConnectSevrPV(char *name, chid * pchid, void *)
   *pchid = (chid)signal;
 }
 
+/*********************************************************************
+ alCaConnectHeartbeatPV
+ *********************************************************************/
+void alCaConnectHeartbeatPV(char *name, chid * pchid, void *puser)
+{
+  cdevSignal	*signal = new cdevSignal (name);
+  toBeConnectedCount++;
+  
+  if (signal->request().getState() == CDEV_INVALID)
+    errMsg("alCaConnectChannel: request object is invalid for heartbeat PV %s\n",name);
+  *pchid = (chid)signal;
+
+}
+
 /******************************************************************************
   clear a channel chid
   ******************************************************************************/
@@ -575,6 +583,31 @@ void	alCaPutSevrValue (chid chid, short *psevr)
   }
 }
 
+/******************************************************************************
+  alCaPutHeartbeatValue
+  ******************************************************************************/
+void	alCaPutHeartbeatValue (chid chid, short *pvalue)
+{
+  cdevSignal		*signal = (cdevSignal *)chid;
+  cdevRequestObject	*request;
+  cdevData 		out;
+  
+  if (!_global_flag || _passive_flag)  return;
+
+  if (!signal)
+  {
+    errMsg("alCaPutHeartbeatValue: null cdevSignal pointer\n");
+    return;
+  }
+
+  sprintf (buff, "set %s", signal->attribute());
+  request = cdevRequestObject::attachPtr (signal->device(), buff);
+  out.insert ("value", *pvalue);
+  if (request->sendNoBlock (out, 0) != CDEV_SUCCESS)
+  {
+    errMsg ("alCaPutHeartbeatValue: error writing heartbeat value %s set %s\n", signal->device(), signal->attribute());
+  }
+}
 
 /******************************************************************************
  *  Close connection event

@@ -29,6 +29,7 @@ static char *alhhsccsId = "@(#) $Id$";
 #include <Xm/RowColumn.h>
 
 #include "alarm.h"
+#include "cadef.h"
 
 #ifdef EXCEED
 /* WIN32 differences */
@@ -165,6 +166,13 @@ Widget              productDescriptionShell;
 Pixmap              ALH_pixmap;
 int                 programId;
 
+struct heartbeatPV {
+    char *name;
+    chid chid;
+    float caputRateInSeconds;
+    short caputValue;
+    XtIntervalId timerId;
+};
 
 struct setup {
 	char configFile[NAMEDEFAULT_SIZE];      /* config file name */
@@ -187,6 +195,7 @@ struct mainGroup {
 	struct groupLink *p1stgroup;    /* main group pointer */
 	int modified;
 	void *area;
+	struct heartbeatPV heartbeatPV; /* heartbeat PV info */
 };
 
 extern struct setup psetup;

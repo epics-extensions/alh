@@ -208,26 +208,25 @@ void setupConfig(char *filename,int program,ALINK *areaOld)
 				holdToBeConnectedCount = toBeConnectedCount;
 			}
 
-			alSetNotConnected((SLIST *)pmainGroup);
-			alPutGblAckT((SLIST *)pmainGroup);
+			alSetNotConnected(pmainGroup);
+			alPutGblAckT(pmainGroup);
 		}
 		else alGetConfig(pmainGroup,filename,CA_CONNECT_NO);
-
+		/* Log new configfile filename */
+		alLogSetupConfigFile(filename);
+		if (sllFirst(pmainGroup)) strcpy(psetup.configFile,filename);
 	} else{
 		if (program == ACT) alCreateConfig(pmainGroup);
 		else {
-			free(pmainGroup);
-			pmainGroup->p1stgroup = alCopyGroup(areaOld->pmainGroup->p1stgroup);
-			alSetPmainGroup(pmainGroup->p1stgroup, pmainGroup);
-			return;
+			if (areaOld) {
+				psetup.beepSevr = beepSevrOld;
+				areaOld->managed = TRUE;
+				errMsg ("ALH Error: Invalid config file: %s\n",filename);
+				return;
+			}
 		}
 	}
 	if ( sllFirst(pmainGroup)) {
-
-		/* Log new configfile filename */
-		alLogSetupConfigFile(filename);
-
-		if (filename[0] != '\0') strcpy(psetup.configFile,filename);
 
 		proot = sllFirst(pmainGroup);
 
@@ -276,22 +275,14 @@ void setupConfig(char *filename,int program,ALINK *areaOld)
 		createDialog(0,0," "," ");
 
 	} else {
-
-		psetup.beepSevr = beepSevrOld;
-
+		free(pmainGroup);
 		if (areaOld) {
+			psetup.beepSevr = beepSevrOld;
 			areaOld->managed = TRUE;
-
-			if (areaOld->form_main )
-				createDialog(areaOld->form_main,XmDIALOG_WARNING,
-					"Configuration file error: ",filename);
-			else if (areaOld->runtimeForm)
-				createDialog(areaOld->runtimeForm,XmDIALOG_WARNING,
-					"Configuration file error: ",filename);
-		} else {
-			area = NULL;
 			errMsg ("ALH Error: Invalid config file: %s\n",filename);
-			exit_quit(NULL, area, NULL);
+		} else {
+			errMsg ("ALH Error: Invalid config file: %s\n",filename);
+			exit_quit(NULL, NULL, NULL);
 		}
 	}
 	return;
@@ -360,13 +351,15 @@ static ALINK *setupArea(ALINK *areaOld)
 		/* Delete the current config */
 		if (area->pmainGroup){
 
+
 			/* cancel channel access */
-			alCaCancel((SLIST *)area->pmainGroup);
+			alCaCancel(area->pmainGroup);
 
 			proot = sllFirst(area->pmainGroup);
 			if (proot) alDeleteGroup((GLINK *)proot);
 
-			free((SLIST *)area->pmainGroup);
+			alHeartbeatPVRemove(area->pmainGroup);
+			free(area->pmainGroup);
 			area->pmainGroup = NULL;
 		}
 
@@ -526,7 +519,7 @@ void createMainWindowWidgets(ALINK *area)
 
 	/* Create group alarm decoder label for the messageArea */
 	area->label_mask = XtVaCreateManagedWidget(
-	    "Mask <CDATL>:  <Cancel,Disable,noAck,noackT,noLog>",
+	    "Mask <CDATL>:  <Cancel,Disable,noAck,noackT,noLog>      H=noAck 1hr timer",
 	    xmLabelGadgetClass,        area->messageArea,
 	    XmNmarginHeight,           3,
 	    XmNalignment,              XmALIGNMENT_BEGINNING,

@@ -26,6 +26,7 @@ static char *axhsccsId = "@(#) $Id$";
 #include <time.h>
 #include <stdio.h>
 
+#include "alh.h"
 #include "axSubW.h"
 #include "line.h"
 #include "alLib.h"
@@ -353,21 +354,21 @@ void alCaAddForcePVEvent(chid chid,void *link,evid *pevid,int type);
 void alCaPutGblAck(chid chid,short *psevr);
 void alCaPutSevrValue(chid chid,short *psevr);
 void alCaPutGblAckT(chid chid, short *pstate);
+void alCaConnectHeartbeatPV(char *name,chid *pchid,void *puser);
+void alCaPutHeartbeatValue(chid chid,short *value);
 
 /********************************************************************
   alCaCommon.c   function prototypes
 *********************************************************************/
-void alCaStart(SLIST *proot);
 void alReplaceGroupForceEvent( GLINK *glink, char *str);
 void alReplaceChanForceEvent( CLINK *clink, char *str);
-void alCaSearch( SLIST *proot);
-void alCaCancel(SLIST *proot);
+void alCaCancel(struct mainGroup *pmainGroup);
 void registerCA(void *dummy, int fd, int opened);
 void alUpdateAreas();
 void alGroupForceEvent(GLINK *glink,short value);
 void alChannelForceEvent(CLINK *clink,short value);
-void alSetNotConnected(SLIST *proot);
-void alPutGblAckT(SLIST *proot);
+void alSetNotConnected(struct mainGroup *pmainGroup);
+void alPutGblAckT(struct mainGroup *pmainGroup);
 
 /********************************************************************
   alConfig.c   function prototypes
@@ -448,6 +449,18 @@ void propUndo(void *area);
 *********************************************************************/
 
 void alBeep(Display *displayBB);
+
+/********************************************************************
+  heartbeat.c   function prototypes
+*********************************************************************/
+
+void alHeartbeatStart(void* data);
+void alHeartbeatStop(void* data);
+void alHeartbeatPVRemove(struct mainGroup *pmainGroup);
+void alHeartbeatPVAdd(struct mainGroup *pmainGroup,char* name,float rate,short value);
+
+
+
 
 #endif /* INCaxh */
 /* alCaCommon.c */

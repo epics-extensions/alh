@@ -48,6 +48,9 @@ static void alCaForcePVAccessRightsEvent(struct access_rights_handler_args args)
 static void alCaSevrPVAccessRightsEvent(struct access_rights_handler_args args);
 static void alCaUpdate(XtPointer cd, XtIntervalId * id);
 static void alCaException(struct exception_handler_args args);
+static void alCaHeartbeatPVAccessRightsEvent(struct access_rights_handler_args args);
+static void alCaHeartbeatPVConnectionEvent(struct connection_handler_args args);
+
 
 /*********************************************************************
  alCaPend
@@ -227,6 +230,29 @@ void alCaConnectSevrPV(char *name, chid * pchid, void *puser)
 }
 
 /*********************************************************************
+  create chid, start search, add connection event handler, add puser,
+  add access_rights event handler
+ *********************************************************************/
+void alCaConnectHeartbeatPV(char *name, chid * pchid, void *puser)
+{
+	int status;
+
+	if (strlen(name) <= (size_t) 1) return;
+
+	toBeConnectedCount++;
+	status = ca_search_and_connect(name,pchid,alCaHeartbeatPVConnectionEvent,puser);
+	if (status != ECA_NORMAL){
+		errMsg("ca_search_and_connect failed for Heartbeat PV %s "
+			"Return status: %s\n",ca_name(*pchid),ca_message(status));
+	}
+	status = ca_replace_access_rights_event(*pchid, alCaHeartbeatPVAccessRightsEvent);
+	if (status != ECA_NORMAL){
+		errMsg("ca_replace_access_rights_event failed for Heartbeat PV %s "
+			"Return status: %s\n",ca_name(*pchid),ca_message(status));
+	}
+}
+
+/*********************************************************************
  clear a channel chid
  *********************************************************************/
 void alCaClearChannel(chid * pchid)
@@ -377,6 +403,25 @@ void alCaPutSevrValue(chid chid, short *psevr)
 
 
 /*********************************************************************
+ alCaPutHeartbeatValue - write to heartbeatPV
+ *********************************************************************/
+void alCaPutHeartbeatValue(chid chid, short *pvalue)
+{
+	int status;
+
+	if (!_global_flag || _passive_flag)  return;
+
+	if (!chid || ca_field_type(chid) == TYPENOTCONN) return;
+
+	status = ca_put(DBR_SHORT, chid, pvalue);
+	if (status != ECA_NORMAL) {
+		errMsg("alCaPutHeartbeatValue: ca_put failed for Heartbeat PV %s "
+			"Return status: %s\n",ca_name(chid),ca_message(status));
+	}
+}
+
+
+/*********************************************************************
  channel alarm Event
  *********************************************************************/
 static void alCaNewAlarmEvent(struct event_handler_args args)
@@ -454,6 +499,18 @@ static void alCaSevrPVAccessRightsEvent(struct access_rights_handler_args args)
 
 
 /*********************************************************************
+ heartbeatPV access_rights event handler
+ *********************************************************************/
+static void alCaHeartbeatPVAccessRightsEvent(struct access_rights_handler_args args)
+{
+	if (ca_field_type(args.chid) == TYPENOTCONN) return;
+	if (!ca_write_access(args.chid) && _global_flag && !_passive_flag) {
+		errMsg("No write access for Heartbeat PV %s\n",ca_name(args.chid));
+	}
+}
+
+
+/*********************************************************************
  channel connection event handler
  *********************************************************************/
 static void alCaChannelConnectionEvent(struct connection_handler_args args)
@@ -498,6 +555,22 @@ static void alCaSevrPVConnectionEvent(struct connection_handler_args args)
 	} else {
 		errMsg("Unknown Connection Event Severity PV %s for %s\n",
 			ca_name(args.chid),(char *)ca_puser(args.chid));
+	}
+}
+
+/*********************************************************************
+ heartbeatPV connection event handler
+ *********************************************************************/
+static void alCaHeartbeatPVConnectionEvent(struct connection_handler_args args)
+{
+	if (args.op == CA_OP_CONN_UP) {
+		toBeConnectedCount--;
+		alHeartbeatStart(ca_puser(args.chid));
+	} else if (args.op == CA_OP_CONN_DOWN) {
+		errMsg("Not Connected: Heartbeat PV %s\n",ca_name(args.chid));
+		alHeartbeatStop(ca_puser(args.chid));
+	} else {
+		errMsg("Unknown Connection Event Heartbeat PV %s\n",ca_name(args.chid));
 	}
 }
 

@@ -182,13 +182,15 @@ static void axExitArea_callback(Widget w,ALINK *area,
 	}
 	area->mapped = FALSE;
 	area->managed = FALSE;
-	if (area->programId == ALH)  alCaCancel((SLIST *)area->pmainGroup);
+	if (area->programId == ALH)  alCaCancel(area->pmainGroup);
 
 	/* Delete the current config */
 	if (area->pmainGroup){
 		proot = sllFirst(area->pmainGroup);
 		if (proot) alDeleteGroup((GLINK *)proot);
 	}
+	alHeartbeatPVRemove(area->pmainGroup);
+	free(area->pmainGroup);
 	area->pmainGroup = NULL;
 }
 

@@ -238,7 +238,7 @@ void exit_quit(Widget w, XtPointer clientdata, XtPointer calldata)
 
 		/* cancel all the channel access requests */
 		if (programId==ALH) {
-			alCaCancel((SLIST *)proot);
+			alCaCancel(area->pmainGroup);
 			alCaStop();
 		}
 
@@ -265,6 +265,7 @@ void exit_quit(Widget w, XtPointer clientdata, XtPointer calldata)
 		if (area->maskWindow) free(area->maskWindow);
 		if (area->beepSevrWindow) free(area->beepSevrWindow);
 		if (area->noAckWindow) free(area->noAckWindow);
+		alHeartbeatPVRemove(area->pmainGroup);
 		if (area->pmainGroup) free(area->pmainGroup);
 		free(area);
 	}

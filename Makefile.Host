@@ -131,6 +131,7 @@ alh_SRCS += dialog.c
 alh_SRCS += file.c
 alh_SRCS += force.c
 alh_SRCS += guidance.c
+alh_SRCS += heartbeat.c
 alh_SRCS += help.c
 alh_SRCS += line.c
 alh_SRCS += mask.c

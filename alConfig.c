@@ -86,7 +86,7 @@ int caConnect, struct mainGroup *pmainGroup);
 static void GetChannelLine( char *buf, GLINK **pglink, CLINK **pclink,
 int caConnect, struct mainGroup *pmainGroup);
 static void GetOptionalLine( FILE *fp, char *buf,
-GCLINK *gclink, int context, int caConnect);
+GCLINK *gclink, int context, int caConnect, struct mainGroup *pmainGroup);
 static void alWriteGroupConfig(FILE *fp,SLIST *pgroup);
 
 static void alConfigTreePrint( FILE *fw, GLINK *glink, char  *treeSym);
@@ -142,7 +142,7 @@ int caConnect)
 			gclink = (GCLINK *)clink;
 		}
 		else if (strncmp(&buf[first_char],"$",1)==0) {
-			GetOptionalLine(fp,&buf[first_char],gclink,context,caConnect);
+			GetOptionalLine(fp,&buf[first_char],gclink,context,caConnect,pmainGroup);
 		}
 		else if (strncmp(&buf[first_char],"INCLUDE",7)==0) {
 			GetIncludeLine(&buf[first_char],&glink,caConnect,pmainGroup);
@@ -400,7 +400,7 @@ int caConnect,struct mainGroup *pmainGroup)
 	read the Optional Line from configuration file
 *******************************************************************/
 static void GetOptionalLine(FILE *fp,char *buf,GCLINK *gclink,
-int context,int caConnect)
+int context,int caConnect,struct mainGroup *pmainGroup)
 {
 	struct gcData *gcdata;
 	struct chanData *cdata=0;
@@ -409,6 +409,10 @@ int context,int caConnect)
 	char mask[6];
 	char string[10];
 	short f1,f2;
+	int value = 1;
+	int valueIn;
+	float rate =1.0;
+	float rateIn;
 	char *str;
 	int i;
 
@@ -427,6 +431,23 @@ int context,int caConnect)
 		}
 		return;
 	}
+
+    if (strncmp(&buf[1],"HEARTBEATPV",11)==0) { /*HEARTBEATPV*/
+        int rtn;
+
+        rtn = sscanf(buf,"%20s%32s%f%d",command,name,&rateIn,&valueIn);
+        if(rtn>=2) {
+        	if(rtn>=3) rate = rateIn;
+	        if(rtn>=4) value = valueIn;
+			alHeartbeatPVAdd(pmainGroup,name,rate,value);
+            if (caConnect && strlen(pmainGroup->heartbeatPV.name)) {
+                alCaConnectHeartbeatPV(pmainGroup->heartbeatPV.name,
+					&(pmainGroup->heartbeatPV.chid),pmainGroup);
+            }
+        }
+        return;
+    }
+
 
 	/* group/channel optional lines */
 

@@ -394,3 +394,6 @@ Tue Feb 11 15:28:34 CST 2003  ALH_1_2_11Beta1
 	automatic acknowlegment is sent to the channel and the auto acknowledge-
 	ment is logged in the opMod file.
 
+Fri Feb 14 16:24:03 CST 2003
+	Added H indicator in mask for noAck 1hr timer 
+	Added a config file heartbeatPV.
