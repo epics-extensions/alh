@@ -128,6 +128,7 @@ extern int _message_broadcast_flag; /* messages sending flag. Albert1*/
 extern int messBroadcastDeskriptor;
 extern char messBroadcastInfoFileName[250];
 int messBroadcastLockDelay=60000; /* 1 min */
+extern char *reloadMBString;
 extern char *rebootString;
 extern int max_not_save_time;
 extern int amIsender;
@@ -155,8 +156,8 @@ static void alhHelpCallback( Widget widget, XtPointer calldata, XtPointer cbs);
 static void browserFBSDialogCbOk();     /* Ok-button     for FSBox. Albert*/
 static void browserFBSDialogCbCancel(); /* Cancel-button for FSBox. Albert*/
 static void writeMessBroadcast(Widget dialog, Widget text_w);
-static void helpMessBroadcast(Widget w);
-static void canselMessBroadcast(Widget w);
+static void helpMessBroadcast(Widget,XtPointer,XtPointer);
+static void cancelMessBroadcast(Widget w);
 static void messBroadcastFileUnlock();
 
 #ifdef CMLOG
@@ -204,6 +205,23 @@ Widget alhCreateMenu(Widget parent,XtPointer user_data)
 		             alhActionCallback, (XtPointer)MENU_ACTION_NOACKTIMER, (MenuItem *)NULL, 0 },
 		         {NULL},
 		     	};
+	/* Albert Kagarmanov new */
+#ifndef WIN32
+	static MenuItem setup_broadcast_mess_menu[] = {
+		         { "Common Message",      PushButtonGadgetClass, 'C', NULL, NULL,
+		             messBroadcast, (XtPointer)0,  (MenuItem *)NULL, 0 },
+		         { "Stop Logging Message",      PushButtonGadgetClass, 'S', NULL, NULL,
+		             messBroadcast, (XtPointer)1,  (MenuItem *)NULL, 0 },
+		         { "Reload",      PushButtonGadgetClass, 'R', NULL, NULL,
+		             messBroadcast, (XtPointer)2,  (MenuItem *)NULL, 0 },
+
+		         { "About",      PushButtonGadgetClass, 'H', NULL, NULL,
+		             helpMessBroadcast, (XtPointer)0,  (MenuItem *)NULL, 0 },
+		         {NULL},
+		     	};
+
+#endif
+/* end Albert Kagarmanov new */
 /* ******************************************** Albert1 : ************************************ */
 static MenuItem action_menuNew[] = {
 		         { "Acknowledge Alarm",      PushButtonGadgetClass, 'A', "Ctrl<Key>A", "Ctrl+A",
@@ -224,8 +242,8 @@ static MenuItem action_menuNew[] = {
 		             alhActionCallback, (XtPointer)MENU_ACTION_NOACKTIMER, (MenuItem *)NULL, 0 },
 			 /* Albert1 For MESSAGE BROADCAST: */
 #ifndef WIN32
-		         { "Send Message ...",  ToggleButtonGadgetClass, 'B', "Ctrl<Key>B", "Ctrl+B",
-		             messBroadcast, (XtPointer) NULL, (MenuItem *)NULL, 0 },
+		         { "Send Message ...",  PushButtonGadgetClass, 'B', "Ctrl<Key>B", "Ctrl+B",
+		             0, 0, (MenuItem *)setup_broadcast_mess_menu, 0 },
 #endif
 		         {NULL},
 		     	};
@@ -721,6 +739,14 @@ XmSelectionBoxCallbackStruct *call_data)
 }
 
 #ifndef WIN32
+struct messBroadcastData
+{
+int type;
+ALINK   *area;
+}
+messBroadcastData;
+
+
 /******************************************************
 Send Message widget
 ******************************************************/
@@ -728,6 +754,9 @@ static void messBroadcast(Widget widget,XtPointer item,XtPointer cbs)  /* Albert
 {
     Widget dialog, text_w;
     ALINK   *area;
+    static struct messBroadcastData mBD;
+    int itemi = (int) item;
+
     XtVaGetValues(widget, XmNuserData, &area, NULL);
 
     if(amIsender)
@@ -757,30 +786,53 @@ static void messBroadcast(Widget widget,XtPointer item,XtPointer cbs)  /* Albert
 	    XtVaSetValues(dialog,XtVaTypedArg, XmNselectionLabelString, XmRString,
 			  "Type message (See help for detail):", 40,NULL);
 	    
-	    XtAddCallback(dialog, XmNcancelCallback,(XtCallbackProc)canselMessBroadcast, NULL);
+	    XtAddCallback(dialog, XmNcancelCallback,(XtCallbackProc)cancelMessBroadcast, NULL);
 	    XtAddCallback(dialog, XmNhelpCallback,(XtCallbackProc)helpMessBroadcast, NULL);
 	    text_w = XmSelectionBoxGetChild(dialog, XmDIALOG_TEXT);
-	    XtVaSetValues(text_w, XmNvalue,"0 type your message", NULL);
-	    XtVaSetValues(dialog,XmNuserData,area,NULL);
+	    if(itemi == 1)
+	      {
+		XtVaSetValues(text_w, XmNvalue,"0 min no write to LOG file", NULL);
+	      }
+	    if(itemi == 2)
+	      {
+		if(DEBUG) fprintf(stderr,"second item\n");
+		XtVaSetValues(text_w, XmNvalue,"Reload config. Reason:", NULL);
+	      }
+
+	       mBD.area =area;
+	       mBD.type =itemi;
+
+	    XtVaSetValues(dialog,XmNuserData,&mBD,NULL);
 	    XtAddCallback(dialog, XmNokCallback,(XtCallbackProc)writeMessBroadcast, text_w);
 	    XtManageChild(dialog);
 
 	  }
 }
 
+ALINK   *ar;
+
 static void writeMessBroadcast(Widget dialog, Widget text_w)
 {
 FILE *fp;
 time_t timeID,time_tmp;
 void messBroadcastFileUnlock();
-char *string;
+static char string[256];
+char *MessString;
 char *blank;
 
 int notsave_time;
-char buff[500];
-ALINK   *ar;
+static char buff[500];
+static struct  messBroadcastData *mBDpt;
 
-    XtVaGetValues(dialog, XmNuserData, &ar, NULL);
+int type;
+
+    memset(string,0,256);
+    XtVaGetValues(dialog, XmNuserData,&mBDpt, NULL);
+
+    type=mBDpt->type;
+    if (( type <0) && ( type >2)) return;
+    
+    ar= mBDpt->area;
 
     if ( (fp=fopen(messBroadcastInfoFileName,"w")) == NULL )
       {
@@ -789,11 +841,14 @@ ALINK   *ar;
 	return;
           }
 
-    /* NOTE: all clients MUST have the same UNIX time !!!!  ?????  */
-    timeID=time(0L); 
-    time_tmp=time(0L); 
     
-    string = XmTextFieldGetString(text_w);
+    timeID=time(0L); 
+    time_tmp=timeID;
+
+    MessString = XmTextFieldGetString(text_w);
+    if(type == 0)       {strcpy(string,"0 "); strcat(string,MessString);}
+    else if (type == 1)  strcpy(string,MessString);
+    else if (type == 2)  {strcpy(string,reloadMBString);strcat(string,MessString);}    
 
     if( (blank=strchr(string,' ')) == NULL )
       {
@@ -803,7 +858,17 @@ ALINK   *ar;
       }
     *blank=0;
     blank++;
-    notsave_time=atoi(string);
+    notsave_time=atoi(string);/*problem to distinguish illegal number and 0-number:*/
+    if(notsave_time==0) 
+      {
+	if(! (string[0] - '0'== 0)&&(string[1] - ' '== 0) )
+	  {
+	    if(DEBUG) printf("Real ! zerro=%s\n",string);	
+	    notsave_time =-1;
+	  }
+	else {if(DEBUG) printf("Real zerro=%s\n",string); }
+      }
+
     if( (notsave_time < 0) || (notsave_time > max_not_save_time) ) 
       {
 	createDialog(ar->form_main,XmDIALOG_INFORMATION,"time so big!!!"," ");
@@ -847,28 +912,40 @@ static void messBroadcastFileUnlock()
   lockf(messBroadcastDeskriptor, F_ULOCK, 0L);
 }
 
-static void helpMessBroadcast(Widget w)
+static void helpMessBroadcast(Widget w,XtPointer item,XtPointer cbs)
 {
-createDialog(w,XmDIALOG_INFORMATION,
-"This message will be pass all other operators which work with the same alh configuration. \n"
-"  \n"
-"ALH has one special type of messages : \n"
-"  \n"
-"  ''time_in_min ''any other text ''  ''  \n"
-"  \n"
-"After this message ALH doesn't save alarms during time_in_min \n"
-"  \n"
-"Please, use this type of message before rebooting IOC for communications with other people.\n"
-"  \n"
-"  \n"
-"  \n"
-"If time_in_min = 0 it's mean any other information messages without cansel saving alarmLog. \n"
-"  \n"
-"You can use it for any other communications (like Hello all)",
+createDialog(XtParent(w),XmDIALOG_INFORMATION,
+"This message will be send all other operators\n"
+"which work with the same alh configuration.\n"
+"\n"
+"1) If you choose 'Stop Logging Message'\n"
+"           first symbol must be a number:\n"
+"\n"
+"         ''time_in_min ''any other text ''  ''\n"
+"\n"
+"         After that  ALH will NOT save alarms during 'time_in_min'\n"
+"\n"
+"         It's very usefull before rebooting IOC \n"
+"         (all other will know about that) \n"
+"         or if you don't like save alarms during this short\n"
+"         (no more than 10 min) time.\n"
+"\n"
+"\n"
+"\n"
+"2) If you choose 'Reload'-part all alh-proceses (including your current process)\n"
+"will reload config file.\n"
+"\n"
+"\n"
+"\n"
+"3) If you choose 'Common Message'-part\n"
+"         it's mean any other information messages without stop logging.\n"
+"\n"
+"         You can use it for any other communications\n" 
+"         (like Hi All!, Need Help!,No meeting today!, ...)",
 "");
 }
 
-static void canselMessBroadcast(Widget w)
+static void cancelMessBroadcast(Widget w)
 {
 XtUnmanageChild(w);
  lockf(messBroadcastDeskriptor, F_ULOCK, 0L);

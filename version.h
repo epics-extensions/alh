@@ -31,6 +31,6 @@
           "Developed at Argonne National Laboratory\n\n" \
           "Authors: Ben-Chin Cha, Janet Anderson,\n" \
           "         Mark Anderson, Marty Kraimer,\n" \
-          "         and Albert Kagarmanov\n\n"
+          "         and Albert Kagarmanov\n\n" 
 
 #endif /* INCversionh */

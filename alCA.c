@@ -39,6 +39,8 @@ static void alCaForcePVValueEvent(struct event_handler_args args);
 static void alCaChannelConnectionEvent(struct connection_handler_args args);
 static void alCaForcePVConnectionEvent(struct connection_handler_args args);
 static void alCaSevrPVConnectionEvent(struct connection_handler_args args);
+static void alCaAckPVConnectionEvent(struct connection_handler_args args);
+static void alCaAckPVAccessRightsEvent(struct access_rights_handler_args args);
 static void alCaChannelAccessRightsEvent(struct access_rights_handler_args args);
 static void alCaForcePVAccessRightsEvent(struct access_rights_handler_args args);
 static void alCaSevrPVAccessRightsEvent(struct access_rights_handler_args args);
@@ -247,6 +249,26 @@ void alCaConnectHeartbeatPV(char *name, chid * pchid, void *puser)
 			"Return status: %s\n",ca_name(*pchid),ca_message(status));
 	}
 }
+/*
+This is similar to previous function alCaConnectSevrPV
+ */
+void alCaConnectAckPV(char *name, chid * pchid, void *puser) 
+{
+	int status;
+	if (strlen(name) <= (size_t) 1) return;
+
+	toBeConnectedCount++;
+	status = ca_search_and_connect(name, pchid, alCaAckPVConnectionEvent, puser);
+	if (status != ECA_NORMAL){
+		errMsg("ca_search_and_connect failed for Severity PV %s "
+			"Return status: %s\n",ca_name(*pchid),ca_message(status));
+	}
+	status = ca_replace_access_rights_event(*pchid, alCaSevrPVAccessRightsEvent);
+	if (status != ECA_NORMAL){
+		errMsg("ca_replace_access_rights_event failed for Severity PV %s "
+			"Return status: %s\n",ca_name(*pchid),ca_message(status));
+	}
+}
 
 /*********************************************************************
  clear a channel chid
@@ -388,6 +410,27 @@ void alCaPutSevrValue(chid chid, short *psevr)
 			"Return status: %s\n",ca_name(chid),ca_message(status));
 	}
 }
+/*
+  This function is the same as prev. but for ackPV record. 
+ */
+void alCaPutAckValue(chid chid, short *psevr)
+{
+	int status;
+#if DEBUG_CALLBACKS
+	{
+		printf("alCaPutAckValue: name=%s value=%d\n", ca_name(chid), *psevr);
+	}
+#endif
+	if (!chid || ca_field_type(chid) == TYPENOTCONN) return;
+
+/*	status = ca_put(ca_field_type(chid), chid, psevr);   */ 
+	status = ca_put(DBR_ENUM, chid, psevr);
+
+	if (status != ECA_NORMAL) {
+		errMsg("alCaPutAckValue: ca_put failed for Severity PV %s "
+			"Return status: %s\n",ca_name(chid),ca_message(status));
+	}
+}
 
 
 /*********************************************************************
@@ -484,6 +527,16 @@ static void alCaSevrPVAccessRightsEvent(struct access_rights_handler_args args)
 		errMsg("No write access for Severity PV %s\n",ca_name(args.chid));
 	}
 }
+/*
+   this is the same as previous function but for .DESC-field.
+ */
+static void alCaAckPVAccessRightsEvent(struct access_rights_handler_args args) 
+{
+	if (ca_field_type(args.chid) == TYPENOTCONN) return;
+	if (!ca_write_access(args.chid) && _global_flag && !_passive_flag) {
+		errMsg("No write access for Ack PV %s\n",ca_name(args.chid));
+	}
+}
 
 
 /*********************************************************************
@@ -545,6 +598,23 @@ static void alCaSevrPVConnectionEvent(struct connection_handler_args args)
 			ca_name(args.chid),(char *)ca_puser(args.chid));
 	}
 }
+
+/*********************************************************************
+ ackPV connection event handler
+ *********************************************************************/
+static void alCaAckPVConnectionEvent(struct connection_handler_args args) 
+{
+	if (args.op == CA_OP_CONN_UP) {
+		toBeConnectedCount--;
+	} else if (args.op == CA_OP_CONN_DOWN) {
+		errMsg("Not Connected: Severity PV %s for %s\n",
+			ca_name(args.chid),(char *)ca_puser(args.chid));
+	} else {
+		errMsg("Unknown Connection Event Severity PV %s for %s\n",
+			ca_name(args.chid),(char *)ca_puser(args.chid));
+	}
+}
+
 
 /*********************************************************************
  heartbeatPV connection event handler
@@ -615,4 +685,62 @@ static void alCaException(struct exception_handler_args args)
 	errMsg("Channel Access Exception: %s  Context: %s\n",
 	    ca_message(args.stat) ? ca_message(args.stat) : "Unavailable",
 	    args.ctx ? args.ctx : "Unavailable");
+}
+static void description_callback (struct event_handler_args args);
+
+getDescriptionRecord(char *name,char *description,chid descriptionFieldCaId)
+{
+  int status;
+  static char desc_name[64];
+  memset(desc_name,0,64);
+  strcpy(desc_name,name);
+  strcat(desc_name,".DESC");
+
+  status = ca_search(desc_name, &descriptionFieldCaId);
+  if (status != ECA_NORMAL) {
+    SEVCHK(status,"     CAN'T search description field\n");
+    fprintf(stderr,"%s: CAN'T search description field\n",desc_name);
+    *description=0;
+    return;      
+  }
+  
+  status = ca_pend_io(0.5);	
+  if (status != ECA_NORMAL) 
+    {
+      SEVCHK(status,"     CAN'T pend description field\n");
+      fprintf(stderr,"%s: CAN'T pend description field\n",desc_name);
+      *description=0;
+      return;          
+    }	
+  
+  status = ca_array_get (DBR_STRING,1,descriptionFieldCaId,description);
+  if (status != ECA_NORMAL) 
+  {
+    SEVCHK(status,"     CAN'T get description field\n");
+    fprintf(stderr,"%s: CAN'T get description field\n",desc_name);
+    *description=0;
+    return;           
+  }
+  
+  status= ca_pend_io(0.5);
+  if (status != ECA_NORMAL)  
+    {
+      SEVCHK(status,"     CAN'T pend description field again \n");
+      fprintf(stderr,"%s: CAN'T pend description field again \n",name);
+      *description=0;
+      return;     
+    }
+  
+  status=ca_add_event
+    (DBR_STRING,descriptionFieldCaId,description_callback,description,NULL);
+  status= ca_pend_io(0.5);
+
+}
+
+static void description_callback (struct event_handler_args args)
+{
+  char *string= (char *)args.dbr;
+  char * descr = (char *)args.usr;
+  if(strlen(string) > 127) return; /* May be garbage. Avoid overwriting*/
+  strcpy(descr,string);
 }

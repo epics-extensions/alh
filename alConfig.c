@@ -58,8 +58,10 @@ extern int _global_flag;
 extern int _passive_flag;
 extern int DEBUG;
 extern int _DB_call_flag;
+extern int _description_field_flag;
 char applicationName[64];  /* Albert1 applicationName = mainGroupName will be send to DB */
 char deviceName[64]="";    /* Albert1 reserved;  will be send to DB */
+
 
 /* alarm severity command list */
 struct sevrCommand {
@@ -393,7 +395,12 @@ int caConnect,struct mainGroup *pmainGroup)
 	if (caConnect && cdata->curMask.Cancel == 0) {
 		alCaAddEvent(cdata->chid,&cdata->evid,clink);
 	}
-
+	if (_description_field_flag) {
+	  if( (cdata->description=malloc(128)) == NULL) {
+	    fatalErrMsg("No memory ");
+	  }
+	  getDescriptionRecord(cdata->name,cdata->description,cdata->descriptionId);
+	}
 }
 
 /*******************************************************************
@@ -728,6 +735,23 @@ int context,int caConnect,struct mainGroup *pmainGroup)
 				pgl->list=(char *)calloc(1,strlen(buf)+1);
 				strcpy(pgl->list,buf);
 				sllAdd(&(gclink->GuideList),(SNODE *)pgl);
+			}
+
+		}
+
+		return;
+	}
+	if (strncmp(&buf[1],"ACKPV",5)==0) { /*ACKPV  Albert*/
+		int rtn;
+		rtn = sscanf(&buf[7],"%30s%32s",name,command);
+
+		if(rtn>=2) {
+		        cdata=(struct chanData *)gcdata;
+			cdata->ackPVName = (char *)calloc(1,strlen(name)+1);
+			strcpy(cdata->ackPVName,name);
+			cdata->ackPVValue=(short) atoi(command);
+			if (caConnect && strlen(cdata->ackPVName) > (size_t) 1) {
+				 alCaConnectAckPV(cdata->ackPVName,&cdata->ackPVId,cdata->name);
 			}
 
 		}

@@ -46,6 +46,7 @@ void ackChan(CLINK *clink)
 
 	if (_global_flag && !_passive_flag) {
 		alCaPutGblAck(cdata->chid,&cdata->unackSevr);
+		if(cdata->ackPVId) alCaPutAckValue(cdata->ackPVId,&cdata->ackPVValue);
 	} else {
 		alSetUnackSevChan(clink,NO_ALARM);
 	}

@@ -29,6 +29,13 @@
 #include "alLib.h"
 #include "ax.h"
 
+#define masterCommand "MASTER_ONLY"
+extern int DEBUG;
+
+extern int _lock_flag; 
+extern int masterFlag;
+extern int notsave;
+
 /******************************************************
   spawn a new related prcess if command is not null
 ******************************************************/
@@ -42,10 +49,38 @@ void processSpawn_callback(Widget w,char *command,void * call_data)
 	static char *ComSpec;
 #endif    
 
+if(notsave) { fprintf(stderr,"NOT SAVE mode - no related process started"); return;}
+
 	if (command) {
 		/* Strip any LF from the end */
 		l = strlen(command);
 		if (*(command+l-1) == '\n') *(command+l-1) = ' ';
+		
+/* If more then 1 alh process work with the same config files
+of cource, usually all this process can span all callback,
+BUT in some special case (in our situation it's mail to 
+mobil-phone) it's expensive (in money :) or processor-time) 
+or not so important. In this case ONLY master alh_process 
+span this task.  For distinguish with common case we add
+additional last parameters in command MASTER_ONLY:
+WAS: $SEVRCOMMAND UP_ERROR             mailx mobil@server.com "ALARM HAPPEN"
+NOW: $SEVRCOMMAND UP_ERROR MASTER_ONLY mailx mobil@server.com "ALARM HAPPEN" 
+
+Coding:
+------
+
+If don't locking system    -- cut MASTER_ONLY from string and spawn it
+Else if you're  master-alh-process  -- the same
+      else do nothing
+*/
+		/* ________MASTER_ONLY code ________________________ */
+		if(strncmp(command,masterCommand,strlen(masterCommand))==0)
+		  {
+		    command += strlen(masterCommand);
+		    if (_lock_flag && !masterFlag) return; 
+		  }
+		/* _______End MASTER_ONLY code ______________________ */
+
 #ifdef WIN32
 		sprintf(buff,"%s",command);
 		/* Get ComSpec for the command shell (should be defined) */

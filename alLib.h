@@ -147,6 +147,11 @@ struct chanData {
 	short curStat;			/* channel status from CA */
 	chid chid;			/* chid from CA search */
 	evid evid;			/* evid from CA add event */
+        char *description;              /* Info from PV .DESC field */
+        chid descriptionId;             /* his (.DESC) chid  */
+        char *ackPVName;                /* ackPV name        */
+	chid ackPVId;                   /* id of prev.       */
+        short ackPVValue;               /* value to ackPV    */
 };
 
 /* group link  */

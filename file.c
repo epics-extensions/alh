@@ -52,6 +52,9 @@
 #define DEFAULT_ALARM   "ALH-default.alhAlarm"
 #define DEFAULT_OPMOD   "ALH-default.alhOpmod"
 
+extern ALINK *alhArea; /* need to group reload in MB-mode*/
+
+
 struct UserInfo {
 char *loginid;
 char *real_world_name;
@@ -73,6 +76,7 @@ int (*default_display_filter)(GCLINK *) = alFilterAll;
 int _read_only_flag=0;       /* Read-only flag.          Albert    */
 int _passive_flag=0;         /* Passive flag.            Albert    */
 
+int _description_field_flag=0;/* Add description into the Log file */    
 int _printer_flag=0;         /* Printer flag.            Albert    */
 int  printerMsgQKey;         /* Network printer MsgQKey. Albert    */
 int  printerMsgQId;          /* Network printer MsgQId.  Albert    */
@@ -93,6 +97,7 @@ XtIntervalId broadcastMessTimeoutId=0;
 int amIsender=0;
 int notsave=0;     
 const char *rebootString="MIN  ALH  WILL  NOT  SAVE ALARM LOG!!!!";
+char * reloadMBString = "0 RELOAD_FACILITY: "; 
 int max_not_save_time=10;
 void broadcastMess_exit_quit(int);
 unsigned long broadcastMessDelay=2000; /*(msec) periodic mess testing. Albert */   
@@ -161,7 +166,7 @@ static struct command_line_data commandLine = {
 #define PARM_NO_ERROR_POPUP			21
 #define PARM_MAIN_WINDOW			22
 #define PARM_ALARM_FILTER			23
-
+#define PARM_DESC_FIELD			        24
 struct parm_data
 {
 	char* parm;
@@ -181,6 +186,7 @@ static struct parm_data ptable[] = {
  		{ "-caputackt", 10,		PARM_CAPUT_ACK_TRANSIENTS },
 		{ "-D", 2,				PARM_READONLY },
 		{ "-debug", 6 ,			PARM_DEBUG },
+		{ "-desc_field", 11 ,		PARM_DESC_FIELD },
 		{ "-filter", 7,			PARM_ALARM_FILTER },
 		{ "-f", 2,				PARM_ALL_FILES_DIR },
  		{ "-global", 7,			PARM_GLOBAL },
@@ -912,6 +918,10 @@ static int getCommandLineParms(int argc, char** argv)
 					fprintf(stderr,"%s\n",alhVersionString);
 					exit(1);
 					break;
+				case PARM_DESC_FIELD:
+					_description_field_flag=1;
+					finished=1;
+					break;
 				default:
 					parm_error=1;
 					break;
@@ -981,6 +991,7 @@ static void printUsage(char *pgm)
 	fprintf(stderr,"                     (if global and active)\n");
 	fprintf(stderr,"  -D               Disable alarm and opmod log writing\n");
 	fprintf(stderr,"  -debug           Debug output\n");
+	fprintf(stderr,"  -desc_field      Add record description to the LogFile\n");
 	fprintf(stderr,"  -f filedir       Directory for config files [.]\n");
 	fprintf(stderr,"  -filter f-opt    Set alarm display filter with f-opt being one of [no]\n");
 	fprintf(stderr,"                     n[o]:     no filter\n");
@@ -1167,6 +1178,25 @@ if(!amIsender)
     createDialog(w,XmDIALOG_INFORMATION,"\nBROADCAST MESSAGE:\n",messBuff);
     XBell(XtDisplay(w),50);
   }
+if(strncmp(messBuff,reloadMBString+2,strlen(reloadMBString)-3 )==0) {
+
+  ALINK *area=NULL;
+
+  if(DEBUG) fprintf(stderr,"reload!\n");
+    XtVaGetValues(blinkToplevel, XmNuserData, &area, NULL);
+  if (!area){ /* !ar */
+    /*fprintf(stderr,"\nBad AREA\n");*/
+    /* return;*/
+  }
+  /*
+  if(DEBUG)printf("\nfileSetupCallback: \n");
+  if(DEBUG)printf("\nfileSetupCallback: filename is %d \n", area->programId);
+  if(DEBUG)printf("\nfileSetupCallback: filename is %s \n", area->configFile);
+  */
+  fileSetup(psetup.configFile,alhArea,FILE_CONFIG,ALH,w);
+  if(DEBUG) fprintf(stderr,"broadcastMessTestingEnd for reload\n");
+  return;
+}
 
 if ( (blank=strchr( (const char *) messBuff, ' ')) == NULL ) return;
 if(strncmp(blank+1,rebootString,strlen(rebootString)-1 )==0) {

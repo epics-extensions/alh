@@ -40,6 +40,7 @@ extern int toBeConnectedCount;
 extern int _transients_flag;
 extern int _global_flag;
 extern int _passive_flag;
+extern int _description_field_flag;
 
 /* Struct for file descriptor linked list */
 struct FDLIST {
@@ -134,6 +135,8 @@ void alCaCancel(struct mainGroup *pmainGroup)
 		if (type == CHANNEL) {
 			alCaClearEvent(&((struct chanData *)gcdata)->evid);
 			alCaClearChannel(&((struct chanData *)gcdata)->chid);
+			if(_description_field_flag) 
+			  alCaClearChannel(&((struct chanData *)gcdata)->descriptionId);
 		}
 		gclink = nextGroupChannel(gclink,&type);
 	}

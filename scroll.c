@@ -71,6 +71,7 @@ static void closeFileViewShell(w,operandFile,call_data)
  
 extern Display *display;
 extern int _global_flag;
+extern int _description_field_flag;
 
 #define MAX_NUM_OF_LOG_FILES 5000  /* # of log files for browser */
 static XmTextPosition positionSearch;
@@ -92,7 +93,6 @@ void compactDataAscMonth(char *,char *,char *,char *,char *,char *);
 void compactData(char *,char *,char *,char *,char *,char *);
 char *digitalMonth(char *);
 Boolean extensionIsDate(char *);
-/* End for search routines. Albert */
 
 #ifndef MAX
 #  define MAX(a,b) ((a) > (b) ? a : b)
@@ -104,7 +104,7 @@ int viewFileMaxLength[N_LOG_FILES];        /* max length of file. */
 unsigned char *viewFileString[N_LOG_FILES];    /* contents of file. */
 
 Widget viewTextWidget[N_LOG_FILES] = {0,0,0};        /* view text widget */
-Widget browserWidget;  /* Albert */
+Widget browserWidget;
 Widget viewFilenameWidget[N_LOG_FILES] = {0,0,0}; /* view filename widget */
 
 extern int alarmLogFileOffsetBytes; /* alarm log file current offset in bytes */
@@ -234,6 +234,11 @@ void fileViewWindow(Widget w,int option,Widget menuButton)
 
 	viewFileString[operandFile] = (unsigned char *)
 	    XtCalloc(1,(unsigned)viewFileMaxLength[operandFile]);
+	if(!viewFileString[operandFile]) { 
+	  XtVaSetValues(menuButton, XmNset, FALSE, NULL);
+	  createDialog(XtParent(w),XmDIALOG_ERROR,"no free memory","");
+	  return;
+	}
 	fread(viewFileString[operandFile], sizeof(char), 
 	    viewFileUsedLength[operandFile], fp);
  clearerr(fp);
@@ -353,15 +358,25 @@ void fileViewWindow(Widget w,int option,Widget menuButton)
 			ac++;
 			XtSetArg (al[ac], XmNleftAttachment, XmATTACH_FORM);  
 			ac++;
+	    if (!_description_field_flag) {
 		if (_global_flag) 
 			title = XtCreateManagedWidget(" TIME_STAMP             PROCESS_VARIABLE_NAME        STATUS       SEVERITY         UNACK_SEV    ACKT  VALUE",
 				xmLabelGadgetClass,app_shell,al,ac);
 		else title = XtCreateManagedWidget(" TIME_STAMP             PROCESS_VARIABLE_NAME        STATUS       SEVERITY        VALUE",
 				xmLabelGadgetClass,app_shell,al,ac);
+	    } else { /* _description_field_flag is ON */
+			  if (_global_flag) 
+			    title = XtCreateManagedWidget(
+" TIME                 RECORD                    DESCRIPTION              VALUE STATUS / SEVERITY / UNACK_SEV / ACKT",
+                            xmLabelGadgetClass,app_shell,al,ac);
+			  else title =    XtCreateManagedWidget(
+" TIME                 RECORD                    DESCRIPTION              VALUE STATUS / SEVERITY",
+                            xmLabelGadgetClass,app_shell,al,ac); 
+	    }
 			previous = title;
 
 		}
-
+		
 		/* create text widget */
 		ac = 0;
 		XtSetArg (al[ac], XmNrows, 24);  
@@ -578,15 +593,15 @@ void updateAlarmLog(int fileIndex,char *string)
 	char   str[MAX_STRING_LENGTH];
 	int stringLength = strlen(string);
 	int startPosition,endPosition;
-	int pos=0;/* Albert1 */
+	int pos=0;
 
 	if (viewTextWidget[fileIndex] == NULL) return;
 
 if(viewTextWidget[fileIndex])
 	XtVaGetValues(viewTextWidget[fileIndex],
 	    XmNcursorPosition,  &pos,
-	    NULL); /* Albert1 */
-else return;      /* Albert1 */  
+	    NULL); 
+else return;      
 
 	/* simply return if the file string does not exist */
 	if (viewFileString[fileIndex] == NULL) return;
@@ -634,7 +649,7 @@ else return;      /* Albert1 */
 }
 
 /**************************************************************************
-    create scroll window for AlarmLog browser. Albert1.
+    create scroll window for AlarmLog browser.
 **************************************************************************/
 void browser_fileViewWindow(Widget w,int option,Widget menuButton)
 {
@@ -650,7 +665,7 @@ void browser_fileViewWindow(Widget w,int option,Widget menuButton)
 	FILE *fp = NULL;             /* Pointer to open file.  */
 	char filename[120];
 	int operandFile=0;
-	/* definitions for search widgets. Albert */
+	/* definitions for search widgets: */
 	Arg al[20];
 	int ac;
 	XmString str=NULL;
@@ -663,7 +678,8 @@ void browser_fileViewWindow(Widget w,int option,Widget menuButton)
 	char buf[120];
 	char defaultString_fy[5],defaultString_fmo[3],defaultString_fd[3],defaultString_fh[3]="00",defaultString_fmi[3]="00";
 	char defaultString_ty[5],defaultString_tmo[3],defaultString_td[3],defaultString_th[3]="24",defaultString_tmi[3]="00";
-	/* End definitions for search routins. Albert */
+	/* End definitions for search routins */
+
 	switch (option) {
 	case ALARM_FILE:
 		operandFile = ALARM_FILE;
@@ -729,12 +745,19 @@ void browser_fileViewWindow(Widget w,int option,Widget menuButton)
 
 	viewFileString[operandFile] = (unsigned char *)
 	    XtCalloc(1,(unsigned)viewFileMaxLength[operandFile]);
+
+	if(!viewFileString[operandFile]) { 
+	  XtVaSetValues(menuButton, XmNset, FALSE, NULL);
+	  createDialog(XtParent(w),XmDIALOG_ERROR,"no free memory","");
+	  return;
+	}
+
 	fread(viewFileString[operandFile], sizeof(char), 
 	    viewFileUsedLength[operandFile], fp);
 
 	/* close up the file */
 		if(option==ALARM_FILE && alarmLogFileMaxRecords)fseek(fp,alarmLogFileOffsetBytes,SEEK_SET);
-		fclose (fp) ; /* ????? Albert1 */
+		fclose (fp) ;
 
 	if (!app_shell) {
 		/*  create view window dialog */
@@ -821,7 +844,7 @@ void browser_fileViewWindow(Widget w,int option,Widget menuButton)
 		    app_shell,al, ac);
 
 		/* For Search Widgets. 
-		We define "Serch" button in AlLogViewPanel. Albert.
+		We define "Search" button in AlLogViewPanel.
 		*/
 			ac = 0;
 			XtSetArg (al[ac], XmNtopAttachment, XmATTACH_FORM);  
@@ -847,7 +870,7 @@ void browser_fileViewWindow(Widget w,int option,Widget menuButton)
 			findShell=XtVaCreatePopupShell("pshell",transientShellWidgetClass,app_shell,
 			    NULL);
 			findPane = XtVaCreateManagedWidget("findPane", xmPanedWindowWidgetClass, 
-			    findShell);
+			    findShell,NULL);
 			ac = 0;
 			XtSetArg(al[ac], XmNhorizontalSpacing, (XtArgVal) 5); 
 			ac++;
@@ -1056,29 +1079,39 @@ void browser_fileViewWindow(Widget w,int option,Widget menuButton)
 			XtAddCallback(showAllButton, XmNactivateCallback,showAllCallback,(XtPointer)option);
 
 			XtManageChild(rowcol2);
-			previous = rowcol2;   /* Albert */
-		/* End for Search Widgets. Albert_____________________________________ */
+			previous = rowcol2;   
+		/* End for Search Widgets. ______________________ */
 
 
 		/* add titles */
 			ac = 0;
-			XtSetArg (al[ac], XmNwidth,800);  
+			XtSetArg (al[ac], XmNwidth,1200);  
 			ac++;
 			XtSetArg (al[ac], XmNheight,30);  
 			ac++;
 			XtSetArg (al[ac], XmNtopAttachment, XmATTACH_WIDGET);  
 			ac++;
 			XtSetArg (al[ac], XmNtopWidget, previous);  
-			ac++; /* was button. Albert */
+			ac++; 
 			XtSetArg (al[ac], XmNleftAttachment, XmATTACH_FORM);  
 			ac++;
 		switch (option) {
 		case ALARM_FILE:
+		  if (!_description_field_flag) {
 			if (_global_flag) 
 				title = XtCreateManagedWidget("TIME_STAMP        PROCESS_VARIABLE_NAME        CURRENT_STATUS           UNACK_SEV  ACKT  VALUE",
 			  		xmLabelGadgetClass,app_shell,al,ac);
 			else title = XtCreateManagedWidget("TIME_STAMP        PROCESS_VARIABLE_NAME         CURRENT_STATUS              VALUE",
 			   		xmLabelGadgetClass,app_shell,al,ac);
+		  } else { /* _description_field_flag set */ 
+		    if (_global_flag) 
+		      title = XtCreateManagedWidget(
+" TIME                 RECORD                    DESCRIPTION              VALUE STATUS / SEVERITY / UNACK_SEV / ACKT",
+                      xmLabelGadgetClass,app_shell,al,ac);
+		    else title =    XtCreateManagedWidget(
+" TIME                 RECORD                    DESCRIPTION              VALUE STATUS / SEVERITY",
+                      xmLabelGadgetClass,app_shell,al,ac); 
+		  }
 			break;
 		case OPMOD_FILE:
 				title = XtCreateManagedWidget("TIME_STAMP        LOG_MESSAGE",
@@ -1092,7 +1125,7 @@ void browser_fileViewWindow(Widget w,int option,Widget menuButton)
 		/* create text widget */
 		ac = 0;
 		XtSetArg (al[ac], XmNrows, 30);  
-		ac++; /* Was 24. Albert*/
+		ac++; 
 		XtSetArg (al[ac], XmNcolumns, 80);  
 		ac++;
 		XtSetArg (al[ac], XmNscrollVertical, True);  
@@ -1146,7 +1179,7 @@ void browser_fileViewWindow(Widget w,int option,Widget menuButton)
 **************************************************************************/
 static void showAllCallback(Widget w,XtPointer client_data,XtPointer call_data)
 {
-	switch ((int)call_data) {
+	switch ((int)client_data) {
 	case ALARM_FILE:
 		XmTextSetString(browserWidget,
 	    		(char *)viewFileString[ALARM_FILE]);
@@ -1196,6 +1229,7 @@ XtPointer call_data)
   int tmp=1;
   Boolean breakFlag=False;
   char *line=&lin[0];
+  int bufferSize= MAX(viewFileMaxLength[ALARM_FILE],viewFileMaxLength[OPMOD_FILE]);
 
   fy =XmTextGetString(text_fy); 
   fmo=XmTextGetString(text_fmo);
@@ -1250,7 +1284,7 @@ XtPointer call_data)
 #endif
 
   string_with=XmTextGetString(text_with);
-  selectedText=XtCalloc(1,viewFileMaxLength[ALARM_FILE]);
+  selectedText=XtCalloc(1,bufferSize);
   if (!waitCursor) waitCursor=XCreateFontCursor(display,XC_watch);
   attrs.cursor=waitCursor;
   XChangeWindowAttributes(display,XtWindow((Widget)client_data),CWCursor,&attrs);
@@ -1347,12 +1381,12 @@ XtPointer call_data)
     }
     XFlush(display);
     XmUpdateDisplay(client_data);
-   
-    while ( fgets(line,159,ffp) ) {
-      if(isdigit(line[0]))                    /* new time format Albert1*/
+
+    while ( fgets(line,250,ffp) ) {
+      if(isdigit(line[0]))                    /* new time format */
 	sscanf(line,"%3s %4s %5s %3s %3s",
 	       day, month,year,hour,min);
-      else {                                   /* old time format Albert1*/
+      else {                                  /* old time format */
 	sscanf(line,"%4s %4s %3s %3s %3s %3s %4s",
 	       un1,month,day,hour,min,un2,year);
       month[3]=day[2]=hour[2]=min[2]=year[4]=0;
@@ -1379,7 +1413,8 @@ XtPointer call_data)
 	}
         if (!found) continue;
       }
-      if( strlen(selectedText) >(size_t)(viewFileMaxLength[ALARM_FILE] -2*159) )
+
+      if( strlen(selectedText) >(size_t)(bufferSize - 2*250) )
         {
 
 	createDialog((Widget) w, XmDIALOG_ERROR,
@@ -1413,6 +1448,8 @@ XtPointer call_data)
   attrs.cursor=None;
   XChangeWindowAttributes(display,XtWindow ((Widget)client_data),CWCursor,&attrs);
   XFlush(display);
+
+
   XtManageChild(browserWidget);
   XtFree(selectedText);
 }
@@ -1434,7 +1471,7 @@ void allDigit(Widget text_w,XtPointer unused,XmTextVerifyCallbackStruct *cbs)
 }
 
 /******************************************************************
-   searchCallback callback routine for Search widgets. Albert
+   searchCallback callback routine for Search widgets.
 *****************************************************************/
 static void searchCallback(Widget w,XtPointer client_data,
 XmAnyCallbackStruct *call_data)
@@ -1445,7 +1482,7 @@ XmAnyCallbackStruct *call_data)
 }
 
 /******************************************************************
-   findForward callback routine for Search widgets. Albert
+   findForward callback routine for Search widgets.
 *****************************************************************/
 static void findForward(Widget w,XtPointer client_data,
 XtPointer call_data)
@@ -1493,7 +1530,7 @@ XtPointer call_data)
 }
 
 /******************************************************************
-   findReverse callback routine for Search widgets. Albert
+   findReverse callback routine for Search widgets.
 *****************************************************************/
 static void findReverse(Widget w,XtPointer client_data,
 XtPointer call_data)
@@ -1543,7 +1580,7 @@ XtPointer call_data)
 }
 
 /******************************************************************
-   findDismiss callback routine for Search widgets. Albert
+   findDismiss callback routine for Search widgets. 
 *****************************************************************/
 static void findDismiss(Widget w,XtPointer client_data,
 XtPointer call_data)
@@ -1552,7 +1589,7 @@ XtPointer call_data)
 }
 
 /******************************************************************
-   Compact presentation of YYY-MM-DD. Albert. 
+   Compact presentation of YYY-MM-DD.  
 *****************************************************************/
 void compactData(char *year,char *month,char *day,char *hour,
 char *min,char *presentation)
@@ -1566,7 +1603,7 @@ char *min,char *presentation)
 }
 
 /******************************************************************
-   Compact presentation of YYY-MMM-DD. Albert. 
+   Compact presentation of YYY-MMM-DD. 
 *****************************************************************/
 void compactDataAscMonth(char *year,char *month,char *day,char *hour,
 char *min,char *presentation)
@@ -1575,7 +1612,7 @@ char *min,char *presentation)
 }
 
 /******************************************************************
-   Month to Digit. Albert
+   Month to Digit.
 *****************************************************************/
 char *digitalMonth(char *strMonth)
 {
@@ -1596,7 +1633,7 @@ char *digitalMonth(char *strMonth)
 }
 
 /******************************************************************
- Cheking that extension looks like YYYY-MM-DD. Albert
+ Cheking that extension looks like YYYY-MM-DD. 
 *****************************************************************/
 Boolean extensionIsDate(char *ext)
 {

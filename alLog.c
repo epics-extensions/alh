@@ -45,6 +45,7 @@ extern int DEBUG;
 extern int _DB_call_flag;
 extern int _global_flag;
 extern int _lock_flag;
+extern int _description_field_flag;
 extern int _message_broadcast_flag;
 extern int _printer_flag;           /* Printer flag. Albert */
 extern int _read_only_flag;         /* RO flag. Albert */
@@ -190,7 +191,7 @@ void alLogAlarmMessage(time_t *ptimeofdayAlarm,int messageCode,CLINK* clink,cons
 	    (alhArea ? alhArea->blinkString : "N/A"),
 	    cdata->value);
 #endif
-
+    if (!_description_field_flag) { 
 	if (_global_flag) {
 		sprintf(buff,
 			"%-28s %-12s %-16s %-12s %-5s %-40.40s\n",
@@ -208,6 +209,25 @@ void alLogAlarmMessage(time_t *ptimeofdayAlarm,int messageCode,CLINK* clink,cons
 			alhAlarmSeverityString[cdata->curSevr],
 			cdata->value);
 	}
+    } else { /* _description_field_flag is ON */
+         if (_global_flag) {
+		sprintf(buff,
+			"%-28s %-28s %-40.40s %-12s %-16s %-12s %-5s\n",
+			cdata->name,cdata->description,cdata->value,
+			alhAlarmStatusString[cdata->curStat],
+			alhAlarmSeverityString[cdata->curSevr],
+			alhAlarmSeverityString[cdata->unackSevr],
+			ackTransientsString[cdata->curMask.AckT]);
+        } else {
+
+		sprintf(buff,
+			"%-28s %-28s %-40.40s %-12s %-16s\n",
+			cdata->name,cdata->description,cdata->value,
+			alhAlarmStatusString[cdata->curStat],
+			alhAlarmSeverityString[cdata->curSevr]);
+		} 
+
+    }
 
 	filePrintf(fl,buff,ptimeofdayAlarm,messageCode);
 }
