@@ -360,8 +360,7 @@ static void noAckOneHourTimerGroupCallback(XtPointer data, XtIntervalId *id)
 static void noAckActivateCallback(Widget widget,XtPointer link,
 XtPointer call_data)
 {
-    /*int seconds = 3600;*/ /* 1 hour */
-    int seconds = 30;
+    int seconds = 3600; /* 1 hour */
 	ALINK *area;
     GCLINK *gclink;
     struct gcData *gcdata;
