@@ -284,7 +284,7 @@ static MenuItem action_menuNew[] = {
 	static MenuItem setup_menu[] = {
 		         { "Display Filter...",        PushButtonGadgetClass, 'F', NULL, NULL,
 		                                      0, 0,    (MenuItem *)setup_filter_menu, 0 },
-		         { "Beep Severity...",       PushButtonGadgetClass, 'B', NULL, NULL,
+		         { "Global Beep Severity...",       PushButtonGadgetClass, 'B', NULL, NULL,
 		                                      0, 0,    (MenuItem *)setup_beep_menu, 0 },
 #ifdef AUDIO_BEEP
 		         { "Audio Setup...",       ToggleButtonGadgetClass, 'D', NULL, NULL,

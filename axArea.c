@@ -652,7 +652,7 @@ void createMainWindowWidgets(ALINK *area)
 	XmStringFree(str);
 
 	/* Create BeepSeverityLabel string for the messageArea */
-	str = XmStringCreateSimple("Beep Severity:");
+	str = XmStringCreateSimple("Global Beep Severity:");
 	area->beepSeverityLabel = XtVaCreateManagedWidget("beepSeverityLabel",
 	    xmLabelGadgetClass,        area->messageArea,
 	    XmNshadowThickness,        2,
