@@ -40,6 +40,7 @@ String title,String pattern,String directory)
 	static void *oldCancel=NULL;
 	static XtPointer oldOkParm = 0;
 	static XtPointer oldCancelParm = 0;
+    char file_sel[]="file_sel";
 
 	/* parent = 0 means we want to unmanage the fileSelectdialog */
 	if (!parent){
@@ -59,7 +60,7 @@ String title,String pattern,String directory)
 	/* "Open" was selected.  Create a Motif FileSelectionDialog w/callback */
 	if (!fileselectdialog) {
 		fileselectdialog = XmCreateFileSelectionDialog(parent,
-		    "file_sel", NULL, 0);
+		    file_sel, NULL, 0);
 		XtVaSetValues(fileselectdialog,
 		    XmNallowShellResize, FALSE,
 		    NULL);
@@ -82,7 +83,7 @@ String title,String pattern,String directory)
 	    XmNuserData,      userParm,
 	    XmNdialogTitle,   Xtitle,
 	    XmNdirectory,     Xdirectory,
-	    XmNdirMask,       Xpattern,
+	    XmNpattern,       Xpattern,
 	    NULL);
 
 	XmStringFree(Xtitle);
@@ -362,11 +363,10 @@ static void logMessageString(Widget w, XtPointer clientdata, XtPointer calldata)
 	while (XmStringGetNextSegment(context,&lstring,&tag,&direction,&separator)){
 		alLogOpMod(lstring);
 		XtFree(lstring);
-		XtFree(tag);
-		XtFree(direction);
 	}
 	XmStringFree(cstring);
 	XmStringFreeContext(context);
+    XtFree(tag);
 }
 
 /******************************************************
