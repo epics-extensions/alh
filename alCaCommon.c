@@ -300,6 +300,7 @@ void alChannelForceEvent(CLINK *clink,short value)
 
 	cdata = clink->pchanData;
 	if (strlen(cdata->forcePVName) <= (size_t) 1) return;
+	if (cdata->forcePVDisabled) return;
 
 	if (cdata->PVValue == value) return;
 	cdata->PVValue = value;
@@ -328,6 +329,7 @@ void     alGroupForceEvent(GLINK *glink,short value)
 
 	gdata = glink->pgroupData;
 	if (strlen(gdata->forcePVName) <= (size_t) 1) return;
+	if (gdata->forcePVDisabled) return;
 
 	if (gdata->PVValue == value) return;
 	gdata->PVValue = value;
