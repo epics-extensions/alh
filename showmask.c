@@ -557,10 +557,7 @@ static void forceMaskApplyCallback(Widget widget,XtPointer calldata,XtPointer cb
 	/* ---------------------------------
 	     Update all dialog Windows
 	     --------------------------------- */
-	/*
-	     axUpdateDialogs(forceMaskWindow->area);
-	*/
-
+	axUpdateDialogs(forceMaskWindow->area);
 }
 
 /******************************************************
