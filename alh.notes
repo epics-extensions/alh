@@ -309,3 +309,6 @@ Tue Sep 26 10:30:55 CDT 2000
 
 Thu Oct  5 14:49:17 CDT 2000 - V1.2.6
 	Added audio for solaris.
+
+Tue Oct 17 14:08:17 CDT 2000 - V1.2.7
+	Change to build with baseR3.14.
