@@ -1,5 +1,14 @@
 /*
  $Log$
+ Revision 1.14  1998/06/02 19:40:51  evans
+ Changed from using Fgmgr to using X to manage events and file
+ descriptors.  (Fdmgr didn't work on WIN32.)  Uses XtAppMainLoop,
+ XtAppAddInput, and XtAppAddTimeOut instead of Fdmgr routines.
+ Updating areas is now in alCaUpdate, which is called every caDelay ms
+ (currently 100 ms).  Added a general error message routine (errMsg)
+ and an exception handler (alCAException).  Is working on Solaris and
+ WIN32.
+
  Revision 1.13  1998/06/01 18:33:26  evans
  Modified the icon.
 
@@ -90,8 +99,6 @@ static char *sccsId = "@(#)file.c	1.14\t2/3/94";
 #endif
 #include <ctype.h>
 
-#include <fdmgr.h>
-
 #include <Xm/Xm.h>
 
 #include <alh.h>
@@ -108,11 +115,6 @@ extern int alarmLogFileEndStringLength; /* alarm log file end data string len*/
 
 extern FILE *fl;		/* alarm log pointer */
 extern FILE *fo;		/* opmod log pointer */
- 
-
-#define FDMGR_SEC_TIMEOUT   10
-#define FDMGR_USEC_TIMEOUT  0
-extern fdctx *pfdctx;
 
 struct command_line_stuff
 {
@@ -188,6 +190,7 @@ void exit_quit(w, area, call_data)
 
      }
 
+     XtDestroyWidget(topLevelShell);
      exit(0);
 }
 
@@ -649,8 +652,6 @@ void fileSetupInit( widget, argc, argv)
      char   logFile[NAMEDEFAULT_SIZE];
      char   opModFile[NAMEDEFAULT_SIZE];
      char   *name = NULL;
-     static struct timeval timeout = {
-          FDMGR_SEC_TIMEOUT, FDMGR_USEC_TIMEOUT};
 
      programId = ALH;
      programName = (char *)calloc(1,4);
@@ -694,10 +695,6 @@ void fileSetupInit( widget, argc, argv)
      if (DEBUG == 1 ) printf("\nOpMod File is %s \n", psetup.opModFile);
      fileSetup(psetup.opModFile,NULL,FILE_OPMOD,programId,widget);
 
-     while (!fo) { 
-          fdmgr_pend_event(pfdctx,&timeout);
-     }
-
      /* ----- initialize and setup alarm log file ----- */
      if (psetup.logDir) {
           strncpy(psetup.logFile,psetup.logDir,NAMEDEFAULT_SIZE-1);
@@ -718,10 +715,6 @@ void fileSetupInit( widget, argc, argv)
      }
      if (DEBUG == 1 ) printf("\nAlarmLog File is %s \n", psetup.logFile);
      fileSetup(psetup.logFile,NULL,FILE_ALARMLOG,programId,widget);
-
-     while (!fl) {
-          fdmgr_pend_event(pfdctx,&timeout);
-     }
 
      /* ----- initialize and setup config file ----- */
      if (psetup.configDir) {

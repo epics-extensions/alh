@@ -1,5 +1,14 @@
 /*
  $Log$
+ Revision 1.15  1998/06/02 19:40:48  evans
+ Changed from using Fgmgr to using X to manage events and file
+ descriptors.  (Fdmgr didn't work on WIN32.)  Uses XtAppMainLoop,
+ XtAppAddInput, and XtAppAddTimeOut instead of Fdmgr routines.
+ Updating areas is now in alCaUpdate, which is called every caDelay ms
+ (currently 100 ms).  Added a general error message routine (errMsg)
+ and an exception handler (alCAException).  Is working on Solaris and
+ WIN32.
+
  Revision 1.14  1998/06/01 18:33:25  evans
  Modified the icon.
 
@@ -46,7 +55,7 @@
  *
  */
 
-#define DEBUG_CALLBACKS 1
+#define DEBUG_CALLBACKS 0
 
 static char *sccsId = "@(#)awView.c	1.14\t10/22/93";
 
@@ -85,7 +94,6 @@ static char *sccsId = "@(#)awView.c	1.14\t10/22/93";
  */
 
 #include <time.h>
-#include <fdmgr.h>
 
 #include <alh.h>
 #include <alLib.h>
@@ -95,20 +103,18 @@ static char *sccsId = "@(#)awView.c	1.14\t10/22/93";
 #include <line.h>
 #include <ax.h>
 
-extern fdctx *pfdctx;
-
 /*  structures for arrow button single vs double click action  */
 struct timeoutData {
-     Widget       pushButton;
-     void        *gdata;
-     void        *timeoutId;
+     Widget        pushButton;
+     void         *gdata;
+     XtIntervalId timeoutId;
 };
 
 #ifdef __STDC__
 
-static void singleClickTreeW_callback( struct timeoutData *pdata);
-static void singleClickArrowGroupW_callback(struct timeoutData *pdata);
-static void singleClickNameGroupW_callback(struct timeoutData *pdata);
+static void singleClickTreeW_callback(XtPointer cd, XtIntervalId *id);
+static void singleClickNameGroupW_callback(XtPointer cd, XtIntervalId *id);
+static void singleClickArrowGroupW_callback(XtPointer cd, XtIntervalId *id);
 
 #else
 
@@ -328,21 +334,22 @@ void nameTreeW_callback(pushButton, line, cbs)
   singleClickTreeW_callback
 ******************************************************/
 
-static void singleClickTreeW_callback(pdata)
-     struct timeoutData *pdata;
+static void singleClickTreeW_callback(XtPointer cd, XtIntervalId *id)
 {
      ALINK  *area;
-
+     struct timeoutData *pdata = (struct timeoutData *)cd;
+     
+     
 #if DEBUG_CALLBACKS
-    {
-	static int n=0;
-
-	printf("singleClickTreeW_callback: n=%d\n",n++);
-    }
+     {
+	 static int n=0;
+	 
+	 printf("singleClickTreeW_callback: n=%d\n",n++);
+     }
 #endif
-
-    XtVaGetValues(pdata->pushButton, XmNuserData, &area, NULL);
-
+     
+     XtVaGetValues(pdata->pushButton, XmNuserData, &area, NULL);
+     
      pdata->timeoutId= 0;
      displayNewViewTree(area,(GLINK *)pdata->gdata,EXPANDCOLLAPSE1);
 }
@@ -357,31 +364,27 @@ void arrowTreeW_callback(pushButton, glink, cbs)
      void     *glink;
      XmPushButtonCallbackStruct *cbs;
 {
-     void               *area;
-     static int           interval=0;
+     void *area;
+     static unsigned long interval=0;
      static struct timeoutData data;
-     static struct timeval timeout;
 
     if (cbs->click_count == 1){
+      /* Get multi-click time in ms */
           if (!interval) interval = XtGetMultiClickTime(display);
-          timeout.tv_sec = 0;
-          timeout.tv_usec = 1000*interval;
-          
           data.pushButton = pushButton;
           data.gdata = (void *)glink;
           if ( data.timeoutId== 0 ) {
-               data.timeoutId= (void *)fdmgr_add_timeout(pfdctx,
-                    &timeout,(void (*)(void *))singleClickTreeW_callback,&data);
+               data.timeoutId= XtAppAddTimeOut(appContext,interval,
+		 singleClickTreeW_callback,(XtPointer)&data);
           }
 
-     }
-     else if (cbs->click_count == 2) {
-          if (data.timeoutId) fdmgr_clear_timeout(pfdctx,(fdmgrAlarmId)(data.timeoutId));
-          data.timeoutId=0;
-
-          XtVaGetValues(pushButton, XmNuserData, &area, NULL);
-
-          displayNewViewTree(area,glink,EXPAND);
+     } else if (cbs->click_count == 2) {
+	 if (data.timeoutId) {
+	     XtRemoveTimeOut(data.timeoutId);
+	     data.timeoutId=0;
+	 }
+	 XtVaGetValues(pushButton, XmNuserData, &area, NULL);
+	 displayNewViewTree(area,glink,EXPAND);
      }
 }
 
@@ -394,8 +397,8 @@ void nameGroupW_callback(pushButton, line, cbs)
      struct anyLine *line;
      XmPushButtonCallbackStruct *cbs;
 {
-     void               *area;
-     static int           interval=0;
+     void *area;
+     static unsigned long interval=0;
      static struct timeoutData data;
      static struct timeval timeout;
      struct subWindow  *groupWindow;
@@ -406,33 +409,27 @@ void nameGroupW_callback(pushButton, line, cbs)
 
      if (line->linkType == GROUP ) {
           if (cbs->click_count == 1){
-               if (!interval) interval = XtGetMultiClickTime(display);
-               timeout.tv_sec = 0;
-               timeout.tv_usec = 1000*interval;
-               
-               data.pushButton = pushButton;
-               data.gdata = (void *)line;
-               if ( data.timeoutId== 0 ) {
-                    data.timeoutId= (void *)fdmgr_add_timeout(pfdctx,
-                         &timeout,(void (*)(void *))singleClickNameGroupW_callback,&data);
-               }
-     
-          }
-          else if (cbs->click_count == 2) {
-               if (data.timeoutId) fdmgr_clear_timeout(pfdctx,(fdmgrAlarmId)(data.timeoutId));
-               data.timeoutId=0;
-
+	    /* Get multi-click time in ms */
+	      if (!interval) interval = XtGetMultiClickTime(display);
+	      data.pushButton = pushButton;
+	      data.gdata = (void *)line;
+	      if (data.timeoutId == 0)  {
+		  data.timeoutId= XtAppAddTimeOut(appContext,interval,
+		    singleClickNameGroupW_callback,(XtPointer)&data);
+	      }
+          } else if (cbs->click_count == 2) {
+               if (data.timeoutId) {
+		   XtRemoveTimeOut(data.timeoutId);
+		   data.timeoutId=0;
+	       }
                doubleClickNameGroupW_callback(pushButton, line, cbs);
-     
           }
      } else {
-
-          markSelectedWidget(groupWindow,pushButton);
-          markSelection(groupWindow, line);
-
-          /* update dialog windows if displayed */
-          axUpdateDialogs(area);
-
+	 markSelectedWidget(groupWindow,pushButton);
+	 markSelection(groupWindow, line);
+	 
+       /* update dialog windows if displayed */
+	 axUpdateDialogs(area);
      }
 }
 
@@ -440,27 +437,27 @@ void nameGroupW_callback(pushButton, line, cbs)
   singleClickNameGroupW_callback
 ******************************************************/
 
-static void singleClickNameGroupW_callback(pdata)
-     struct timeoutData *pdata;
+static void singleClickNameGroupW_callback(XtPointer cd, XtIntervalId *id)
 {
      void               *area;
      struct subWindow  *groupWindow;
-
+     struct timeoutData *pdata = (struct timeoutData *)cd;
+     
 #if DEBUG_CALLBACKS
-    {
-	static int n=0;
-
-	printf("singleClickNameGroupW_callback: n=%d\n",n++);
-    }
+     {
+	 static int n=0;
+	 
+	 printf("singleClickNameGroupW_callback: n=%d\n",n++);
+     }
 #endif
-
+     
      pdata->timeoutId= 0;
      XtVaGetValues(pdata->pushButton, XmNuserData, &groupWindow, NULL);
      area = groupWindow->area;
-
+     
      markSelectedWidget(groupWindow,pdata->pushButton);
      markSelection(groupWindow,pdata->gdata);
-
+     
      /* update dialog windows if displayed */
      axUpdateDialogs(area);
 
@@ -470,8 +467,7 @@ static void singleClickNameGroupW_callback(pdata)
   singleClickArrowGroupW_callback
 ******************************************************/
 
-static void singleClickArrowGroupW_callback(pdata)
-     struct timeoutData *pdata;
+static void singleClickArrowGroupW_callback(XtPointer cd, XtIntervalId *id)
 {
      ALINK  *area;
      GCLINK     *link;
@@ -479,23 +475,23 @@ static void singleClickArrowGroupW_callback(pdata)
      GLINK     *glinkTemp;
      struct subWindow  *treeWindow;
      int grandparentsOpen;
-
-
+     struct timeoutData *pdata = (struct timeoutData *)cd;
+     
 #if DEBUG_CALLBACKS
-    {
-	static int n=0;
-
-	printf("singleClickArrowTreeW_callback: n=%d\n",n++);
-    }
+     {
+	 static int n=0;
+	 
+	 printf("singleClickArrowTreeW_callback: n=%d\n",n++);
+     }
 #endif
-
+     
      pdata->timeoutId= 0;
-
+     
      XtVaGetValues(pdata->pushButton, XmNuserData, &area, NULL);
-
+     
      link = pdata->gdata;
      parent = link->parent;
-
+     
      treeWindow = area->treeWindow;
 
      /* update tree window  */
@@ -522,33 +518,29 @@ void arrowGroupW_callback(pushButton, glink, cbs)
      void     *glink;
      XmPushButtonCallbackStruct *cbs;
 {
-     void               *area;
-     static int           interval=0;
+     void *area;
+     static unsigned long interval=0;
      static struct timeoutData data;
      static struct timeval timeout;
 
 
      if (cbs->click_count == 1){
+       /* Get multi-click time in ms */
           if (!interval) interval = XtGetMultiClickTime(display);
-          timeout.tv_sec = 0;
-          timeout.tv_usec = 1000*interval;
-          
           data.pushButton = pushButton;
           data.gdata = (void *)glink;
           if ( data.timeoutId== 0 ) {
-               data.timeoutId= (void *)fdmgr_add_timeout(pfdctx,
-                    &timeout,(void (*)(void *))singleClickArrowGroupW_callback,&data);
+               data.timeoutId= XtAppAddTimeOut(appContext,interval,
+		 singleClickArrowGroupW_callback,(XtPointer)&data);
           }
-
-     }
-     else if (cbs->click_count == 2) {
-          if (data.timeoutId) fdmgr_clear_timeout(pfdctx,(fdmgrAlarmId)(data.timeoutId));
-          data.timeoutId=0;
-
-          XtVaGetValues(pushButton, XmNuserData, &area, NULL);
-
-          singleClickArrowGroupW_callback(&data);
-          displayNewViewTree(area,glink,EXPAND);
+     } else if (cbs->click_count == 2) {
+	 if (data.timeoutId) {
+	     XtRemoveTimeOut(data.timeoutId);
+	     data.timeoutId=0;
+	 }
+	 XtVaGetValues(pushButton, XmNuserData, &area, NULL);
+	 singleClickArrowGroupW_callback((XtPointer)&data,NULL);
+	 displayNewViewTree(area,glink,EXPAND);
      }
 }
 

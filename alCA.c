@@ -1,5 +1,14 @@
 /*
  $Log$
+ Revision 1.14  1998/06/02 19:40:44  evans
+ Changed from using Fgmgr to using X to manage events and file
+ descriptors.  (Fdmgr didn't work on WIN32.)  Uses XtAppMainLoop,
+ XtAppAddInput, and XtAppAddTimeOut instead of Fdmgr routines.
+ Updating areas is now in alCaUpdate, which is called every caDelay ms
+ (currently 100 ms).  Added a general error message routine (errMsg)
+ and an exception handler (alCAException).  Is working on Solaris and
+ WIN32.
+
  Revision 1.13  1998/06/01 18:33:22  evans
  Modified the icon.
 
@@ -37,7 +46,7 @@ prototype.
  *
  */
 
-#define DEBUG_CALLBACKS 1
+#define DEBUG_CALLBACKS 0
 
 static char *sccsId = "%W%\t%G%";
 
@@ -90,7 +99,6 @@ static char *sccsId = "%W%\t%G%";
 #include <stdlib.h>
 
 #include <alarm.h>
-#include <fdmgr.h>
 #include <cadef.h>
 
 #include <sllLib.h>
@@ -103,13 +111,20 @@ static char *sccsId = "%W%\t%G%";
 
 #define CA_PEND_EVENT_TIME     0.001    
 
+/* Struct for file descriptor linked list */
+struct FDLIST {
+    struct FDLIST *prev;
+    XtInputId inpid;
+    int fd;
+};
+
+struct FDLIST *lastFdInList=(struct FDLIST *)0;
+
 static char buff[81];
 
-fdctx *pfdctx;            /* fdmgr context */
-fdmgrAlarmId caTimeoutId;
+XtIntervalId  caTimeoutId=(XtIntervalId)0;
 
-static struct timeval caDelay = {
-    10, 0};
+unsigned long caDelay = 100;     /* ms */
 
 extern int DEBUG;
 extern XtAppContext appContext;
@@ -147,9 +162,10 @@ static void SevrChannelChangeConnectionEvent( struct connection_handler_args
 args);
 static void al_ca_error_code(char *alhName,char *caName,int status,char *
 PVname);
-static void registerCA(void *pfdctx, int fd, int condition);
-static void alCaPendEvent(void *unused);
-static void alProcessX(void *unused);
+static void registerCA(void *dummy, int fd, int opened);
+static void alCaUpdate(XtPointer cd, XtIntervalId *id);
+static void alProcessCA(XtPointer cd, int *source, XtInputId *id);
+static void alCAException(struct exception_handler_args args);
 
 #else
 
@@ -163,8 +179,9 @@ static void SevrGroupChangeConnectionEvent();
 static void SevrChannelChangeConnectionEvent();
 static void al_ca_error_code();
 static void registerCA();
-static void alCaPendEvent();
-static void alProcessX();
+static void alCaUpdate();
+static void alProcessCA();
+static void alCAException();
 
 #endif /*__STDC__*/
 
@@ -192,8 +209,6 @@ void alCaClearEvent(clink)        Remove a channel alarm event
 * 
 void alCaAddEvent(clink)        Add a channel alarm event
     CLINK *clink;
-*
-void alProcessCA()            ca_pend_event
 * 
 void alCaPutSevr(clink)            ca_put SevrPVValue
     CLINK *clink;
@@ -216,7 +231,7 @@ alReplaceChanForceEvent(clink,str)      Replace new channel force events
 ------------
 |  PRIVATE  |
 ------------
-static void registerCA(pfdctx,fd,condition)
+static void registerCA(dummy,fd,condition)
 *
 static ClearChannelAccessEvents(glink)        Clear Channel access events
     SLIST *glink;        
@@ -259,53 +274,49 @@ r channel
 */
 
 /*****************************************************
- This function initializes fdmgr
+ alCaUpdate -- Timer proc to update screen
 ****************************************************/
-void alFdmgrInit(display)
-Display *display;
+static void alCaUpdate(XtPointer cd, XtIntervalId *id)
 {
-#if DEBUG_CALLBACKS
-    {
-	printf("alFdmgrInit: fd=%d\n",ConnectionNumber(display));
-    }
-#endif
-    /*
-     *  initialize fdmgr 
-     */
-    pfdctx = fdmgr_init();
-
-    /*
-     * add X's fd to fdmgr ...
-     */
-    /*fdmgr_add_fd(pfdctx, ConnectionNumber(display), alProcessX, NULL);*/
-#if 0
-    fdmgr_add_callback(pfdctx, ConnectionNumber(display),fdi_read,alProcessX, NULL);
-#endif    
-
-}
-
-/*****************************************************
- alCaPendEvent
-****************************************************/
-static void alCaPendEvent(void *unused)
-{
+     ALINK        *area;
+     
 #if DEBUG_CALLBACKS
     {
 	static int n=0;
-
-	printf("alCaPendEvent: n=%d\n",n++);
+	
+	printf("alCaUpdate: n=%d\n",n++);
     }
 #endif
+    
+  /* Poll CA */
+    ca_poll();
 
-    ca_pend_event(.00001);
-    caTimeoutId = fdmgr_add_timeout(pfdctx,&caDelay,alCaPendEvent,NULL);
-#if DEBUG_CALLBACKS
-	printf("          caTimeoutId=%d\n",caTimeoutId);
-#endif
+  /* Update areas */
+    area = 0;
+    if (areaList) area = (ALINK *)sllFirst(areaList);
+    while (area) {
+	if (area->pmainGroup && area->pmainGroup->p1stgroup){
+	    alHighestSystemSeverity(area->pmainGroup->p1stgroup);
+	    
+	    if ( area->pmainGroup->modified ){
+		if ( area->mapped && area->managed){
+		    invokeDialogUpdate(area);
+		    invokeSubWindowUpdate(area->treeWindow);
+		    invokeSubWindowUpdate(area->groupWindow);
+		}
+		updateCurrentAlarmWindow(area);
+		area->pmainGroup->modified = 0;
+	    }
+	}
+	area = (ALINK *)sllNext(area);
+    }
+    
+  /* Set the proc to be called again */
+    caTimeoutId = XtAppAddTimeOut(appContext,caDelay,alCaUpdate,NULL);
 }
 
 /*****************************************************
- This function only initializes channel access
+ This function initializes channel access
 ****************************************************/
 void alCaInit()
 {
@@ -314,30 +325,29 @@ void alCaInit()
 	printf("alCaInit: caTimeoutId=%d\n",caTimeoutId);
     }
 #endif
-    /*
-     *  initialize channel access
-     */
+    
+  /* Initialize channel access */
     SEVCHK(ca_task_initialize(),"alCaInit: error in ca_task_initialize");
 
-    /*
-     * and add CA fd to fdmgr ...
-     */
-    SEVCHK(ca_add_fd_registration(registerCA,pfdctx),
-        "alCaInit: error in ca_add_fd_registration");
+  /* Register exception handler */
+    SEVCHK(ca_add_exception_event(alCAException,NULL),
+      "alCaInit: error in ca_add_exception_event");
+    
+  /* Register file descriptor callback */
+    SEVCHK(ca_add_fd_registration(registerCA,NULL),
+      "alCaInit: error in ca_add_fd_registration");
 
-    caTimeoutId = fdmgr_add_timeout(pfdctx,&caDelay,alCaPendEvent,NULL);
-
+  /* Start the CA poll and update areas timer proc */
+    caTimeoutId = XtAppAddTimeOut(appContext,caDelay,alCaUpdate,NULL);
 #if DEBUG_CALLBACKS
 	printf("          caTimeoutId=%d\n",caTimeoutId);
 #endif
 }
 
 /********************************************************
- *    functions to register channel access file descriptor with XT
- *     and perform CA handling when events exist on that event stream
- *     
+ Callback when there is activity on a CA file descriptor
 ********************************************************/
-void alProcessCA()
+static void alProcessCA(XtPointer cd, int *source, XtInputId *id)
 {
 #if DEBUG_CALLBACKS
     {
@@ -346,49 +356,71 @@ void alProcessCA()
 	printf("alProcessCA: n=%d\n",n++);
     }
 #endif
-    ca_flush_io();
-    ca_pend_event(CA_PEND_EVENT_TIME);
-}
-
-static void alProcessX(void *unused)
-{
-    XEvent event;
-
-#if DEBUG_CALLBACKS
-    {
-	static int n=0;
-
-	printf("alProcessX: n=%d\n",n++);
-    }
-#endif
-    while (XtAppPending(appContext)) {
-        XtAppNextEvent(appContext,&event);
-        XtDispatchEvent(&event);
-    };
+    ca_poll();
 }
 
 
-static void registerCA(pfdctx,fd,condition)
-void *pfdctx;
-int fd;
-int condition;
+/********************************************************
+ Callback to register file descriptors
+********************************************************/
+static void registerCA(void *dummy, int fd, int opened)
 {
-
-
+    struct FDLIST *cur,*next;
+    int found;
+    
 #if DEBUG_CALLBACKS
     {
-	printf("registerCA: fd=%d condition=%d\n",fd,condition);
+	printf("registerCA: fd=%d opened=%d\n",fd,opened);
     }
 #endif
-    if (condition) {
-        /*fdmgr_add_fd(pfdctx,fd,(void (*)(void *))alProcessCA,NULL); */
-        fdmgr_add_callback(pfdctx, fd,fdi_read ,(void (*)(void *))alProcessCA, NULL);
+
+  /* Branch depending on whether the fd is opened or closed */
+    if(opened) {
+      /* Look for a linked list structure for this fd */
+	cur=lastFdInList;
+	while(cur) {
+	    if(cur->fd == fd) {
+		errMsg("Tried to add a second callback "
+		  "for file descriptor %d",fd);
+		return;
+	    }
+	    cur=cur->prev;
+	}
+      /* Allocate and fill a linked list structure for this fd */
+	cur=(struct FDLIST *)calloc(1,sizeof(struct FDLIST));
+	if(cur == NULL) {
+	    errMsg("Could not allocate space to keep track of "
+	      "file descriptor %d",fd);
+	    return;
+	}
+	cur->prev=lastFdInList;
+	cur->inpid=XtAppAddInput(appContext,fd,(XtPointer)XtInputReadMask,
+	alProcessCA,NULL);
+ 	cur->fd=fd;
+	lastFdInList=cur;
     } else {
-        /*fdmgr_clear_fd(pfdctx,fd); */
-        fdmgr_clear_callback(pfdctx,fd,fdi_read);
+      /* Find the linked list structure for this fd */
+	found=0;
+	cur=next=lastFdInList;
+	while(cur) {
+	    if(cur->fd == fd) {
+		found=1;
+		break;
+	    }
+	    next=cur;
+	    cur=cur->prev;
+	}
+      /* Remove the callback */
+	if(found) {
+	    XtRemoveInput(cur->inpid);
+	    if(cur == lastFdInList) lastFdInList=cur->prev;
+	    else next->prev=cur->prev;
+	    free(cur);
+	} else {
+	    errMsg("Error removing callback for file descriptor %d",fd);
+	}
     }
 }
-
 
 /******************************************************************************
  *  This function initializes channel access and adds channel access events 
@@ -467,17 +499,10 @@ SLIST *proot;
  *****************************************************************/
 void alCaStop()
 {
-
-    /* cancel registration of the CA file descriptors */
-    /*
-          SEVCHK(ca_add_fd_registration(registerCA,pfdctx),
-            "alCaCancel:  error in ca_add_fd_registration");
-    */
-
     /* cancel timeout */
     if (caTimeoutId) {
-        fdmgr_clear_timeout(pfdctx,(fdmgrAlarmId)caTimeoutId);
-        caTimeoutId = NULL;
+	XtRemoveTimeOut(caTimeoutId);
+        caTimeoutId = (XtIntervalId)0;
     }
 
     /* and close channel access */
@@ -1078,12 +1103,12 @@ struct event_handler_args args;
             gdata->PVValue = value;
             if (value == gdata->forcePVValue) {
                 alChangeGroupMask(glink,gdata->forcePVMask);
-                alProcessCA();
+                ca_poll();
                 alLogForcePVGroup(glink,AUTOMATIC);
             }
             if (value == gdata->resetPVValue) {
                 alResetGroupMask(glink);
-                alProcessCA();
+                ca_poll();
                 alLogResetPVGroup(glink,AUTOMATIC);
             }
             glink->pmainGroup->modified = 1;
@@ -1130,7 +1155,7 @@ struct event_handler_args args;
             /* change   channel mask to force mask  */
             alOperatorForcePVChanEvent(clink,cdata->forcePVMask);
 
-            alProcessCA();
+            ca_poll();
 
             /* log automatic channel force mask event ? */
             alLogForcePVChan(clink,AUTOMATIC);
@@ -1140,7 +1165,7 @@ struct event_handler_args args;
             /* change channel mask to default mask  */
             alOperatorForcePVChanEvent(clink,cdata->defaultMask);
 
-            alProcessCA();
+            ca_poll();
 
             /* log automatic channel reset mask event ? */
             alLogResetPVChan(clink,AUTOMATIC);
@@ -1378,3 +1403,30 @@ char *str;
         ForceGroupChangeConnectionEvent);
 }
 
+static void alCAException(struct exception_handler_args args)
+{
+    errMsg("alCAException: Channel Access Exception:\n"
+      "  Channel Name: %s\n"
+      "  Native Type: %s\n"
+      "  Native Count: %hu\n"
+      "  Access: %s%s\n"
+      "  IOC: %s\n"
+      "  Message: %s\n"
+      "  Context: %s\n"
+      "  Requested Type: %s\n"
+      "  Requested Count: %ld\n"
+      "  Source File: %s\n"
+      "  Line number: %u",
+      args.chid?ca_name(args.chid):"Unavailable",
+      args.chid?dbf_type_to_text(ca_field_type(args.chid)):"Unavailable",
+      args.chid?ca_element_count(args.chid):0,
+      args.chid?(ca_read_access(args.chid)?"R":""):"Unavailable",
+      args.chid?(ca_write_access(args.chid)?"W":""):"",
+      args.chid?ca_host_name(args.chid):"Unavailable",
+      ca_message(args.stat)?ca_message(args.stat):"Unavailable",
+      args.ctx?args.ctx:"Unavailable",
+      dbf_type_to_text(args.type),
+      args.count,
+      args.pFile?args.pFile:"Unavailable",
+      args.pFile?args.lineNo:0);
+}

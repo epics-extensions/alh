@@ -1,5 +1,14 @@
 /*
  $Log$
+ Revision 1.7  1998/06/02 19:40:47  evans
+ Changed from using Fgmgr to using X to manage events and file
+ descriptors.  (Fdmgr didn't work on WIN32.)  Uses XtAppMainLoop,
+ XtAppAddInput, and XtAppAddTimeOut instead of Fdmgr routines.
+ Updating areas is now in alCaUpdate, which is called every caDelay ms
+ (currently 100 ms).  Added a general error message routine (errMsg)
+ and an exception handler (alCAException).  Is working on Solaris and
+ WIN32.
+
  Revision 1.6  1998/06/01 18:33:24  evans
  Modified the icon.
 
@@ -22,7 +31,7 @@
  *
  */
 
-#define DEBUG_CALLBACKS 1
+#define DEBUG_CALLBACKS 0
 
 static char *sccsId = "@(#)alh.c	1.23\t12/15/93";
 
@@ -71,8 +80,6 @@ static char *sccsId = "@(#)alh.c	1.23\t12/15/93";
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <fdmgr.h>
-
 #include <alh.h>
 #include <epicsVersion.h>
 #include <fallback.h>
@@ -80,14 +87,10 @@ static char *sccsId = "@(#)alh.c	1.23\t12/15/93";
 #include <axArea.h>
 #include <ax.h>
 
-#define FDMGR_SEC_TIMEOUT   10
-#define FDMGR_USEC_TIMEOUT  0
-
 /* global variables */
 int DEBUG = 0;
 int ALARM_COUNTER = 0;
 SLIST *areaList;
-extern fdctx *pfdctx;
 extern XtAppContext appContext;
 extern Display *display;
 
@@ -102,11 +105,6 @@ void main(argc, argv)
      int argc;
      char *argv[];
 {
-     ALINK        *area;
-     static struct timeval timeout = {
-          FDMGR_SEC_TIMEOUT, FDMGR_USEC_TIMEOUT};
-     Widget        topLevelShell;
-
      /* WIN32 initialization */
 #ifdef WIN32	
      HCLXmInit();
@@ -122,9 +120,6 @@ void main(argc, argv)
            XtWarning("cannot open display");
            exit(-1);
      }
-
-     /* initialize fdmgr */
-     alFdmgrInit(display);
 
      XtAppSetWarningMsgHandler(appContext,
            (XtErrorMsgHandler)trapExtraneousWarningsHandler);
@@ -145,43 +140,6 @@ void main(argc, argv)
      productDescriptionShell = 0;
 #endif
 
-#if 1
-
-     alProcessCA();
-     XFlush(display);
-     /* start alh Process events loop */
-#if DEBUG_CALLBACKS
-     printf("Before main loop, after alProcessCA\n");
-#endif
-     while(TRUE) {
-#if DEBUG_CALLBACKS
-    {
-	static int n=0;
-
-	printf("main loop: n=%d\n",n++);
-    }
-#endif
-          fdmgr_pend_event(pfdctx,&timeout);
-          area = 0;
-          if (areaList) area = (ALINK *)sllFirst(areaList);
-          while (area) {
-               if (area->pmainGroup && area->pmainGroup->p1stgroup){
-                    alHighestSystemSeverity(area->pmainGroup->p1stgroup);
-
-                    if ( area->pmainGroup->modified ){
-                         if ( area->mapped && area->managed){
-                               invokeDialogUpdate(area);
-                               invokeSubWindowUpdate(area->treeWindow);
-                               invokeSubWindowUpdate(area->groupWindow);
-                         }
-                         updateCurrentAlarmWindow(area);
-                         area->pmainGroup->modified = 0;
-                    }
-               }
-               area = (ALINK *)sllNext(area);
-          }
-     }
-#else
+   /* Start main loop */
      XtAppMainLoop(appContext);
-#endif
 }

@@ -1,5 +1,14 @@
 /*
  $Log$
+ Revision 1.15  1998/06/02 19:40:49  evans
+ Changed from using Fgmgr to using X to manage events and file
+ descriptors.  (Fdmgr didn't work on WIN32.)  Uses XtAppMainLoop,
+ XtAppAddInput, and XtAppAddTimeOut instead of Fdmgr routines.
+ Updating areas is now in alCaUpdate, which is called every caDelay ms
+ (currently 100 ms).  Added a general error message routine (errMsg)
+ and an exception handler (alCAException).  Is working on Solaris and
+ WIN32.
+
  Revision 1.14  1998/05/12 18:22:45  evans
  Initial changes for WIN32.
 
@@ -173,6 +182,7 @@ Widget createFileDialog( Widget parent, void *okCallback, XtPointer okParm,
 void createDialog( Widget parent, int dialogType, char *message1, char *message2);
 void createActionDialog( Widget parent, int dialogType, String message1,
      XtCallbackProc okCallback, XtPointer okParm, XtPointer userParm);
+void errMsg(const char *fmt, ...);
 
 /********************************************************************
   file.c   function prototypes
@@ -416,7 +426,6 @@ void ClearChannelAccessChids( SLIST *proot);
 void  alCaAddEvents( SLIST *proot);
 void alReplaceGroupForceEvent( GLINK *glink, char *str);
 void alReplaceChanForceEvent( CLINK *clink, char *str);
-void alProcessCA(void);         /* process CA events */
 void alCaPutGblAck(CLINK *clink);
 void alCaPutSevrValue(char *sevrPVName,chid sevrchid,int sevr);
 

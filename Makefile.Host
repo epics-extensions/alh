@@ -93,5 +93,6 @@ USR_LDFLAGS += /nodefaultlib:"libcd.lib"   #-MLd Single-thread, Debug
 endif
 
 RCS_WIN32 += alh.rc
+alh.res:../alh.ico
 
 include $(TOP)/config/RULES.Host

@@ -1,5 +1,14 @@
 /*
  $Log$
+ Revision 1.6  1998/06/02 19:40:50  evans
+ Changed from using Fgmgr to using X to manage events and file
+ descriptors.  (Fdmgr didn't work on WIN32.)  Uses XtAppMainLoop,
+ XtAppAddInput, and XtAppAddTimeOut instead of Fdmgr routines.
+ Updating areas is now in alCaUpdate, which is called every caDelay ms
+ (currently 100 ms).  Added a general error message routine (errMsg)
+ and an exception handler (alCAException).  Is working on Solaris and
+ WIN32.
+
  Revision 1.5  1995/10/20 16:50:33  jba
  Modified Action menus and Action windows
  Renamed ALARMCOMMAND to SEVRCOMMAND
@@ -354,4 +363,42 @@ void createActionDialog(parent,dialogType,message1,okCallback,okParm,userParm)
      XmUpdateDisplay(dialog);
 */
      return;
+}
+
+/******************************************************
+  Error handler
+******************************************************/
+void errMsg(const char *fmt, ...)
+{
+    Widget warningbox,child;
+    XmString cstring;
+    va_list vargs;
+    static char lstring[1024];  /* DANGER: Fixed buffer size */
+    int nargs=10;
+    Arg args[10];
+    
+    va_start(vargs,fmt);
+    vsprintf(lstring,fmt,vargs);
+    va_end(vargs);
+    
+    if(lstring[0] != '\0') {
+	XBell(display,50); XBell(display,50); XBell(display,50); 
+	cstring=XmStringCreateLtoR(lstring,XmSTRING_DEFAULT_CHARSET);
+	nargs=0;
+	XtSetArg(args[nargs],XmNtitle,"Warning"); nargs++;
+	XtSetArg(args[nargs],XmNmessageString,cstring); nargs++;
+	warningbox=XmCreateWarningDialog(topLevelShell,"warningMessage",
+	  args,nargs);
+	XmStringFree(cstring);
+	child=XmMessageBoxGetChild(warningbox,XmDIALOG_CANCEL_BUTTON);
+	XtDestroyWidget(child);
+	child=XmMessageBoxGetChild(warningbox,XmDIALOG_HELP_BUTTON);
+	XtDestroyWidget(child);
+	XtManageChild(warningbox);
+#ifdef WIN32
+	lprintf("%s\n",lstring);
+#else
+	fprintf(stderr,"%s\n",lstring);
+#endif
+    }
 }

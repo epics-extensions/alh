@@ -1,5 +1,14 @@
 /*
  $Log$
+ Revision 1.19  1998/06/02 19:40:45  evans
+ Changed from using Fgmgr to using X to manage events and file
+ descriptors.  (Fdmgr didn't work on WIN32.)  Uses XtAppMainLoop,
+ XtAppAddInput, and XtAppAddTimeOut instead of Fdmgr routines.
+ Updating areas is now in alCaUpdate, which is called every caDelay ms
+ (currently 100 ms).  Added a general error message routine (errMsg)
+ and an exception handler (alCAException).  Is working on Solaris and
+ WIN32.
+
  Revision 1.18  1998/06/01 18:33:23  evans
  Modified the icon.
 
@@ -59,7 +68,7 @@
  *
  */
 
-#define DEBUG_CALLBACKS 1
+#define DEBUG_CALLBACKS 0
 
 static char *sccsId = "@(#)alLib.c	1.14\t10/15/93";
 
@@ -102,7 +111,6 @@ static char *sccsId = "@(#)alLib.c	1.14\t10/15/93";
 #include <stdlib.h>
 #include <time.h>
 
-#include <fdmgr.h>
 #include <sllLib.h>
 #include <alLib.h>
 #include <ax.h>
@@ -112,7 +120,9 @@ static char *sccsId = "@(#)alLib.c	1.14\t10/15/93";
 extern int DEBUG;
 extern int ALARM_COUNTER;
 extern struct setup psetup;
-extern fdctx *pfdctx;
+
+/* function prototypes */
+static void alarmCountFilter_callback(XtPointer cd, XtIntervalId *id);
 
 /* external routines
 extern   alCaAddEvent();
@@ -954,9 +964,9 @@ x2.Cancel = x1.Cancel | x2.Cancel;
   alarmCountFilter_callback
 ******************************************************/
 
-static void alarmCountFilter_callback(void *pdata)
+static void alarmCountFilter_callback(XtPointer cd, XtIntervalId *id)
 {
-     COUNTFILTER *countFilter=pdata;
+     COUNTFILTER *countFilter=(COUNTFILTER *)cd;
      time_t alarmTime;
 
 #if DEBUG_CALLBACKS
@@ -1038,10 +1048,9 @@ void alNewAlarm(stat,sev,value,clink)
           alarmTime_prev=countFilter->alarmTime;
           if (!alarmTime_prev || ((alarmTime-alarmTime_prev)>countFilter->inputSeconds)){
                if ( countFilter->timeoutId == 0 ) {
-                    timeout.tv_sec = countFilter->inputSeconds;
-                    timeout.tv_usec = 0;
-                    countFilter->timeoutId= (void *)fdmgr_add_timeout(pfdctx,
-                         &timeout,alarmCountFilter_callback,(void *)countFilter);
+                    countFilter->timeoutId = XtAppAddTimeOut(appContext,
+		      (unsigned long)countFilter->inputSeconds*1000,
+		      alarmCountFilter_callback,(XtPointer)countFilter);
                }
                countFilter->curCount=1;
                countFilter->alarmTime=alarmTime;
@@ -1049,7 +1058,7 @@ void alNewAlarm(stat,sev,value,clink)
                countFilter->curCount++;
                if (countFilter->curCount >= countFilter->inputCount) {
                     if (countFilter->timeoutId)
-                         fdmgr_clear_timeout(pfdctx,(fdmgrAlarmId)(countFilter->timeoutId));
+                         XtRemoveTimeOut(countFilter->timeoutId);
                     countFilter->timeoutId=0;
                     countFilter->curCount=0;
                     countFilter->alarmTime=0;
@@ -1058,7 +1067,7 @@ void alNewAlarm(stat,sev,value,clink)
           }
      } else if ((cdata->curSevr==0 && sev==0) || (cdata->curSevr!=0 && sevr_prev==0)){
           if (countFilter->timeoutId){
-               fdmgr_clear_timeout(pfdctx,(fdmgrAlarmId)(countFilter->timeoutId));
+               XtRemoveTimeOut(countFilter->timeoutId);
           }
           countFilter->timeoutId=0;
           if (cdata->curSevr) alNewAlarmProcess(stat,sev,value,clink,alarmTime);

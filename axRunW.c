@@ -1,5 +1,14 @@
 /*
  $Log$
+ Revision 1.13  1998/06/02 19:40:50  evans
+ Changed from using Fgmgr to using X to manage events and file
+ descriptors.  (Fdmgr didn't work on WIN32.)  Uses XtAppMainLoop,
+ XtAppAddInput, and XtAppAddTimeOut instead of Fdmgr routines.
+ Updating areas is now in alCaUpdate, which is called every caDelay ms
+ (currently 100 ms).  Added a general error message routine (errMsg)
+ and an exception handler (alCAException).  Is working on Solaris and
+ WIN32.
+
  Revision 1.12  1998/06/01 18:33:25  evans
  Modified the icon.
 
@@ -42,7 +51,7 @@
  *
  */
 
-#define DEBUG_CALLBACKS 1
+#define DEBUG_CALLBACKS 0
 
 static char *sccsId = "@(#)axRunW.c	1.8\t9/14/93";
 
@@ -168,8 +177,6 @@ static void okCallback(widget,area,cbs)
 
 #include <stdio.h>
 
-#include <fdmgr.h>
-
 #include <Xm/Xm.h>
 #include <Xm/AtomMgr.h>
 #include <Xm/Form.h>
@@ -193,7 +200,7 @@ static void alLoadFont( char *fontname, XFontStruct **font_info);
 static void okCallback( Widget widget, void * area, XmAnyCallbackStruct *cbs);
 static void axExit_callback( Widget w, ALINK *area, XmAnyCallbackStruct *call_data);
 static void axExitArea_callback( Widget w, ALINK *area, XmAnyCallbackStruct *call_data);
-static void blinking(void *unused);
+static void blinking(XtPointer cd, XtIntervalId *id);
 
 #else
 static void alChangeOpenCloseButtonToRemap();
@@ -221,12 +228,9 @@ extern char * alarmStatusString[];
 extern Display *display;
 Widget blinkButton;
 Pixel  blinkPixel;
-extern fdctx *pfdctx;
-fdmgrAlarmId blinkTimeoutId;
-/*
-static struct timeval blinkDelay = {0, 500};
-*/
-static struct timeval blinkDelay = {1, 0};
+
+XtIntervalId blinkTimeoutId = (XtIntervalId)0;
+unsigned long blinkDelay = 1000;     /* ms */
 int blinkCOUNT=0;
 
 
@@ -298,19 +302,25 @@ static unsigned long COLOR(w, name)
 void icon_update()
 {
 
-#if  XmVersion && XmVersion >= 1002
-               XmChangeColor(blinkButton,bg_pixel[0]);
-#else
-               XtVaSetValues(blinkButton,XmNbackground,bg_pixel[0],NULL);
+#if DEBUG_CALLBACKS
+	printf("icon_update\n");
 #endif
 
-  if (blinkTimeoutId) {
-	fdmgr_clear_timeout(pfdctx,(fdmgrAlarmId)blinkTimeoutId);
+#if  XmVersion && XmVersion >= 1002
+    XmChangeColor(blinkButton,bg_pixel[0]);
+#else
+    XtVaSetValues(blinkButton,XmNbackground,bg_pixel[0],NULL);
+#endif
+    
+  /* Remove any existing timer */
+    if (blinkTimeoutId) {
+	XtRemoveTimeOut(blinkTimeoutId);
 	blinkTimeoutId = NULL;
-  }
-
-  blinkTimeoutId = fdmgr_add_timeout(pfdctx,&blinkDelay,
-	blinking,NULL); 
+    }
+    
+  /* Restart the timer */
+    blinkTimeoutId = XtAppAddTimeOut(appContext,blinkDelay,
+      blinking,NULL); 
 }
 
 /******************************************************
@@ -595,18 +605,23 @@ void createMainWindow_callback(w,area,call_data)
   blinking
 ******************************************************/
 
-static void blinking(unused)
-     void *unused;
+static void blinking(XtPointer cd, XtIntervalId *id)
 {
      Display *displayBB;
      static Boolean blinking2State = FALSE;
+     int restart=0;
 
 
 #if DEBUG_CALLBACKS
     {
 	static int n=0;
 
-	printf("blinking: n=%d\n",n++);
+	printf("blinking: n=%d blinking2State=%d psetup.nobeep=%d psetup.beep=%d\n"
+	  " psetup.highestSev=%d blinkPixel=%d bg_pixel[0]=%d\n"
+	  " psetup.highestUnackSevr=%d psetup.beepSevr=%d\n",
+	  n++,blinking2State,psetup.nobeep,psetup.beep,
+	  psetup.highestSevr,blinkPixel,bg_pixel[0],
+	  psetup.highestUnackSevr,psetup.beepSevr);
     }
 #endif
 
@@ -626,14 +641,19 @@ static void blinking(unused)
 #else
                XtVaSetValues(blinkButton,XmNbackground,blinkPixel,NULL);
 #endif
+	       restart=1;
           }
           if (psetup.nobeep == FALSE && psetup.beep == TRUE && 
                (psetup.highestUnackSevr >= psetup.beepSevr)) {
                XBell(displayBB,0);
                XRaiseWindow(displayBB,XtWindow(XtParent(XtParent(blinkButton))));
+	       restart=1;
           }
-          blinkTimeoutId = fdmgr_add_timeout(pfdctx,&blinkDelay,
-	       blinking, NULL); 
+	  restart=1;     /* This all needs to be fixed */
+	  if(restart) {
+	      blinkTimeoutId = XtAppAddTimeOut(appContext,blinkDelay,
+		blinking,NULL); 
+	  }
           blinking2State = TRUE;
 
      } else {
@@ -645,13 +665,9 @@ static void blinking(unused)
                XtVaSetValues(blinkButton,XmNbackground,bg_pixel[0],NULL);
 #endif
           }
-          blinkTimeoutId = fdmgr_add_timeout(pfdctx,&blinkDelay,
-               blinking, NULL); 
+          blinkTimeoutId = XtAppAddTimeOut(appContext,blinkDelay,
+	    blinking,NULL); 
           blinking2State = FALSE;
-#if DEBUG_CALLBACKS
-	printf("          blinkTimeoutId=%d\n",blinkTimeoutId);
-#endif
-
      }
 
      XFlush(displayBB);
@@ -787,18 +803,18 @@ void silenceForever_callback(w,toggleB,call_data)
      Widget toggleB;
      XmAnyCallbackStruct *call_data;
 {
-	psetup.nobeep = psetup.nobeep ^ TRUE;
-	if (psetup.nobeep == TRUE)  {
-		psetup.beep = TRUE;
-		XmToggleButtonGadgetSetState(toggleB,FALSE,FALSE);
-		}
-
-	if (psetup.nobeep == FALSE)  {
-		if (XmToggleButtonGadgetGetState(toggleB)) 
-			psetup.beep = FALSE;
-		else
-		psetup.beep = TRUE; 
-		}
+    psetup.nobeep = psetup.nobeep ^ TRUE;
+    if (psetup.nobeep == TRUE)  {
+	psetup.beep = TRUE;
+	XmToggleButtonGadgetSetState(toggleB,FALSE,FALSE);
+    }
+    
+    if (psetup.nobeep == FALSE)  {
+	if (XmToggleButtonGadgetGetState(toggleB)) 
+	  psetup.beep = FALSE;
+	else
+	  psetup.beep = TRUE; 
+    }
 }
 
 /***************************************************

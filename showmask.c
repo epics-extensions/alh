@@ -1,5 +1,14 @@
 /*
  $Log$
+ Revision 1.8  1998/06/02 19:40:52  evans
+ Changed from using Fgmgr to using X to manage events and file
+ descriptors.  (Fdmgr didn't work on WIN32.)  Uses XtAppMainLoop,
+ XtAppAddInput, and XtAppAddTimeOut instead of Fdmgr routines.
+ Updating areas is now in alCaUpdate, which is called every caDelay ms
+ (currently 100 ms).  Added a general error message routine (errMsg)
+ and an exception handler (alCAException).  Is working on Solaris and
+ WIN32.
+
  Revision 1.7  1998/05/13 19:29:53  evans
  More WIN32 changes.
 
@@ -589,14 +598,14 @@ static void forceMaskApplyCallback(Widget widget,XtPointer calldata,XtPointer cb
      XtFree(buff);
      if (linkType == CHANNEL) {
           alOperatorForcePVChanEvent((CLINK *)link,mask);
-          alProcessCA();
+          ca_poll();
           alLogForcePVChan((CLINK *)link,OPERATOR);
           cdata = (struct chanData *)pgcData;
           if (programId != ALH) cdata->defaultMask = cdata->curMask;
      }
      if (linkType == GROUP) {
           alChangeGroupMask((GLINK *)link,mask);
-          alProcessCA();
+          ca_poll();
           alLogForcePVGroup((GLINK *)link,OPERATOR);
      }
 
@@ -632,14 +641,14 @@ static void forceMaskResetCallback(Widget widget,XtPointer calldata,XtPointer cb
      if (linkType == CHANNEL) {
           cdata = (struct chanData *)link->pgcData;
           alOperatorForcePVChanEvent((CLINK *)link,cdata->defaultMask);
-          alProcessCA();
+          ca_poll();
           alLogResetPVChan((CLINK *)link,OPERATOR);
           cdata = (struct chanData *)pgcData;
           if (programId != ALH) cdata->defaultMask = cdata->curMask;
      }
      if (linkType == GROUP) {
           alResetGroupMask((GLINK *)link);
-          alProcessCA();
+          ca_poll();
           alLogResetPVGroup((GLINK *)link,OPERATOR);
      }
 

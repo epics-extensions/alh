@@ -1,5 +1,14 @@
 /*
  $Log$
+ Revision 1.6  1998/06/02 19:40:51  evans
+ Changed from using Fgmgr to using X to manage events and file
+ descriptors.  (Fdmgr didn't work on WIN32.)  Uses XtAppMainLoop,
+ XtAppAddInput, and XtAppAddTimeOut instead of Fdmgr routines.
+ Updating areas is now in alCaUpdate, which is called every caDelay ms
+ (currently 100 ms).  Added a general error message routine (errMsg)
+ and an exception handler (alCAException).  Is working on Solaris and
+ WIN32.
+
  Revision 1.5  1995/10/20 16:50:36  jba
  Modified Action menus and Action windows
  Renamed ALARMCOMMAND to SEVRCOMMAND
@@ -69,6 +78,7 @@ static String fallbackResources[] = {
          "*alh*background: #b0c3ca",
          "*act*foreground: black",
          "*act*background: #b0c3ca",
+         "*productDescriptionShell*background: #b0c3ca",
          "*form_main.width: 1000",
          "*form_main.height: 600",
          "*form_main.x: 100",
@@ -88,6 +98,8 @@ static String fallbackResources[] = {
          "*sevr.fontList: 7x14",
          "*pushButtonName.fontList: -*-Helvetica-bold-r-*--12-*",
          "*pushButtonGroupName.fontList: -*-Helvetica-bold-r-*--12-*",
+	 "*warningMessage*background: Red",
+	 "*warningMessage*foreground: White",
          (String)NULL
 };
 

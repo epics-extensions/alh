@@ -1,5 +1,14 @@
 /*
  $Log$
+ Revision 1.7  1998/06/02 19:40:47  evans
+ Changed from using Fgmgr to using X to manage events and file
+ descriptors.  (Fdmgr didn't work on WIN32.)  Uses XtAppMainLoop,
+ XtAppAddInput, and XtAppAddTimeOut instead of Fdmgr routines.
+ Updating areas is now in alCaUpdate, which is called every caDelay ms
+ (currently 100 ms).  Added a general error message routine (errMsg)
+ and an exception handler (alCAException).  Is working on Solaris and
+ WIN32.
+
  Revision 1.6  1998/05/12 18:22:42  evans
  Initial changes for WIN32.
 
@@ -252,6 +261,7 @@ char               *programName;
 SLIST              *areaList;
 Display            *display;
 XtAppContext        appContext;
+Widget              topLevelShell;
 Widget              productDescriptionShell;
 Pixmap              ALH_pixmap;
 int                 programId;

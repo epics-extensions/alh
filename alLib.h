@@ -1,5 +1,14 @@
 /*
  $Log$
+ Revision 1.8  1998/06/02 19:40:46  evans
+ Changed from using Fgmgr to using X to manage events and file
+ descriptors.  (Fdmgr didn't work on WIN32.)  Uses XtAppMainLoop,
+ XtAppAddInput, and XtAppAddTimeOut instead of Fdmgr routines.
+ Updating areas is now in alCaUpdate, which is called every caDelay ms
+ (currently 100 ms).  Added a general error message routine (errMsg)
+ and an exception handler (alCAException).  Is working on Solaris and
+ WIN32.
+
  Revision 1.7  1997/08/27 22:06:56  jba
  Fixed alLogConnection comment.
 
@@ -106,7 +115,7 @@ typedef struct countFilter {
         int    curCount;
         int    alarmTime;
         void  *clink;
-        void  *timeoutId;
+        XtIntervalId timeoutId;
         } COUNTFILTER;
  
 /* group/channel data structure */
@@ -352,7 +361,7 @@ void alCaPutSevr(clink)          		Update SevrPVValue
 void alProcessCA()                      	ca_pend_io
 void  alCaSearch(glink)           		Add all channel access searchs
 void  alCaAddEvents(glink)  			Add CA connection events
-static void registerCA(pfdctx,fd,condition)
+static void registerCA(dummy,fd,condition)
 static ClearChannelAccessEvents(glink)          Clear Channel access events
 static void AlarmChangeConnectionEvent(args)    Add alarm not connected event
 static void NewAlarmEvent(args)                 New alarm event call back 
