@@ -1,8 +1,11 @@
 /*
  $Log$
- Revision 1.7  1995/06/01 15:15:18  jba
- Removed some comments
+ Revision 1.8  1995/06/22 19:48:46  jba
+ Added $ALIAS facility.
 
+ * Revision 1.7  1995/06/01  15:15:18  jba
+ * Removed some comments
+ *
  * Revision 1.6  1995/05/31  20:50:37  jba
  * Added test for change in severity before spawn of ALARMCOMMAND
  *
@@ -334,6 +337,7 @@ CLINK *clink;
         if (strcmp(cdata->forcePVName,"-") != 0) free(cdata->forcePVName);
         if (strcmp(cdata->sevrPVName,"-") != 0) free(cdata->sevrPVName);
         if (cdata->command) free(cdata->command);
+        if (cdata->alias) free(cdata->alias);
 
         removeAlarmCommandList(&cdata->alarmCommandList);
 
@@ -386,6 +390,7 @@ struct groupData *gdata;
         if (strcmp(gdata->forcePVName,"-") != 0) free(gdata->forcePVName);
         if (strcmp(gdata->sevrPVName,"-") != 0) free(gdata->sevrPVName);
         if (gdata->command) free(gdata->command);
+        if (gdata->alias) free(gdata->alias);
 
         removeAlarmCommandList(&gdata->alarmCommandList);
 
@@ -589,6 +594,12 @@ GLINK *alCopyGroup(glink)
 		strcpy(gdataNew->command,buff);
 	}
 
+	/* copy alias */
+	buff = gdata->alias;
+	if (buff){
+		gdataNew->alias = (char*)calloc(1,strlen(buff)+1);
+		strcpy(gdataNew->alias,buff);
+	}
 
 	/* copy alarm commands */
     copyAlarmCommandList(&gdata->alarmCommandList,&gdataNew->alarmCommandList);
@@ -700,6 +711,13 @@ CLINK *alCopyChan(clink)
 	if (buff){
 		cdataNew->command = (char*)calloc(1,strlen(buff)+1);
 		strcpy(cdataNew->command,buff);
+	}
+
+	/* copy alias */
+	buff = cdata->alias;
+	if (buff){
+		cdataNew->alias = (char*)calloc(1,strlen(buff)+1);
+		strcpy(cdataNew->alias,buff);
 	}
 
 	/* copy alarm commands */
@@ -1648,7 +1666,10 @@ SNODE *pt;
 char *alAlarmGroupName(link)
      GLINK *link;
 {
-     if (link) return(link->pgroupData->name);
+     if (link){
+         if (link->pgroupData->alias) return(link->pgroupData->alias);
+         else return(link->pgroupData->name);
+     }
      return(0);
 }
 

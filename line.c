@@ -1,8 +1,11 @@
 /*
  $Log$
- Revision 1.3  1995/04/13 19:20:25  jba
- Fixed bug in line mask size and initialization.
+ Revision 1.4  1995/06/22 19:48:53  jba
+ Added $ALIAS facility.
 
+ * Revision 1.3  1995/04/13  19:20:25  jba
+ * Fixed bug in line mask size and initialization.
+ *
  * Revision 1.2  1994/06/22  21:17:39  jba
  * Added cvs Log keyword
  *
@@ -335,6 +338,7 @@ void initLine(line)
           line->unackSevr = 0;
           line->curSevr = 0;
           line->pname = 0;
+          line->alias = 0;
 }
 
 

@@ -1,8 +1,11 @@
 /*
  $Log$
- Revision 1.7  1995/06/09 16:25:08  jba
- Fixed arrow click and double click in group window
+ Revision 1.8  1995/06/22 19:48:52  jba
+ Added $ALIAS facility.
 
+ * Revision 1.7  1995/06/09  16:25:08  jba
+ * Fixed arrow click and double click in group window
+ *
  * Revision 1.6  1995/06/01  15:15:42  jba
  * Fixed area selection bug.
  *
@@ -369,7 +372,7 @@ static void singleClickGroupW_callback(pdata)
 /*
           if ( link->viewCount <= 1 ){
 */
-               displayNewViewTree(area,link,EXPANDCOLLAPSE1);
+               displayNewViewTree(area,(GLINK *)link,EXPANDCOLLAPSE1);
 /*
           }
 */
@@ -611,7 +614,11 @@ void redraw(subWindow,rowNumber)
                 markSelectedWidget(subWindow,NULL);
           line->link = (void *)link;
           line->pname = ((GCLINK *)link)->pgcData->name;
-           
+          if (((GCLINK *)link)->pgcData->alias){
+               line->alias = ((GCLINK *)link)->pgcData->alias;
+          } else {
+               line->alias = ((GCLINK *)link)->pgcData->name;
+          } 
           if(isTreeWindow(subWindow->area,subWindow)) link->lineTreeW = (void *)line;
           else link->lineGroupW = (void *)line;
           if (linkType == GROUP){

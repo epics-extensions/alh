@@ -1,8 +1,11 @@
 /*
  $Log$
- Revision 1.4  1995/05/30 15:55:08  jba
- Added ALARMCOMMAND facility
+ Revision 1.5  1995/06/22 19:48:44  jba
+ Added $ALIAS facility.
 
+ * Revision 1.4  1995/05/30  15:55:08  jba
+ * Added ALARMCOMMAND facility
+ *
  * Revision 1.3  1995/02/28  16:43:27  jba
  * ansi c changes
  *
@@ -505,18 +508,32 @@ static void GetOptionalLine(fp,buf,gclink,caConnect)
 	return;
     }
 
-    if(buf[1]=='A') { /*ALARMCOMMAND*/
-    int len;
+    if(buf[1]=='A') {
+        if(buf[3]=='A') { /*ALARMCOMMAND*/
+            int len;
 
-        sscanf(buf,"%20s",command);
-        len = strlen(command);
-        while( buf[len] == ' ' || buf[len] == '\t') len++;
-        str = (char *)calloc(1,strlen(&buf[len]));
-        strcpy(str,&buf[len]);
-	    if(str[strlen(str)-1] == '\n') str[strlen(str)-1] = '\0'; 
-        addNewAlarmCommand(&gcdata->alarmCommandList,str);
+            sscanf(buf,"%20s",command);
+            len = strlen(command);
+            while( buf[len] == ' ' || buf[len] == '\t') len++;
+            str = (char *)calloc(1,strlen(&buf[len]));
+            strcpy(str,&buf[len]);
+            if(str[strlen(str)-1] == '\n') str[strlen(str)-1] = '\0'; 
+            addNewAlarmCommand(&gcdata->alarmCommandList,str);
+            return;
+        }
 
-    return;
+        if(buf[3]=='I') { /*ALIAS*/
+            int len;
+
+            sscanf(buf,"%20s",command);
+            len = strlen(command);
+            while( buf[len] == ' ' || buf[len] == '\t') len++;
+            gcdata->alias = (char *)calloc(1,strlen(&buf[len])+1);
+            strcpy(gcdata->alias,&buf[len]);
+            if(gcdata->alias[strlen(gcdata->alias)-1] == '\n')
+                 gcdata->alias[strlen(gcdata->alias)-1] = '\0'; 
+            return;
+        }
     }
 
     if(buf[1]=='G') { /*GUIDANCE*/
@@ -622,6 +639,9 @@ struct alarmCommand *alarmCommand;
 			if (gdata->command != NULL)
 			fprintf(fw,"$COMMAND  %s",gdata->command);
 
+			if (gdata->alias != NULL)
+			fprintf(fw,"$ALIAS  %s",gdata->alias);
+
 
 			}
 
@@ -643,6 +663,9 @@ struct alarmCommand *alarmCommand;
 
 			if (gdata->command!=NULL)
 			fprintf(fw,"$COMMAND  %s\n",gdata->command);
+
+			if (gdata->alias != NULL)
+			fprintf(fw,"$ALIAS  %s",gdata->alias);
 
             alarmCommand=(struct alarmCommand *)ellFirst(&gdata->alarmCommandList);
             while (alarmCommand) {
@@ -693,6 +716,9 @@ struct alarmCommand *alarmCommand;
 
 			if (cdata->command != NULL)
 			fprintf(fw,"$COMMAND  %s",cdata->command);
+
+			if (cdata->alias != NULL)
+			fprintf(fw,"$ALIAS  %s",cdata->alias);
 
             alarmCommand=(struct alarmCommand *)ellFirst(&cdata->alarmCommandList);
             while (alarmCommand) {
@@ -822,6 +848,9 @@ static void alConfigTreePrint(fw,glink,treeSym)
             if (gdata->command != NULL)
             fprintf(fw,"%s        COMMAND  %s",treeSym,gdata->command);
 
+            if (gdata->alias != NULL)
+            fprintf(fw,"%s        ALIAS  %s",treeSym,gdata->alias);
+
             alarmCommand=(struct alarmCommand *)ellFirst(&gdata->alarmCommandList);
             while (alarmCommand) {
             fprintf(fw,"%s        ALARMCOMMAND  %s",treeSym, alarmCommand->instructionString);
@@ -874,6 +903,8 @@ static void alConfigTreePrint(fw,glink,treeSym)
             fprintf(fw,"%s        SEVRPV   %-28s\n",treeSym,cdata->sevrPVName);
             if (cdata->command != NULL)
             fprintf(fw,"%s        COMMAND  %s",treeSym,cdata->command);
+            if (cdata->alias != NULL)
+            fprintf(fw,"%s        ALIAS  %s",treeSym,cdata->alias);
 
             alarmCommand=ellFirst(cdata->alarmCommandList);
             while (alarmCommand) {

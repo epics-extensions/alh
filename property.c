@@ -1,8 +1,11 @@
 /*
  $Log$
- Revision 1.5  1995/05/31 20:34:18  jba
- Added name selection and arrow functions to Group window
+ Revision 1.6  1995/06/22 19:48:57  jba
+ Added $ALIAS facility.
 
+ * Revision 1.5  1995/05/31  20:34:18  jba
+ * Added name selection and arrow functions to Group window
+ *
  * Revision 1.4  1995/05/30  15:55:06  jba
  * Added ALARMCOMMAND facility
  *
@@ -93,6 +96,7 @@ struct propWindow {
     Widget forceMaskToggleButtonW[ALARM_NMASK];
     Widget forcePVvalueTextW;
     Widget forcePVresetValueTextW;
+    Widget aliasTextW;
     Widget processTextW;
     Widget alarmProcessTextW;
     Widget guidanceTextW;
@@ -259,6 +263,7 @@ static void propUpdateDialogWidgets(propWindow)
           XtVaSetValues(propWindow->forcePVmaskStringLabelW, XmNlabelString, string, NULL);
           XmTextFieldSetString(propWindow->forcePVvalueTextW,'\0');
           XmTextFieldSetString(propWindow->forcePVresetValueTextW,'\0');
+          XmTextFieldSetString(propWindow->aliasTextW,'\0');
           XmTextFieldSetString(propWindow->processTextW,'\0');
           XmTextFieldSetString(propWindow->alarmProcessTextW,'\0');
           XmTextSetString(propWindow->guidanceTextW, '\0');
@@ -355,6 +360,11 @@ static void propUpdateDialogWidgets(propWindow)
      XmTextFieldSetString(propWindow->forcePVresetValueTextW,buff);
 
      /* ---------------------------------
+     Alias
+     --------------------------------- */
+     XmTextFieldSetString(propWindow->aliasTextW,pgcData->alias);
+
+     /* ---------------------------------
      Related Process Command
      --------------------------------- */
      XmTextFieldSetString(propWindow->processTextW,pgcData->command);
@@ -411,6 +421,7 @@ static void propCreateDialog(area, link, linkType)
      Widget forcePVlabel, severityPVlabel;
      Widget alarmMaskToggleButtonW[ALARM_NMASK];
      Widget forceMaskToggleButtonW[ALARM_NMASK];
+     Widget aliasLabel, aliasTextW;
      Widget processLabel, processTextW;
      Widget alarmProcessLabel, alarmProcessTextW;
      Widget forcePVvalueLabel,forcePVnameTextW, forcePVvalueTextW, forcePVresetValueTextW, forcePVreset;
@@ -734,6 +745,34 @@ static void propCreateDialog(area, link, linkType)
      XtManageChild(rowcol2);
 
      /* ---------------------------------
+     Alias
+     --------------------------------- */
+     aliasTextW = XtVaCreateManagedWidget("aliasTextW",
+          xmTextFieldWidgetClass, form,
+          XmNspacing,                0,
+          XmNmarginHeight,           0,
+          XmNbackground,             textBackground,
+          XmNtopAttachment,          XmATTACH_WIDGET,
+          XmNtopWidget,              frame3,
+          XmNleftAttachment,         XmATTACH_FORM,
+          XmNrightAttachment,        XmATTACH_FORM,
+          NULL);
+
+     XtAddCallback(aliasTextW, XmNactivateCallback,
+          (XtCallbackProc)XmProcessTraversal, (XtPointer)XmTRAVERSE_NEXT_TAB_GROUP);
+
+     string = XmStringCreateSimple("Alias");
+     aliasLabel = XtVaCreateManagedWidget("aliasLabel",
+          xmLabelGadgetClass, form,
+          XmNlabelString,     string,
+          XmNcolumns,                80,
+          XmNbottomAttachment,       XmATTACH_WIDGET,
+          XmNbottomWidget,           aliasTextW,
+          XmNleftAttachment,         XmATTACH_FORM,
+          NULL);
+     XmStringFree(string);
+
+     /* ---------------------------------
      Related Process Command
      --------------------------------- */
      processTextW = XtVaCreateManagedWidget("processTextW",
@@ -742,7 +781,7 @@ static void propCreateDialog(area, link, linkType)
           XmNmarginHeight,           0,
           XmNbackground,             textBackground,
           XmNtopAttachment,          XmATTACH_WIDGET,
-          XmNtopWidget,              frame3,
+          XmNtopWidget,              aliasTextW,
           XmNleftAttachment,         XmATTACH_FORM,
           XmNrightAttachment,        XmATTACH_FORM,
           NULL);
@@ -845,6 +884,7 @@ static void propCreateDialog(area, link, linkType)
      propWindow->forcePVmaskStringLabelW = forcePVmaskStringLabelW;
      propWindow->forcePVvalueTextW = forcePVvalueTextW;
      propWindow->forcePVresetValueTextW = forcePVresetValueTextW;
+     propWindow->aliasTextW = aliasTextW;
      propWindow->processTextW = processTextW;
      propWindow->alarmProcessTextW = alarmProcessTextW;
      propWindow->guidanceTextW = guidanceTextW;
@@ -1001,6 +1041,14 @@ static void propApplyCallback(widget, propWindow, cbs)
      else pgcData->resetPVValue = 0;
 
      /* ---------------------------------
+     Alias
+     --------------------------------- */
+     if (pgcData->alias) free(pgcData->alias);
+     buff = XmTextFieldGetString(propWindow->aliasTextW);
+     if (strlen(buff)) pgcData->alias = buff;
+     else pgcData->alias = 0;
+
+     /* ---------------------------------
      Related Process Command
      --------------------------------- */
      if (pgcData->command) free(pgcData->command);
@@ -1062,6 +1110,11 @@ static void propApplyCallback(widget, propWindow, cbs)
      line = link->lineGroupW;
      if (line && line->link==link ){
           line->pname = ((GCLINK *)link)->pgcData->name;
+          if (((GCLINK *)link)->pgcData->alias){
+              line->alias = ((GCLINK *)link)->pgcData->alias;
+          } else {
+              line->alias = ((GCLINK *)link)->pgcData->name;
+          }
           markSelectedWidget(((ALINK *)propWindow->area)->groupWindow, 0);
           awRowWidgets(line, propWindow->area);
           markSelectedWidget( ((ALINK *)propWindow->area)->groupWindow, ((WLINE *)line->wline)->name);
@@ -1071,6 +1124,11 @@ static void propApplyCallback(widget, propWindow, cbs)
      line = link->lineTreeW;
      if (line && line->link==link ){
           line->pname = ((GCLINK *)link)->pgcData->name;
+          if (((GCLINK *)link)->pgcData->alias){
+              line->alias = ((GCLINK *)link)->pgcData->alias;
+          } else {
+              line->alias = ((GCLINK *)link)->pgcData->name;
+          }
           awRowWidgets(line, propWindow->area);
      }
 
@@ -1205,6 +1263,13 @@ static GLINK *propCopyGroup(glink)
 	glinkNew->viewCount = glink->viewCount;
 	glinkNew->pmainGroup = glink->pmainGroup;
 
+	/* copy alias */
+	buff = gdata->alias;
+	if (buff){
+		gdataNew->alias = (char*)calloc(1,strlen(buff)+1);
+		strcpy(gdataNew->alias,buff);
+	}
+
 	/* copy command */
 	buff = gdata->command;
 	if (buff){
@@ -1286,6 +1351,7 @@ static void propFreeGroup(glink)
      if (strcmp(glink->pgroupData->forcePVName,"-") != 0) free(glink->pgroupData->forcePVName);
      if (strcmp(glink->pgroupData->sevrPVName,"-") != 0) free(glink->pgroupData->sevrPVName);
      if (glink->pgroupData->command) free(glink->pgroupData->command);
+     if (glink->pgroupData->alias) free(glink->pgroupData->alias);
 
      removeAlarmCommandList(&glink->pgroupData->alarmCommandList);
 
@@ -1315,6 +1381,7 @@ static void propFreeChannel(clink)
         if (strcmp(clink->pchanData->forcePVName,"-") != 0) free(clink->pchanData->forcePVName);
         if (strcmp(clink->pchanData->sevrPVName,"-") != 0) free(clink->pchanData->sevrPVName);
         if (clink->pchanData->command) free(clink->pchanData->command);
+        if (clink->pchanData->alias) free(clink->pchanData->alias);
 
         removeAlarmCommandList(&clink->pchanData->alarmCommandList);
 
@@ -1398,6 +1465,11 @@ void propUndo(area, link, linkType, newLink)
      pgcData->resetPVValue = newData->resetPVValue;
 
      /* ---------------------------------
+     Alias
+     --------------------------------- */
+     pgcData->alias = newData->alias;
+
+     /* ---------------------------------
      Related Process Command
      --------------------------------- */
      pgcData->command = newData->command;
@@ -1433,6 +1505,11 @@ void propUndo(area, link, linkType, newLink)
      line = link->lineGroupW;
      if (line && line->link==link ){
           line->pname = ((GCLINK *)link)->pgcData->name;
+          if (((GCLINK *)link)->pgcData->alias){
+              line->alias = ((GCLINK *)link)->pgcData->alias;
+          } else {
+              line->alias = ((GCLINK *)link)->pgcData->name;
+          }
           awRowWidgets(line,area);
      }
 
@@ -1442,6 +1519,11 @@ void propUndo(area, link, linkType, newLink)
      line = link->lineTreeW;
      if (line && line->link==link ){
           line->pname = ((GCLINK *)link)->pgcData->name;
+          if (((GCLINK *)link)->pgcData->alias){
+              line->alias = ((GCLINK *)link)->pgcData->alias;
+          } else {
+              line->alias = ((GCLINK *)link)->pgcData->name;
+          }
           awRowWidgets(line,area);
      }
 

@@ -1,8 +1,11 @@
 /*
  $Log$
- Revision 1.3  1995/05/31 20:34:06  jba
- Added name selection and arrow functions to Group window
+ Revision 1.4  1995/06/22 19:48:50  jba
+ Added $ALIAS facility.
 
+ * Revision 1.3  1995/05/31  20:34:06  jba
+ * Added name selection and arrow functions to Group window
+ *
  * Revision 1.2  1994/06/22  21:16:54  jba
  * Added cvs Log keyword
  *
@@ -464,6 +467,7 @@ static void alhActionCallback(widget, item, cbs)
      GCLINK              *link;
      struct anyLine      *line;
      struct gcData       *gcdata;
+     WLINE               *wline;
 
      XtVaGetValues(widget, XmNuserData, &area, NULL);
 
@@ -495,29 +499,22 @@ static void alhActionCallback(widget, item, cbs)
 
              /* Display Guidance */
              link = (GCLINK *)area->selectionLink;
-             if (area->selectionType == GROUP){
+             line = (struct anyLine *)link->lineTreeW;
+             if (! line || line->pwindow != (void *)area->selectionWindow )
+                  line = (struct anyLine *)link->lineGroupW;
+             if (line){
+                  wline=(WLINE *)line->wline;
                   if (sllFirst(&(link->GuideList))){
-                       GroupGuidance_callback(area->toplevel,(GLINK *)link, cbs);
+                       guidance_callback(wline->guidance,(GCLINK *)link, cbs);
                   }
                   else {
-                       createDialog(area->form_main,XmDIALOG_WARNING,"No guidance for group ",
-                            link->pgcData->name);
+                       createDialog(area->form_main,XmDIALOG_WARNING,"No guidance for ",
+                            link->pgcData->alias);
                   }
              }
              else {
-                  if (area->selectionType == CHANNEL){
-                       if (sllFirst(&(link->GuideList))){
-                            ChannelGuidance_callback(area->toplevel,(CLINK *)link, cbs);
-                       }
-                       else {
-                            createDialog(area->form_main,XmDIALOG_WARNING,"No guidance for channel ",
-                                 link->pgcData->name);
-                       }
-                  }
-                  else {
-                       createDialog(area->form_main,XmDIALOG_WARNING,
-                            "Please select an alarm group or channel first."," ");
-                  }
+                  createDialog(area->form_main,XmDIALOG_WARNING,
+                       "Please select an alarm group or channel first."," ");
              }
              break;
 
@@ -529,8 +526,8 @@ static void alhActionCallback(widget, item, cbs)
                   if (alProcessExists(link)){
                        relatedProcess_callback(widget,link, cbs);
                   } else {
-                       createDialog(area->form_main,XmDIALOG_WARNING,"No related process for: ",
-                            link->pgcData->name );
+                       createDialog(area->form_main,XmDIALOG_WARNING,"No related process for ",
+                            link->pgcData->alias );
                   }
 
              } else {
@@ -896,7 +893,7 @@ void awRowWidgets(line, area)
           nextX = nextX + width + 3;
      
 
-          str = XmStringCreateSimple(line->pname);
+          str = XmStringCreateSimple(line->alias);
           wline->name = XtVaCreateManagedWidget("pushButtonName",
                xmPushButtonWidgetClass,   wline->row_widget,
                XmNmarginHeight,           0,
@@ -946,14 +943,14 @@ void awRowWidgets(line, area)
           wline->guidance = XtVaCreateWidget("G",
                xmPushButtonWidgetClass,   wline->row_widget,
                XmNmarginHeight,           0,
-               XmNuserData,               (XtPointer)area,
+               XmNuserData,               (XtPointer)line->alias,
                XmNx,                      nextX,
                NULL);
 
           if (alGuidanceExists(link)) {
                XtManageChild(wline->guidance);
                XtAddCallback(wline->guidance, XmNactivateCallback, 
-                    (XtCallbackProc)guidance_callback, line);
+                    (XtCallbackProc)guidance_callback, link);
                XtVaGetValues(wline->guidance,XmNwidth,&width,NULL);
                nextX = nextX + width + 3;
           }
@@ -1040,7 +1037,7 @@ void awRowWidgets(line, area)
           XtVaGetValues(wline->sevr,XmNwidth,&width,NULL);
           nextX = nextX + width +3;
 
-          str = XmStringCreateSimple(line->pname);
+          str = XmStringCreateSimple(line->alias);
           XtVaSetValues(wline->name,
                XmNlabelString,            str,
                XmNx,                      nextX,
@@ -1096,9 +1093,10 @@ void awRowWidgets(line, area)
                XtRemoveAllCallbacks(wline->guidance, XmNactivateCallback);
           if (alGuidanceExists(link)) {
                XtVaSetValues(wline->guidance,XmNx,nextX,NULL);
+               XtVaSetValues(wline->guidance,XmNuserData,line->alias,NULL);
                XtManageChild(wline->guidance);
                XtAddCallback(wline->guidance, XmNactivateCallback, 
-                    (XtCallbackProc)guidance_callback, line);
+                    (XtCallbackProc)guidance_callback, link);
                XtVaGetValues(wline->guidance,XmNwidth,&width,NULL);
                nextX = nextX + width + 3;
           } else {

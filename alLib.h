@@ -1,8 +1,11 @@
 /*
  $Log$
- Revision 1.3  1995/05/30 15:51:07  jba
- Added ALARMCOMMAND facility
+ Revision 1.4  1995/06/22 19:48:48  jba
+ Added $ALIAS facility.
 
+ * Revision 1.3  1995/05/30  15:51:07  jba
+ * Added ALARMCOMMAND facility
+ *
  * Revision 1.2  1994/06/22  21:16:38  jba
  * Added cvs Log keyword
  *
@@ -89,6 +92,7 @@ struct gcData {
 	short forcePVValue;	/* PV value for force mask */	
 	short resetPVValue;	/* PV value for reset mask */
 	MASK forcePVMask;	/* force Mask */
+	char *alias;	 	/* alias text */
 	char *command;	 	/* command text */
 	ELLLIST alarmCommandList;	/* alarm command list */
 	short curSevr;		/* current severity */
@@ -107,6 +111,7 @@ struct groupData {
 	short forcePVValue;		/* PV value for force mask */	
 	short resetPVValue;		/* PV value for reset mask */
 	MASK forcePVMask;		/* force Mask */
+	char *alias;	 	/* alias text */
 	char *command;	 		/* command text */
 	ELLLIST alarmCommandList;	/* alarm command list */
 	short curSevr;			/* current highestseverity from CA */
@@ -129,6 +134,7 @@ struct chanData {
 	short forcePVValue;		/* PV value for force mask */
 	short resetPVValue;		/* PV value for reset mask */
 	MASK forcePVMask;		/* forced mask setting */
+	char *alias;	 	/* alias text */
 	char *command;			/* command text */	
 	ELLLIST alarmCommandList;	/* alarm command list */
 	short curSevr;			/* channel severity from CA */
