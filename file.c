@@ -1,8 +1,11 @@
 /*
  $Log$
- Revision 1.2  1994/06/22 21:17:28  jba
- Added cvs Log keyword
+ Revision 1.3  1995/01/09 19:38:29  jba
+ For loop changed to while loop wo HP compile would work.
 
+ * Revision 1.2  1994/06/22  21:17:28  jba
+ * Added cvs Log keyword
+ *
  */
 
 static char *sccsId = "@(#)file.c	1.14\t2/3/94";
@@ -178,13 +181,13 @@ char *shortname;
 
 	len = strlen(name);
 	shortname = name;
-	for (i=len;i=0;i--) {
-		if (*(name+i) == '/'){
-	        shortname = name+i+1;
+    while (len != 0) {
+        if(*(name+len)== '/') {
+            shortname = name+len+1;
             break;
-          }
-		}
-	return(shortname);
+        }
+        len--;
+    }
 }
 
 /******************************************************
