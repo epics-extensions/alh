@@ -571,7 +571,7 @@ void alNewEvent(int stat,int sevr,int acks,int ackt,char *value,CLINK *clink)
 	if (_global_flag) {
 		/* NOTE: ackt and curMask.AckT have opposite meaning */
 		newAckt = (ackt+1)%2; 
-		if (cdata->unackSevr != acks) {
+		if (cdata->unackSevr != acks && cdata->curMask.Disable == 0) {
 			alSetUnackSevChan(clink,acks);
 		}
 		if (cdata->curMask.AckT != newAckt) {
@@ -696,7 +696,7 @@ CLINK *clink,time_t timeofday)
 	/* 
 	 * disabled alarm special handling 
 	 */
-	if (mask.Disable ==1 ) return;
+	if (mask.Disable == 1) return;
 
 	/*
 	 * update current alarm history strings
@@ -762,7 +762,7 @@ CLINK *clink,time_t timeofday)
 	/*
 	 * alarm not required to acknowledge
 	 */
-	if ( mask.Ack == 1) return;
+	if (mask.Ack == 1) return;
 
 	/*
 	 * update unackSev[] and unackSevr of all parent groups
@@ -921,7 +921,7 @@ static void alUpdateGroupMask(CLINK *clink,int index,int op)
 			gdata = parent->pgroupData;
 			if (gdata->mask[index] > 0) gdata->mask[index]--;
 			else 
-				errMsg("Error:alUpdateGroupMask, mask[%d] < 1",index);
+				errMsg("Error:alUpdateGroupMask, mask[%d] < 1\n",index);
 			parent->modified = 1;
 			parent = parent->parent;
 		}
@@ -1021,7 +1021,7 @@ void alChangeChanMask(CLINK *clink,MASK mask)
 				}
 			}
 */
-			if (cdata->curMask.Disable  == 0 && cdata->curSevr > 0) {
+			if (cdata->curMask.Disable == 0 && cdata->curSevr > 0) {
 				saveSevr = cdata->curSevr;
 				cdata->curSevr = NO_ALARM;
 				alNewAlarmProcess(cdata->curStat,saveSevr,cdata->value,clink,time(0L));
