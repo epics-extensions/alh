@@ -1,8 +1,11 @@
 /*
  $Log$
- Revision 1.2  1994/06/22 21:17:44  jba
- Added cvs Log keyword
+ Revision 1.3  1995/06/22 19:46:52  jba
+ Started cleanup of file.
 
+ * Revision 1.2  1994/06/22  21:17:44  jba
+ * Added cvs Log keyword
+ *
  */
 
 static char *sccsId = "@(#)mask.c	1.4\t9/9/93";
@@ -48,20 +51,6 @@ static char *sccsId = "@(#)mask.c	1.4\t9/9/93";
 #include <axArea.h>
 #include <ax.h>
 
-extern struct setup psetup;
-
-/* external routines
-extern void xs_ok_callback();
-extern XmString xs_str_array_to_xmstr();
-extern void xs_help_callback();
-extern Widget createShowChanMasksDialog();
-extern Widget createForcePVChanDialog();
-extern Widget createForceCMaskDialog();
-*/
-
-
-
-extern int DEBUG;
 
 /*
 ******************************************************************
