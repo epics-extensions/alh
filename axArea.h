@@ -83,6 +83,7 @@ typedef struct  areaLink{
 	void             *forcePVWindow;
 	void             *maskWindow;
 	void             *beepSevrWindow;
+	void             *noAckWindow;
 	/* ----- Current Selection groupLine info ----- */
 	void             *selectionWindow;
 	void             *selectionLink;
