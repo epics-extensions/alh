@@ -368,7 +368,7 @@ int caConnect,struct mainGroup *pmainGroup)
 	*pclink = clink;
 
 	cdata->curSevr=ERROR_STATE;
-	cdata->curStat=NOT_CONNECTED;
+	cdata->curStat=NO_ALARM;
 	while(parent_link!=NULL) {
 		parent_link->pgroupData->curSev[ERROR_STATE] ++;
 		parent_link->pgroupData->unackSev[NO_ALARM] ++;
