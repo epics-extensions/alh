@@ -97,6 +97,7 @@ struct gcData {
 	short curSevr;		/* current severity */
 	short unackSevr;	/* highest unack severity */
 	short unackBeepSevr;  	/* highest unack severity for beeping */
+	short highestBeepSevr;  /* highest beep severity */
 	chid sevrchid;			/* group sevrPV channel id */
 	short beepSevr;		/* beep severity */
 	XtIntervalId noAckTimerId;
@@ -113,11 +114,13 @@ struct groupData {
 	short curSevr;			/* current highestseverity from CA */
 	short unackSevr;		/* highest unack severity */
 	short unackBeepSevr;  	/* highest unack severity for beeping */
+	short highestBeepSevr;  /* highest beep severity */
 	chid sevrchid;			/* group sevrPV channel id */
 	short beepSevr;		/* beep severity */
 	XtIntervalId noAckTimerId;
 	char *treeSym;                  /* tree symbols for treeWindow display */
 	int mask[ALARM_NMASK];	/* no. of channels of masked types*/
+	int beepSev[ALH_ALARM_NSEV]; /* channels of different beep severity */
 	int curSev[ALH_ALARM_NSEV];  	/* channels of different severity */
 	int unackSev[ALH_ALARM_NSEV];  	/* channels of unacknowledged sevr */
 	int unackBeepSev[ALH_ALARM_NSEV];  	/* channels of unacknowledged sev >= beep sevr */
@@ -134,6 +137,7 @@ struct chanData {
 	short curSevr;			/* channel severity from CA */
 	short unackSevr;		/* highest unack severity */
 	short unackBeepSevr;  	/* highest unack severity for beeping */
+	short highestBeepSevr;  /* highest beep severity */
 	chid sevrchid;		 	/* sevrPV channel id */
 	short beepSevr;		/* beep severity */
 	XtIntervalId noAckTimerId;
