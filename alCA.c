@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.17  1998/08/05 18:09:41  jba
+ Do not call invokeDialogUpdate for new alarms.
+
  Revision 1.16  1998/06/09 17:10:48  evans
  Fixed a typo in the exception handler.
 
@@ -307,7 +310,7 @@ static void alCaUpdate(XtPointer cd, XtIntervalId *id)
 	    
 	    if ( area->pmainGroup->modified ){
 		if ( area->mapped && area->managed){
-		    invokeDialogUpdate(area);
+		    /*invokeDialogUpdate(area); */
 		    invokeSubWindowUpdate(area->treeWindow);
 		    invokeSubWindowUpdate(area->groupWindow);
 		}
