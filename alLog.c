@@ -157,7 +157,7 @@ int sev,int unackSevr,int ackT)
 
 #ifdef CMLOG
    char cm_text[80];
-   if (use_CMLOG_alarm && masterFlag) {
+   if (use_CMLOG_alarm && masterFlag && alhArea && alhArea->blinkString) {
 	    if (_global_flag) {
 		    sprintf(cm_text, "(%s / %s)",
 		    alhAlarmSeverityString[unackSevr],
@@ -177,7 +177,7 @@ int sev,int unackSevr,int ackT)
 		    alhAlarmSeverityString[sev],
 		    cdata->name,
 		    cm_text,
-		    (alhArea && alhArea->blinkString)?alhArea->blinkString:"unknown",
+		    alhArea->blinkString,
 		    cdata->value);
    }
 #endif
@@ -209,7 +209,7 @@ int sev,int unackSevr,int ackT)
 void alLogConnection(const char *pvname,const char *ind)
 {
 #ifdef CMLOG
-   if (use_CMLOG_alarm && masterFlag) {
+   if (use_CMLOG_alarm && masterFlag && alhArea && alhArea->blinkString) {
 	cmlog_logmsg(cmlog,
 	    0,			/* verbosity */
 	    0,			/* dummy severity */
@@ -221,7 +221,7 @@ void alLogConnection(const char *pvname,const char *ind)
 	    "ERROR",
 	    pvname,
 	    ind,
-	    (alhArea && alhArea->blinkString)?alhArea->blinkString:"unknown");
+	    alhArea->blinkString);
    }
 #endif
 
@@ -238,10 +238,11 @@ void alLogAckChan(struct anyLine *line)
     if (use_CMLOG_opmod) {
 	char cm_text[80];
         if (_global_flag) {
-		sprintf(cm_text, "Global Ack Channel (%s / %s)",
+		sprintf(cm_text, "Global Ack Channel (%s)",
 		    alhAlarmSeverityString[line->unackSevr]);
 	} else {
-		sprintf(cm_text, "Local Ack Channel ( / )");
+		sprintf(cm_text, "Local Ack Channel (%s)",
+		    alhAlarmSeverityString[line->unackSevr]);
 	}
 
 	cmlog_logmsg(cmlog,
