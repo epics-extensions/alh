@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.6  1997/09/12 19:31:19  jba
+ Change to get cut/paste clipboard working.
+
  Revision 1.5  1997/09/09 22:21:19  jba
  Changed Help menu and fixed Properties Window.
 
@@ -164,10 +167,12 @@ Widget actCreateMenu(parent, user_data)
          { "Paste",      &xmPushButtonGadgetClass, 'P', "Shift<Key>Insert<Key>", "Shift+Ins",
              actEditCallback, (XtPointer)MENU_EDIT_PASTE,  (MenuItem *)NULL },
 */
+/*   UNDO DOES NOT WORK YET
          { "Undo",       &xmPushButtonGadgetClass, 'U', NULL, NULL,
              actEditCallback, (XtPointer)MENU_EDIT_UNDO,   (MenuItem *)NULL },
          { "",           &xmSeparatorGadgetClass, '\0', NULL, NULL,
              NULL,        NULL,                        (MenuItem *)NULL },
+*/
          { "Cut",        &xmPushButtonGadgetClass, 't', NULL, NULL,
              actEditCallback, (XtPointer)MENU_EDIT_CUT,    (MenuItem *)NULL },
          { "Copy",       &xmPushButtonGadgetClass, 'C', NULL, NULL,
@@ -210,8 +215,10 @@ Widget actCreateMenu(parent, user_data)
      };
      
      static MenuItem help_menu[] = {
+/* HELP NOT IMPLEMENTED YET
          { "Help Topics",       &xmPushButtonGadgetClass, 'H', NULL, NULL,
              actHelpCallback, (XtPointer)MENU_HELP_TOPICS,      (MenuItem *)NULL },
+*/
 #if  XmVersion && XmVersion >= 1002
          { "About ALH",         &xmPushButtonGadgetClass, 'A', NULL, NULL,
              actHelpCallback, (XtPointer)MENU_HELP_ABOUT, (MenuItem *)NULL },
@@ -316,7 +323,8 @@ static void actFileCallback(widget, item, cbs)
  
         case MENU_FILE_SAVE:
 
-             fileSetupCallback(area->form_main,FILE_SAVE,(void *)cbs);
+             alLogSetupSaveConfigFile(psetup.configFile);
+             alWriteConfig(psetup.configFile,area->pmainGroup);
              break;
 
         case MENU_FILE_ALH:
@@ -433,13 +441,6 @@ static void actEditCallback(widget, item, cbs)
              
              if (checkActiveSelection(area) ) break;
 
-             if (checkActiveSelectionMainGroup(area) ) break;
-
-             editClipboardGet(&link, &linkType);
-
-             editUndoSet((GCLINK *)alCopyGroup((GLINK *)link),
-                  linkType, NULL, MENU_EDIT_UNDO_UPDATE_CLIPBOARD, DELETE);
-
              link = (GCLINK *)area->selectionLink;
              linkType = area->selectionType;
 
@@ -453,7 +454,7 @@ static void actEditCallback(widget, item, cbs)
 
              editClipboardGet(&link, &linkType);
 
-             editPasteLink(area,link,linkType);
+             if (link) editPasteLink(area,link,linkType);
 
              break;
 
