@@ -1,95 +1,23 @@
-/*
- $Log$
- Revision 1.8  1998/07/07 20:51:01  jba
- Added alh versioning.
+/* alh.c */
 
- Revision 1.7  1998/06/02 19:40:47  evans
- Changed from using Fgmgr to using X to manage events and file
- descriptors.  (Fdmgr didn't work on WIN32.)  Uses XtAppMainLoop,
- XtAppAddInput, and XtAppAddTimeOut instead of Fdmgr routines.
- Updating areas is now in alCaUpdate, which is called every caDelay ms
- (currently 100 ms).  Added a general error message routine (errMsg)
- and an exception handler (alCAException).  Is working on Solaris and
- WIN32.
+/************************DESCRIPTION***********************************
+  Alarm Handler
+**********************************************************************/
 
- Revision 1.6  1998/06/01 18:33:24  evans
- Modified the icon.
-
- Revision 1.5  1998/05/13 19:29:48  evans
- More WIN32 changes.
-
- Revision 1.4  1995/10/20 16:50:05  jba
- Modified Action menus and Action windows
- Renamed ALARMCOMMAND to SEVRCOMMAND
- Added STATCOMMAND facility
- Added ALIAS facility
- Added ALARMCOUNTFILTER facility
- Make a few bug fixes.
-
- * Revision 1.3  1994/09/14  21:11:13  jba
- * Modified  to work with new CONFIG files
- *
- * Revision 1.2  1994/06/22  21:16:45  jba
- * Added cvs Log keyword
- *
- */
+static char *sccsId = "@@(#) $Id$";
 
 #define DEBUG_CALLBACKS 0
-
-static char *sccsId = "@(#)alh.c	1.23\t12/15/93";
-
-/* alh.c */
-/*  alh  -  Alarm Handler
- *
- *      Author: Ben-chin Cha 
- *      Date:   12-20-90
- * 
- *      Experimental Physics and Industrial Control System (EPICS)
- *
- *      Copyright 1991, the Regents of the University of California,
- *      and the University of Chicago Board of Governors.
- *
- *      This software was produced under  U.S. Government contracts:
- *      (W-7405-ENG-36) at the Los Alamos National Laboratory,
- *      and (W-31-109-ENG-38) at Argonne National Laboratory.
- *
- *      Initial development by:
- *              The Controls and Automation Group (AT-8)
- *              Ground Test Accelerator
- *              Accelerator Technology Division
- *              Los Alamos National Laboratory
- *
- *      Co-developed with
- *              The Controls and Computing Group
- *              Accelerator Systems Division
- *              Advanced Photon Source
- *              Argonne National Laboratory
- *
- * Modification Log:
- * -----------------
- *              Argonne National Laboratory
- *
- * Modification Log:
- * -----------------
- * .01  08-22-91        bkc     Change XtMainLoop to call awInvokeCallback
- *				when there is no Xevent or CA event 
- * .02  mm-dd-yy        bkc	Add the option of printing # of alarms detected  
- * .03  02-16-93        jba     Rewrote alh.c for new user interface
- * .04  12-10-93        jba     Moved commandline options handling to file.c
- * .nn  mm-dd-yy        iii     Comment
- *      ...
- */
 
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <alh.h>
-#include <epicsVersion.h>
-#include <version.h>
-#include <fallback.h>
-#include <sllLib.h>
-#include <axArea.h>
-#include <ax.h>
+#include "alh.h"
+#include "epicsVersion.h"
+#include "version.h"
+#include "fallback.h"
+#include "sllLib.h"
+#include "axArea.h"
+#include "ax.h"
 
 /* global variables */
 int DEBUG = 0;
@@ -99,56 +27,55 @@ char alhVersionString[60];
 extern XtAppContext appContext;
 extern Display *display;
 
-
+/* externals */
 extern Widget createAndPopupProductDescriptionShell();
+
 
 /******************************************************
   main
 ******************************************************/
 
-void main(argc, argv)
-     int argc;
-     char *argv[];
+void main(int argc,char *argv[])
 {
 
-     /* WIN32 initialization */
+	/* WIN32 initialization */
 #ifdef WIN32	
-     HCLXmInit();
+	HCLXmInit();
 #endif
 
-     /*  Xt initialize the application */
-     topLevelShell = XtAppInitialize(&appContext, "Alarm", NULL, 0, &argc, argv,
-        fallbackResources, NULL, 0);
+	/*  Xt initialize the application */
+	topLevelShell = XtAppInitialize(&appContext, "Alarm", NULL, 0, &argc, argv,
+	    fallbackResources, NULL, 0);
 
-     /*  check display  */
-     display = XtDisplay(topLevelShell);
-     if (display == NULL) {
-           XtWarning("cannot open display");
-           exit(-1);
-     }
+	/*  check display  */
+	display = XtDisplay(topLevelShell);
+	if (display == NULL) {
+		XtWarning("cannot open display");
+		exit(-1);
+	}
 
-     XtAppSetWarningMsgHandler(appContext,
-           (XtErrorMsgHandler)trapExtraneousWarningsHandler);
+	XtAppSetWarningMsgHandler(appContext,
+	    (XtErrorMsgHandler)trapExtraneousWarningsHandler);
 
-     /* setup area and configuration */
-     fileSetupInit(topLevelShell,argc,argv);
+	/* setup area and configuration */
+	fileSetupInit(topLevelShell,argc,argv);
 
-     sprintf(alhVersionString,"ALH Version %d.%d.%d  (%s)",
-        ALH_VERSION,ALH_REVISION,ALH_MODIFICATION,EPICS_VERSION_STRING);
+	sprintf(alhVersionString,"ALH Version %d.%d.%d  (%s)",
+	    ALH_VERSION,ALH_REVISION,ALH_MODIFICATION,EPICS_VERSION_STRING);
 
-     /* display alh credits window */
+	/* display alh credits window */
 #if  IWantGreetings
-    productDescriptionShell = createAndPopupProductDescriptionShell( appContext,
-          topLevelShell,
-          "  ALH  ", NULL, ALH_pixmap,
-          "\nAlarm Handler\n Alarm Configuration Tool\n",NULL,
-          ALH_CREDITS_STRING ,
-          alhVersionString,
-          NULL, -1,-1,3);
+	productDescriptionShell = createAndPopupProductDescriptionShell( appContext,
+	    topLevelShell,
+	    "  ALH  ", NULL, ALH_pixmap,
+	    "\nAlarm Handler\n Alarm Configuration Tool\n",NULL,
+	    ALH_CREDITS_STRING ,
+	    alhVersionString,
+	    NULL, -1,-1,3);
 #else
-     productDescriptionShell = 0;
+	productDescriptionShell = 0;
 #endif
 
-   /* Start main loop */
-     XtAppMainLoop(appContext);
+	/* Start main loop */
+	XtAppMainLoop(appContext);
 }

@@ -55,7 +55,6 @@ awAlh_CFLAGS += -DALH_HELP_URL="\"http://www.aps.anl.gov/asd/controls/epics/Epic
 alh_SRCS += acknowledge.c
 alh_SRCS += alCaCommon.c
 alh_SRCS += alConfig.c
-alh_SRCS += alDebug.c
 alh_SRCS += alFilter.c
 alh_SRCS += alInitialize.c
 alh_SRCS += alLib.c
@@ -70,7 +69,6 @@ alh_SRCS += axArea.c
 alh_SRCS += axRunW.c
 alh_SRCS += axSubW.c
 alh_SRCS += browser.cc
-alh_SRCS += clipboardOps.c
 alh_SRCS += current.c
 alh_SRCS += dialog.c
 alh_SRCS += file.c
@@ -84,7 +82,6 @@ alh_SRCS += property.c
 alh_SRCS += scroll.c
 alh_SRCS += showmask.c
 alh_SRCS += sllLib.c
-alh_SRCS += testalarm.c
 
 alh_printer_SRCS = printer.c
 

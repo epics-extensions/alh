@@ -1,122 +1,10 @@
-/*
- $Log$
- Revision 1.22  1999/01/13 21:41:43  jba
- Added CDEV and made Ca changes for adding CDEV.
+/* file.c */
 
- Revision 1.21  1998/09/01 20:26:03  jba
- Removed unused variables.
+/************************DESCRIPTION***********************************
+  File contains file handling routines
+**********************************************************************/
 
- Revision 1.20  1998/08/07 22:29:44  jba
- Alh now quits when invalid config file is specified on command line.
-
- Revision 1.19  1998/08/05 18:20:10  jba
- Added silenceOneHour button.
- Moved silenceForever button to Setup menu.
- Added logging for operator silence changes.
-
- Revision 1.18  1998/07/23 18:06:43  jba
- Exit routine changes.
-
- Revision 1.17  1998/07/16 18:30:56  jba
- not error to start alh with no filename on command line.
-
- Revision 1.16  1998/06/22 18:42:14  jba
- Merged the new alh-options created at DESY MKS group:
-  -D Disable Writing, -S Passive Mode, -T AlarmLogDated, -P Printing
-
- Revision 1.15  1998/06/22 17:49:29  jba
- Bug fixes for command line option handling.
-
- Revision 1.14  1998/06/02 19:40:51  evans
- Changed from using Fgmgr to using X to manage events and file
- descriptors.  (Fdmgr didn't work on WIN32.)  Uses XtAppMainLoop,
- XtAppAddInput, and XtAppAddTimeOut instead of Fdmgr routines.
- Updating areas is now in alCaUpdate, which is called every caDelay ms
- (currently 100 ms).  Added a general error message routine (errMsg)
- and an exception handler (alCAException).  Is working on Solaris and
- WIN32.
-
- Revision 1.13  1998/06/01 18:33:26  evans
- Modified the icon.
-
- Revision 1.12  1998/05/13 19:29:49  evans
- More WIN32 changes.
-
- Revision 1.11  1998/05/12 18:22:48  evans
- Initial changes for WIN32.
-
- Revision 1.10  1997/09/12 19:38:27  jba
- Bug fixes for Save and SaveAs.
-
- Revision 1.9  1997/04/17 18:01:14  jba
- Added calls to free allocated memory.
-
- Revision 1.8  1997/01/09 14:38:19  jba
- Added alarmLog circular file facility.
-
- Revision 1.7  1996/08/19 13:53:39  jba
- Minor usage and mask printed output changes.
-
- Revision 1.6  1995/11/13 22:31:29  jba
- Added beepseverity command, ansi changes and other changes.
-
- * Revision 1.5  1995/10/20  16:50:38  jba
- * Modified Action menus and Action windows
- * Renamed ALARMCOMMAND to SEVRCOMMAND
- * Added STATCOMMAND facility
- * Added ALIAS facility
- * Added ALARMCOUNTFILTER facility
- * Make a few bug fixes.
- *
- * Revision 1.4  1995/05/30  16:04:02  jba
- * Removed references to ? as a valid input param since they do NOT work.
- *
- * Revision 1.3  1995/01/09  19:38:29  jba
- * For loop changed to while loop wo HP compile would work.
- *
- * Revision 1.2  1994/06/22  21:17:28  jba
- * Added cvs Log keyword
- *
- */
-
-static char *sccsId = "@(#)file.c	1.14\t2/3/94";
-
-/* file.c 
- *
- *      Author: Ben-chin Cha
- *      Date:   12-20-90
- *
- *      Experimental Physics and Industrial Control System (EPICS)
- *
- *      Copyright 1991, the Regents of the University of California,
- *      and the University of Chicago Board of Governors.
- *
- *      This software was produced under  U.S. Government contracts:
- *      (W-7405-ENG-36) at the Los Alamos National Laboratory,
- *      and (W-31-109-ENG-38) at Argonne National Laboratory.
- *
- *      Initial development by:
- *              The Controls and Automation Group (AT-8)
- *              Ground Test Accelerator
- *              Accelerator Technology Division
- *              Los Alamos National Laboratory
- *
- *      Co-developed with
- *              The Controls and Computing Group
- *              Accelerator Systems Division
- *              Advanced Photon Source
- *              Argonne National Laboratory
- *
- * Modification Log:
- * -----------------
- * .01  02-16-93        jba     Added files for new user interface
- * .02  12-10-93        jba     Added new command line options and reorganized code
- * .03  02-06-94        jba     Fixed file handling when file open errors on startup
- * .nn  mm-dd-yy        iii     Comment
- *      ...
- */
-
-#define INCerrMdefh
+static char *sccsId = "@(#) $Id$";
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -128,18 +16,23 @@ static char *sccsId = "@(#)file.c	1.14\t2/3/94";
 
 #include <Xm/Xm.h>
 
-#include <alh.h>
-#include <alLib.h>
-#include <axArea.h>
-#include <ax.h>
+#include "alh.h"
+#include "alLib.h"
+#include "axArea.h"
+#include "ax.h"
+
+/* default  file names */
+#define DEFAULT_CONFIG  "ALH-default.alhConfig"
+#define DEFAULT_ALARM   "ALH-default.alhAlarm"
+#define DEFAULT_OPMOD   "ALH-default.alhOpmod"
 
 int _read_only_flag=0; /* Read-only flag. Albert */
 int _passive_flag=0;   /* Passive flag. Albert */
 int _tm_day_old;       /* Day-variable for dated. Albert */
 int _printer_flag=0;   /* Printer flag. Albert */
-  char printerHostname[120];
-  int  printerPort;
-  char printerColorModel[120];
+char printerHostname[120];
+int  printerPort;
+char printerColorModel[120];
 int _time_flag=0;      /* Dated flag. Albert */
 
 extern int DEBUG;
@@ -161,7 +54,8 @@ struct command_line_data
 	char* opModFile;
 	int alarmLogFileMaxRecords;
 };
-static struct command_line_data commandLine = { NULL,NULL,NULL,NULL,NULL,0};
+static struct command_line_data commandLine = { 
+	NULL,NULL,NULL,NULL,NULL,0};
 
 #define PARM_DEBUG			0
 #define PARM_ACT			1
@@ -184,399 +78,377 @@ struct parm_data
 };
 
 static struct parm_data ptable[] = {
-	{ "-v",		2,	PARM_DEBUG },
-	{ "-c",		2,	PARM_ACT },
-	{ "-f",		2,	PARM_ALL_FILES_DIR },
-	{ "-l",		2,	PARM_LOG_DIR },
-	{ "-a",		2,	PARM_ALARM_LOG_FILE },
-	{ "-o",		2,	PARM_OPMOD_LOG_FILE },
-	{ "-m",		2,	PARM_ALARM_LOG_MAX },
-	{ "-P",		2,	PARM_PRINTER },
-	{ "-T",		2,	PARM_DATED },
-	{ "-S",		2,	PARM_PASSIVE },
-	{ "-D",		2,	PARM_READONLY },
-	{ "-help",	5,	PARM_HELP },
-        { NULL,		-1,     -1 }
-};
+		{ "-v",		2,	PARM_DEBUG },
+		{ "-c",		2,	PARM_ACT },
+		{ "-f",		2,	PARM_ALL_FILES_DIR },
+		{ "-l",		2,	PARM_LOG_DIR },
+		{ "-a",		2,	PARM_ALARM_LOG_FILE },
+		{ "-o",		2,	PARM_OPMOD_LOG_FILE },
+		{ "-m",		2,	PARM_ALARM_LOG_MAX },
+		{ "-P",		2,	PARM_PRINTER },
+		{ "-T",		2,	PARM_DATED },
+		{ "-S",		2,	PARM_PASSIVE },
+		{ "-D",		2,	PARM_READONLY },
+		{ "-help",	5,	PARM_HELP },
+	        { NULL,		-1,     -1 }};
 
-void saveConfigFile_callback(Widget widget,char *filename,XmAnyCallbackStruct *cbs);
-void printUsage(char *);
-
+/* forward declarations */
+static void saveConfigFile_callback(Widget widget,char *filename,
+XmAnyCallbackStruct *cbs);
+static void printUsage(char *);
+static void fileSetup(char *filename,ALINK *area,int fileType,int programId,
+Widget widget);
+static int checkFilename(char *filename,int fileType);
+static int getCommandLineParms(int argc, char** argv);
 
 /***************************************************
  exit and quit application
 ***************************************************/
-
-void exit_quit(w, area, call_data)
-     Widget          w;
-     ALINK          *area;
-     XmAnyCallbackStruct *call_data;
+void exit_quit(Widget w,ALINK *area,XmAnyCallbackStruct *call_data)
 {
-     GLINK *proot=0;
+	GLINK *proot=0;
 
-     alLogExit();
-     fclose(fl);
-     fclose(fo);
-     if (area && area->pmainGroup) proot = area->pmainGroup->p1stgroup;
+	alLogExit();
+	fclose(fl);
+	fclose(fo);
+	if (area && area->pmainGroup) proot = area->pmainGroup->p1stgroup;
 
-     /* 
-      * note: if pmainGroup or proot == NULL then probably never even fired up initial
-      *	 configuration file and ca...
-      */
-     if (proot) {
+	/* 
+	      * note: if pmainGroup or proot == NULL then probably never even fired up initial
+	      *	 configuration file and ca...
+	      */
+	if (proot) {
 
-          /* cancel all the channel access requests */
-          if (programId==ALH) {
-               alCaCancel((SLIST *)proot);
-               alCaStop();
-          }
+		/* cancel all the channel access requests */
+		if (programId==ALH) {
+			alCaCancel((SLIST *)proot);
+			alCaStop();
+		}
 
-          /* delete all the subgroups of proot & free proot */
-          alDeleteGroup(proot);
+		/* delete all the subgroups of proot & free proot */
+		alDeleteGroup(proot);
 
-     }
+	}
 
-     if (programId==ACT) editClipboardSet(0,0);
-     if (area  && area->pmainGroup) free(area->pmainGroup);
-     if (area) free(area);
-     XtDestroyWidget(topLevelShell);
-     exit(0);
+	if (programId==ACT) editClipboardSet(0,0);
+	if (area  && area->pmainGroup) free(area->pmainGroup);
+	if (area) free(area);
+	XtDestroyWidget(topLevelShell);
+	exit(0);
 }
-
 
 /******************************************************
  shorten file name without path
 ******************************************************/
-
-char *shortfile(name)
-char *name;
+char *shortfile(char *name)
 {
-int len;
-char *shortname;
+	int len;
+	char *shortname;
 
 	len = strlen(name);
 	shortname = name;
-    while (len != 0) {
-        if(*(name+len)== '/') {
-            shortname = name+len+1;
-            break;
-        }
-        len--;
-    }
-    return shortname;
+	while (len != 0) {
+		if(*(name+len)== '/') {
+			shortname = name+len+1;
+			break;
+		}
+		len--;
+	}
+	return shortname;
 }
 
 /******************************************************
   checkFilename
 ******************************************************/
-
-int checkFilename(filename,fileType)
-     char      *filename;
-     int        fileType;
+static int checkFilename(char *filename,int fileType)
 {
-     FILE *tt;
-     
+	FILE *tt;
+
 #ifndef WIN32
-     DIR *directory;
+	DIR *directory;
 #endif
-     
-     if ( filename[0] == '\0') return 2;
 
-     if ( DEBUG == 1 )
-          printf("\nFilename is %s \n", filename);
+	if ( filename[0] == '\0') return 2;
+
+	if ( DEBUG == 1 )
+		printf("\nFilename is %s \n", filename);
 
 #ifndef WIN32
-     directory = opendir(filename);
-     if (directory) {
-          closedir(directory);
-          return 1;
-     }
+	directory = opendir(filename);
+	if (directory) {
+		closedir(directory);
+		return 1;
+	}
 #endif     
 
-     switch (fileType) {
-          case FILE_CONFIG:
-          case FILE_CONFIG_INSERT:
-               tt = fopen(filename,"r");
-               if (!tt){
-                    return 2;
-               }
-               break;
+	switch (fileType) {
+	case FILE_CONFIG:
+	case FILE_CONFIG_INSERT:
+		tt = fopen(filename,"r");
+		if (!tt){
+			return 2;
+		}
+		break;
 
-          case FILE_SAVEAS:
-               tt = fopen(filename,"r");
-               if (tt){
-                    return 3;
-               }
+	case FILE_SAVEAS:
+		tt = fopen(filename,"r");
+		if (tt){
+			return 3;
+		}
 
-          case FILE_SAVE:
-          case FILE_SAVEAS_OK:
-          case FILE_PRINT:
-               tt = fopen(filename,"w");
-               if (!tt){
-                    return 4;
-               }
-               break;
+	case FILE_SAVE:
+	case FILE_SAVEAS_OK:
+	case FILE_PRINT:
+		tt = fopen(filename,"w");
+		if (!tt){
+			return 4;
+		}
+		break;
 
-          case FILE_OPMOD:
-          case FILE_ALARMLOG:
-               tt = fopen(filename,"a");
-               if (!tt){
-                    return 4;
-               }
-               break;
-        }
+	case FILE_OPMOD:
+	case FILE_ALARMLOG:
+		tt = fopen(filename,"a");
+		if (!tt){
+			return 4;
+		}
+		break;
+	}
 
-        fclose(tt);
-        return 0;
+	fclose(tt);
+	return 0;
 }
 
 /******************************************************
   fileCancelCallback
 ******************************************************/
-
-void fileCancelCallback(widget, area, cbs)
-     Widget widget;
-     ALINK    *area;
-     XmFileSelectionBoxCallbackStruct *cbs;
+void fileCancelCallback(Widget widget,ALINK *area,
+XmFileSelectionBoxCallbackStruct *cbs)
 {
-     area->managed = TRUE;
-     XtUnmanageChild(widget);
+	area->managed = TRUE;
+	XtUnmanageChild(widget);
 }
 
 /******************************************************
   fileSetupCallback
 ******************************************************/
-
-void fileSetupCallback(widget, client_data, cbs)
-     Widget widget;
-     int    client_data;
-     XmFileSelectionBoxCallbackStruct *cbs;
+void fileSetupCallback(Widget widget,int client_data,
+XmFileSelectionBoxCallbackStruct *cbs)
 {
-     char *filename;
-     ALINK *area;
-     int pgm;
+	char *filename;
+	ALINK *area;
+	int pgm;
 
 
-     /* get the filename string */
-     XmStringGetLtoR(cbs->value, XmSTRING_DEFAULT_CHARSET, &filename);
-     if ( DEBUG == 1 ) printf("\nFilename is %s \n", filename);
+	/* get the filename string */
+	XmStringGetLtoR(cbs->value, XmSTRING_DEFAULT_CHARSET, &filename);
+	if ( DEBUG == 1 ) printf("\nFilename is %s \n", filename);
 
-     /* get the area pointer */
-     XtVaGetValues(widget, XmNuserData, &area, NULL);
+	/* get the area pointer */
+	XtVaGetValues(widget, XmNuserData, &area, NULL);
 
-     if (area) pgm = area->programId;
-     else pgm = programId;
-     fileSetup(filename,area,client_data,pgm,widget);
-     XtFree(filename);
+	if (area) pgm = area->programId;
+	else pgm = programId;
+	fileSetup(filename,area,client_data,pgm,widget);
+	XtFree(filename);
 
 }
 
 /******************************************************
   fileSetup
 ******************************************************/
-
-void fileSetup(filename,area,fileType,programId, widget)
-     char *filename;
-     ALINK *area;
-     int    fileType;
-     int    programId;
-     Widget widget;
+static void fileSetup(char *filename,ALINK *area,int fileType,
+int programId,Widget widget)
 {
-     int    error;
-     char   fileTypeString[NAMEDEFAULT_SIZE];
-     char   str[MAX_STRING_LENGTH];
-     char  *dir=0;
-     char  *pattern=0;
-     FILE  *tt;
-     Widget fileSelectionBox;
-     time_t timeofday;
-     struct tm *tms;
-     char buf[16];
-/* _______ For Dated AlLog File. Albert______________________________*/
-     timeofday = time(0L);
-     tms = localtime(&timeofday);  
-     sprintf(buf,".%.4d-%.2d-%.2d",
-             1900+tms->tm_year,1+tms->tm_mon,tms->tm_mday);
-     buf[11]=0;
-     _tm_day_old = tms->tm_mday;
-     if ((fileType == FILE_ALARMLOG)&&(_time_flag)) 
-     {
-      strncat(filename, &buf[0], strlen(buf));
-     } 
-/* _______ End. Albert______________________________*/
-     error = checkFilename(filename,fileType);
-     if (error){
-          switch(fileType) {
+	int    error;
+	char   fileTypeString[NAMEDEFAULT_SIZE];
+	char   str[MAX_STRING_LENGTH];
+	char  *dir=0;
+	char  *pattern=0;
+	FILE  *tt;
+	Widget fileSelectionBox;
+	time_t timeofday;
+	struct tm *tms;
+	char buf[16];
+	/* _______ For Dated AlLog File. Albert______________________________*/
+	timeofday = time(0L);
+	tms = localtime(&timeofday);
+	sprintf(buf,".%.4d-%.2d-%.2d",
+	    1900+tms->tm_year,1+tms->tm_mon,tms->tm_mday);
+	buf[11]=0;
+	_tm_day_old = tms->tm_mday;
+	if ((fileType == FILE_ALARMLOG)&&(_time_flag))
+	{
+		strncat(filename, &buf[0], strlen(buf));
+	}
+	/* _______ End. Albert______________________________*/
+	error = checkFilename(filename,fileType);
+	if (error){
+		switch(fileType) {
 
-               case FILE_CONFIG:
-               case FILE_CONFIG_INSERT:
-                    pattern = CONFIG_PATTERN;
-                    dir = psetup.configDir;
-                    if (programId == ALH) {
-                         strcpy(fileTypeString,"Alarm Handler: Alarm Configuration File");
-                    } else {
-                         /* not error to start act with no filename */
-                         if ( filename[0] == '\0' && fileType == FILE_CONFIG ) error = 0;
-                         strcpy(fileTypeString,"Alarm Configuration Tool: Alarm Configuration File");
-                    }
-                    break;
+		case FILE_CONFIG:
+		case FILE_CONFIG_INSERT:
+			pattern = CONFIG_PATTERN;
+			dir = psetup.configDir;
+			if (programId == ALH) {
+				strcpy(fileTypeString,"Alarm Handler: Alarm Configuration File");
+			} else {
+				/* not error to start act with no filename */
+				if ( filename[0] == '\0' && fileType == FILE_CONFIG ) error = 0;
+				strcpy(fileTypeString,"Alarm Configuration Tool: Alarm Configuration File");
+			}
+			break;
 
-               case FILE_OPMOD:
-                    pattern = OPMOD_PATTERN;
-                    dir = psetup.logDir;
-                    strcpy(fileTypeString,"OpMod Log File");
-                    break;
+		case FILE_OPMOD:
+			pattern = OPMOD_PATTERN;
+			dir = psetup.logDir;
+			strcpy(fileTypeString,"OpMod Log File");
+			break;
 
-               case FILE_ALARMLOG:
-                    pattern = ALARMLOG_PATTERN;
-                    dir = psetup.logDir;
-                    strcpy(fileTypeString,"Alarm Log File");
-                    break;
+		case FILE_ALARMLOG:
+			pattern = ALARMLOG_PATTERN;
+			dir = psetup.logDir;
+			strcpy(fileTypeString,"Alarm Log File");
+			break;
 
-               case FILE_PRINT:
-                    pattern = TREEREPORT_PATTERN;
-                    dir = NULL;
-                    strcpy(fileTypeString,"Print File");
-                    break;
+		case FILE_PRINT:
+			pattern = TREEREPORT_PATTERN;
+			dir = NULL;
+			strcpy(fileTypeString,"Print File");
+			break;
 
-               default:
-                    pattern = '\0';
-                    dir = psetup.configDir;
-                    strcpy(fileTypeString,"Filename");
-                    break;
+		default:
+			pattern = '\0';
+			dir = psetup.configDir;
+			strcpy(fileTypeString,"Filename");
+			break;
 
-          }
+		}
 
-     } 
-     if (error){
-          fileSelectionBox = widget;
-          /* Display file selection box  */
-          if ( XtIsShell(widget)) {
-               fileSelectionBox = createFileDialog(widget,
-                    (void *)fileSetupCallback, (XtPointer)fileType,
-                    (void *)exit_quit,(XtPointer)FALSE,
-                    (XtPointer)NULL,
-                    fileTypeString, (String)pattern, dir);
-          }
+	}
+	if (error){
+		fileSelectionBox = widget;
+		/* Display file selection box  */
+		if ( XtIsShell(widget)) {
+			fileSelectionBox = createFileDialog(widget,
+			    (void *)fileSetupCallback, (XtPointer)fileType,
+			    (void *)exit_quit,(XtPointer)FALSE,
+			    (XtPointer)NULL,
+			    fileTypeString, (String)pattern, dir);
+		}
 
-          /* Display file error dialog */
-          switch (error){       
-               case 1: 
-                    createDialog(fileSelectionBox,XmDIALOG_ERROR,filename," is a directory.");
-                    break;
-     
-               case 2: 
-                    /* no warning if DEFAULT filename does not exist */
-                    if ( strcmp(shortfile(filename),DEFAULT_CONFIG) )
-                       createDialog(fileSelectionBox,XmDIALOG_ERROR,filename," open error.");
-                    break;
-     
-               case 3: 
-                    strcpy(str, filename);
-                    strcat(str," already exists.  Overwrite?");
-                    createActionDialog(fileSelectionBox,XmDIALOG_WARNING, str ,
-                         (XtCallbackProc)saveConfigFile_callback,
-                         (XtPointer)filename,(XtPointer)area);
-                    break;
+		/* Display file error dialog */
+		switch (error){
+		case 1:
+			createDialog(fileSelectionBox,XmDIALOG_ERROR,filename," is a directory.");
+			break;
 
-               case 4: 
-                    createDialog(fileSelectionBox,XmDIALOG_ERROR,filename," write error.");
-                    break;
-               default: 
-                    break;
-          }
-     } else {
-          /* unmanage the fileSelection dialog */
-          if ( !XtIsShell(widget))
-               createFileDialog(0,0,0,0,0,0,0,0,0);
+		case 2:
+			/* no warning if DEFAULT filename does not exist */
+			if ( strcmp(shortfile(filename),DEFAULT_CONFIG) )
+				createDialog(fileSelectionBox,XmDIALOG_ERROR,filename," open error.");
+			break;
 
-          switch(fileType) {
+		case 3:
+			strcpy(str, filename);
+			strcat(str," already exists.  Overwrite?");
+			createActionDialog(fileSelectionBox,XmDIALOG_WARNING, str ,
+			    (XtCallbackProc)saveConfigFile_callback,
+			    (XtPointer)filename,(XtPointer)area);
+			break;
 
-               case FILE_CONFIG:
-                    setupConfig(filename,programId,area);
-                    break;
+		case 4:
+			createDialog(fileSelectionBox,XmDIALOG_ERROR,filename," write error.");
+			break;
+		default:
+			break;
+		}
+	} else {
+		/* unmanage the fileSelection dialog */
+		if ( !XtIsShell(widget))
+			createFileDialog(0,0,0,0,0,0,0,0,0);
 
-               case FILE_ALARMLOG:
-                    if (fo) alLogSetupAlarmFile(filename);
-                    strcpy(psetup.logFile,filename);
-                    if (fl) fclose(fl); /* RO-flag. Albert */
-		    if(_read_only_flag)  fl = fopen(psetup.logFile,"r"); 
-                    else if(_time_flag)  fl = fopen(psetup.logFile,"a+");
-                    else                 fl = fopen(psetup.logFile,"r+");
-/*---------------- 
-                    if (alarmLogFileMaxRecords && alarmLogFileEndStringLength) {
-                        fseek(fl,0,SEEK_SET);
-                        while (fgets(str,sizeof(str),fl)) {
-                            if(strncmp(alarmLogFileEndString,str,
-                                     alarmLogFileEndStringLength)==0){
-                                fseek(fl,-strlen(str),SEEK_CUR);
-                                break;
-                            }
-                        }
-                        alarmLogFileOffsetBytes = ftell(fl);
-                    } else {
-                         fseek(fl,0,SEEK_END);
-                    }
-----------------*/
-                    break;
+		switch(fileType) {
 
-               case FILE_OPMOD:
-                    if (fo) alLogSetupOpmodFile(filename);
-                    strcpy(psetup.opModFile,filename);
-                    if (fo) fclose(fo);
-		    if(!_read_only_flag) fo=fopen(psetup.opModFile,"a");
-		    /* RO-option. Albert */
-		    else  fo=fopen(psetup.opModFile,"r");
-                    break;
+		case FILE_CONFIG:
+			setupConfig(filename,programId,area);
+			break;
 
-               case FILE_SAVEAS:
-               case FILE_SAVE:
-                    saveConfigFile_callback(widget,filename,(void *)NULL);
-                    break;
+		case FILE_ALARMLOG:
+			if (fo) alLogSetupAlarmFile(filename);
+			strcpy(psetup.logFile,filename);
+			if (fl) fclose(fl); /* RO-flag. Albert */
+			if(_read_only_flag)  fl = fopen(psetup.logFile,"r");
+			else if(_time_flag)  fl = fopen(psetup.logFile,"a+");
+			else fl = fopen(psetup.logFile,"r+");
+			/*---------------- 
+			                    if (alarmLogFileMaxRecords && alarmLogFileEndStringLength) {
+			                        fseek(fl,0,SEEK_SET);
+			                        while (fgets(str,sizeof(str),fl)) {
+			                            if(strncmp(alarmLogFileEndString,str,
+			                                     alarmLogFileEndStringLength)==0){
+			                                fseek(fl,-strlen(str),SEEK_CUR);
+			                                break;
+			                            }
+			                        }
+			                        alarmLogFileOffsetBytes = ftell(fl);
+			                    } else {
+			                         fseek(fl,0,SEEK_END);
+			                    }
+			----------------*/
+			break;
 
-               case FILE_PRINT:
-                    tt = fopen(filename,"w");
-                    alPrintConfig(tt,area->pmainGroup);
-                    fclose(tt);
-                    break;
+		case FILE_OPMOD:
+			if (fo) alLogSetupOpmodFile(filename);
+			strcpy(psetup.opModFile,filename);
+			if (fo) fclose(fo);
+			if(!_read_only_flag) fo=fopen(psetup.opModFile,"a");
+			/* RO-option. Albert */
+			else fo=fopen(psetup.opModFile,"r");
+			break;
 
-               case FILE_CONFIG_INSERT:
-                    editInsertFile(filename,area);
-                    break;
-          }
-     }
+		case FILE_SAVEAS:
+		case FILE_SAVE:
+			saveConfigFile_callback(widget,filename,(void *)NULL);
+			break;
+
+		case FILE_PRINT:
+			tt = fopen(filename,"w");
+			alPrintConfig(tt,area->pmainGroup);
+			fclose(tt);
+			break;
+
+		case FILE_CONFIG_INSERT:
+			editInsertFile(filename,area);
+			break;
+		}
+	}
 }
-
 
 /******************************************************
   saveConfigFile_callback
 ******************************************************/
-
-void saveConfigFile_callback(widget,filename,cbs)
-     Widget widget;
-     char                 *filename;
-     XmAnyCallbackStruct *cbs;
+static void saveConfigFile_callback(Widget widget,char *filename,
+XmAnyCallbackStruct *cbs)
 {
-     ALINK   *area;
+	ALINK   *area;
 
-     XtVaGetValues(widget, XmNuserData, &area, NULL);
+	XtVaGetValues(widget, XmNuserData, &area, NULL);
 
-     alLogSetupSaveConfigFile(filename);
-/*
-     strcpy(psetup.saveFile,filename);
-*/
-     alWriteConfig(filename,area->pmainGroup);
-     /* unmanage the warning dialog */
-     XtUnmanageChild(widget);
-     /* unmanage the fileSelection dialog */
-     createFileDialog(0,0,0,0,0,0,0,0,0);
+	alLogSetupSaveConfigFile(filename);
+	/*
+	     strcpy(psetup.saveFile,filename);
+	*/
+	alWriteConfig(filename,area->pmainGroup);
+	/* unmanage the warning dialog */
+	XtUnmanageChild(widget);
+	/* unmanage the fileSelection dialog */
+	createFileDialog(0,0,0,0,0,0,0,0,0);
 }
 
 /******************************************************
   getCommandLineParms
 ******************************************************/
-
-int getCommandLineParms(int argc, char** argv)
+static int getCommandLineParms(int argc, char** argv)
 {
 	int i,j;
 	int finished=0;
@@ -675,27 +547,30 @@ int getCommandLineParms(int argc, char** argv)
 						break;
 					}
 					if ( (p= strchr(argv[i],':')) == NULL) {
-						fprintf(stderr,"%s - you must specify <printerHostname>:<portNumber>:[printerColorModel] for printer.\nPrinting will be disable\n",argv[i]); 
+						fprintf(stderr,"%s - you must specify <printerHostname>:<portNumber>:[printerColorModel] for printer.\nPrinting will be disable\n",
+						    argv[i]);
 						parm_error=1;
 						break;
 					}
-					*p=0; p++;
+					*p=0; 
+					p++;
 					strcpy(printerHostname,argv[i]);
 					if ( (q= strchr(p,':')) != NULL) {
-						*q=0;q++;
+						*q=0;
+						q++;
 						printerPort=atoi(p);
-						strcpy(printerColorModel,q);     
+						strcpy(printerColorModel,q);
 					}
 					else {
 						printerPort=atoi(p);
-						strcpy(printerColorModel,"mono"); 
-					}    
+						strcpy(printerColorModel,"mono");
+					}
 					if (printerPort== 0) {
 						fprintf(stderr,"%s - is not number.\nPrinting will be disable\n",p);
 						parm_error=1;
 						break;
 					}
-					_printer_flag=1;   
+					_printer_flag=1;
 					finished=1;
 					break;
 				case PARM_DATED:
@@ -715,7 +590,7 @@ int getCommandLineParms(int argc, char** argv)
 					parm_error=1;
 					break;
 				}
-                        }
+			}
 		}
 		if(ptable[j].parm==NULL)
 		{
@@ -724,18 +599,18 @@ int getCommandLineParms(int argc, char** argv)
 				if(argv[i][0]=='-') parm_error=1;
 				else
 				{
-			        	commandLine.configFile=argv[i];
+					commandLine.configFile=argv[i];
 					finished=1;
 				}
 			}
 			else parm_error=1;
-		}else {
-	 		finished=0;
+		} else {
+			finished=0;
 		}
 	}
 
 	if(parm_error)
-        {
+	{
 		printUsage(argv[0]);
 		return 1;
 	}
@@ -745,122 +620,119 @@ int getCommandLineParms(int argc, char** argv)
 /******************************************************
   printUsage
 ******************************************************/
-
-void printUsage(char *pgm)
+static void printUsage(char *pgm)
 {
-          fprintf(stderr,
-          "\nusage: %s [-cdst] [-f filedir] [-l logdir] [-a alarmlogfile] [-o opmodlogfile] [-m alarmlogmaxrecords] [-P printerName:portNumber:<printerColorModel>] [Xoptions] [configfile] \n",
-               pgm);
-          fprintf(stderr,"\n\tconfigfile\tAlarm configuration filename\n");
-          fprintf(stderr,"\n\t-c\t\tAlarm Configuration Tool mode\n");
-          fprintf(stderr,"\n\t-f filedir\tDirectory for all files\n");
-          fprintf(stderr,"\n\t-l logdir\tDirectory for log files\n");
-          fprintf(stderr,"\n\t-a alarmlogfile\tAlarm log filename\n");
-          fprintf(stderr,"\n\t-o opmodlogfile\tOpMod log filename\n");
-          fprintf(stderr,"\n\t-m maxrecords\talarm log file max records (default 2000)\n");
-          fprintf(stderr,"\n\t-D\t\tDisable Writing\n");
-          fprintf(stderr,"\n\t-S\t\tPassive Mode\n");
-          fprintf(stderr,"\n\t-T\t\tAlarmLogDated\n");
-          fprintf(stderr,"\n\t-P Name:port:colorModel\tPrint to TCP printer(colorMod={mono,hp_color,...})\n");
-          exit(1);
+	fprintf(stderr,
+	    "\nusage: %s [-cdst] [-f filedir] [-l logdir] [-a alarmlogfile] [-o opmodlogfile] [-m alarmlogmaxrecords] [-P printerName:portNumber:<printerColorModel>] [Xoptions] [configfile] \n",
+	    pgm);
+	fprintf(stderr,"\n\tconfigfile\tAlarm configuration filename\n");
+	fprintf(stderr,"\n\t-c\t\tAlarm Configuration Tool mode\n");
+	fprintf(stderr,"\n\t-f filedir\tDirectory for all files\n");
+	fprintf(stderr,"\n\t-l logdir\tDirectory for log files\n");
+	fprintf(stderr,"\n\t-a alarmlogfile\tAlarm log filename\n");
+	fprintf(stderr,"\n\t-o opmodlogfile\tOpMod log filename\n");
+	fprintf(stderr,"\n\t-m maxrecords\talarm log file max records (default 2000)\n");
+	fprintf(stderr,"\n\t-D\t\tDisable Writing\n");
+	fprintf(stderr,"\n\t-S\t\tPassive Mode\n");
+	fprintf(stderr,"\n\t-T\t\tAlarmLogDated\n");
+	fprintf(stderr,"\n\t-P Name:port:colorModel\tPrint to TCP printer(colorMod={mono,hp_color,...})\n");
+	exit(1);
 }
-
 
 /******************************************************
   fileSetupInit
 ******************************************************/
-
 void fileSetupInit( widget, argc, argv)
-     Widget widget;
-     int argc;
-     char *argv[];
+Widget widget;
+int argc;
+char *argv[];
 {
-     int    len;
-     char   configFile[NAMEDEFAULT_SIZE];
-     char   logFile[NAMEDEFAULT_SIZE];
-     char   opModFile[NAMEDEFAULT_SIZE];
-     char   *name = NULL;
+	int    len;
+	char   configFile[NAMEDEFAULT_SIZE];
+	char   logFile[NAMEDEFAULT_SIZE];
+	char   opModFile[NAMEDEFAULT_SIZE];
+	char   *name = NULL;
 
-     programId = ALH;
-     programName = (char *)calloc(1,4);
-     strcpy(programName,"alh");
- 
-     /* get optional command line parameters */
-     getCommandLineParms(argc,argv);
+	programId = ALH;
+	programName = (char *)calloc(1,4);
+	strcpy(programName,"alh");
 
-     if (DEBUG) printf("programName=%s\n",programName);
+	/* get optional command line parameters */
+	getCommandLineParms(argc,argv);
 
-     if (commandLine.configDir)
-          psetup.configDir=commandLine.configDir;
-     else
-          psetup.configDir=getenv("ALARMHANDLER");
+	if (DEBUG) printf("programName=%s\n",programName);
 
-     if (commandLine.logDir)
-          psetup.logDir=commandLine.logDir;
+	if (commandLine.configDir)
+		psetup.configDir=commandLine.configDir;
+		else
+		psetup.configDir=getenv("ALARMHANDLER");
 
-     if (psetup.configDir && !psetup.logDir)
-          psetup.logDir=psetup.configDir;
+	if (commandLine.logDir)
+		psetup.logDir=commandLine.logDir;
 
-     /* ----- initialize and setup opMod file ----- */
-     if (psetup.logDir) {
-          strncpy(psetup.opModFile,psetup.logDir,NAMEDEFAULT_SIZE-1);
-          strcat(psetup.opModFile,"/");
-     }
-     if (commandLine.opModFile) {
-          strncpy(opModFile,commandLine.opModFile,NAMEDEFAULT_SIZE-1);
-     } else {
-          strcpy(opModFile,DEFAULT_OPMOD);
-     }
-     name = opModFile;
-     if ( name[0] == '/' || (name[0] == '.' && name[1] == '.') ||
-          (name[0] == '.' && name[1] == '/')) {
-          strncpy(psetup.opModFile,opModFile,NAMEDEFAULT_SIZE);
-     } else {
-          len = strlen(psetup.opModFile);
-          strncat(psetup.opModFile,opModFile,NAMEDEFAULT_SIZE-len);
-     }
-     if (DEBUG == 1 ) printf("\nOpMod File is %s \n", psetup.opModFile);
-     fileSetup(psetup.opModFile,NULL,FILE_OPMOD,programId,widget);
+	if (psetup.configDir && !psetup.logDir)
+		psetup.logDir=psetup.configDir;
 
-     /* ----- initialize and setup alarm log file ----- */
-     if (psetup.logDir) {
-          strncpy(psetup.logFile,psetup.logDir,NAMEDEFAULT_SIZE-1);
-          strcat(psetup.logFile,"/");
-     }
-     if (commandLine.logFile) {
-          strncpy(logFile,commandLine.logFile,NAMEDEFAULT_SIZE-1);
-     } else {
-          strcpy(logFile,DEFAULT_ALARM);
-     }
-     name = logFile;
-     if ( name[0] == '/' || (name[0] == '.' && name[1] == '.') ||
-          (name[0] == '.' && name[1] == '/')) { 
-          strncpy(psetup.logFile,logFile,NAMEDEFAULT_SIZE);
-     } else {
-          len = strlen(psetup.logFile);
-          strncat(psetup.logFile,logFile,NAMEDEFAULT_SIZE-len);
-     }
-     if (DEBUG == 1 ) printf("\nAlarmLog File is %s \n", psetup.logFile);
-     fileSetup(psetup.logFile,NULL,FILE_ALARMLOG,programId,widget);
+	/* ----- initialize and setup opMod file ----- */
+	if (psetup.logDir) {
+		strncpy(psetup.opModFile,psetup.logDir,NAMEDEFAULT_SIZE-1);
+		strcat(psetup.opModFile,"/");
+	}
+	if (commandLine.opModFile) {
+		strncpy(opModFile,commandLine.opModFile,NAMEDEFAULT_SIZE-1);
+	} else {
+		strcpy(opModFile,DEFAULT_OPMOD);
+	}
+	name = opModFile;
+	if ( name[0] == '/' || (name[0] == '.' && name[1] == '.') ||
+	    (name[0] == '.' && name[1] == '/')) {
+		strncpy(psetup.opModFile,opModFile,NAMEDEFAULT_SIZE);
+	} else {
+		len = strlen(psetup.opModFile);
+		strncat(psetup.opModFile,opModFile,NAMEDEFAULT_SIZE-len);
+	}
+	if (DEBUG == 1 ) printf("\nOpMod File is %s \n", psetup.opModFile);
+	fileSetup(psetup.opModFile,NULL,FILE_OPMOD,programId,widget);
 
-     /* ----- initialize and setup config file ----- */
-     if (psetup.configDir) {
-          strncpy(psetup.configFile,psetup.configDir,NAMEDEFAULT_SIZE-1);
-          strcat(psetup.configFile,"/");
-     }
-     if (commandLine.configFile) {
-          strncpy(configFile,commandLine.configFile,NAMEDEFAULT_SIZE-1);
-     } else {
-          strcpy(configFile,DEFAULT_CONFIG);
-     }
-     name = configFile;
-     if ( name[0] == '/' || (name[0] == '.' && name[1] == '.') ||
-          (name[0] == '.' && name[1] == '/')) { 
-          strncpy(psetup.configFile,configFile,NAMEDEFAULT_SIZE);
-     } else {
-          len = strlen(psetup.configFile);
-          strncat(psetup.configFile,configFile,NAMEDEFAULT_SIZE-len);
-     }
-     if (DEBUG == 1 ) printf("\nConfig File is %s \n", psetup.configFile);
-     fileSetup(psetup.configFile,NULL,FILE_CONFIG,programId,widget);
+	/* ----- initialize and setup alarm log file ----- */
+	if (psetup.logDir) {
+		strncpy(psetup.logFile,psetup.logDir,NAMEDEFAULT_SIZE-1);
+		strcat(psetup.logFile,"/");
+	}
+	if (commandLine.logFile) {
+		strncpy(logFile,commandLine.logFile,NAMEDEFAULT_SIZE-1);
+	} else {
+		strcpy(logFile,DEFAULT_ALARM);
+	}
+	name = logFile;
+	if ( name[0] == '/' || (name[0] == '.' && name[1] == '.') ||
+	    (name[0] == '.' && name[1] == '/')) {
+		strncpy(psetup.logFile,logFile,NAMEDEFAULT_SIZE);
+	} else {
+		len = strlen(psetup.logFile);
+		strncat(psetup.logFile,logFile,NAMEDEFAULT_SIZE-len);
+	}
+	if (DEBUG == 1 ) printf("\nAlarmLog File is %s \n", psetup.logFile);
+	fileSetup(psetup.logFile,NULL,FILE_ALARMLOG,programId,widget);
+
+	/* ----- initialize and setup config file ----- */
+	if (psetup.configDir) {
+		strncpy(psetup.configFile,psetup.configDir,NAMEDEFAULT_SIZE-1);
+		strcat(psetup.configFile,"/");
+	}
+	if (commandLine.configFile) {
+		strncpy(configFile,commandLine.configFile,NAMEDEFAULT_SIZE-1);
+	} else {
+		strcpy(configFile,DEFAULT_CONFIG);
+	}
+	name = configFile;
+	if ( name[0] == '/' || (name[0] == '.' && name[1] == '.') ||
+	    (name[0] == '.' && name[1] == '/')) {
+		strncpy(psetup.configFile,configFile,NAMEDEFAULT_SIZE);
+	} else {
+		len = strlen(psetup.configFile);
+		strncat(psetup.configFile,configFile,NAMEDEFAULT_SIZE-len);
+	}
+	if (DEBUG == 1 ) printf("\nConfig File is %s \n", psetup.configFile);
+	fileSetup(psetup.configFile,NULL,FILE_CONFIG,programId,widget);
 }

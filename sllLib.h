@@ -1,37 +1,24 @@
-/*
- $Log$
- Revision 1.3  1995/10/20 16:51:00  jba
- Modified Action menus and Action windows
- Renamed ALARMCOMMAND to SEVRCOMMAND
- Added STATCOMMAND facility
- Added ALIAS facility
- Added ALARMCOUNTFILTER facility
- Make a few bug fixes.
+/* sllLib.h */
 
- * Revision 1.2  1994/06/22  21:18:02  jba
- * Added cvs Log keyword
- *
- */
+/************************DESCRIPTION***********************************
+  *PUBLIC* functions for single link list operations.
+**********************************************************************/
 
 #ifndef INCsllLibh
 #define INCsllLibh 1
 
-/*  sllLib.h 
-	header file for single link list
- */       
-
 static char *sllLibhSccsId = "@(#)sllLib.h	1.6\t8/4/93";
 
 struct snode {
-        struct snode *next;
-        };
+	struct snode *next;
+};
 typedef struct snode SNODE;
 
 struct list {
-        SNODE *first;
-        SNODE *last;
-        int count;
-        };
+	SNODE *first;
+	SNODE *last;
+	int count;
+};
 typedef struct list SLIST;
 
 #define sllFirst(PSLIST) \
@@ -53,26 +40,12 @@ SNODE *sllNth();
 /********************************************************************
   sllLib.c   function prototypes
 *********************************************************************/
-
-#ifdef __STDC__
-
 int sllAdd( SLIST *list, SNODE *new);
 SNODE *sllNth( SLIST *list, int n);
 void sllInsert( SLIST *list, SNODE *prev,SNODE *new);
 int sllPrecede( SLIST *list, SNODE *next,SNODE *new);
 void sllRemove( SLIST *list, SNODE *node);
 int sllFind( SLIST *plist, SNODE *pnode);
-
-#else
-
-int sllAdd();
-SNODE *sllNth();
-void sllInsert();
-int sllPrecede();
-void sllRemove();
-int sllFind();
-
-#endif /*__STDC__*/
 
 /*------------------------------------------------------------------------------------
 Routines defined in sllLib.c:

@@ -1,4 +1,8 @@
-/* alCaCdev.cc */
+static char *sccsId = "@(#) $Id$";
+
+/******************************************************************
+  cdev access routines
+******************************************************************/
 
 #include <cdevSystem.h>
 #include <cdevRequestObject.h>
@@ -13,9 +17,9 @@
 #include <ctype.h>
 
 extern "C" {
-#include <alarm.h>
-#include <fdmgr.h>
-#include <cadef.h>
+#include "alarm.h"
+#include "fdmgr.h"
+#include "cadef.h"
 
 extern void 	alChannelForceEvent	(void *, short);
 extern void 	alGroupForceEvent	(void *, short);

@@ -1,18 +1,15 @@
-/* $Id$ */
-/******************************************************************
-*       This file contains subWindow handling routines.
-******************************************************************/
+/* axSubW.c */
 
+/************************DESCRIPTION***********************************
+  This file contains subWindow handling routines.
+**********************************************************************/
+
+static char *sccsId = "@(#) $Id$";
 
 /********************************************************************
-  BRIEF DESCRIPTIONS OF FUNCTIONS DEFINED IN axSubW.c 
+  Public functions defined in axSubW.c 
 
-  This file contains subWindow handling routines.
-*********************************************************************
--------------            
-|  PUBLIC   |
--------------            
-void scrollBarMovedCallback()           Adjust viewOffset when
+static void scrollBarMovedCallback()    Adjust viewOffset when
                                         subWindow scrollbar is moved
 void setParentLink()                    Set parentLink for subWindow
 void setLineRoutine()                   Set subWindow routine names 
@@ -55,19 +52,15 @@ void initSevrBelow()                    Initialize severity below indicator
 /* globals */
 extern Pixel bg_pixel[ALARM_NSEV];
 
-/* prototypes for static routines */
-static void scrollBarMovedCallback( Widget widget, struct subWindow *subWindow,
-           XmScrollBarCallbackStruct *cbs);
-
 /***************************************************
   scrollBarMovedCallback
 ****************************************************/
 static void scrollBarMovedCallback(Widget widget,struct subWindow *subWindow,
-     XmScrollBarCallbackStruct *cbs)
+XmScrollBarCallbackStruct *cbs)
 {
-     if ((int)subWindow->viewOffset == cbs->value) return;
-     subWindow->viewOffset = cbs->value;
-     redraw(subWindow,0);
+	if ((int)subWindow->viewOffset == cbs->value) return;
+	subWindow->viewOffset = cbs->value;
+	redraw(subWindow,0);
 }
 
 /***************************************************
@@ -75,7 +68,7 @@ static void scrollBarMovedCallback(Widget widget,struct subWindow *subWindow,
 ****************************************************/
 void setParentLink(struct subWindow *subWindow,void *link)
 {
-     subWindow->parentLink = link;
+	subWindow->parentLink = link;
 }
 
 /***************************************************
@@ -83,64 +76,64 @@ void setParentLink(struct subWindow *subWindow,void *link)
 ****************************************************/
 void setLineRoutine(void *area,struct subWindow *subWindow,int program)
 {
-     /* Set line widget creation/modify routines to default values */
-     if (isTreeWindow(area,subWindow)) {
-          subWindow->alViewNth = ( void  *(*)())alViewNthTreeW;
-          subWindow->alViewNext = ( void *(*)())alViewNextTreeW;
-          subWindow->alViewMaxSevrN = alViewMaxSevrNTreeW;
-     } else {
-          subWindow->alViewNth = (void  *(*)())alViewNthGroupW;
-          subWindow->alViewNext = (void *(*)())alViewNextGroupW;
-          subWindow->alViewMaxSevrN = alViewMaxSevrNGroupW;
-     }
+	/* Set line widget creation/modify routines to default values */
+	if (isTreeWindow(area,subWindow)) {
+		subWindow->alViewNth = ( void  *(*)())alViewNthTreeW;
+		subWindow->alViewNext = ( void *(*)())alViewNextTreeW;
+		subWindow->alViewMaxSevrN = alViewMaxSevrNTreeW;
+	} else {
+		subWindow->alViewNth = (void  *(*)())alViewNthGroupW;
+		subWindow->alViewNext = (void *(*)())alViewNextGroupW;
+		subWindow->alViewMaxSevrN = alViewMaxSevrNGroupW;
+	}
 }
 /***************************************************
   markSelectedWidget
 ****************************************************/
 void markSelectedWidget(struct subWindow *subWindow,Widget newWidget)
 {
-     static Pixel armColor=0;
-     static Pixel backgroundColor;
-     static Pixel bottomShadowColor;
-     static Pixel topShadowColor;
-     Widget       oldWidget;
+	static Pixel armColor=0;
+	static Pixel backgroundColor;
+	static Pixel bottomShadowColor;
+	static Pixel topShadowColor;
+	Widget       oldWidget;
 
-     oldWidget = subWindow->selectionWidget;
-     if (oldWidget == newWidget ) return;
+	oldWidget = subWindow->selectionWidget;
+	if (oldWidget == newWidget ) return;
 
-     if (oldWidget) {
-          XtVaGetValues(oldWidget,
-               XmNbackground,       &backgroundColor,
-               XmNarmColor,         &armColor,
-               XmNtopShadowColor,   &topShadowColor,
-               XmNbottomShadowColor,&bottomShadowColor,
-               NULL);
+	if (oldWidget) {
+		XtVaGetValues(oldWidget,
+		    XmNbackground,       &backgroundColor,
+		    XmNarmColor,         &armColor,
+		    XmNtopShadowColor,   &topShadowColor,
+		    XmNbottomShadowColor,&bottomShadowColor,
+		    NULL);
 
-          XtVaSetValues(oldWidget,
-               XmNbackground,       armColor,
-               XmNarmColor,         backgroundColor,
-               XmNtopShadowColor,   bottomShadowColor,
-               XmNbottomShadowColor,topShadowColor,
-               NULL);
-     }
+		XtVaSetValues(oldWidget,
+		    XmNbackground,       armColor,
+		    XmNarmColor,         backgroundColor,
+		    XmNtopShadowColor,   bottomShadowColor,
+		    XmNbottomShadowColor,topShadowColor,
+		    NULL);
+	}
 
-     if (newWidget) {
-          XtVaGetValues(newWidget,
-               XmNbackground,       &backgroundColor,
-               XmNarmColor,         &armColor,
-               XmNtopShadowColor,   &topShadowColor,
-               XmNbottomShadowColor,&bottomShadowColor,
-               NULL);
+	if (newWidget) {
+		XtVaGetValues(newWidget,
+		    XmNbackground,       &backgroundColor,
+		    XmNarmColor,         &armColor,
+		    XmNtopShadowColor,   &topShadowColor,
+		    XmNbottomShadowColor,&bottomShadowColor,
+		    NULL);
 
-          XtVaSetValues(newWidget, 
-               XmNbackground,       armColor,
-               XmNarmColor,         backgroundColor,
-               XmNtopShadowColor,   bottomShadowColor,
-               XmNbottomShadowColor,topShadowColor,
-               NULL);
-     }
-     subWindow->selectionWidget = newWidget;
-     markActiveWidget(subWindow->area,newWidget);
+		XtVaSetValues(newWidget, 
+		    XmNbackground,       armColor,
+		    XmNarmColor,         backgroundColor,
+		    XmNtopShadowColor,   bottomShadowColor,
+		    XmNbottomShadowColor,topShadowColor,
+		    NULL);
+	}
+	subWindow->selectionWidget = newWidget;
+	markActiveWidget(subWindow->area,newWidget);
 }
 
 /***************************************************
@@ -148,17 +141,17 @@ void markSelectedWidget(struct subWindow *subWindow,Widget newWidget)
 ****************************************************/
 void initializeSubWindow(struct subWindow *subWindow)
 {
-     subWindow->modified = FALSE;
-     subWindow->viewOffset = 0;
+	subWindow->modified = FALSE;
+	subWindow->viewOffset = 0;
 
-     /* Make NULL the selected group */
-     subWindow->selectionLink = NULL;
-     subWindow->parentLink = NULL;
+	/* Make NULL the selected group */
+	subWindow->selectionLink = NULL;
+	subWindow->parentLink = NULL;
 
-     subWindow->viewConfigCount = 0;
-     subWindow->oldViewConfigCount = 0;
+	subWindow->viewConfigCount = 0;
+	subWindow->oldViewConfigCount = 0;
 
-     initializeLines((SNODE *)subWindow->lines);
+	initializeLines((SNODE *)subWindow->lines);
 }
 
 /***************************************************
@@ -166,10 +159,10 @@ void initializeSubWindow(struct subWindow *subWindow)
 ****************************************************/
 void setViewConfigCount(struct subWindow *subWindow,int count)
 {
-     subWindow->viewConfigCount = count;
-/*
-     subWindow->oldViewConfigCount = 0;
-*/
+	subWindow->viewConfigCount = count;
+	/*
+	     subWindow->oldViewConfigCount = 0;
+	*/
 }
 
 /***************************************************
@@ -177,40 +170,40 @@ void setViewConfigCount(struct subWindow *subWindow,int count)
 ****************************************************/
 void invokeSubWindowUpdate(struct subWindow *subWindow)
 {
-     SLIST *lines;
-     struct anyLine *line;
-     void  *link=0;
-     int linkType;
+	SLIST *lines;
+	struct anyLine *line;
+	void  *link=0;
+	int linkType;
 
-     if (subWindow->modified){
-        redraw(subWindow,0);
-        subWindow->modified = 0;
-        return;
-     }
+	if (subWindow->modified){
+		redraw(subWindow,0);
+		subWindow->modified = 0;
+		return;
+	}
 
-     lines = subWindow->lines;
-     if (!lines) return;
+	lines = subWindow->lines;
+	if (!lines) return;
 
-     /* update modified lines */
-     line = (struct anyLine *)sllFirst(lines);
-     while (line){
-         invokeLinkUpdate((GCLINK *)line->link,line->linkType);
-         if (line->link ){
-              link = line->link;
-              linkType = line->linkType;
-         }
-         line = (struct anyLine *)sllNext(line);
-     }
-    
-     /* update the severity below indicator */
-     if (link) {
-          link = (subWindow->alViewNext)(link,&linkType);
-          if (link) initSevrBelow(subWindow,link);
-     }
- 
-     /* update the severity above indicator */
-     link = (subWindow->alViewNth)(subWindow->parentLink,&linkType,0);
-     initSevrAbove(subWindow,link);
+	/* update modified lines */
+	line = (struct anyLine *)sllFirst(lines);
+	while (line){
+		invokeLinkUpdate((GCLINK *)line->link,line->linkType);
+		if (line->link ){
+			link = line->link;
+			linkType = line->linkType;
+		}
+		line = (struct anyLine *)sllNext(line);
+	}
+
+	/* update the severity below indicator */
+	if (link) {
+		link = (subWindow->alViewNext)(link,&linkType);
+		if (link) initSevrBelow(subWindow,link);
+	}
+
+	/* update the severity above indicator */
+	link = (subWindow->alViewNth)(subWindow->parentLink,&linkType,0);
+	initSevrAbove(subWindow,link);
 }
 
 /***************************************************
@@ -218,17 +211,17 @@ void invokeSubWindowUpdate(struct subWindow *subWindow)
 ****************************************************/
 struct subWindow *createSubWindow(void *area)
 {
-     struct subWindow  *subWindow;
+	struct subWindow  *subWindow;
 
-     subWindow =(struct subWindow *)calloc(1,sizeof(struct subWindow));
+	subWindow =(struct subWindow *)calloc(1,sizeof(struct subWindow));
 
-     subWindow->area = (void *)area;
+	subWindow->area = (void *)area;
 
-     /* allocate and initialize a list for line data */
-     subWindow->lines = (SLIST *)calloc(1,sizeof(SLIST));
-     sllInit(subWindow->lines);
+	/* allocate and initialize a list for line data */
+	subWindow->lines = (SLIST *)calloc(1,sizeof(SLIST));
+	sllInit(subWindow->lines);
 
-     return(subWindow);
+	return(subWindow);
 }
 
 /***************************************************
@@ -236,88 +229,88 @@ struct subWindow *createSubWindow(void *area)
 ****************************************************/
 void createSubWindowWidgets(struct subWindow *subWindow,Widget parent)
 {
-     Pixel          color;
-     Dimension      width;
+	Pixel          color;
+	Dimension      width;
 
-     /* Create a Form for sevr indicators and scrollbar */
-     subWindow->form_vsb = XtVaCreateWidget("form_vsb",
-          xmFormWidgetClass,         parent,
-          XmNorientation,            XmVERTICAL,
-          XmNadjustLast,             TRUE,
-          XmNtopAttachment,          XmATTACH_FORM,
-          XmNrightAttachment,        XmATTACH_FORM,
-          XmNbottomAttachment,       XmATTACH_FORM,
-          NULL);
+	/* Create a Form for sevr indicators and scrollbar */
+	subWindow->form_vsb = XtVaCreateWidget("form_vsb",
+	    xmFormWidgetClass,         parent,
+	    XmNorientation,            XmVERTICAL,
+	    XmNadjustLast,             TRUE,
+	    XmNtopAttachment,          XmATTACH_FORM,
+	    XmNrightAttachment,        XmATTACH_FORM,
+	    XmNbottomAttachment,       XmATTACH_FORM,
+	    NULL);
 
-     subWindow->sevrAboveInd = XtVaCreateManagedWidget("sevrAboveInd",
-          xmLabelWidgetClass,        subWindow->form_vsb,
-          XmNlabelType,              XmPIXMAP,
-          XmNborderWidth,            1,
-          XmNtopAttachment,          XmATTACH_FORM,
-          XmNrightAttachment,        XmATTACH_FORM,
-          XmNleftAttachment,         XmATTACH_FORM,
-          NULL);
+	subWindow->sevrAboveInd = XtVaCreateManagedWidget("sevrAboveInd",
+	    xmLabelWidgetClass,        subWindow->form_vsb,
+	    XmNlabelType,              XmPIXMAP,
+	    XmNborderWidth,            1,
+	    XmNtopAttachment,          XmATTACH_FORM,
+	    XmNrightAttachment,        XmATTACH_FORM,
+	    XmNleftAttachment,         XmATTACH_FORM,
+	    NULL);
 
-     subWindow->sevrBelowInd = XtVaCreateManagedWidget(" ",
-          xmLabelWidgetClass,        subWindow->form_vsb,
-          XmNlabelType,              XmPIXMAP,
-          XmNborderWidth,            1,
-          XmNrightAttachment,        XmATTACH_FORM,
-          XmNleftAttachment,         XmATTACH_FORM,
-          XmNbottomAttachment,       XmATTACH_FORM,
-          NULL);
+	subWindow->sevrBelowInd = XtVaCreateManagedWidget(" ",
+	    xmLabelWidgetClass,        subWindow->form_vsb,
+	    XmNlabelType,              XmPIXMAP,
+	    XmNborderWidth,            1,
+	    XmNrightAttachment,        XmATTACH_FORM,
+	    XmNleftAttachment,         XmATTACH_FORM,
+	    XmNbottomAttachment,       XmATTACH_FORM,
+	    NULL);
 
-     /* Create vertical scrollbar for the tree area */
-     subWindow->vsb = XtVaCreateManagedWidget("vsb",
-          xmScrollBarWidgetClass,    subWindow->form_vsb,
-          XmNorientation,            XmVERTICAL,
-          XmNrepeatDelay,            200,
-          XmNtopAttachment,          XmATTACH_WIDGET,
-          XmNtopWidget,              subWindow->sevrAboveInd,
-          XmNbottomAttachment,       XmATTACH_WIDGET,
-          XmNbottomWidget,           subWindow->sevrBelowInd,
-          XmNrightAttachment,        XmATTACH_FORM,
-          XmNleftAttachment,         XmATTACH_FORM,
-          NULL);
+	/* Create vertical scrollbar for the tree area */
+	subWindow->vsb = XtVaCreateManagedWidget("vsb",
+	    xmScrollBarWidgetClass,    subWindow->form_vsb,
+	    XmNorientation,            XmVERTICAL,
+	    XmNrepeatDelay,            200,
+	    XmNtopAttachment,          XmATTACH_WIDGET,
+	    XmNtopWidget,              subWindow->sevrAboveInd,
+	    XmNbottomAttachment,       XmATTACH_WIDGET,
+	    XmNbottomWidget,           subWindow->sevrBelowInd,
+	    XmNrightAttachment,        XmATTACH_FORM,
+	    XmNleftAttachment,         XmATTACH_FORM,
+	    NULL);
 
 
-     /* manage the Form for sevr indicators and scrollbar in the sub */
-     XtManageChild(subWindow->form_vsb);
+	/* manage the Form for sevr indicators and scrollbar in the sub */
+	XtManageChild(subWindow->form_vsb);
 
-     /* use same callback for all callback reasons */
-     XtAddCallback(subWindow->vsb,
-          XmNvalueChangedCallback,
-          (XtCallbackProc)scrollBarMovedCallback, subWindow);
-     XtAddCallback(subWindow->vsb,
-          XmNdragCallback,
-          (XtCallbackProc)scrollBarMovedCallback, subWindow);
+	/* use same callback for all callback reasons */
+	XtAddCallback(subWindow->vsb,
+	    XmNvalueChangedCallback,
+	    (XtCallbackProc)scrollBarMovedCallback, subWindow);
+	XtAddCallback(subWindow->vsb,
+	    XmNdragCallback,
+	    (XtCallbackProc)scrollBarMovedCallback, subWindow);
 
-     XtVaGetValues(subWindow->vsb,
-          XmNwidth,                  &width,
-          XmNtroughColor,            &color,
-          NULL);
+	XtVaGetValues(subWindow->vsb,
+	    XmNwidth,                  &width,
+	    XmNtroughColor,            &color,
+	    NULL);
 
-     XtVaSetValues(subWindow->sevrAboveInd,
-          XmNbackground,             color,
-          XmNheight,                 width,
-          XmNwidth,                  width,
-          NULL);
-     XtVaSetValues(subWindow->sevrBelowInd,
-          XmNbackground,             color,
-          XmNheight,                 width,
-          XmNwidth,                  width,
-          NULL);
+	XtVaSetValues(subWindow->sevrAboveInd,
+	    XmNbackground,             color,
+	    XmNheight,                 width,
+	    XmNwidth,                  width,
+	    NULL);
+	XtVaSetValues(subWindow->sevrBelowInd,
+	    XmNbackground,             color,
+	    XmNheight,                 width,
+	    XmNwidth,                  width,
+	    NULL);
 
-     /* Create DrawingArea to hold the line widgets */
-     subWindow->drawing_area = XtVaCreateManagedWidget("drawing_area",
-          xmDrawingAreaWidgetClass,  parent,
-          XmNresizePolicy,           XmRESIZE_NONE,
-          XmNmarginHeight,           3,
-          XmNspacing,                0,
-          XmNtopAttachment,          XmATTACH_FORM,
-          XmNbottomAttachment,       XmATTACH_FORM,
-          XmNleftAttachment,         XmATTACH_FORM,
-          NULL);
+	/* Create DrawingArea to hold the line widgets */
+	subWindow->drawing_area = XtVaCreateManagedWidget("drawing_area",
+	    xmDrawingAreaWidgetClass,  parent,
+	    XmNresizePolicy,           XmRESIZE_NONE,
+	    XmNmarginHeight,           3,
+	    XmNspacing,                0,
+	    XmNtopAttachment,          XmATTACH_FORM,
+	    XmNbottomAttachment,       XmATTACH_FORM,
+	    XmNleftAttachment,         XmATTACH_FORM,
+	    NULL);
 }
 
 /***************************************************
@@ -325,10 +318,10 @@ void createSubWindowWidgets(struct subWindow *subWindow,Widget parent)
 ****************************************************/
 int calcRowCount(struct subWindow *subWindow)
 {
-     int viewRowCount;
-     viewRowCount =(int)((int)(subWindow->viewHeight-2*subWindow->marginHeight)/
-          (int)(2+subWindow->rowHeight));
-     return(viewRowCount);
+	int viewRowCount;
+	viewRowCount =(int)((int)(subWindow->viewHeight-2*subWindow->marginHeight)/
+	    (int)(2+subWindow->rowHeight));
+	return(viewRowCount);
 }
 
 /***************************************************
@@ -336,10 +329,10 @@ int calcRowCount(struct subWindow *subWindow)
 ****************************************************/
 int calcRowYValue(struct subWindow *subWindow,int lineNo)
 {
-     int yValue;
-     yValue = (int)(2+subWindow->rowHeight)*lineNo + subWindow->marginHeight;
+	int yValue;
+	yValue = (int)(2+subWindow->rowHeight)*lineNo + subWindow->marginHeight;
 
-     return(yValue);
+	return(yValue);
 }
 
 /***************************************************
@@ -347,82 +340,82 @@ int calcRowYValue(struct subWindow *subWindow,int lineNo)
 ****************************************************/
 void adjustScrollBar(struct subWindow *subWindow)
 {
-     /* adjust scrollbar and slider if viewRowCount or viewConfigCount changed*/
-     if ( !subWindow->viewRowCount ||  !subWindow->viewConfigCount)
-          XtUnmanageChild(subWindow->form_vsb);
+	/* adjust scrollbar and slider if viewRowCount or viewConfigCount changed*/
+	if ( !subWindow->viewRowCount ||  !subWindow->viewConfigCount)
+		XtUnmanageChild(subWindow->form_vsb);
 
-     if ( subWindow->viewRowCount != subWindow->oldViewRowCount ||
-          subWindow->viewConfigCount != subWindow->oldViewConfigCount ){
+	if ( subWindow->viewRowCount != subWindow->oldViewRowCount ||
+	    subWindow->viewConfigCount != subWindow->oldViewConfigCount ){
 
-          if ( XtIsManaged(subWindow->form_vsb) == TRUE )
-               XtUnmanageChild(subWindow->form_vsb);
-          
-          /* set slider values */
-          XtVaSetValues(subWindow->vsb,
-               XmNvalue,         subWindow->viewOffset,
-               XmNmaximum,       Mmax(subWindow->viewRowCount,
-                                      subWindow->viewConfigCount),
-               XmNsliderSize,    Mmax(subWindow->viewRowCount, 1),
-               XmNpageIncrement, Mmax(subWindow->viewRowCount-1, 1),
-               NULL);
+		if ( XtIsManaged(subWindow->form_vsb) == TRUE )
+			XtUnmanageChild(subWindow->form_vsb);
 
-          /* manage/unmanage scrollbar */
-          if ( subWindow->viewConfigCount <= subWindow->viewRowCount ){
-               if ( XtIsManaged(subWindow->form_vsb) == TRUE ){
-                    XtUnmanageChild(subWindow->form_vsb);
-               }
-          } else {
-               if ( XtIsManaged(subWindow->form_vsb) == FALSE ){
-                    XtManageChild(subWindow->form_vsb);
-               }
-          }
+		/* set slider values */
+		XtVaSetValues(subWindow->vsb,
+		    XmNvalue,         subWindow->viewOffset,
+		    XmNmaximum,       Mmax(subWindow->viewRowCount,
+		    subWindow->viewConfigCount),
+		    XmNsliderSize,    Mmax(subWindow->viewRowCount, 1),
+		    XmNpageIncrement, Mmax(subWindow->viewRowCount-1, 1),
+		    NULL);
 
-          subWindow->oldViewConfigCount = subWindow->viewConfigCount;
-          subWindow->oldViewRowCount = subWindow->viewRowCount;
-     }
+		/* manage/unmanage scrollbar */
+		if ( subWindow->viewConfigCount <= subWindow->viewRowCount ){
+			if ( XtIsManaged(subWindow->form_vsb) == TRUE ){
+				XtUnmanageChild(subWindow->form_vsb);
+			}
+		} else {
+			if ( XtIsManaged(subWindow->form_vsb) == FALSE ){
+				XtManageChild(subWindow->form_vsb);
+			}
+		}
+
+		subWindow->oldViewConfigCount = subWindow->viewConfigCount;
+		subWindow->oldViewRowCount = subWindow->viewRowCount;
+	}
 }
 
 /***************************************************
   exposeResizeCallback
 ****************************************************/
 void exposeResizeCallback(Widget widget,struct subWindow *subWindow,
-     XEvent *cbs)
+XEvent *cbs)
 {
-     Dimension oldViewHeight;
+	Dimension oldViewHeight;
 
-/*
-     if (cbs->reason == XmCR_EXPOSE){
-          return;
-     }
-*/
-     oldViewHeight = subWindow->viewHeight;
-     XtVaGetValues(subWindow->drawing_area,
-          XmNheight,            &subWindow->viewHeight,
-          XmNmarginHeight,      &subWindow->marginHeight,
-          NULL);
+	/*
+	     if (cbs->reason == XmCR_EXPOSE){
+	          return;
+	     }
+	*/
+	oldViewHeight = subWindow->viewHeight;
+	XtVaGetValues(subWindow->drawing_area,
+	    XmNheight,            &subWindow->viewHeight,
+	    XmNmarginHeight,      &subWindow->marginHeight,
+	    NULL);
 
-     subWindow->oldViewRowCount = subWindow->viewRowCount;
-     if ( subWindow->rowHeight ){ 
-          subWindow->viewRowCount = calcRowCount(subWindow);
-     }
+	subWindow->oldViewRowCount = subWindow->viewRowCount;
+	if ( subWindow->rowHeight ){
+		subWindow->viewRowCount = calcRowCount(subWindow);
+	}
 
-     if (subWindow->viewRowCount <= 0) return;
+	if (subWindow->viewRowCount <= 0) return;
 
-     redraw(subWindow,0);
+	redraw(subWindow,0);
 
-/*  because redraw is slow we get into trouble with following stmnts
-    with many frequent calls to resize 
-*/
+	/*  because redraw is slow we get into trouble with following stmnts
+	    with many frequent calls to resize 
+	*/
 #if 0
-     if (subWindow->viewHeight == oldViewHeight) return;
+	if (subWindow->viewHeight == oldViewHeight) return;
 
-     if (subWindow->viewHeight < oldViewHeight) {
-          if (subWindow->viewRowCount < subWindow->viewConfigCount){
-               redraw(subWindow,subWindow->viewRowCount);
-          } else return; 
-     } else{
-          redraw(subWindow,subWindow->oldViewRowCount);
-     }
+	if (subWindow->viewHeight < oldViewHeight) {
+		if (subWindow->viewRowCount < subWindow->viewConfigCount){
+			redraw(subWindow,subWindow->viewRowCount);
+		} else return;
+	} else{
+		redraw(subWindow,subWindow->oldViewRowCount);
+	}
 #endif
 }
 
@@ -431,27 +424,27 @@ void exposeResizeCallback(Widget widget,struct subWindow *subWindow,
 ****************************************************/
 void defaultTreeSelection(ALINK *area)
 {
-     struct subWindow  *treeWindow;
-     struct subWindow  *groupWindow;
-     struct anyLine       *line;
-     WLINE                *wline;
+	struct subWindow  *treeWindow;
+	struct subWindow  *groupWindow;
+	struct anyLine       *line;
+	WLINE                *wline;
 
-     treeWindow = (struct subWindow  *)area->treeWindow;
-     groupWindow = (struct subWindow  *)area->groupWindow;
-     if (!treeWindow->lines) return;
-     line = (struct anyLine *)sllFirst(treeWindow->lines);
-     if (!line) return;
-     wline = (WLINE *)(line->wline);
+	treeWindow = (struct subWindow  *)area->treeWindow;
+	groupWindow = (struct subWindow  *)area->groupWindow;
+	if (!treeWindow->lines) return;
+	line = (struct anyLine *)sllFirst(treeWindow->lines);
+	if (!line) return;
+	wline = (WLINE *)(line->wline);
 
-     markSelectedWidget(treeWindow,wline->name);
-     markSelection(treeWindow, line);
+	markSelectedWidget(treeWindow,wline->name);
+	markSelection(treeWindow, line);
 
-     /* groupWindow must now display contents of new treeWindow selection */
-     groupWindow->parentLink = line->link;
-     groupWindow->viewConfigCount = 
-        alViewAdjustGroupW((GLINK *)line->link,area->viewFilter);
-     groupWindow->viewOffset = 0;
-     redraw(groupWindow,0);
+	/* groupWindow must now display contents of new treeWindow selection */
+	groupWindow->parentLink = line->link;
+	groupWindow->viewConfigCount = 
+	    alViewAdjustGroupW((GLINK *)line->link,area->viewFilter);
+	groupWindow->viewOffset = 0;
+	redraw(groupWindow,0);
 }
 
 /***************************************************
@@ -459,18 +452,18 @@ void defaultTreeSelection(ALINK *area)
 ****************************************************/
 void initSevrAbove(struct subWindow *subWindow,void *link)
 {
-     int    sevrAbove;
+	int    sevrAbove;
 
-     if ( XtIsManaged(subWindow->form_vsb) == TRUE ){
+	if ( XtIsManaged(subWindow->form_vsb) == TRUE ){
 
-          sevrAbove = (subWindow->alViewMaxSevrN)(link,subWindow->viewOffset);
+		sevrAbove = (subWindow->alViewMaxSevrN)(link,subWindow->viewOffset);
 #if  XmVersion && XmVersion >= 1002
-          XmChangeColor(subWindow->sevrAboveInd,bg_pixel[sevrAbove]);
+		XmChangeColor(subWindow->sevrAboveInd,bg_pixel[sevrAbove]);
 #else
-          XtVaSetValues(subWindow->sevrAboveInd,XmNbackground,
-                        bg_pixel[sevrAbove],NULL);
+		XtVaSetValues(subWindow->sevrAboveInd,XmNbackground,
+		    bg_pixel[sevrAbove],NULL);
 #endif
-     }
+	}
 }
 
 /***************************************************
@@ -478,19 +471,19 @@ void initSevrAbove(struct subWindow *subWindow,void *link)
 ****************************************************/
 void initSevrBelow(struct subWindow *subWindow,void *link)
 {
-     int    sevrBelow,n;
+	int    sevrBelow,n;
 
-     if ( XtIsManaged(subWindow->form_vsb) == TRUE ){
+	if ( XtIsManaged(subWindow->form_vsb) == TRUE ){
 
-          n = subWindow->viewConfigCount - subWindow->viewOffset - subWindow->viewRowCount;
+		n = subWindow->viewConfigCount - subWindow->viewOffset - subWindow->viewRowCount;
 
-          sevrBelow = (subWindow->alViewMaxSevrN)(link,n);
-          if (sevrBelow < 0 ) return;
+		sevrBelow = (subWindow->alViewMaxSevrN)(link,n);
+		if (sevrBelow < 0 ) return;
 #if  XmVersion && XmVersion >= 1002
-          XmChangeColor(subWindow->sevrBelowInd,bg_pixel[sevrBelow]);
+		XmChangeColor(subWindow->sevrBelowInd,bg_pixel[sevrBelow]);
 #else
-          XtVaSetValues(subWindow->sevrBelowInd,XmNbackground,bg_pixel[sevrBelow],NULL);
+		XtVaSetValues(subWindow->sevrBelowInd,XmNbackground,bg_pixel[sevrBelow],NULL);
 #endif
-     }
+	}
 }
 

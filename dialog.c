@@ -1,9 +1,10 @@
-/* $Id$ */
+/* dialog.c */
 
-/****************************************************
-* dialog.c
-*This file contains routines for creating dialogs
-****************************************************/
+/************************DESCRIPTION***********************************
+  Creates  alh dialogs
+**********************************************************************/
+
+static char *sccsId = "@(#) $Id$";
 
 #include <stdio.h>
 
@@ -23,82 +24,82 @@ static void killWidget(Widget w, XtPointer clientdata, XtPointer calldata);
   Create a fileSelectionBox
 ******************************************************/
 Widget createFileDialog(Widget parent,void *okCallback,XtPointer okParm,
-     void *cancelCallback,XtPointer cancelParm,XtPointer userParm,
-     String title,String pattern,String directory)
+void *cancelCallback,XtPointer cancelParm,XtPointer userParm,
+String title,String pattern,String directory)
 {
-     XmString        Xtitle;
-     XmString        Xpattern;
-     XmString        Xdirectory;
-     XmString        Xcurrentdir=0;
-     static Widget   fileselectdialog = 0; /* make it static for reuse */
-     static void *oldOk= NULL;
-     static void *oldCancel=NULL;
-     static XtPointer oldOkParm = 0;
-     static XtPointer oldCancelParm = 0;
+	XmString        Xtitle;
+	XmString        Xpattern;
+	XmString        Xdirectory;
+	XmString        Xcurrentdir=0;
+	static Widget   fileselectdialog = 0; /* make it static for reuse */
+	static void *oldOk= NULL;
+	static void *oldCancel=NULL;
+	static XtPointer oldOkParm = 0;
+	static XtPointer oldCancelParm = 0;
 
-     /* parent = 0 means we want to unmanage the fileSelectdialog */
-     if (!parent){
-          if (fileselectdialog && XtIsManaged(fileselectdialog))
-               XtUnmanageChild(fileselectdialog);
-          return(fileselectdialog);
-     }
+	/* parent = 0 means we want to unmanage the fileSelectdialog */
+	if (!parent){
+		if (fileselectdialog && XtIsManaged(fileselectdialog))
+			XtUnmanageChild(fileselectdialog);
+		return(fileselectdialog);
+	}
 
-     /* destroy runtimeToplevel fileselectdialog 
-        so we will not have exposure problems */
-     if ( parent && fileselectdialog &&
-          XtParent(XtParent(fileselectdialog)) != parent) {
-          XtDestroyWidget(fileselectdialog); 
-          fileselectdialog = 0;
-     }
+	/* destroy runtimeToplevel fileselectdialog 
+	        so we will not have exposure problems */
+	if ( parent && fileselectdialog &&
+	    XtParent(XtParent(fileselectdialog)) != parent) {
+		XtDestroyWidget(fileselectdialog);
+		fileselectdialog = 0;
+	}
 
-     /* "Open" was selected.  Create a Motif FileSelectionDialog w/callback */
-     if (!fileselectdialog) {
-          fileselectdialog = XmCreateFileSelectionDialog(parent,
-               "file_sel", NULL, 0);
-          XtVaSetValues(fileselectdialog,
-               XmNallowShellResize, FALSE,
-               NULL);
-          XtAddCallback(fileselectdialog,XmNhelpCallback,
-               (XtCallbackProc)helpCallback,(XtPointer)NULL);
-     } else {
-          XtVaGetValues(fileselectdialog, XmNdirectory, &Xcurrentdir, NULL);
-          if (oldOk)     XtRemoveCallback(fileselectdialog,XmNokCallback,
-                              (XtCallbackProc)oldOk     ,(XtPointer)oldOkParm);
-          if (oldCancel) XtRemoveCallback(fileselectdialog,XmNcancelCallback,
-                              (XtCallbackProc)oldCancel ,(XtPointer)oldCancelParm);
-     }
+	/* "Open" was selected.  Create a Motif FileSelectionDialog w/callback */
+	if (!fileselectdialog) {
+		fileselectdialog = XmCreateFileSelectionDialog(parent,
+		    "file_sel", NULL, 0);
+		XtVaSetValues(fileselectdialog,
+		    XmNallowShellResize, FALSE,
+		    NULL);
+		XtAddCallback(fileselectdialog,XmNhelpCallback,
+		    (XtCallbackProc)helpCallback,(XtPointer)NULL);
+	} else {
+		XtVaGetValues(fileselectdialog, XmNdirectory, &Xcurrentdir, NULL);
+		if (oldOk)     XtRemoveCallback(fileselectdialog,XmNokCallback,
+		    (XtCallbackProc)oldOk     ,(XtPointer)oldOkParm);
+		if (oldCancel) XtRemoveCallback(fileselectdialog,XmNcancelCallback,
+		    (XtCallbackProc)oldCancel ,(XtPointer)oldCancelParm);
+	}
 
-     Xtitle=XmStringCreateLtoR(title,XmSTRING_DEFAULT_CHARSET);
-     Xpattern=XmStringCreateLtoR(pattern,XmSTRING_DEFAULT_CHARSET);
-     if ( !directory  && Xcurrentdir ) Xdirectory = Xcurrentdir;
-     else Xdirectory = XmStringCreateLtoR(directory,XmSTRING_DEFAULT_CHARSET);
+	Xtitle=XmStringCreateLtoR(title,XmSTRING_DEFAULT_CHARSET);
+	Xpattern=XmStringCreateLtoR(pattern,XmSTRING_DEFAULT_CHARSET);
+	if ( !directory  && Xcurrentdir ) Xdirectory = Xcurrentdir;
+	else Xdirectory = XmStringCreateLtoR(directory,XmSTRING_DEFAULT_CHARSET);
 
-     XtVaSetValues(fileselectdialog,
-          XmNuserData,      userParm,
-          XmNdialogTitle,   Xtitle,
-          XmNdirectory,     Xdirectory,
-          XmNdirMask,       Xpattern,
-          NULL);
+	XtVaSetValues(fileselectdialog,
+	    XmNuserData,      userParm,
+	    XmNdialogTitle,   Xtitle,
+	    XmNdirectory,     Xdirectory,
+	    XmNdirMask,       Xpattern,
+	    NULL);
 
-     XmStringFree(Xtitle);
-     XmStringFree(Xpattern);
-     XmStringFree(Xdirectory);
+	XmStringFree(Xtitle);
+	XmStringFree(Xpattern);
+	XmStringFree(Xdirectory);
 
-     XtAddCallback(fileselectdialog,XmNokCallback,
-            (XtCallbackProc)okCallback, (XtPointer)okParm);
-     XtAddCallback(fileselectdialog,XmNcancelCallback,
-            (XtCallbackProc)cancelCallback,(XtPointer)cancelParm);
-     oldOk = okCallback;
-     oldCancel = cancelCallback;
-     oldOkParm = okParm;
-     oldCancelParm = cancelParm;
+	XtAddCallback(fileselectdialog,XmNokCallback,
+	    (XtCallbackProc)okCallback, (XtPointer)okParm);
+	XtAddCallback(fileselectdialog,XmNcancelCallback,
+	    (XtCallbackProc)cancelCallback,(XtPointer)cancelParm);
+	oldOk = okCallback;
+	oldCancel = cancelCallback;
+	oldOkParm = okParm;
+	oldCancelParm = cancelParm;
 
-     XtManageChild(fileselectdialog);
-     XFlush(display);
-/*
-     XtPopup(XtParent(fileselectdialog), XtGrabNone);
-*/
-     return(fileselectdialog);
+	XtManageChild(fileselectdialog);
+	XFlush(display);
+	/*
+	     XtPopup(XtParent(fileselectdialog), XtGrabNone);
+	*/
+	return(fileselectdialog);
 }
 
 /******************************************************
@@ -106,148 +107,148 @@ Widget createFileDialog(Widget parent,void *okCallback,XtPointer okParm,
 ******************************************************/
 void createDialog(Widget parent,int dialogType,char *message1,char *message2)
 {
-     static Widget   dialog = 0; /* make it static for reuse */
-     XmString        str,str1,str2,string;
+	static Widget   dialog = 0; /* make it static for reuse */
+	XmString        str,str1,str2,string;
 
-     if (dialog) XtUnmanageChild(dialog);
-     if (!dialogType ) return;
+	if (dialog) XtUnmanageChild(dialog);
+	if (!dialogType ) return;
 
-     /* destroy runtimeToplevel dialog so dialog is positioned properly */
-     if ( !parent ) return;
-     if ( parent && dialog &&
-          XtParent(XtParent(dialog)) != parent) {
-          XtDestroyWidget(dialog); 
-          dialog = 0;
-     }
+	/* destroy runtimeToplevel dialog so dialog is positioned properly */
+	if ( !parent ) return;
+	if ( parent && dialog &&
+	    XtParent(XtParent(dialog)) != parent) {
+		XtDestroyWidget(dialog);
+		dialog = 0;
+	}
 
-     if (!dialog) {
-          dialog = XmCreateMessageDialog(parent, "Dialog", NULL, 0);
-          XtUnmanageChild(XmMessageBoxGetChild(dialog,XmDIALOG_CANCEL_BUTTON));
-          XtUnmanageChild(XmMessageBoxGetChild(dialog,XmDIALOG_HELP_BUTTON));
-          XtSetSensitive(XmMessageBoxGetChild(dialog,XmDIALOG_HELP_BUTTON),FALSE);
-          XtAddCallback(dialog,XmNokCallback, (XtCallbackProc)XtUnmanageChild,NULL);
-     }
+	if (!dialog) {
+		dialog = XmCreateMessageDialog(parent, "Dialog", NULL, 0);
+		XtUnmanageChild(XmMessageBoxGetChild(dialog,XmDIALOG_CANCEL_BUTTON));
+		XtUnmanageChild(XmMessageBoxGetChild(dialog,XmDIALOG_HELP_BUTTON));
+		XtSetSensitive(XmMessageBoxGetChild(dialog,XmDIALOG_HELP_BUTTON),FALSE);
+		XtAddCallback(dialog,XmNokCallback, (XtCallbackProc)XtUnmanageChild,NULL);
+	}
 
-     switch(dialogType) {
-          case XmDIALOG_WARNING:
-               str=XmStringCreateLtoR("WarningDialog",XmSTRING_DEFAULT_CHARSET);
-               break;
-          case XmDIALOG_ERROR:
-               str=XmStringCreateLtoR("ErrorDialog",XmSTRING_DEFAULT_CHARSET);
-               break;
-          case XmDIALOG_INFORMATION:
-               str=XmStringCreateLtoR("InformationDialog",XmSTRING_DEFAULT_CHARSET);
-               break;
-          case XmDIALOG_MESSAGE:
-               str=XmStringCreateLtoR("MessageDialog",XmSTRING_DEFAULT_CHARSET);
-               break;
-          case XmDIALOG_QUESTION:
-               str=XmStringCreateLtoR("QuestionDialog",XmSTRING_DEFAULT_CHARSET);
-               break;
-          case XmDIALOG_WORKING:
-               str=XmStringCreateLtoR("WorkDialog",XmSTRING_DEFAULT_CHARSET);
-               break;
-          default:
-               str=XmStringCreateLtoR("Dialog",XmSTRING_DEFAULT_CHARSET);
-               break;
-     }
-     
-     str1 = XmStringCreateLtoR(message1,XmFONTLIST_DEFAULT_TAG);
-     str2 = XmStringCreateLtoR(message2,XmFONTLIST_DEFAULT_TAG);
-     string = XmStringConcat(str1,str2);
+	switch(dialogType) {
+	case XmDIALOG_WARNING:
+		str=XmStringCreateLtoR("WarningDialog",XmSTRING_DEFAULT_CHARSET);
+		break;
+	case XmDIALOG_ERROR:
+		str=XmStringCreateLtoR("ErrorDialog",XmSTRING_DEFAULT_CHARSET);
+		break;
+	case XmDIALOG_INFORMATION:
+		str=XmStringCreateLtoR("InformationDialog",XmSTRING_DEFAULT_CHARSET);
+		break;
+	case XmDIALOG_MESSAGE:
+		str=XmStringCreateLtoR("MessageDialog",XmSTRING_DEFAULT_CHARSET);
+		break;
+	case XmDIALOG_QUESTION:
+		str=XmStringCreateLtoR("QuestionDialog",XmSTRING_DEFAULT_CHARSET);
+		break;
+	case XmDIALOG_WORKING:
+		str=XmStringCreateLtoR("WorkDialog",XmSTRING_DEFAULT_CHARSET);
+		break;
+	default:
+		str=XmStringCreateLtoR("Dialog",XmSTRING_DEFAULT_CHARSET);
+		break;
+	}
 
-     XtVaSetValues(dialog,
-          XmNdialogType,  dialogType,
-          XmNdialogTitle, str,
-          XmNmessageString, string,
-          NULL);
-     XmStringFree(str);
-     XmStringFree(str1);
-     XmStringFree(str2);
-     XmStringFree(string);
+	str1 = XmStringCreateLtoR(message1,XmFONTLIST_DEFAULT_TAG);
+	str2 = XmStringCreateLtoR(message2,XmFONTLIST_DEFAULT_TAG);
+	string = XmStringConcat(str1,str2);
 
-     XtManageChild(dialog);
-     XFlush(display);
-/*
-     XmUpdateDisplay(dialog);
-*/
+	XtVaSetValues(dialog,
+	    XmNdialogType,  dialogType,
+	    XmNdialogTitle, str,
+	    XmNmessageString, string,
+	    NULL);
+	XmStringFree(str);
+	XmStringFree(str1);
+	XmStringFree(str2);
+	XmStringFree(string);
+
+	XtManageChild(dialog);
+	XFlush(display);
+	/*
+	     XmUpdateDisplay(dialog);
+	*/
 }
 
 /******************************************************
   createActionDialog
 ******************************************************/
 void createActionDialog(Widget parent,int dialogType,char *message1,
-     XtCallbackProc okCallback,XtPointer okParm,XtPointer userParm)
+XtCallbackProc okCallback,XtPointer okParm,XtPointer userParm)
 {
-     static Widget         dialog = 0; /* make it static for reuse */
-     XmString              str;
-     XmString              str2;
-     static XtCallbackProc oldOkCallback = 0;
-     static XtPointer      oldOkParm = 0;
+	static Widget         dialog = 0; /* make it static for reuse */
+	XmString              str;
+	XmString              str2;
+	static XtCallbackProc oldOkCallback = 0;
+	static XtPointer      oldOkParm = 0;
 
-     if (dialog) XtUnmanageChild(dialog);
-     if (!dialogType ) return;
+	if (dialog) XtUnmanageChild(dialog);
+	if (!dialogType ) return;
 
-     /* destroy runtimeToplevel dialog so dialog is positioned properly */
-     if ( parent && dialog &&
-          XtParent(XtParent(dialog)) != parent) {
-          XtDestroyWidget(dialog); 
-          dialog = 0;
-     }
+	/* destroy runtimeToplevel dialog so dialog is positioned properly */
+	if ( parent && dialog &&
+	    XtParent(XtParent(dialog)) != parent) {
+		XtDestroyWidget(dialog);
+		dialog = 0;
+	}
 
-     if (!dialog) {
-          dialog = XmCreateMessageDialog(parent, "Dialog", NULL, 0);
-          XtSetSensitive(XmMessageBoxGetChild(dialog,XmDIALOG_HELP_BUTTON),FALSE);
-          XtAddCallback(dialog,XmNcancelCallback,(XtCallbackProc) XtUnmanageChild,NULL);
+	if (!dialog) {
+		dialog = XmCreateMessageDialog(parent, "Dialog", NULL, 0);
+		XtSetSensitive(XmMessageBoxGetChild(dialog,XmDIALOG_HELP_BUTTON),FALSE);
+		XtAddCallback(dialog,XmNcancelCallback,(XtCallbackProc) XtUnmanageChild,NULL);
 
-     } else {
-          XtRemoveCallback(dialog,XmNokCallback,oldOkCallback,(XtPointer)oldOkParm);
-     }
+	} else {
+		XtRemoveCallback(dialog,XmNokCallback,oldOkCallback,(XtPointer)oldOkParm);
+	}
 
-     switch(dialogType) {
-          case XmDIALOG_WARNING:
-               str = XmStringCreateSimple("WarningDialog");
-               break;
-          case XmDIALOG_ERROR:
-               str = XmStringCreateSimple("ErrorDialog");
-               break;
-          case XmDIALOG_INFORMATION:
-               str = XmStringCreateSimple("InformationDialog");
-               break;
-          case XmDIALOG_MESSAGE:
-               str = XmStringCreateSimple("MessageDialog");
-               break;
-          case XmDIALOG_QUESTION:
-               str = XmStringCreateSimple("QuestionDialog");
-               break;
-          case XmDIALOG_WORKING:
-               str = XmStringCreateSimple("WorkingDialog");
-               break;
-          default:
-               str = XmStringCreateSimple("InformationDialog");
-               break;
-     }
-     
-     str2=XmStringCreateLtoR(message1,XmSTRING_DEFAULT_CHARSET);
-     XtVaSetValues(dialog,
-          XmNuserData,      userParm,
-          XmNdialogType,  dialogType,
-          XmNdialogTitle, str,
-          XmNmessageString, str2,
-          NULL);
-     XmStringFree(str);
-     XmStringFree(str2);
+	switch(dialogType) {
+	case XmDIALOG_WARNING:
+		str = XmStringCreateSimple("WarningDialog");
+		break;
+	case XmDIALOG_ERROR:
+		str = XmStringCreateSimple("ErrorDialog");
+		break;
+	case XmDIALOG_INFORMATION:
+		str = XmStringCreateSimple("InformationDialog");
+		break;
+	case XmDIALOG_MESSAGE:
+		str = XmStringCreateSimple("MessageDialog");
+		break;
+	case XmDIALOG_QUESTION:
+		str = XmStringCreateSimple("QuestionDialog");
+		break;
+	case XmDIALOG_WORKING:
+		str = XmStringCreateSimple("WorkingDialog");
+		break;
+	default:
+		str = XmStringCreateSimple("InformationDialog");
+		break;
+	}
 
-     XtAddCallback(dialog,XmNokCallback,okCallback,okParm);
-     oldOkCallback = okCallback;
-     oldOkParm = okParm;
+	str2=XmStringCreateLtoR(message1,XmSTRING_DEFAULT_CHARSET);
+	XtVaSetValues(dialog,
+	    XmNuserData,      userParm,
+	    XmNdialogType,  dialogType,
+	    XmNdialogTitle, str,
+	    XmNmessageString, str2,
+	    NULL);
+	XmStringFree(str);
+	XmStringFree(str2);
 
-     XtManageChild(dialog);
-     XFlush(display);
-/*
-     XmUpdateDisplay(dialog);
-*/
-     return;
+	XtAddCallback(dialog,XmNokCallback,okCallback,okParm);
+	oldOkCallback = okCallback;
+	oldOkParm = okParm;
+
+	XtManageChild(dialog);
+	XFlush(display);
+	/*
+	     XmUpdateDisplay(dialog);
+	*/
+	return;
 }
 
 /******************************************************
@@ -255,38 +256,42 @@ void createActionDialog(Widget parent,int dialogType,char *message1,
 ******************************************************/
 void errMsg(const char *fmt, ...)
 {
-    Widget warningbox,child;
-    XmString cstring;
-    va_list vargs;
-    static char lstring[1024];  /* DANGER: Fixed buffer size */
-    int nargs=10;
-    Arg args[10];
-    
-    va_start(vargs,fmt);
-    vsprintf(lstring,fmt,vargs);
-    va_end(vargs);
-    
-    if(lstring[0] != '\0') {
-	XBell(display,50); XBell(display,50); XBell(display,50); 
-	cstring=XmStringCreateLtoR(lstring,XmSTRING_DEFAULT_CHARSET);
-	nargs=0;
-	XtSetArg(args[nargs],XmNtitle,"Warning"); nargs++;
-	XtSetArg(args[nargs],XmNmessageString,cstring); nargs++;
-	warningbox=XmCreateWarningDialog(topLevelShell,"warningMessage",
-	  args,nargs);
-	XmStringFree(cstring);
-	child=XmMessageBoxGetChild(warningbox,XmDIALOG_CANCEL_BUTTON);
-	XtDestroyWidget(child);
-	child=XmMessageBoxGetChild(warningbox,XmDIALOG_HELP_BUTTON);
-	XtDestroyWidget(child);
-	XtManageChild(warningbox);
-	XtAddCallback(warningbox,XmNokCallback,killWidget,NULL);
+	Widget warningbox,child;
+	XmString cstring;
+	va_list vargs;
+	static char lstring[1024];  /* DANGER: Fixed buffer size */
+	int nargs=10;
+	Arg args[10];
+
+	va_start(vargs,fmt);
+	vsprintf(lstring,fmt,vargs);
+	va_end(vargs);
+
+	if(lstring[0] != '\0') {
+		XBell(display,50); 
+		XBell(display,50); 
+		XBell(display,50);
+		cstring=XmStringCreateLtoR(lstring,XmSTRING_DEFAULT_CHARSET);
+		nargs=0;
+		XtSetArg(args[nargs],XmNtitle,"Warning"); 
+		nargs++;
+		XtSetArg(args[nargs],XmNmessageString,cstring); 
+		nargs++;
+		warningbox=XmCreateWarningDialog(topLevelShell,"warningMessage",
+		    args,nargs);
+		XmStringFree(cstring);
+		child=XmMessageBoxGetChild(warningbox,XmDIALOG_CANCEL_BUTTON);
+		XtDestroyWidget(child);
+		child=XmMessageBoxGetChild(warningbox,XmDIALOG_HELP_BUTTON);
+		XtDestroyWidget(child);
+		XtManageChild(warningbox);
+		XtAddCallback(warningbox,XmNokCallback,killWidget,NULL);
 #ifdef WIN32
-	lprintf("%s\n",lstring);
+		lprintf("%s\n",lstring);
 #else
-	fprintf(stderr,"%s\n",lstring);
+		fprintf(stderr,"%s\n",lstring);
 #endif
-    }
+	}
 }
 
 /******************************************************
@@ -294,5 +299,5 @@ void errMsg(const char *fmt, ...)
 ******************************************************/
 static void killWidget(Widget w, XtPointer clientdata, XtPointer calldata)
 {
-    XtDestroyWidget(w);
+	XtDestroyWidget(w);
 }

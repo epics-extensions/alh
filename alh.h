@@ -1,99 +1,18 @@
-/*
- $Log$
- Revision 1.11  1998/09/03 19:18:44  jba
- Added url help for help menu.
-
- Revision 1.10  1998/08/05 18:20:05  jba
- Added silenceOneHour button.
- Moved silenceForever button to Setup menu.
- Added logging for operator silence changes.
-
-
- Revision 1.9  1998/08/03 14:33:20  jba
- Changed MAX_STRING_LENGTH to 500
-
- Revision 1.8  1998/07/29 17:27:35  jba
- Added "Unacknowledged Alarms Only" display filter.
-
- Revision 1.7  1998/06/02 19:40:47  evans
- Changed from using Fgmgr to using X to manage events and file
- descriptors.  (Fdmgr didn't work on WIN32.)  Uses XtAppMainLoop,
- XtAppAddInput, and XtAppAddTimeOut instead of Fdmgr routines.
- Updating areas is now in alCaUpdate, which is called every caDelay ms
- (currently 100 ms).  Added a general error message routine (errMsg)
- and an exception handler (alCAException).  Is working on Solaris and
- WIN32.
-
- Revision 1.6  1998/05/12 18:22:42  evans
- Initial changes for WIN32.
-
- Revision 1.5  1997/09/09 22:20:03  jba
- Changed HELP selections on menu.
-
- Revision 1.4  1995/11/13 22:31:15  jba
- Added beepseverity command, ansi changes and other changes.
-
- * Revision 1.3  1995/10/20  16:50:07  jba
- * Modified Action menus and Action windows
- * Renamed ALARMCOMMAND to SEVRCOMMAND
- * Added STATCOMMAND facility
- * Added ALIAS facility
- * Added ALARMCOUNTFILTER facility
- * Make a few bug fixes.
- *
- * Revision 1.2  1994/06/22  21:16:48  jba
- * Added cvs Log keyword
- *
- */
-
 /* alh.h */
 
-/* alh.h - Alarm Handler 
- *
- *      Author: 	Ben-chin Cha 
- *      Date:		05-04-92
- *
- *	Experimental Physics and Industrial Control System (EPICS)
- *
- *	Copyright 1991, the Regents of the University of California,
- *	and the University of Chicago Board of Governors.
- *
- *	This software was produced under  U.S. Government contracts:
- *	(W-7405-ENG-36) at the Los Alamos National Laboratory,
- *	and (W-31-109-ENG-38) at Argonne National Laboratory.
- *
- *	Initial development by:
- *		The Controls and Automation Group (AT-8)
- *		Ground Test Accelerator
- *		Accelerator Technology Division
- *		Los Alamos National Laboratory
- *
- *	Co-developed with
- *		The Controls and Computing Group
- *		Accelerator Systems Division
- *		Advanced Photon Source
- *		Argonne National Laboratory
- *
- *
- * Modification Log:
- * -----------------
- * .nn	mm-dd-yy		nnn	Description
- * .01  12-10-93        jba modified FILE_ defines added configDir,logdDir
- *                      and fixed endif comment
- * .02  02-17-94        use dbDefs.h to define pvname and field name lengths
- */
+/************************DESCRIPTION***********************************
+ Alh header file of #defines and structure definitions
+**********************************************************************/
 
 #ifndef INCalhh
 #define INCalhh
+
+static char *alhhsccsId = "@(#) $Id$";
 
 #include <stdio.h>
 
 #include <Xm/Xm.h>
 #include <Xm/RowColumn.h>
-
-#include <sllLib.h>
-
-#include <dbDefs.h>
 
 /* WIN32 differences */
 #ifdef WIN32
@@ -111,23 +30,15 @@
 #   define printf lprintf
 #  endif
 # endif
-#else /* #ifdef WIN32 */
-/* WIN32 does not have unistd.h */
-# include <unistd.h>
 #endif /* #ifdef WIN32 */
- 
-static char *alhhSccsId = "@(#)alh.h	1.10\t10/8/93";
 
-/* default  file names */
-#define DEFAULT_CONFIG  "ALH-default.alhConfig"
-#define DEFAULT_ALARM   "ALH-default.alhAlarm"
-#define DEFAULT_OPMOD   "ALH-default.alhOpmod"
-#define NEW_CONFIG      "ALH-new.alhConfig"
+#include "sllLib.h"
+#include "dbDefs.h"
+
 
 /* size of name */
 #define NAMEDEFAULT_SIZE  150           /* file name size  */
 #define OPMODMESSAGE_SIZE 130           /* opmod log line size */
-#define LINEMESSAGE_SIZE   60           /* window message line size */
 #define PVNAME_SIZE  PVNAME_STRINGSZ+FLDNAME_SZ       /* PV name size from dbDefs.h */
 
 
@@ -162,77 +73,14 @@ static char *alhhSccsId = "@(#)alh.h	1.10\t10/8/93";
 
 #define	MAX_TREE_DEPTH			50
 
-#define CA_PEND_IO_SECONDS  5.0
-
 /* define parameters for menu callbacks */
-#define MENU_FILE_NEW		10100
-#define MENU_FILE_OPEN		10101
-#define MENU_FILE_OPEN_OK	10102
-#define MENU_FILE_CLOSE		10103
-#define MENU_FILE_CLOSEALL	10104
-#define MENU_FILE_SAVE		10105
-#define MENU_FILE_SAVEAS	10106
-#define MENU_FILE_ALH		10107
-#define MENU_FILE_PRINT		10108
-#define MENU_FILE_QUIT		10109
-
-#define MENU_VIEW_EXPANDCOLLAPSE1	10200
-#define MENU_VIEW_EXPANDBRANCH		10201
-#define MENU_VIEW_EXPANDALL			10202
-#define MENU_VIEW_COLLAPSEBRANCH	10203
-#define MENU_VIEW_PROPERTIES		10204
-
-#define	MENU_ACTION_ACK			10300
-#define	MENU_ACTION_GUIDANCE	10301
-#define	MENU_ACTION_PROCESS		10302
-#define MENU_ACTION_FORCEPV		10303
-#define MENU_ACTION_FORCE_MASK	10304
-#define MENU_ACTION_MODIFY_MASK	10305
-
-
-#define	MENU_VIEW_CONFIG		10400
-#define	MENU_VIEW_OPMOD			10401
-#define	MENU_VIEW_ALARMLOG		10402
-#define	MENU_VIEW_CURRENT		10403
-
-#define MENU_SETUP_BEEP_MINOR	10500
-#define MENU_SETUP_BEEP_MAJOR	10501
-#define MENU_SETUP_BEEP_INVALID	10502
-#define MENU_SETUP_FILTER_NONE	10503
-#define MENU_SETUP_FILTER_ACTIVE	10504
-#define MENU_SETUP_FILTER_UNACK 	10505
-#define MENU_SETUP_SILENCE_FOREVER	10506
-#define MENU_SETUP_ALARMLOG		10507
-#define MENU_SETUP_OPMOD		10508
-
-#define MENU_EDIT_UNDO			10600
-#define MENU_EDIT_CUT			10601
-#define MENU_EDIT_COPY			10602
-#define MENU_EDIT_PASTE			10603
-#define MENU_EDIT_CLEAR			10604
-#define MENU_EDIT_CLEAR_OK		10605
-
-#define MENU_EDIT_UNDO_PASTE_NOSELECT	10700
-#define MENU_EDIT_UNDO_PASTE			10701
-#define MENU_EDIT_UNDO_CUT				10702
-#define MENU_EDIT_UNDO_CUT_NOSELECT		10703
-#define MENU_EDIT_UNDO_UPDATE_CLIPBOARD	10704
-#define MENU_EDIT_UNDO_PROPERTIES		10705
-#define MENU_EDIT_UNDO_CLEAR			10706
-
-#define MENU_INSERT_GROUP		10800
-#define MENU_INSERT_CHANNEL		10801
-#define MENU_INSERT_INCLUDE		10802
-#define MENU_INSERT_FILE		10803
-#define MENU_INSERT_SETTINGS	10804
-
-#define MENU_HELP_HELP	10900
-#define MENU_HELP_ABOUT	10906
-
-
-
-
-typedef  void (*FUNPTR)();      /* define void function pointer */
+#define MENU_EDIT_UNDO_PASTE_NOSELECT   10700
+#define MENU_EDIT_UNDO_PASTE            10701
+#define MENU_EDIT_UNDO_CUT              10702
+#define MENU_EDIT_UNDO_CUT_NOSELECT     10703
+#define MENU_EDIT_UNDO_UPDATE_CLIPBOARD 10704
+#define MENU_EDIT_UNDO_PROPERTIES       10705
+#define MENU_EDIT_UNDO_CLEAR            10706
 
 #ifdef Mmax  /* just in case--we don't know, but these are commonly set */
 #undef Mmax  /* by arbitrary unix systems.  Also, we cast to int! */
@@ -267,9 +115,9 @@ typedef  void (*FUNPTR)();      /* define void function pointer */
 #define TREEREPORT_PATTERN "*.alhReport"
 
 typedef struct {
-    char *label;
-    void (*callback)(Widget, void *, void *);
-    XtPointer data;
+	char *label;
+	void (*callback)(Widget, void *, void *);
+	XtPointer data;
 } ActionAreaItem;
 
 #define TIGHTNESS  30
@@ -286,155 +134,29 @@ int                 programId;
 
 
 struct setup {
-     char configFile[NAMEDEFAULT_SIZE];      /* config file name */
-     char logFile[NAMEDEFAULT_SIZE];         /* alarm log file name */
-     char opModFile[NAMEDEFAULT_SIZE];       /* opMod log file name */
-     char saveFile[NAMEDEFAULT_SIZE];        /* save config file name */
-     short silenceForever;                   /* 1 - beepoff forever is true */
-     short silenceOneHour;                   /* 1 - beepoff one hour is true */
-     short silenceCurrent;                     /* 1 - current beep on  0 - off */
-     short beepSevr;                 /* 1,2,3,4,5 */
-     short highestSevr;              /* system highest  sevr */
-     short highestUnackSevr;         /* system highest unack sevr */
-     char *configDir;                /* config files directory */
-     char *logDir;                   /* log files directory */
- };
+	char configFile[NAMEDEFAULT_SIZE];      /* config file name */
+	char logFile[NAMEDEFAULT_SIZE];         /* alarm log file name */
+	char opModFile[NAMEDEFAULT_SIZE];       /* opMod log file name */
+	char saveFile[NAMEDEFAULT_SIZE];        /* save config file name */
+	short silenceForever;                   /* 1 - beepoff forever is true */
+	short silenceOneHour;                   /* 1 - beepoff one hour is true */
+	short silenceCurrent;                     /* 1 - current beep on  0 - off */
+	short beepSevr;                 /* 1,2,3,4,5 */
+	short highestSevr;              /* system highest  sevr */
+	short highestUnackSevr;         /* system highest unack sevr */
+	char *configDir;                /* config files directory */
+	char *logDir;                   /* log files directory */
+};
 
 struct mainGroup {
-     struct groupLink *p1stgroup;    /* main group pointer */
-     int modified;
-     void *area;
+	struct groupLink *p1stgroup;    /* main group pointer */
+	int modified;
+	void *area;
 };
 
 extern struct setup psetup;
 
 
-/*************************************************************************/
-
-/*
- * SOME CONVENIENCE ROUTINES
- */
-
-#if FALSE
-
-
-#ifndef IGNORE_FONT
-static XmFontList
-FONT_LIST(w, name)
-Widget  w;
-char    *name;
-{
-XFontStruct     *font;
-
-font = XLoadQueryFont(XtDisplay(w), name);
-if( font == NULL )
-{
-    XtWarning("Cannot find font, using default.");
-    font = XLoadQueryFont(XtDisplay(w), "fixed");
-}
-return(XmFontListCreate(font, XmSTRING_DEFAULT_CHARSET)); 
-}
-#endif
-
-#ifndef IGNORE_PIXMAP
-static Pixmap
-PIXMAP(w, name)
-Widget  w;
-char    *name;
-{
-Pixmap          bitmap;
-Pixmap          pixmap;
-unsigned long   bg, fg;
-Arg                     args[20];
-int                     i;
-int                     width, height;
-int                 xhot, yhot;
-GC                      gc;
-int                     depth;
-Window          window;
-window = DefaultRootWindow(XtDisplay(w));
-i = 0;
-XtSetArg(args[i], XmNbackground, &bg); i++;
-XtSetArg(args[i], XmNforeground, &fg); i++;
-XtSetArg(args[i], XmNdepth, &depth); i++;
-XtGetValues(w, args, i);
-if( XReadBitmapFile(XtDisplay(w), window,
-   name, &width, &height, &bitmap, &xhot, &yhot)
-      != BitmapSuccess) return(XmUNSPECIFIED_PIXMAP);
-pixmap = XCreatePixmap(XtDisplay(w), window,
-       width, height, depth);
-gc = XCreateGC(XtDisplay(w), window, 0, 0);
-XSetForeground(XtDisplay(w), gc, fg);
-XSetBackground(XtDisplay(w), gc, bg);
-XCopyPlane(XtDisplay(w), bitmap, pixmap, gc, 0,
-       0, width, height, 0, 0, 0x00000001);
-XFreeGC(XtDisplay(w), gc);
-XFreePixmap(XtDisplay(w), bitmap);
-return(pixmap);
-}
-#endif
-
-#ifndef IGNORE_MENU_POST
-static void
-MENU_POST(p, m, e)
-Widget  m;
-XButtonEvent *e;
-{
-Arg args[2];
-int argcnt;
-int button;
-
-    argcnt = 0;
-    XtSetArg(args[argcnt], XmNwhichButton, &button);
-    argcnt++;
-    XtGetValues(m, args, argcnt);
-    if( e->button != button) return;
-    XmMenuPosition(m, e);
-    XtManageChild(m);
-}
-#endif
-
-
-#ifndef IGNORE_STRING_TABLE
-#ifdef __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
-
-#ifdef __STDC__
-static XmString* STRING_TABLE(int count, XmString *array, ...)
-#else
-static XmString* STRING_TABLE(va_alist)
-va_dcl
-#endif
-{
-    va_list     ap;
-#ifndef __STDC__
-    int         count;
-    XmString    *array;
-#endif
-    int     i;
-
-#ifdef __STDC__
-    va_start(ap, count);
-#else
-    va_start(ap);
-    count = va_arg(ap, int);
-#endif
-    array = (XmString*)XtMalloc(count * sizeof(XmString*));
-    for(i = 0;  i < count; i++ )
-    {
-	array[i] = XmStringCreateLtoR(va_arg(ap, char*),
-	XmSTRING_DEFAULT_CHARSET);
-    }
-    va_end(ap);
-
-    return(array);
-}
-#endif
-
-#endif  
 
 #endif /* INCalhh */
 
@@ -465,7 +187,6 @@ va_dcl
      axArea.c         X routines for setup of area and area Main Window
      axRunW.c         X routines related to the iconlike runtime window
      axSubW.c         X routines for tree and groupContents subWindows
-     clipboardOps.c   Routines allow cut and paste of pushbutton label
      current.c        Routines for current alarm history (last 10 alarms)
      dialog.c         Routines for creating dialogs
      file.c           Routines for file handling and alh exit
