@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.21  1998/09/01 20:26:03  jba
+ Removed unused variables.
+
  Revision 1.20  1998/08/07 22:29:44  jba
  Alh now quits when invalid config file is specified on command line.
 
@@ -771,7 +774,6 @@ void fileSetupInit( widget, argc, argv)
      char   logFile[NAMEDEFAULT_SIZE];
      char   opModFile[NAMEDEFAULT_SIZE];
      char   *name = NULL;
-     char *p,*q;  /* for printer parameters. Albert */
 
      programId = ALH;
      programName = (char *)calloc(1,4);
