@@ -103,11 +103,11 @@ char FS_filename[128]; /* Filename      for FSBox. Albert*/
 static void alhFileCallback( Widget widget, XtPointer calldata, XtPointer cbs);
 static void alhActionCallback( Widget widget, XtPointer calldata, XtPointer cbs);
 static void alhViewCallback( Widget widget, XtPointer calldata, XtPointer cbs);
-static void alhViewCallback1( Widget widget, XtPointer item, XtPointer cbs);
+static void alhViewBrowserCallback( Widget widget, XtPointer item, XtPointer cbs); /* Albert1 */
 static void alhSetupCallback( Widget widget, XtPointer calldata, XtPointer cbs);
 static void alhHelpCallback( Widget widget, XtPointer calldata, XtPointer cbs);
-static void dialogCbOk();     /* Ok-button     for FSBox. Albert*/
-static void dialogCbCancel(); /* Cancel-button for FSBox. Albert*/
+static void browserFBSDialogCbOk();     /* Ok-button     for FSBox. Albert*/
+static void browserFBSDialogCbCancel(); /* Cancel-button for FSBox. Albert*/
 
 
 /******************************************************
@@ -166,10 +166,8 @@ Widget alhCreateMenu(Widget parent,XtPointer user_data)
 		             alhViewCallback, (XtPointer)MENU_VIEW_CURRENT,         (MenuItem *)NULL, 0 },
 		         { "Configuration File Window",     &xmToggleButtonGadgetClass, 'f', NULL, NULL,
 		             alhViewCallback, (XtPointer)MENU_VIEW_CONFIG,           (MenuItem *)NULL, 0 },
-		/* Next Callback for FSBox adding. Albert */
 		         { "Alarm Log File Window",         &xmToggleButtonGadgetClass, 'r', NULL, NULL,
-		             alhViewCallback1, (XtPointer)MENU_VIEW_ALARMLOG,         (MenuItem *)NULL, 0 },
-		/* End. Albert */
+		             alhViewCallback, (XtPointer)MENU_VIEW_ALARMLOG,         (MenuItem *)NULL, 0 },
 		         { "Operation Log File Window",     &xmToggleButtonGadgetClass, 'O', NULL, NULL,
 		             alhViewCallback, (XtPointer)MENU_VIEW_OPMOD,         (MenuItem *)NULL, 0 },
 		         { "Group/Channel Properties Window", &xmToggleButtonGadgetClass, 'W', NULL, NULL,
@@ -177,6 +175,39 @@ Widget alhCreateMenu(Widget parent,XtPointer user_data)
 
 		         {NULL},
 		     	};
+/* ****************************************************************************Albert1: */
+	static MenuItem view_menuNew[] = {
+		         { "Expand One Level",       &xmPushButtonGadgetClass, 'L', "None<Key>plus", "+",
+		             alhViewCallback, (XtPointer)MENU_VIEW_EXPANDCOLLAPSE1,   (MenuItem *)NULL, 0 },
+		         { "Expand Branch",          &xmPushButtonGadgetClass, 'B', "None<Key>asterisk", "*",
+		             alhViewCallback, (XtPointer)MENU_VIEW_EXPANDBRANCH,      (MenuItem *)NULL, 0 },
+		         { "Expand All",             &xmPushButtonGadgetClass, 'A', "Ctrl<Key>asterisk", "Ctrl+*",
+		             alhViewCallback, (XtPointer)MENU_VIEW_EXPANDALL,         (MenuItem *)NULL, 0 },
+		         { "Collapse Branch",        &xmPushButtonGadgetClass, 'C', "None<Key>minus", "-",
+		             alhViewCallback, (XtPointer)MENU_VIEW_COLLAPSEBRANCH,    (MenuItem *)NULL, 0 },
+		         { "",                       &xmSeparatorGadgetClass,  '\0', NULL, NULL,
+		             NULL,    NULL,   (MenuItem *)NULL, 0 },
+		         { "Current Alarm History Window",  &xmToggleButtonGadgetClass, 'H', NULL, NULL,
+		             alhViewCallback, (XtPointer)MENU_VIEW_CURRENT,         (MenuItem *)NULL, 0 },
+		         { "Configuration File Window",     &xmToggleButtonGadgetClass, 'f', NULL, NULL,
+		             alhViewCallback, (XtPointer)MENU_VIEW_CONFIG,           (MenuItem *)NULL, 0 },
+		         { "Alarm Log File Window",         &xmToggleButtonGadgetClass, 'r', NULL, NULL,
+		             alhViewCallback, (XtPointer)MENU_VIEW_ALARMLOG,         (MenuItem *)NULL, 0 },
+		/* Next Callback for AlarmLog Browser adding. Albert */
+		         { "Browser For Alarm Log",         &xmToggleButtonGadgetClass, 's', NULL, NULL,
+		             alhViewBrowserCallback, (XtPointer)MENU_VIEW_ALARMLOG,         (MenuItem *)NULL, 0 },
+
+		         { "Operation Log File Window",     &xmToggleButtonGadgetClass, 'O', NULL, NULL,
+		             alhViewCallback, (XtPointer)MENU_VIEW_OPMOD,         (MenuItem *)NULL, 0 },
+		         { "Browser For Operation Log",         &xmToggleButtonGadgetClass, 'e', NULL, NULL,
+		             alhViewBrowserCallback, (XtPointer)MENU_VIEW_OPMOD,         (MenuItem *)NULL, 0 },
+		/* End. Albert */
+		         { "Group/Channel Properties Window", &xmToggleButtonGadgetClass, 'W', NULL, NULL,
+		             alhViewCallback, (XtPointer)MENU_VIEW_PROPERTIES,    (MenuItem *)NULL, 0 },
+
+		         {NULL},
+		     	};
+/* ******************************************************************************End ofAlbert1 */
 
 	static MenuItem setup_beep_menu[] = {
 		         { "Minor",      &xmPushButtonGadgetClass, 'M', NULL, NULL,
@@ -229,7 +260,11 @@ Widget alhCreateMenu(Widget parent,XtPointer user_data)
 
 	widget = buildPulldownMenu(menubar, "File",     'F', TRUE, file_menu, user_data);
 	widget = buildPulldownMenu(menubar, "Action",   'A', TRUE, action_menu, user_data);
+        if(!_time_flag)
 	widget = buildPulldownMenu(menubar, "View",     'V', TRUE, view_menu, user_data);
+        else  /* Albert1 */
+	widget = buildPulldownMenu(menubar, "View",     'V', TRUE, view_menuNew, user_data);
+
 	widget = buildPulldownMenu(menubar, "Setup",    'S', TRUE, setup_menu, user_data);
 
 	widget = buildPulldownMenu(menubar, "Help",     'H', TRUE, help_menu, user_data);
@@ -514,51 +549,65 @@ static void alhViewCallback(Widget widget,XtPointer calldata,XtPointer cbs)
 /******************************************************
   FileSelect for AlhView. Albert
 ******************************************************/
-static void alhViewCallback1(Widget widget,XtPointer item,XtPointer cbs)
+static void alhViewBrowserCallback(Widget widget,XtPointer item,XtPointer cbs)
 {
 	ALINK   *area;
 	Widget dialog;
 	Arg al[10];
 	int ac=0;
 	XmString Xpattern,Xtitle,Xcurrentdir;
-	char *pattern=ALARMLOG_PATTERN;
-	char *title="Alarm Log File";
-	if (!_time_flag) alhViewCallback(widget, item, cbs);
-	else 
-	{
+        int ch = (int) item;
+	switch ( ch )
+	  {
+	  case MENU_VIEW_ALARMLOG:
+	    Xtitle=XmStringCreateSimple("Alarm Log File");          
+	    Xpattern = XmStringCreateSimple(psetup.logFile);
+	    Xcurrentdir = XmStringCreateSimple(psetup.logDir); 
+	    break;
+	    
+	  case MENU_VIEW_OPMOD:
+	    Xtitle=XmStringCreateSimple("Operator File");          
+	    Xpattern = XmStringCreateSimple(psetup.opModFile);
+	    Xcurrentdir = XmStringCreateSimple(psetup.logDir);  /* Albert1 ???? */  
+	    break;
+
+	  default:
+            perror("bad item");
+	    return;
+	  }     
+
 		XtVaGetValues(widget, XmNuserData, &area, NULL);
-		dialog=XmCreateFileSelectionDialog(area->form_main,"dialog",al,ac);
-		XtAddCallback(dialog,XmNokCallback,dialogCbOk,widget);
-		XtAddCallback(dialog,XmNcancelCallback,dialogCbCancel,NULL);
+		dialog=XmCreateFileSelectionDialog(area->form_main,"dialog",NULL,0);
+
+		XtAddCallback(dialog,XmNokCallback,browserFBSDialogCbOk,widget);
+		XtAddCallback(dialog,XmNcancelCallback,browserFBSDialogCbCancel,NULL);
 		XtUnmanageChild(XmFileSelectionBoxGetChild(dialog,
 		    XmDIALOG_HELP_BUTTON));
-		Xtitle = XmStringCreateSimple(title);
-		Xpattern = XmStringCreateSimple(psetup.logFile);
-		Xcurrentdir = XmStringCreateSimple(psetup.configDir);
+
 		XtVaSetValues(dialog,
 		    XmNdirectory,     Xcurrentdir,
 		    XmNdialogTitle,   Xtitle,
-		    XmNdirMask,       Xpattern,
+		    XmNdirMask,    Xpattern,
+                    XmNfileTypeMask,		XmFILE_REGULAR,
 		    NULL);
 		XtManageChild(dialog);
 		XmStringFree(Xpattern);
 		XmStringFree(Xtitle);
-	}
 }
 
 /******************************************************
-  dialogCbCancel
+  browserFBSDialogCbCancel
 ******************************************************/
-static void dialogCbCancel(Widget w,int client_data,
+static void browserFBSDialogCbCancel(Widget w,int client_data,
 XmSelectionBoxCallbackStruct *call_data)
 {
 	XtUnmanageChild(w);
 }
 
 /******************************************************
-  dialogCbOk
+  browserFBSDialogCbOk
 ******************************************************/
-static void dialogCbOk(Widget w,Widget wdgt,
+static void browserFBSDialogCbOk(Widget w,Widget wdgt,
 XmSelectionBoxCallbackStruct *call_data)
 {
 	ALINK   *area;
@@ -567,7 +616,7 @@ XmSelectionBoxCallbackStruct *call_data)
 	strcpy(FS_filename,s);
 	XtFree(s);
 	XtVaGetValues(wdgt, XmNuserData, &area, NULL);
-	fileViewWindow(area->form_main,ALARM_FILE,wdgt);
+	browser_fileViewWindow(area->form_main,ALARM_FILE,wdgt);  /* Albert1 */
 	XtUnmanageChild(w);
 }
 

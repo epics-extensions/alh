@@ -30,6 +30,8 @@ alLogSetupSaveConfigFile(filename)			Log setup save config file
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <sys/msg.h>
+#include <errno.h>
 #ifdef WIN32
 #include <process.h>
 #else
@@ -79,20 +81,26 @@ FILE *fl;       /* write alarm log file pointer */
 
 time_t timeofday;
 char buff[260],*str;
-
+int ret;
 extern char * alarmSeverityString[];
 extern char * alarmStatusString[];
 
 extern int _read_only_flag;         /* RO flag. Albert */
-extern int _tm_day_old;             /* DayofMonth. Albert */
+extern int tm_day_old;              /* Midnight switch. Albert */
 extern int _printer_flag;           /* Printer flag. Albert */
-extern char printerHostname[120];
-extern int  printerPort;
-extern char printerColorModel[120];
-int write2printer(char *message,int len,int sev);
+extern int masterFlag;
+extern int printerMsgQId;
+extern int _lock_flag;
+
+int write2MQ(int, char *);
+
+char *digit2month[12]={"Jan","Feb","Mar","Apr","May","Jun","Jul","Aug",
+		       "Sep","Oct","Nov","Dec"};
 extern int _time_flag;              /* Dated flag. Albert */
 
-
+extern int _DB_call_flag;
+extern int DBMsgQId;
+extern int DEBUG;
 /***********************************************************************
  * log the channel alarm at the alarm logfile
  ***********************************************************************/
@@ -100,30 +108,36 @@ void alLogAlarm(time_t *ptimeofdayAlarm,struct chanData *cdata,int stat,
 int sev,int h_unackStat,int h_unackSevr)
 {
 	int status=0;
-	/*___________________ For AlLog dated. Albert ___________________ */
-	time_t timeofday;
 	struct tm *tms;
-	char buf[16];
-	/*________________________ End. Albert___________________________ */
-	/* 158 chars put into buff */
+	char printerBuff[250]; /* Albert */
+	char DBbuf[250]; /* Albert */
+	char buf[30];
+	/* 158/154 chars put into buff */
+/* new time format (like  "09-Feb-1999 12:21:12")  Albert1. */
+	tms = localtime(ptimeofdayAlarm);  
+        sprintf(buf,"%-.2d-%-3s-%-.4d %-.2d:%-.2d:%-.2d",
+        tms->tm_mday,digit2month[tms->tm_mon],1900+tms->tm_year,
+        tms->tm_hour,tms->tm_min,tms->tm_sec);
+        buf[20]=0;
+
+/* old time format (like  "Fri Feb 19 12:21:12 1999")
 	str = ctime(ptimeofdayAlarm);
 	*(str + strlen(str)-1) = '\0';
+*/
 
 	sprintf(buff,
 	    "%-24s :  %-28s %-12s %-16s %-12s %-16s %-40.40s\n",
-	    str,cdata->name,
+	    buf,cdata->name,
 	    alarmStatusString[stat],alarmSeverityString[sev],
 	    alarmStatusString[h_unackStat],
 	    alarmSeverityString[h_unackSevr],
 	    cdata->value);
 
 	/* update file and Alarm Log text window */
-	/*______ For AlLog dated. Albert  ___________________________ */
+	/*______ For AlLog dated & printer. Albert  ___________________________ */
 	if (_time_flag)
 	{
-		timeofday = time(0L);
-		tms = localtime(&timeofday);
-		if(tms->tm_mday != _tm_day_old)
+		if(tms->tm_mday != tm_day_old)
 		{
 			sprintf(buf,".%.4d-%.2d-%.2d",
 			    1900+tms->tm_year,1+tms->tm_mon,tms->tm_mday);
@@ -131,15 +145,47 @@ int sev,int h_unackStat,int h_unackSevr)
 			psetup.logFile[strlen(psetup.logFile) - 11] = 0;
 			strncat(psetup.logFile, &buf[0], strlen(buf));
 			fclose(fl);
-			fl = fopen(psetup.logFile,"w");
+			fl = fopen(psetup.logFile,"a");
 			fclose(fl);
-			if(!_read_only_flag) fl = fopen(psetup.logFile,"r+");
-			else fl = fopen(psetup.logFile,"r");
-			_tm_day_old=tms->tm_mday;
+			if(_read_only_flag)  fl = fopen(psetup.logFile,"r");
+			else if (_lock_flag) fl = fopen(psetup.logFile,"a");
+                        else fl = fopen(psetup.logFile,"r+");
+
+			/* The same with psetup.opModFile: */
+			psetup.opModFile[strlen(psetup.opModFile) - 11] = 0;
+			strncat(psetup.opModFile, &buf[0], strlen(buf));
+			fclose(fo);
+			fo = fopen(psetup.opModFile,"a");
+			fclose(fo);
+			if(_read_only_flag)  fo = fopen(psetup.opModFile,"r");
+			else if (_lock_flag) fo = fopen(psetup.opModFile,"a");
+                        else fo = fopen(psetup.opModFile,"r+");
+
+			tm_day_old=tms->tm_mday;
 			alarmLogFileOffsetBytes =0;
 		}
 	}
-	/*________________________ end for AlLog dated. Albert__________ */
+	if (_printer_flag)
+	{
+        	sprintf(printerBuff,
+		"%d %-19s %-28s %-7.7s %-7.7s %s",sev+1,
+		buf,cdata->name,
+		alarmStatusString[stat],alarmSeverityString[sev],
+		cdata->value);	
+	}
+        if(_DB_call_flag)
+	  {
+           	sprintf(DBbuf,
+	    "%d %-24s :  %-28s %-12s %-16s %-12s %-16s %-40.40s\n",
+	    sev+1,buf,cdata->name,
+	    alarmStatusString[stat],alarmSeverityString[sev],
+	    alarmStatusString[h_unackStat],
+	    alarmSeverityString[h_unackSevr],
+	    cdata->value);
+	  }
+	/*________________________ end for AlLog dated & other. Albert__________ */
+
+
 	if (alarmLogFileMaxRecords) {
 		if (alarmLogFileOffsetBytes != ftell(fl))
 			fseek(fl,alarmLogFileOffsetBytes,SEEK_SET);
@@ -149,8 +195,13 @@ int sev,int h_unackStat,int h_unackSevr)
 			alarmLogFileOffsetBytes = 0;
 		}
 
-		(void)fprintf(fl,"%s",buff);
-		if(_printer_flag) write2printer(buff,158,sev);/* Albert */
+		if(masterFlag) fprintf(fl,"%s",buff);
+		if(_printer_flag&&masterFlag) 
+		  write2MQ(printerMsgQId, printerBuff); /* Albert */
+                if(_DB_call_flag&&masterFlag) {
+		  write2MQ(DBMsgQId, DBbuf);      /* Albert */
+		}
+
 		/*---------------
 			        (void)fprintf(fl,"%-157s\n",alarmLogFileEndString);
 		                fseek(fl,-alarmLogFileStringLength,SEEK_CUR);
@@ -159,8 +210,12 @@ int sev,int h_unackStat,int h_unackSevr)
 		alarmLogFileOffsetBytes = ftell(fl);
 		fflush(fl);
 	} else {
-		(void)fprintf(fl,"%s",buff);
-		if(_printer_flag) write2printer(buff,sizeof(buff),sev); /*Albert*/
+		if(masterFlag) fprintf(fl,"%s",buff);  /*Albert*/
+		if(_printer_flag&&masterFlag) write2MQ(printerMsgQId,printerBuff);
+                if(_DB_call_flag&&masterFlag) {
+		  write2MQ(DBMsgQId, DBbuf);      /* Albert */
+		}
+
 		fflush(fl);
 	}
 	updateAlarmLog(ALARM_FILE,buff);
@@ -171,17 +226,29 @@ int sev,int h_unackStat,int h_unackSevr)
  ***********************************************************************/
 void alLogConnection(const char *pvname,const char *ind)
 {
-	timeofday = time(0L);
-	str = ctime(&timeofday);
-	*(str + strlen(str)-1) = '\0';
+        struct tm *tms;
+        char buf[30];
 
-	sprintf(buff,"%-26s %-31s: [%s]\n", str,ind,pvname);
+        timeofday = time(0L);
 
+        /* new time format (like  "09-Feb-1999 12:21:12")  Albert1. */
+        tms = localtime(&timeofday);  
+	sprintf(buf,"%-.2d-%-3s-%-.4d %-.2d:%-.2d:%-.2d",
+		tms->tm_mday,digit2month[tms->tm_mon],1900+tms->tm_year,
+		tms->tm_hour,tms->tm_min,tms->tm_sec);
+	buf[20]=0;
+  
+	/* old time format (like  "Fri Feb 19 12:21:12 1999")
+	   str = ctime(&timeofday);
+	   *(str + strlen(str)-1) = '\0';
+	   */
+	sprintf(buff,"%-26s %-31s: [%s]\n", buf,ind,pvname);
+  
 	/* update file and Alarm Log text window */
-	fprintf(fl,"%s",buff);
+	if(masterFlag) fprintf(fl,"%s",buff);
 	fflush(fl);
-	updateLog(ALARM_FILE,buff);
-
+	updateAlarmLog(ALARM_FILE,buff);
+  
 }
 
 /***********************************************************************
@@ -589,40 +656,62 @@ void alLogOpMod(char *text)
 
 
 /***********************************************************************
-  Call to independent alh_printer process. Albert.
-  Write message to TCP-printer. Albert
-  sev values are "NO_ALARM","MINOR","MAJOR","INVALID" 
+  Send alarm to message Queue for printer or DB.
+  After that it will be print in TCP-printer or save to DB. Albert 
+  NOTE: We send sevirity first.
 ***********************************************************************/
-int write2printer(char *message,int len, int sev)
-{
-	char cmd_buf[250];
-	int pid;
-	/*cmd_buf=alh_printer ip_addr port printerColorMode  len_mes sev message*/
-	sprintf(cmd_buf,"alh_printer %s %d %s %d %d \"%s\"",printerHostname,
-	    printerPort,printerColorModel,len,sev,message);
-#ifdef WIN32
-	{
-		static int first=1;
-		static char *ComSpec;
-		int status;
 
-		/* Get ComSpec for the command shell (should be defined) */
-		if (first) {
-			first=0;
-			ComSpec = getenv("ComSpec");
-		}
-		if (!ComSpec) {
-			errMsg("processSpawn_callback: Cannot find command processor\n");
-			return;
-		}
-		status = _spawnl(_P_DETACH, ComSpec, ComSpec, "/C", cmd_buf, NULL);
-	}
-#else
-	if ((pid=fork ()))
+int write2MQ(int mq,char *message)
+{
+  char buf[60];
+  static int lostFlag=0;
+  static int lostCount=0;
+  static char tFirst[20], tLast[20];
+  int ret;
+
+  ret=write2msgQ(mq,message);
+  if (ret == 1 )
+    {
+      if(!lostFlag) { strncpy(tFirst,&message[2],20); tFirst[19]=0;}
+       lostFlag=1;
+       strncpy(tLast,&message[2],20); tLast[19]=0;
+       lostCount++;
+       if(DEBUG) printf("lostCount=%d\n",lostCount);
+        return(1);
+    }
+  else if (ret == - 1 ) return (-1);
+  else 
+    {
+      if(lostFlag) 
 	{
-		execl("/bin/sh","sh","-c",cmd_buf,0);
-		exit(0);
+        sprintf(buf,"%d MQ lost %d messages from=%s to=%s !!!!!!\n",
+		1,lostCount+1,tFirst,tLast);
+        lostCount=0;
+        lostFlag=0;
+
+        if(DEBUG) printf("after reconnect buf=%s\n",buf);
+        if (write2msgQ(mq,buf)== 1)  /* bad connection with printer or DB*/
+	  {
+	          perror("msgQsendError_very_unstable");
+                  return (1); 
+	  }
+
 	}
-#endif
-	return 0;
+    }
+  return(0);
 }
+
+
+int write2msgQ(int mq, char *mes)
+{
+  if (msgsnd(mq,mes,strlen(mes),IPC_NOWAIT /* 0*/) == -1 )
+    {
+      perror("msgQsendError");
+      if(errno == EAGAIN ) return (1);  /* Queue is full */
+      return(-1);
+    }
+  return(0);
+}
+
+
+

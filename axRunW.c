@@ -52,6 +52,7 @@ extern char * alarmStatusString[];
 /* some globals for blink Data */
 extern Display *display;
 Widget blinkButton;
+Widget blinkToplevel; /* Albert1 for locking status marking*/
 Pixel  blinkPixel;
 
 XtIntervalId blinkTimeoutId = (XtIntervalId)0;
@@ -270,6 +271,7 @@ void createRuntimeWindow(ALINK *area)
 		area->runtimeToplevel = XtAppCreateShell( app_name, programName,
 		    applicationShellWidgetClass, display, NULL, 0);
 
+		blinkToplevel = area->runtimeToplevel;  /* Albert1 for locking status marking*/
 		free(app_name);
 
 		XtVaSetValues(area->runtimeToplevel, XmNtitle, alhTitle, NULL);

@@ -83,10 +83,12 @@ alh_SRCS += scroll.c
 alh_SRCS += showmask.c
 alh_SRCS += sllLib.c
 
+alh_Db_SRCS = alh_DB.c  
+
 alh_printer_SRCS = printer.c
 
-PROD_DEFAULT = alh alh_printer
-PROD_WIN32 = alh
+PROD_DEFAULT = alh alh_printer alh_DB
+PROD_WIN32 = alh alh_DB
 
 USR_CFLAGS_WIN32 += /DWIN32 /D_WINDOWS
 USR_LDFLAGS_WIN32 += /SUBSYSTEM:WINDOWS

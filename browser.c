@@ -31,7 +31,7 @@ static char *sccsId = "@(#) $Id$";
 #include <X11/Xmu/WinUtil.h>
 
 #ifndef NETSCAPEPATH
-#define NETSCAPEPATH "netscape"
+#define NETSCAPEPATH "netscape4 "
 #endif
 
 /* Function prototypes */

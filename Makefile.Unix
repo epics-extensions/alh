@@ -9,7 +9,7 @@ include $(EPICS)/config/CONFIG_EXTENSIONS
 DEPLIBS = $(EPICS_BASE_LIB)/libca.a $(EPICS_BASE_LIB)/libCom.a
 
 # baseR3.13.0.beta12 and later
-awAlh_CFLAGS += -DALH_HELP_URL="\"http://www.aps.anl.gov/asd/controls/epics/EpicsDocumentation/ExtensionsManuals/AlarmHandler/alh.html\""
+awAlh_CFLAGS += -DALH_HELP_URL="\"http://www.aps.anl.gov/asd/controls/epics/EpicsDocumentation/ExtensionsManuals/AlarmHandler/old/alh.html\""
 
 USR_CFLAGS = -DACCESS_SECURITY
 USR_INCLUDES = -I$(MOTIF_INC) -I$(X11_INC)
@@ -92,7 +92,11 @@ SRCS1.c =  ../printer.c
 
 OBJS1 =  printer.o  
 
-PROD = alh alh_printer
+SRCS2.c =  ../alh_DB.c  
+
+OBJS2 =  alh_DB.o  
+
+PROD = alh alh_printer alh_DB
 
 include $(EPICS)/config/RULES.Unix
 
@@ -101,5 +105,8 @@ alh: $(OBJS) $(DEPLIBS)
 
 alh_printer: $(OBJS1) $(DEPLIBS)
 	$(LINK.c) -o $@ $(OBJS1) $(LDLIBS)
+
+alh_DB: $(OBJS2) $(DEPLIBS)
+	$(LINK.c) -o $@ $(OBJS2) $(LDLIBS)
 
 all: $(PROD)

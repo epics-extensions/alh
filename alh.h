@@ -59,7 +59,7 @@ static char *alhhsccsId = "@(#) $Id$";
 #define ALARM_FILE      1
 #define OPMOD_FILE      2
 #define N_LOG_FILES     3
-#define INITIAL_FILE_LENGTH     2048
+#define INITIAL_FILE_LENGTH     204800
 
 /* parameters for fileSetupCallback */
 #define FILE_CONFIG			0

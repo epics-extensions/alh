@@ -10,27 +10,49 @@
 #ifndef INCprinterh
 #define INCprinterh 1
 
-/* ------------- Mono printer ---------------------------------- */
+/* ------------- Mono Bold printer ---------------------------------- */
 
-char colorStartNoMono[] ={
+char colorStartNoMonoBold[] ={
 	{0}};
-int colorStartNoMonoLen=0;
+int colorStartNoMonoBoldLen=0;
 
-char colorStartMinorMono[] ={
+char colorStartMinorMonoBold[] ={
 	{0}};
-int colorStartMinorMonoLen=0;
+int colorStartMinorMonoBoldLen=0;
 
-char colorStartMajorMono[]={
+char colorStartMajorMonoBold[]={
 	{27},{'['},{'1'},{'m'},{0}};  /*BOLD letters*/
-int colorStartMajorMonoLen=5;
+int colorStartMajorMonoBoldLen=5;
 
-char colorStartInvalidMono[]={
+char colorStartInvalidMonoBold[]={
 	{27},{'['},{'1'},{'m'},{0}};/*BOLD letters*/
-int colorStartInvalidMonoLen=5;
+int colorStartInvalidMonoBoldLen=5;
 
-char colorEndMono[]={
+char colorEndMonoBold[]={
 	{27},{'['},{'0'},{'m'},{0}};
-int colorEndMonoLen=5;
+int colorEndMonoBoldLen=5;
+
+/* ------------- Mono OKI printer ---------------------------------- */
+
+char colorStartNoOkiBold[] ={
+	{0}};
+int colorStartNoOkiBoldLen=0;
+
+char colorStartMinorOkiBold[] ={
+	{0}};
+int colorStartMinorOkiBoldLen=0;
+
+char colorStartMajorOkiBold[]={
+	{27},{72},{0}};  /*BOLD letters*/
+int colorStartMajorOkiBoldLen=3;
+
+char colorStartInvalidOkiBold[]={
+	{27},{72},{0}};/*BOLD letters*/
+int colorStartInvalidOkiBoldLen=3;
+
+char colorEndOkiBold[]={
+	{27},{73},{0}};
+int colorEndOkiBoldLen=3;
 
 /* ------------- HP DeskJet 1200C ---------------------------------- */
 
@@ -48,11 +70,34 @@ int colorStartMajorHpColorLen=6;                 /*RED letters*/
 
 char colorStartInvalidHpColor[]={
 	{27},{'&'},{'v'},{'5'},{'S'},{0}};
-int colorStartInvalidHpColorLen=6;             /*MAGNETA letters*/
+int colorStartInvalidHpColorLen=6;             /* Magenta  letters*/
 
 char colorEndHpColor[]={
 	{27},{'E'},{0}};
 int colorEndHpColorLen=3;
+
+/* ------------- Mono printer ---------------------------------- */
+
+char colorStartNoMono[] ={
+	{0}};
+int colorStartNoMonoLen=0;
+
+char colorStartMinorMono[] ={
+	{0}};
+int colorStartMinorMonoLen=0;
+
+char colorStartMajorMono[]={
+	{0}};
+int colorStartMajorMonoLen=0;
+
+char colorStartInvalidMono[]={
+	{0}};
+int colorStartInvalidMonoLen=0;
+
+char colorEndMono[]={
+	{0}};
+int colorEndMonoLen=1;
+
 
 #endif /* INCprinterh */
 

@@ -5,9 +5,18 @@
 **********************************************************************/
 
 static char *sccsId = "@(#) $Id$";
-
 #include <stdlib.h>
 #include <stdio.h>
+#include <unistd.h>  /* Albert1 */
+#include <fcntl.h>   /* Albert1 */
+#include <errno.h>
+#include <sys/msg.h>  
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <netdb.h>
+#include <arpa/inet.h>
+
 #ifndef WIN32
 /* WIN32 does not have dirent.h used by opendir, closedir */
 #include <dirent.h>
@@ -26,15 +35,32 @@ static char *sccsId = "@(#) $Id$";
 #define DEFAULT_ALARM   "ALH-default.alhAlarm"
 #define DEFAULT_OPMOD   "ALH-default.alhOpmod"
 
-int _read_only_flag=0; /* Read-only flag. Albert */
-int _passive_flag=0;   /* Passive flag. Albert */
-int _tm_day_old;       /* Day-variable for dated. Albert */
-int _printer_flag=0;   /* Printer flag. Albert */
-char printerHostname[120];
-int  printerPort;
-char printerColorModel[120];
-int _time_flag=0;      /* Dated flag. Albert */
+int _read_only_flag=0;       /* Read-only flag. Albert */
+int _passive_flag=0;         /* Passive flag.   Albert */
 
+int _printer_flag=0;         /* Printer flag.               Albert */
+int  printerMsgQKey;         /* Network printer MsgQKey.    Albert */
+int  printerMsgQId;          /* Network printer MsgQId.     Albert */
+ 
+int _time_flag=0;            /* Dated flag.             Albert */
+int tm_day_old;              /* Day-variable for dated. Albert */
+
+int _DB_call_flag=0;         /* Database(Oracle...) call. Albert */
+int  DBMsgQKey;         /* Database MsgQKey.    Albert */
+int  DBMsgQId;          /* database MsgQId.     Albert */
+
+int _message_broadcast_flag=0;/* Message Broadcast System. not y.e. Albert */
+
+int _lock_flag=0;                /* Flag for locking. Albert */
+char lockFileName[250];          /* FN for lock file. Albert */
+int lockFileDeskriptor;          /* FD for lock file. Albert */
+unsigned long lockDelay=5000;    /* in msec. periodical masterStatus testing. Albert */
+int masterFlag=1;                /* am I master for write operations? Albert */  
+void masterTesting();            /* periodical calback for masterStatus testing. Albert */
+extern Widget blinkToplevel;     /* for locking status marking */
+char masterStr[30],slaveStr[30]; /* titles for Master/Slave with/whitout printer */
+XtIntervalId lockTimeoutId=NULL;   
+ 
 extern int DEBUG;
 
 extern int alarmLogFileMaxRecords;  /* alarm log file maximum # records */
@@ -70,6 +96,9 @@ static struct command_line_data commandLine = {
 #define PARM_READONLY			10
 #define PARM_HELP			11
 #define PARM_SILENT			12
+#define PARM_LOCK			13
+#define PARM_DATABASE			14
+#define PARM_MESSAGE_BROADCAST		15
 
 struct parm_data
 {
@@ -92,6 +121,9 @@ static struct parm_data ptable[] = {
 		{ "-s",		2,	PARM_SILENT },
 		{ "-D",		2,	PARM_READONLY },
 		{ "-help",	5,	PARM_HELP },
+		{ "-L",		2,	PARM_LOCK },     /* Albert1 */
+		{ "-O",		2,	PARM_DATABASE }, /* Albert1 */
+ 		{ "-B",		2,	PARM_MESSAGE_BROADCAST }, /* Albert1 */               
 	        { NULL,		-1,     -1 }};
 
 /* forward declarations */
@@ -136,6 +168,13 @@ void exit_quit(Widget w,ALINK *area,XmAnyCallbackStruct *call_data)
 	if (area  && area->pmainGroup) free(area->pmainGroup);
 	if (area) free(area);
 	XtDestroyWidget(topLevelShell);
+	if(_lock_flag)  {
+	  lockf(lockFileDeskriptor, F_ULOCK, 0L); /* Albert1 */
+	  if (lockTimeoutId) {
+	  XtRemoveTimeOut(lockTimeoutId);
+	  }
+	}
+
 	exit(0);
 }
 
@@ -280,8 +319,8 @@ int programId,Widget widget)
 	sprintf(buf,".%.4d-%.2d-%.2d",
 	    1900+tms->tm_year,1+tms->tm_mon,tms->tm_mday);
 	buf[11]=0;
-	_tm_day_old = tms->tm_mday;
-	if ((fileType == FILE_ALARMLOG)&&(_time_flag))
+	tm_day_old = tms->tm_mday;
+	if ( ((fileType == FILE_ALARMLOG)||(fileType == FILE_OPMOD))&&(_time_flag)  )
 	{
 		strncat(filename, &buf[0], strlen(buf));
 	}
@@ -377,6 +416,76 @@ int programId,Widget widget)
 
 		case FILE_CONFIG:
 			setupConfig(filename,programId,area);
+			if(_lock_flag)
+			  {
+			    FILE *fp;
+			    strcpy(lockFileName,psetup.configFile);
+			    strcat(lockFileName,".LOCK");
+			    if (!(fp=fopen(lockFileName,"a")))
+			      {
+				perror("Can't open locking file for w");
+				exit(1);
+			      }
+                              fclose(fp);     
+			    if((lockFileDeskriptor=open(lockFileName,O_RDWR,0644)) == 0)
+			      { 
+				perror("Can't open locking file for rw");
+				exit(1);
+			      }
+			    if (DEBUG) fprintf(stderr,"INIT: deskriptor for %s=%d\n",
+					       lockFileName,lockFileDeskriptor);
+                            strcpy(masterStr,"Master");
+                            strcpy(slaveStr,"Slave"); 
+                            if(_printer_flag) {
+			      strcat(masterStr," with printer");
+			      strcat(slaveStr, " with printer");
+			    }                           
+			    masterTesting(); /* Albert */
+			  }
+			if( _printer_flag)
+			  {
+			    struct msqid_ds buf;  
+			    printerMsgQId = msgget (printerMsgQKey, 0600|IPC_CREAT);
+			    if(printerMsgQId == -1) {perror("printer:msgQ_create"); exit(1);}
+			    else {
+			      if(DEBUG) fprintf(stderr,"printerMsgQ with key=%d is OK\n",
+						printerMsgQKey);
+			      if (msgctl(printerMsgQId,IPC_STAT,&buf) != 1)
+				{
+				  if(DEBUG)fprintf(stderr,"printer:o=%d.%d,perm=%04o,max byte=%d\n",
+						   buf.msg_perm.uid,buf.msg_perm.gid,
+						   buf.msg_perm.mode,
+						   buf.msg_qbytes);
+				  if(DEBUG) fprintf(stderr,"printer:%d msgs = %d bytes on queue\n",
+						    buf.msg_qnum, buf.msg_cbytes);
+				}
+			      else {perror("printer:msgctl()");  exit(1);}
+			    }
+			  }
+			if( _DB_call_flag)
+			  {
+			    struct msqid_ds buf;  
+			    DBMsgQId = msgget (DBMsgQKey, 0600|IPC_CREAT);
+			    if(DBMsgQId == -1) {perror("DB:msgQ_create"); exit(1);}
+			    else {
+			      if(DEBUG) fprintf(stderr,"DB:msgQ with key=%d is OK\n",
+						DBMsgQKey);
+			      if (msgctl(DBMsgQId,IPC_STAT,&buf) != 1)
+				{
+				  if(DEBUG)fprintf(stderr,"DB:o=%d.%d,perm=%04o,max byte=%d\n",
+						   buf.msg_perm.uid,buf.msg_perm.gid,
+						   buf.msg_perm.mode,
+						   buf.msg_qbytes);
+				  if(DEBUG) fprintf(stderr,"DB:%d msgs = %d bytes on queue\n",
+						    buf.msg_qnum, buf.msg_cbytes);
+				}
+			      else {perror("DB:msgctl()");  exit(1);}
+			    }
+			  }
+			
+
+
+
 			break;
 
 		case FILE_ALARMLOG:
@@ -384,9 +493,10 @@ int programId,Widget widget)
 			strcpy(psetup.logFile,filename);
 			if (fl) fclose(fl); /* RO-flag. Albert */
 			if(_read_only_flag)  fl = fopen(psetup.logFile,"r");
-			else if(_time_flag)  fl = fopen(psetup.logFile,"a+");
+			else if((_time_flag)||(_lock_flag))  fl = fopen(psetup.logFile,"a");
 			else fl = fopen(psetup.logFile,"r+");
-			/*---------------- 
+                        if (!fl) perror("CAN'T OPEN LOG FILE"); /* Albert1 */
+  			/*---------------- 
 			                    if (alarmLogFileMaxRecords && alarmLogFileEndStringLength) {
 			                        fseek(fl,0,SEEK_SET);
 			                        while (fgets(str,sizeof(str),fl)) {
@@ -410,6 +520,7 @@ int programId,Widget widget)
 			if(!_read_only_flag) fo=fopen(psetup.opModFile,"a");
 			/* RO-option. Albert */
 			else fo=fopen(psetup.opModFile,"r");
+                        if (!fo) perror("CAN'T OPEN OP FILE"); /* Albert1 */
 			break;
 
 		case FILE_SAVEAS:
@@ -467,8 +578,10 @@ static int getCommandLineParms(int argc, char** argv)
 	int i,j;
 	int finished=0;
 	int parm_error=0;
-	char *p,*q;  /* for printer parameters. Albert */
+        char *colon; /* Albert1 */
 
+	alarmLogFileMaxRecords=commandLine.alarmLogFileMaxRecords=2000; /* Albert1 */
+        
 	for(i=1;i<argc && !parm_error;i++)
 	{
 		for(j=0;!finished && !parm_error && ptable[j].parm;j++)
@@ -550,46 +663,26 @@ static int getCommandLineParms(int argc, char** argv)
 						if(argv[i][0]=='-') parm_error=1;
 						else
 						{
-							sscanf(argv[i],"%u",&commandLine.alarmLogFileMaxRecords);
+							commandLine.alarmLogFileMaxRecords=atoi(argv[i]);
+							if( (!commandLine.alarmLogFileMaxRecords)&&(strcmp(argv[i],"0") )) parm_error=1;
+							alarmLogFileMaxRecords=commandLine.alarmLogFileMaxRecords;
 							finished=1;
 						}
 					}
 					break;
 				case PARM_PRINTER: /* Printer parameters. Albert */
-					if(++i>=argc) {
-						parm_error=1;
-						break;
+					if(++i>=argc) parm_error=1;
+					else
+					{
+						if(argv[i][0]=='-') parm_error=1;
+						else
+						{
+                                                        printerMsgQKey=atoi(argv[i]);
+                                                        if(!printerMsgQKey) parm_error=1;
+                                                        _printer_flag=1;
+							finished=1;
+						}
 					}
-					if(argv[i][0]=='-') {
-						parm_error=1;
-						break;
-					}
-					if ( (p= strchr(argv[i],':')) == NULL) {
-						fprintf(stderr,"%s - you must specify <printerHostname>:<portNumber>:[printerColorModel] for printer.\nPrinting will be disable\n",
-						    argv[i]);
-						parm_error=1;
-						break;
-					}
-					*p=0; 
-					p++;
-					strcpy(printerHostname,argv[i]);
-					if ( (q= strchr(p,':')) != NULL) {
-						*q=0;
-						q++;
-						printerPort=atoi(p);
-						strcpy(printerColorModel,q);
-					}
-					else {
-						printerPort=atoi(p);
-						strcpy(printerColorModel,"mono");
-					}
-					if (printerPort== 0) {
-						fprintf(stderr,"%s - is not number.\nPrinting will be disable\n",p);
-						parm_error=1;
-						break;
-					}
-					_printer_flag=1;
-					finished=1;
 					break;
 				case PARM_DATED:
 					_time_flag=1; /* Dated-option. Albert */
@@ -602,6 +695,28 @@ static int getCommandLineParms(int argc, char** argv)
 					break;
 				case PARM_READONLY:
 					_read_only_flag=1;  /* RO-option. Albert */
+					finished=1;
+					break;
+				case PARM_LOCK:
+					_lock_flag=1;  /* locking system. Albert */
+					finished=1;
+					break;
+				case PARM_DATABASE:   /* DATABASE-option. Albert */
+					if(++i>=argc) parm_error=1;
+					else
+					{
+						if(argv[i][0]=='-') parm_error=1;
+						else
+						{
+                                                        DBMsgQKey=atoi(argv[i]);
+                                                        if(!DBMsgQKey) parm_error=1;
+                                                        _DB_call_flag=1;
+							finished=1;
+						}
+					}
+					break;
+				case PARM_MESSAGE_BROADCAST:
+					_message_broadcast_flag=1;/* Mess. Broadcast Albert */
 					finished=1;
 					break;
 				default:
@@ -627,6 +742,30 @@ static int getCommandLineParms(int argc, char** argv)
 		}
 	}
 
+if(commandLine.alarmLogFileMaxRecords&&_lock_flag)
+  {
+  fprintf(stderr,"use -m 0 option together with -L\n");
+  parm_error=1;
+  }
+
+if(_printer_flag&&!_lock_flag)
+  {
+  fprintf(stderr,"use -P together with -L\n");
+  parm_error=1;
+  }
+
+if(_DB_call_flag&&!_lock_flag)
+  {
+  fprintf(stderr,"use -O together with -L\n");
+  parm_error=1;
+  }
+
+if(_message_broadcast_flag&&!_lock_flag)
+  {
+  fprintf(stderr,"use -B together with -L\n");
+  parm_error=1;
+  }
+
 	if(parm_error)
 	{
 		printUsage(argv[0]);
@@ -641,7 +780,7 @@ static int getCommandLineParms(int argc, char** argv)
 static void printUsage(char *pgm)
 {
 	fprintf(stderr,
-	    "\nusage: %s [-cdst] [-f filedir] [-l logdir] [-a alarmlogfile] [-o opmodlogfile] [-m alarmlogmaxrecords] [-P printerName:portNumber:<printerColorModel>] [Xoptions] [configfile] \n",
+	    "\nusage: %s [-csDSTLOB] [-f filedir] [-l logdir] [-a alarmlogfile] [-o opmodlogfile] [-m alarmlogmaxrecords] [-P key] [Xoptions] [configfile] \n",
 	    pgm);
 	fprintf(stderr,"\n\tconfigfile\tAlarm configuration filename\n");
 	fprintf(stderr,"\n\t-c\t\tAlarm Configuration Tool mode\n");
@@ -654,9 +793,13 @@ static void printUsage(char *pgm)
 	fprintf(stderr,"\n\t-D\t\tDisable Writing\n");
 	fprintf(stderr,"\n\t-S\t\tPassive Mode\n");
 	fprintf(stderr,"\n\t-T\t\tAlarmLogDated\n");
-	fprintf(stderr,"\n\t-P Name:port:colorModel\tPrint to TCP printer(colorMod={mono,hp_color,...})\n");
+	fprintf(stderr,"\n\t-P key\tPrint to TCP printer\n");
+	fprintf(stderr,"\n\t-L\t\tLocking system\n");
+	fprintf(stderr,"\n\t-O\t\tDatabase call\n");
+	fprintf(stderr,"\n\t-B\t\tMessage BroadcastSystem\n");
 	exit(1);
 }
+
 
 /******************************************************
   fileSetupInit
@@ -671,10 +814,10 @@ char *argv[];
 	char   logFile[NAMEDEFAULT_SIZE];
 	char   opModFile[NAMEDEFAULT_SIZE];
 	char   *name = NULL;
-
 	programId = ALH;
 	programName = (char *)calloc(1,4);
 	strcpy(programName,"alh");
+
 
 	/* get optional command line parameters */
 	getCommandLineParms(argc,argv);
@@ -754,4 +897,35 @@ char *argv[];
 	}
 	if (DEBUG == 1 ) printf("\nConfig File is %s \n", psetup.configFile);
 	fileSetup(psetup.configFile,NULL,FILE_CONFIG,programId,widget);
+
+
 }
+/* *******************************Albert1: ************************************* */
+void masterTesting()
+{
+        if ( lockf(lockFileDeskriptor, F_TLOCK, 0L) < 0 ) {
+	  if ((errno == EAGAIN || errno == EACCES )) {
+	      masterFlag=0;
+	      if(DEBUG) fprintf(stderr,"I'm slave;lockFileDeskriptor=%d\n",lockFileDeskriptor);
+	      XtVaSetValues(blinkToplevel,XmNtitle,slaveStr,NULL);
+	  }
+	  else {
+	    perror("lockf Error!!!!"); /* Albert1 exit ?????? */
+	  }
+	}
+	else 
+	  {
+	    masterFlag=1;
+	    if(DEBUG) fprintf(stderr,"I'm master;lockFileDeskriptor=%d\n",lockFileDeskriptor);
+            XtVaSetValues(blinkToplevel,XmNtitle,masterStr,NULL);
+	  }
+	
+	lockTimeoutId = XtAppAddTimeOut(appContext, lockDelay,masterTesting , NULL);
+
+}
+/* *******************************End of Albert1 ************************************* */
+
+
+
+
+

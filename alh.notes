@@ -172,3 +172,42 @@ Thu Jan 28 16:57:39 CST 1999
 	        of silencing only for current file.
 	Modified the url help location.
 
+Thu Mar 11 10:12:06 CST 1999
+	Added the following alh modifications which were created at DESY MKS group.
+	
+	New alh-options:
+	
+	-D Disable Writing  --- allows work with alh without possibility 
+	                        create/modify alarmLog and alarmOpMod files.
+	-S Passive Mode     --- means that operator can't acknowledge alarms 
+	                        and can't save alarmLog and alarmOpMod files.
+	-T AlarmLogDated    --- 1) alarmLog and OpMod files will have "date" extensions 
+	                           like YYYY-MM-DD, and automatical switching 
+	                           this files in midnight.
+	
+	                        2)  We add FSbox for search LogFiles in 
+	                            View->"Browser for Alarm Log" and 
+	
+	                        3) We add search button for finding string at LogFile.
+				
+	                        4) We add "Find from <t1> to <t2> with <String>" 
+	                             widget, which allow search <String> from
+	                             all AlLog-files at some directory
+	                        
+	-P Printing         --- simultaneously printing Alarm to TCP printer
+	                        (socket connection and so on). Now we print it
+	                        asynchronous, so we add additional task "alh_printer"
+	                        and modificate Makefile.Unix.
+	
+	-L locking          --- allow multiple work with the same config files,
+							only one process is real master and write to alhLog
+							other is slave and they wait until master will not killed 
+	
+	-0 Database(Oracle) --- simultaneously runtime add Alarm to Database.
+							it works asynchronous, so we add additional task "alh_DB"
+	
+	-B - message broadcasting -- allow send messages between operators work with the
+	                            same config file. Most important case: "REBOOT MESSAGE":
+							    allow don't save alarm during reboot time.
+							   (NOT IMPLEMENTED YET ;)  )	
+	                               	
