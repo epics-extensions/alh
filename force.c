@@ -564,7 +564,7 @@ XtPointer cbs)
 	string = XmStringCreateSimple(mask);
 	XtVaSetValues(maskWidget, XmNlabelString, string, NULL);
 	XmStringFree(string);
-	free(mask);
+	XtFree(mask);
 }
 
 /******************************************************
@@ -615,9 +615,6 @@ XtPointer cbs)
 	}
 	XtFree(buff);
 
-	/*  update disabled field  - forcePVDisabled */
-    pgcData->forcePVDisabled = XmToggleButtonGadgetGetState(forcePVWindow->forcePVDisabledToggleButton);
-
 	/*  update link field  - forcePVName */
 	buff = XmTextFieldGetString(forcePVWindow->forcePVnameTextW);
 	if (strlen(buff) > (size_t)1 && strcmp(buff,pgcData->forcePVName) != 0) {
@@ -625,6 +622,18 @@ XtPointer cbs)
 		else alReplaceChanForceEvent((CLINK *)link,buff);
 	}
 	XtFree(buff);
+
+	/*  update disabled field  - forcePVDisabled */
+    rtn = XmToggleButtonGadgetGetState(forcePVWindow->forcePVDisabledToggleButton);
+	if (strlen(pgcData->forcePVName)!=0 && strcmp(pgcData->forcePVName,"-")!= 0) {
+    	if (rtn != pgcData->forcePVDisabled) {
+			if (rtn) updateDisabledForcePVCount(forcePVWindow->area,1);
+			else updateDisabledForcePVCount(forcePVWindow->area,-1);
+    		pgcData->forcePVDisabled = rtn;
+		}
+	} else {
+	    XmToggleButtonGadgetSetState(forcePVWindow->forcePVDisabledToggleButton,pgcData->forcePVDisabled,FALSE);
+	}
 
 	/*  log on operation file */
 	if (linkType == GROUP) alLogForcePVGroup((GLINK *)link,OPERATOR);
@@ -634,7 +643,6 @@ XtPointer cbs)
 	/* ---------------------------------
 	     Update dialog windows
 	     --------------------------------- */
-	/*  update forcePVerties dialog window field */
 	axUpdateDialogs(forcePVWindow->area);
 
 }
