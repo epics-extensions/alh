@@ -1,46 +1,5 @@
 /*
- $Log$
- Revision 1.13  1997/08/27 21:59:11  jba
- Added calls to free.
-
- Revision 1.12  1997/04/17 18:01:16  jba
- Added calls to free allocated memory.
-
- Revision 1.11  1996/12/03 22:04:32  jba
- Changed unused Help ActionItem data to NULL.
-
- Revision 1.10  1996/11/19 19:40:30  jba
- Fixed motif delete window actions, and fixed size of force PV window.
-
- Revision 1.9  1995/11/13 22:31:32  jba
- Added beepseverity command, ansi changes and other changes.
-
- * Revision 1.8  1995/10/20  16:50:52  jba
- * Modified Action menus and Action windows
- * Renamed ALARMCOMMAND to SEVRCOMMAND
- * Added STATCOMMAND facility
- * Added ALIAS facility
- * Added ALARMCOUNTFILTER facility
- * Make a few bug fixes.
- *
- * Revision 1.7  1995/06/22  20:27:00  jba
- * Fixed alias overwriting Related process label.
- *
- * Revision 1.6  1995/06/22  19:48:57  jba
- * Added $ALIAS facility.
- *
- * Revision 1.5  1995/05/31  20:34:18  jba
- * Added name selection and arrow functions to Group window
- *
- * Revision 1.4  1995/05/30  15:55:06  jba
- * Added ALARMCOMMAND facility
- *
- * Revision 1.3  1995/02/28  16:43:50  jba
- * ansi c changes
- *
- * Revision 1.2  1994/06/22  21:17:51  jba
- * Added cvs Log keyword
- *
+ *  $Id$
  */
 
 static char *sccsId = "@(#)property.c	1.9\t2/18/94";
@@ -71,12 +30,6 @@ static char *sccsId = "@(#)property.c	1.9\t2/18/94";
  *              Advanced Photon Source
  *              Argonne National Laboratory
  *
- * Modification Log:
- * -----------------
- * .01  07-26-93        jba     initial implementation
- * .02  02-19-94        jba     Max name field length set to PVNAME_SIZE
- * .nn  mm-dd-yy        iii     Comment
- *      ...
  */
 
 #include <stdlib.h>
@@ -103,9 +56,6 @@ static char *sccsId = "@(#)property.c	1.9\t2/18/94";
 #include <ax.h>
 
 extern Pixel bg_pixel[ALARM_NSEV];
-
-GCLINK *undoLink;
-GCLINK *holdLink;
 
 struct propWindow {
     void *area;
@@ -146,8 +96,9 @@ static void propHelpCallback(Widget widget,struct propWindow *propWindow,XmAnyCa
 static void propCreateDialog(ALINK*area);
 static void propUpdateDialogWidgets(struct propWindow *propWindow);
 static void propMaskChangeCallback( Widget widget, int index, XmAnyCallbackStruct *cbs);
-static void propMoveData(GCLINK *fromLink,GCLINK *toLink,int linkType);
 static void propEditableDialogWidgets(ALINK *area);
+static GCLINK *propCreateClone(GCLINK *link,int linkType);
+static void propDeleteClone(GCLINK *link,int linkType);
 
 #else
 
@@ -158,8 +109,9 @@ static void propHelpCallback();
 static void propCreateDialog();
 static void propUpdateDialogWidgets();
 static void propMaskChangeCallback();
-static void propMoveData();
 static void propEditableDialogWidgets();
+static GCLINK *propCreateClone();
+static void propDeleteClone();
 
 #endif /*__STDC__*/
 
@@ -439,9 +391,12 @@ static void propUpdateDialogWidgets(propWindow)
      /* ---------------------------------
      Stat Command
      --------------------------------- */
-     if (linkType == GROUP) XtSetSensitive(propWindow->statProcessTextW, FALSE);
-     else {
+     if (linkType == GROUP) {
+          XtSetSensitive(propWindow->statProcessTextW, FALSE);
+          XtVaSetValues(propWindow->statProcessTextW,XmNbackground,bg_pixel[0],NULL);
+     } else {
           XtSetSensitive(propWindow->statProcessTextW, TRUE);
+          XtVaSetValues(propWindow->statProcessTextW,XmNbackground,bg_pixel[3],NULL);
           getStringStatCommandList(&pcData->statCommandList,&str);
           XmTextSetString(propWindow->statProcessTextW,str);
           free(str);
@@ -481,13 +436,13 @@ static void propCreateDialog(area)
      ALINK    *area;
 {
      struct propWindow *propWindow;
+     int n;
+     Arg args[10];
 
      Widget propDialogShell, propDialog, severityPVnameTextW;
      Widget rowcol, form, maskFrameW;
      Widget nameLabelW, nameTextW;
      Widget guidanceScrolledW;
-     Widget statProcessScrolledW;
-     Widget sevrProcessScrolledW;
      Widget forcePVlabel, severityPVlabel;
      Widget alarmMaskToggleButtonW[ALARM_NMASK];
      Widget forceMaskToggleButtonW[ALARM_NMASK];
@@ -975,12 +930,13 @@ static void propCreateDialog(area)
      aliasLabel = XtVaCreateManagedWidget("aliasLabel",
           xmLabelGadgetClass,        form,
           XmNlabelString,            string,
-          XmNcolumns,                80,
           XmNtopAttachment,          XmATTACH_WIDGET,
           XmNtopWidget,              severityPVnameTextW,
           XmNleftAttachment,         XmATTACH_FORM,
           NULL);
      XmStringFree(string);
+
+/*XmNcolumns,                80,*/
 
      aliasTextW = XtVaCreateManagedWidget("aliasTextW",
           xmTextFieldWidgetClass, form,
@@ -1003,7 +959,6 @@ static void propCreateDialog(area)
      processLabel = XtVaCreateManagedWidget("processLabel",
           xmLabelGadgetClass,        form,
           XmNlabelString,            string,
-          XmNcolumns,                80,
           XmNtopAttachment,          XmATTACH_WIDGET,
           XmNtopWidget,              aliasTextW,
           XmNleftAttachment,         XmATTACH_FORM,
@@ -1031,28 +986,27 @@ static void propCreateDialog(area)
      sevrProcessLabel = XtVaCreateManagedWidget("sevrProcessLabel",
           xmLabelGadgetClass, form,
           XmNlabelString,     string,
-          XmNcolumns,                80,
           XmNtopAttachment,          XmATTACH_WIDGET,
           XmNtopWidget,              processTextW,
           XmNleftAttachment,         XmATTACH_FORM,
           NULL);
      XmStringFree(string);
 
-     /* Create Scrolled Window  */
-     sevrProcessScrolledW = XtVaCreateManagedWidget("sevrScrolledW",
-          xmScrolledWindowWidgetClass, form,
-          XmNscrollingPolicy,        XmAUTOMATIC,
+     /* Create Scrolled Text  */
+     n=0;
+     XtSetArg(args[n], XmNeditMode, XmMULTI_LINE_EDIT); n++;
+     XtSetArg(args[n], XmNbackground, textBackground); n++;
+     XtSetArg(args[n], XmNrows, 4); n++;
+     sevrProcessTextW = XmCreateScrolledText(form,"sevrProcessTextW",args,n);
+
+     XtVaSetValues(XtParent(sevrProcessTextW),
           XmNtopAttachment,          XmATTACH_WIDGET,
           XmNtopWidget,              sevrProcessLabel,
           XmNleftAttachment,         XmATTACH_FORM,
           XmNrightAttachment,        XmATTACH_FORM,
           NULL);
 
-     sevrProcessTextW = XtVaCreateManagedWidget("sevrProcessTextW",
-          xmTextWidgetClass, sevrProcessScrolledW,
-          XmNeditMode,               XmMULTI_LINE_EDIT,
-          XmNbackground,             textBackground,
-          NULL);
+     XtManageChild(sevrProcessTextW);
 
      /* ---------------------------------
      Stat Command
@@ -1061,28 +1015,27 @@ static void propCreateDialog(area)
      statProcessLabel = XtVaCreateManagedWidget("statProcessLabel",
           xmLabelGadgetClass, form,
           XmNlabelString,     string,
-          XmNcolumns,                80,
           XmNtopAttachment,          XmATTACH_WIDGET,
-          XmNtopWidget,              sevrProcessScrolledW,
+          XmNtopWidget,              XtParent(sevrProcessTextW),
           XmNleftAttachment,         XmATTACH_FORM,
           NULL);
      XmStringFree(string);
 
-     /* Create Scrolled Window  */
-     statProcessScrolledW = XtVaCreateManagedWidget("statScrolledW",
-          xmScrolledWindowWidgetClass, form,
-          XmNscrollingPolicy,        XmAUTOMATIC,
+     /* Create Scrolled Text  */
+     n=0;
+     XtSetArg(args[n], XmNeditMode, XmMULTI_LINE_EDIT); n++;
+     XtSetArg(args[n], XmNbackground, textBackground); n++;
+     XtSetArg(args[n], XmNrows, 4); n++;
+     statProcessTextW = XmCreateScrolledText(form,"statProcessTextW",args,n);
+
+     XtVaSetValues(XtParent(statProcessTextW),
           XmNtopAttachment,          XmATTACH_WIDGET,
           XmNtopWidget,              statProcessLabel,
           XmNleftAttachment,         XmATTACH_FORM,
           XmNrightAttachment,        XmATTACH_FORM,
           NULL);
 
-     statProcessTextW = XtVaCreateManagedWidget("statProcessTextW",
-          xmTextWidgetClass,statProcessScrolledW,
-          XmNeditMode,               XmMULTI_LINE_EDIT,
-          XmNbackground,             textBackground,
-          NULL);
+     XtManageChild(statProcessTextW);
 
      /* ---------------------------------
      Guidance Text
@@ -1092,42 +1045,29 @@ static void propCreateDialog(area)
           xmLabelGadgetClass, form,
           XmNlabelString,     string,
           XmNtopAttachment,   XmATTACH_WIDGET,
-          XmNtopWidget,       statProcessScrolledW,
+          XmNtopWidget,       XtParent(statProcessTextW),
           XmNleftAttachment,  XmATTACH_FORM,
           NULL);
      XmStringFree(string);
  
-     /* Create Scrolled Window  */
-     guidanceScrolledW = XtVaCreateManagedWidget("guidanceScrolledW",
-          xmScrolledWindowWidgetClass, form,
-          XmNscrollingPolicy,        XmAUTOMATIC,
-          XmNtopAttachment,          XmATTACH_WIDGET,
-          XmNtopWidget,              guidanceLabel,
-          XmNleftAttachment,         XmATTACH_FORM,
-          XmNrightAttachment,        XmATTACH_FORM,
-          XmNbottomAttachment,       XmATTACH_FORM,
-          NULL);
-     guidanceTextW = XtVaCreateManagedWidget("guidanceTextW",
-          xmTextWidgetClass, guidanceScrolledW,
-          XmNeditMode,               XmMULTI_LINE_EDIT,
-          XmNbackground,             textBackground,
-          XmNresizeHeight,           TRUE,
-          XmNresizeWidth,            TRUE,
-          NULL);
-/*
+     /* Create Scrolled Text  */
      n=0;
      XtSetArg(args[n], XmNeditMode, XmMULTI_LINE_EDIT); n++;
      XtSetArg(args[n], XmNbackground, textBackground); n++;
-     XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
-     XtSetArg(args[n], XmNtopWidget, guidanceLabel); n++;
-     XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
-     XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
-     XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
+     XtSetArg(args[n], XmNrows, 6); n++;
+/*XtSetArg(args[n], XmNcursorPositionVisible, True); n++; */
+/*XtSetArg(args[n], XmNscrollingPolicy, XmAUTOMATIC); n++; */
      guidanceTextW = XmCreateScrolledText(form,"guidanceTextW",args,n);
-     XtManageChild(guidanceTextW);
 
-*/
-     XtManageChild(form);
+     XtVaSetValues(XtParent(guidanceTextW),
+          XmNtopAttachment, XmATTACH_WIDGET,
+          XmNtopWidget, guidanceLabel,
+          XmNleftAttachment, XmATTACH_FORM,
+          XmNrightAttachment, XmATTACH_FORM,
+          XmNbottomAttachment, XmATTACH_FORM,
+          NULL);
+
+     XtManageChild(guidanceTextW);
 
      if (programId != ALH) {
           /* Set the client data "Apply", "Cancel", "Dismiss" and "Help" button's callbacks. */
@@ -1144,6 +1084,7 @@ static void propCreateDialog(area)
           (void)createActionButtons(propDialog, prop_items_alh, XtNumber(prop_items_alh));
      }
 
+     XtManageChild(form);
      XtManageChild(propDialog);
 
      propWindow->propDialog = propDialog;
@@ -1249,26 +1190,23 @@ static void propApplyCallback(widget, propWindow, cbs)
      MASK mask;
      struct guideLink *guideLink;
      SNODE *pt;
+     GCLINK *undoLink=NULL;
+     int undoLinkType;
+
+     editUndoGet(&undoLink, &linkType, &link);
 
      link =getSelectionLinkArea(propWindow->area);
      if (!link) return;
      linkType =getSelectionLinkTypeArea(propWindow->area);
      pgcData = link->pgcData;
 
-     /* create 2 links of type channel- for undo purposes */
-     /* NOTE: a type channel link with its chanData
-              can hold all the property data */
-     if (!undoLink) {
-         undoLink = (GCLINK *)alAllocChan();
-         holdLink = (GCLINK *)alAllocChan();
-     }
-
-     propMoveData(link,undoLink,linkType);
+     propDeleteClone(undoLink,undoLinkType);
+     undoLink = propCreateClone(link,linkType);
+     undoLinkType = linkType;
 
      /* ---------------------------------
      Group/Channel Name 
      --------------------------------- */
-     free(pgcData->name);
      buff = XmTextFieldGetString(propWindow->nameTextW);
      pgcData->name = buff;
 
@@ -1289,7 +1227,6 @@ static void propApplyCallback(widget, propWindow, cbs)
      /* ---------------------------------
      Severity Process Variable
      --------------------------------- */
-     free(pgcData->sevrPVName);
      buff = XmTextFieldGetString(propWindow->severityPVnameTextW);
      if (strlen(buff)) pgcData->sevrPVName = buff;
      else pgcData->sevrPVName = "-";
@@ -1299,7 +1236,6 @@ static void propApplyCallback(widget, propWindow, cbs)
      --------------------------------- */
      if (linkType == CHANNEL) {
           cdata = (struct chanData *)pgcData;
-          free(cdata->countFilter);
           cdata->countFilter = 0;
           buff = XmTextFieldGetString(propWindow->countFilterCountTextW);
           rtn = sscanf(buff,"%hd",&f1);
@@ -1319,7 +1255,6 @@ static void propApplyCallback(widget, propWindow, cbs)
      Force Process Variable
      --------------------------------- */
      /*  update link field  - forcePVName */
-     free(pgcData->forcePVName);
      buff = XmTextFieldGetString(propWindow->forcePVnameTextW);
      if (strlen(buff)) pgcData->forcePVName = buff;
      else pgcData->forcePVName = "-";
@@ -1346,7 +1281,6 @@ static void propApplyCallback(widget, propWindow, cbs)
      /* ---------------------------------
      Alias
      --------------------------------- */
-     if (pgcData->alias) free(pgcData->alias);
      buff = XmTextFieldGetString(propWindow->aliasTextW);
      if (strlen(buff)) pgcData->alias = buff;
      else pgcData->alias = 0;
@@ -1354,7 +1288,6 @@ static void propApplyCallback(widget, propWindow, cbs)
      /* ---------------------------------
      Related Process Command
      --------------------------------- */
-     if (pgcData->command) free(pgcData->command);
      buff = XmTextFieldGetString(propWindow->processTextW);
      if (strlen(buff)) pgcData->command = buff;
      else pgcData->command = 0;
@@ -1362,7 +1295,7 @@ static void propApplyCallback(widget, propWindow, cbs)
      /* ---------------------------------
      Sevr Commands
      --------------------------------- */
-     removeSevrCommandList(&(pgcData->sevrCommandList));
+     ellInit(&(pgcData->sevrCommandList));
 
      buff = XmTextGetString(propWindow->sevrProcessTextW);
      if (strlen(buff)){
@@ -1380,7 +1313,7 @@ static void propApplyCallback(widget, propWindow, cbs)
      --------------------------------- */
      if (linkType == CHANNEL) {
           cdata = (struct chanData *)pgcData;
-          removeStatCommandList(&(cdata->sevrCommandList));
+          ellInit(&(cdata->statCommandList));
 
           buff = XmTextGetString(propWindow->statProcessTextW);
           if (strlen(buff)){
@@ -1397,13 +1330,6 @@ static void propApplyCallback(widget, propWindow, cbs)
      /* ---------------------------------
      Guidance Text
      --------------------------------- */
-     pt = sllFirst(&(link->GuideList));
-     while (pt) {
-           guideLink = (struct guideLink *)pt;
-           pt = sllNext(pt);
-           free(guideLink->list);
-           free(guideLink);
-     }
      sllInit(&(link->GuideList));
 
      buff = XmTextGetString(propWindow->guidanceTextW);
@@ -1455,7 +1381,6 @@ static void propApplyCallback(widget, propWindow, cbs)
      set undo data
      --------------------------------- */
      editUndoSet(undoLink,linkType, link, MENU_EDIT_UNDO_PROPERTIES, FALSE);
-
 }
 
 /******************************************************
@@ -1530,19 +1455,44 @@ static void propCancelCallback(widget, propWindow, cbs)
   propUndo
 ******************************************************/
 
-void propUndo(area, link, linkType, undoLink)
+void propUndo(area)
      void *area;
+{
      GCLINK *link;
      int linkType;
      GCLINK *undoLink;
-{
      struct anyLine *line;
+     GCLINK *tempLink;
+     GLINK *glink;
+     CLINK *clink;
+     struct chanData *pchanData;
+     struct groupData *pgroupData;
+
+     editUndoGet(&undoLink, &linkType, &link);
 
      if (!link) return;
+     tempLink = propCreateClone(link,linkType);
 
-     propMoveData(link,holdLink,linkType);
-     propMoveData(undoLink,link,linkType);
-     propMoveData(holdLink,undoLink,linkType);
+    if (linkType == GROUP) {
+         glink=(GLINK *)link;
+         pgroupData = glink->pgroupData;
+         *glink = *(GLINK*)undoLink;
+         *pgroupData = *(struct groupData *)undoLink->pgcData;
+         glink->pgroupData = pgroupData;
+         free((struct groupData *)undoLink->pgcData);
+         free((GLINK*)undoLink);
+     }
+       
+     if (linkType == CHANNEL) {
+         clink=(CLINK *)link;
+         pchanData = clink->pchanData;
+         *clink = *(CLINK *)undoLink;
+         *pchanData = *(struct chanData *)undoLink->pgcData;
+         clink->pchanData = pchanData;
+         free((struct chanData *)undoLink->pgcData);
+         free((CLINK*)undoLink);
+     }
+     undoLink = tempLink;
 
      /* ---------------------------------
      Update dialog windows
@@ -1581,120 +1531,6 @@ void propUndo(area, link, linkType, undoLink)
      set undo data
      --------------------------------- */
      editUndoSet(undoLink,linkType, link, MENU_EDIT_UNDO_PROPERTIES, FALSE);
-
-}
-
-/******************************************************
-  propMoveData
-******************************************************/
-
-static void propMoveData(fromLink, toLink, linkType)
-     GCLINK *fromLink;
-     GCLINK *toLink;
-     int linkType;
-{
-     struct chanData *cfromData;
-     struct chanData *ctoData;
-     struct gcData *fromData;
-     struct gcData *toData;
-     struct guideLink *guideLink;
-     SNODE *pt;
-
-     if (!toLink || !fromLink) return;
-
-     fromData = fromLink->pgcData;
-     toData = toLink->pgcData;
-
-     /* ---------------------------------
-     Group/Channel Name 
-     --------------------------------- */
-     free(toData->name);
-     toData->name = fromData->name;
-     fromData->name = NULL;
-
-     /* ---------------------------------
-     Alarm Mask 
-     --------------------------------- */
-     if (linkType == CHANNEL) {
-          ctoData = (struct chanData *)toData;
-          cfromData = (struct chanData *)fromData;
-          ctoData->curMask = cfromData->curMask;
-          ctoData->defaultMask = cfromData->defaultMask;
-     }
-
-     /* ---------------------------------
-     Severity Process Variable
-     --------------------------------- */
-     free(toData->sevrPVName);
-     toData->sevrPVName = fromData->sevrPVName;
-     fromData->sevrPVName = NULL;
-
-     /* ---------------------------------
-     Alarm Count Filter 
-     --------------------------------- */
-     if (linkType == CHANNEL) {
-          ctoData = (struct chanData *)toData;
-          cfromData = (struct chanData *)fromData;
-          free(ctoData->countFilter);
-          ctoData->countFilter = cfromData->countFilter;
-          cfromData->countFilter = NULL;
-     }
-
-     /* ---------------------------------
-     Force Process Variable
-     --------------------------------- */
-     free(toData->forcePVName);
-     toData->forcePVName = fromData->forcePVName;
-     fromData->forcePVName = NULL;
-     toData->forcePVMask = fromData->forcePVMask;
-     toData->forcePVValue = fromData->forcePVValue;
-     toData->resetPVValue = fromData->resetPVValue;
-
-     /* ---------------------------------
-     Alias
-     --------------------------------- */
-     free(toData->alias);
-     toData->alias = fromData->alias;
-     fromData->alias = NULL;
-
-     /* ---------------------------------
-     Related Process Command
-     --------------------------------- */
-     free(toData->command);
-     toData->command = fromData->command;
-     fromData->command = NULL;
-
-     /* ---------------------------------
-     Sevr Command List
-     --------------------------------- */
-     removeSevrCommandList(&toData->sevrCommandList);
-     toData->sevrCommandList = fromData->sevrCommandList;
-     ellInit(&fromData->sevrCommandList);
-
-     /* ---------------------------------
-     Stat Command List
-     --------------------------------- */
-     if (linkType == CHANNEL) {
-          ctoData = (struct chanData *)toData;
-          cfromData = (struct chanData *)fromData;
-          removeStatCommandList(&ctoData->statCommandList);
-          ctoData->statCommandList = cfromData->statCommandList;
-          ellInit(&cfromData->statCommandList);
-     }
-
-
-     /* ---------------------------------
-     Guidance Text
-     --------------------------------- */
-     pt = sllFirst(&(toLink->GuideList));
-     while (pt) {
-           guideLink = (struct guideLink *)pt;
-           pt = sllNext(pt);
-           free(guideLink->list);
-           free(guideLink);
-     }
-     toLink->GuideList = fromLink->GuideList;
-     sllInit(&fromLink->GuideList);
 
 }
 
@@ -1740,3 +1576,68 @@ static void propEditableDialogWidgets(area)
      return;
 }
 
+static void propDeleteClone(GCLINK *link,int linkType)
+{
+    SNODE *pt,*next;
+    struct guideLink *guidelist;
+    struct gcData *pgcData;
+    struct chanData *pcData;
+    struct groupData *pgData;
+ 
+    if (link == NULL) return;
+
+    pgcData = link->pgcData;
+    if (pgcData->name) free(pgcData->name);
+    if (strcmp(pgcData->forcePVName,"-") != 0) free(pgcData->forcePVName);
+    if (strcmp(pgcData->sevrPVName,"-") != 0) free(pgcData->sevrPVName);
+    if (pgcData->command) free(pgcData->command);
+    if (pgcData->alias) free(pgcData->alias);
+    removeSevrCommandList(&pgcData->sevrCommandList);
+    if (linkType == CHANNEL) {
+        pcData = (struct chanData *)pgcData;
+        if (pcData->countFilter) free(pcData->countFilter);
+        removeStatCommandList(&pcData->statCommandList);
+    }
+    if (linkType == GROUP) {
+        pgData = (struct groupData *)pgcData;
+        if (pgData->treeSym) free(pgData->treeSym);
+    }
+ 
+    pt = sllFirst(&link->GuideList);
+    while (pt) {
+        next = sllNext(pt);
+        guidelist = (struct guideLink *)pt;
+        free(guidelist->list);
+        free(guidelist);
+        pt = next;
+    }
+    free(pgcData);
+    free(link);
+}
+
+
+static GCLINK *propCreateClone(GCLINK *link,int linkType)
+{
+     CLINK *newChan;
+     struct chanData *pchanData;
+     GLINK *newGroup;
+     struct groupData *pgroupData;
+
+     if (linkType == GROUP) {
+          newGroup = alAllocGroup();
+          pgroupData = newGroup->pgroupData;
+          *newGroup = *(GLINK *)link;
+          *pgroupData = *(struct groupData *)link->pgcData;
+          newGroup->pgroupData = pgroupData;
+          return (GCLINK *)newGroup;
+     }
+       
+     if (linkType == CHANNEL) {
+          newChan = alAllocChan();
+          pchanData = newChan->pchanData;
+          *newChan = *(CLINK *)link;
+          *pchanData = *(struct chanData *)link->pgcData;
+          newChan->pchanData = pchanData;
+          return (GCLINK *)newChan;
+     }
+}
