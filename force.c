@@ -52,6 +52,7 @@ struct forcePVWindow {
 	Widget nameLabelW;
 	Widget nameTextW;
 	Widget forcePVnameTextW;
+	Widget forcePVDisabledToggleButton;
 	Widget forcePVmaskStringLabelW;
 	Widget forceMaskToggleButtonW[ALARM_NMASK];
 	Widget forcePVforceValueTextW;
@@ -197,6 +198,8 @@ static void forcePVUpdateDialogWidgets(struct forcePVWindow *forcePVWindow)
 		XmTextFieldSetString(forcePVWindow->forcePVnameTextW,pgcData->forcePVName);
 	else XmTextFieldSetString(forcePVWindow->forcePVnameTextW,"");
 
+	XmToggleButtonGadgetSetState(forcePVWindow->forcePVDisabledToggleButton,pgcData->forcePVDisabled,FALSE);
+
 	alGetMaskString(pgcData->forcePVMask,buff);
 	string = XmStringCreateSimple(buff);
 	XtVaSetValues(forcePVWindow->forcePVmaskStringLabelW, XmNlabelString, string, NULL);
@@ -245,6 +248,7 @@ static void forcePVCreateDialog(ALINK *area)
 	Widget forcePVDialogShell, forcePVDialog;
 	Widget form;
 	Widget nameLabelW, nameTextW;
+	Widget forcePVDisabledToggleButton;
 	Widget forceMaskToggleButtonW[ALARM_NMASK];
 	Widget forcePVforceValueLabel,forcePVnameTextW, forcePVforceValueTextW,
 	    forcePVresetValueTextW, forcePVresetValueLabel;
@@ -346,16 +350,24 @@ static void forcePVCreateDialog(ALINK *area)
 
 	rowcol2 = XtVaCreateWidget("rowcol2",
 	    xmFormWidgetClass, frame2,
+	    XmNtopAttachment,          XmATTACH_FORM,
+	    XmNleftAttachment,         XmATTACH_FORM,
 	    XmNspacing,          0,
 	    XmNmarginHeight,     0,
 	    NULL);
+
+    forcePVDisabledToggleButton = XtVaCreateManagedWidget(
+		"ForcePV Disabled",
+        xmToggleButtonGadgetClass, rowcol2,
+        NULL);
 
 	string = XmStringCreateSimple("Force Process Variable Name    ");
 	forcePVnameLabel = XtVaCreateManagedWidget("forcePVnameLabel",
 	    xmLabelGadgetClass, rowcol2,
 	    XmNlabelString,            string,
-	    XmNtopAttachment,          XmATTACH_FORM,
-	    XmNleftAttachment,         XmATTACH_FORM,
+	    XmNtopAttachment,          XmATTACH_WIDGET,
+        XmNtopWidget,              forcePVDisabledToggleButton,
+		XmNtopOffset,              10,
 	    NULL);
 	XmStringFree(string);
 
@@ -485,6 +497,7 @@ static void forcePVCreateDialog(ALINK *area)
 	forcePVWindow->forcePVDialog = forcePVDialog;
 	forcePVWindow->nameLabelW = nameLabelW;
 	forcePVWindow->nameTextW = nameTextW;
+	forcePVWindow->forcePVDisabledToggleButton = forcePVDisabledToggleButton;
 	forcePVWindow->forcePVnameTextW = forcePVnameTextW;
 	forcePVWindow->forcePVmaskStringLabelW = forcePVmaskStringLabelW;
 	forcePVWindow->forcePVforceValueTextW = forcePVforceValueTextW;
@@ -597,6 +610,9 @@ XtPointer cbs)
 	else pgcData->resetPVValue = 0;
 	XtFree(buff);
 
+	/*  update disabled field  - forcePVDisabled */
+    pgcData->forcePVDisabled = XmToggleButtonGadgetGetState(forcePVWindow->forcePVDisabledToggleButton);
+
 	/*  update link field  - forcePVName */
 	buff = XmTextFieldGetString(forcePVWindow->forcePVnameTextW);
 	if (strlen(buff) > (size_t)1 && strcmp(buff,pgcData->forcePVName) != 0) {
@@ -668,4 +684,5 @@ XtPointer cbs)
 	struct forcePVWindow *forcePVWindow= (struct forcePVWindow *)calldata;
 	forcePVUpdateDialog((ALINK *)(forcePVWindow->area));
 }
+
 
