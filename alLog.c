@@ -171,11 +171,13 @@ int sev,int unackSevr,int ackT)
 		    0,			/* dummy severity */
 		    REGULAR_RECORD,	/* code */
 		    "alh-Alarm",	/* facility */
-		    "host=%s status=%s severity=%s device=%s text=%s domain=%s value=%s",
+		    "host=%s status=%s severity=%s device=%s message=%s "
+		    "text=%s domain=%s value=%s",
 		    cm_host,
 		    alhAlarmStatusString[stat],
 		    alhAlarmSeverityString[sev],
 		    cdata->name,
+		    (cdata->alias ? cdata->alias : "N/A"),
 		    cm_text,
 		    alhArea->blinkString,
 		    cdata->value);
@@ -250,11 +252,12 @@ void alLogAckChan(struct anyLine *line)
 	    0,			/* dummy severity */
 	    ACK_CHANNEL,	/* code */
 	    "alh-Opmod",	/* facility */
-	    "host=%s status=%s severity=%s device=%s text=%s domain=%s",
+	    "host=%s status=%s severity=%s device=%s message=%s text=%s domain=%s",
 	    cm_host,
 	    alhAlarmStatusString[line->curStat],
 	    alhAlarmSeverityString[line->curSevr],
 	    line->pname,
+	    (line->alias ? line->alias : "N/A"),
 	    cm_text,
 	    alhArea->blinkString);
    }
@@ -293,10 +296,11 @@ void alLogAckGroup(struct anyLine *line)
 	    0,			/* dummy severity */
 	    ACK_GROUP,		/* code */
 	    "alh-Opmod",	/* facility */
-	    "host=%s severity=%s device=%s text=%s domain=%s",
+	    "host=%s severity=%s device=%s message=%s text=%s domain=%s",
 	    cm_host,
 	    alhAlarmSeverityString[line->curSevr],
 	    line->pname,
+	    (line->alias ? line->alias : "N/A"),
 	    cm_text,
 	    alhArea->blinkString);
    }
@@ -336,9 +340,10 @@ void alLogChangeChanMasks(CLINK *clink,int maskno,int maskid)
 	    0,			/* dummy severity */
 	    CHANGE_MASK,	/* code */
 	    "alh-Opmod",	/* facility */
-	    "host=%s device=%s text=%s domain=%s",
+	    "host=%s device=%s message=%s text=%s domain=%s",
 	    cm_host,
 	    clink->pchanData->name,
+	    (clink->pchanData->alias ? clink->pchanData->alias : "N/A"),
 	    cm_text,
 	    alhArea->blinkString);
    }
@@ -382,9 +387,10 @@ void alLogForcePVGroup(GLINK *glink,int ind)
 		      0,	           /* dummy severity */
 		      CHANGE_MASK_GROUP,   /* code */
 		      "alh-Opmod",         /* facility */
-		      "host=%s device=%s text=%s domain=%s",
+		      "host=%s device=%s message=%s text=%s domain=%s",
 		      cm_host,
 		      gdata->name,
+		      (gdata->alias ? gdata->alias : "N/A"),
 		      cm_text,
 		      alhArea->blinkString);
 	   }
@@ -411,9 +417,10 @@ void alLogForcePVGroup(GLINK *glink,int ind)
 		      0,	          /* dummy severity */
 		      FORCE_MASK_GROUP,   /* code */
 		      "alh-Opmod",        /* facility */
-		      "host=%s device=%s text=%s domain=%s",
+		      "host=%s device=%s message=%s text=%s domain=%s",
 		      cm_host,
 		      gdata->name,
+		      (gdata->alias ? gdata->alias : "N/A"),
 		      cm_text,
 		      alhArea->blinkString);
 	   }
@@ -453,9 +460,10 @@ void alLogResetPVGroup(GLINK *glink,int ind)
 		      0,	           /* dummy severity */
 		      CHANGE_MASK_GROUP,   /* code */
 		      "alh-Opmod",         /* facility */
-		      "host=%s device=%s text=%s domain=%s",
+		      "host=%s device=%s message=%s text=%s domain=%s",
 		      cm_host,
 		      gdata->name,
+		      (gdata->alias ? gdata->alias : "N/A"),
 		      cm_text,
 		      (alhArea && alhArea->blinkString)?alhArea->blinkString:"unknown");
 	   }
@@ -482,9 +490,10 @@ void alLogResetPVGroup(GLINK *glink,int ind)
 		      0,	          /* dummy severity */
 		      FORCE_MASK_GROUP,   /* code */
 		      "alh-Opmod",        /* facility */
-		      "host=%s device=%s text=%s domain=%s",
+		      "host=%s device=%s message=%s text=%s domain=%s",
 		      cm_host,
 		      gdata->name,
+		      (gdata->alias ? gdata->alias : "N/A"),
 		      cm_text,
 		      (alhArea && alhArea->blinkString)?alhArea->blinkString:"unknown");
 	   }
@@ -524,9 +533,10 @@ void alLogForcePVChan(CLINK *clink,int ind)
 		      0,	           /* dummy severity */
 		      CHANGE_MASK,         /* code */
 		      "alh-Opmod",         /* facility */
-		      "host=%s device=%s text=%s domain=%s",
+		      "host=%s device=%s message=%s text=%s domain=%s",
 		      cm_host,
 		      cdata->name,
+		      (cdata->alias ? cdata->alias : "N/A"),
 		      cm_text,
 		      alhArea->blinkString);
 	   }
@@ -553,9 +563,10 @@ void alLogForcePVChan(CLINK *clink,int ind)
 		      0,	          /* dummy severity */
 		      FORCE_MASK,         /* code */
 		      "alh-Opmod",        /* facility */
-		      "host=%s device=%s text=%s domain=%s",
+		      "host=%s device=%s message=%s text=%s domain=%s",
 		      cm_host,
 		      cdata->name,
+		      (cdata->alias ? cdata->alias : "N/A"),
 		      cm_text,
 		      alhArea->blinkString);
 	   }
@@ -596,9 +607,10 @@ void alLogResetPVChan(CLINK *clink,int ind)
 		      0,	           /* dummy severity */
 		      CHANGE_MASK,         /* code */
 		      "alh-Opmod",         /* facility */
-		      "host=%s device=%s text=%s domain=%s",
+		      "host=%s device=%s message=%s text=%s domain=%s",
 		      cm_host,
 		      cdata->name,
+		      (cdata->alias ? cdata->alias : "N/A"),
 		      cm_text,
 		      alhArea->blinkString);
 	   }
@@ -625,9 +637,10 @@ void alLogResetPVChan(CLINK *clink,int ind)
 		      0,	          /* dummy severity */
 		      FORCE_MASK,         /* code */
 		      "alh-Opmod",        /* facility */
-		      "host=%s device=%s text=%s domain=%s",
+		      "host=%s device=%s message=%s text=%s domain=%s",
 		      cm_host,
 		      cdata->name,
+		      (cdata->alias ? cdata->alias : "N/A"),
 		      cm_text,
 		      alhArea->blinkString);
 	   }
@@ -675,9 +688,10 @@ void alLogChangeGroupMasks(GLINK *glink,int maskno,int maskid)
 	    0,			/* dummy severity */
 	    CHANGE_MASK_GROUP,	/* code */
 	    "alh-Opmod",	/* facility */
-	    "host=%s device=%s text=%s domain=%s",
+	    "host=%s device=%s message=%s text=%s domain=%s",
 	    cm_host,
 	    glink->pgroupData->name,
+	    (glink->pgroupData->alias ? glink->pgroupData->alias : "N/A"),
 	    cm_text,
 	    alhArea->blinkString);
    }
