@@ -1,8 +1,12 @@
 /*
  $Log$
- Revision 1.3  1995/03/24 16:35:51  jba
- Bug fix and reorganized some files
+ Revision 1.4  1995/05/30 16:07:42  jba
+ Removed  local routined blinking and alProcessX.
+ Renamed guidance_spawn_callback to processSpawn_callback.
 
+ * Revision 1.3  1995/03/24  16:35:51  jba
+ * Bug fix and reorganized some files
+ *
  * Revision 1.2  1994/06/22  21:17:02  jba
  * Added cvs Log keyword
  *
@@ -91,7 +95,6 @@ XtErrorMsgHandler trapExtraneousWarningsHandler( String message);
 void pixelData( Widget iconBoard, Widget bButton);
 void createRuntimeWindow( ALINK *area);
 void createMainWindow_callback( Widget w, ALINK *area, XmAnyCallbackStruct *call_data);
-void blinking( void);
 void unmapwindow_callback( Widget w, Widget main, XmAnyCallbackStruct *call_data);
 void remapwindow_callback( Widget w, Widget main, XmAnyCallbackStruct *call_data);
 void resetBeep(void);
@@ -189,7 +192,7 @@ void ChannelGuidance_callback( Widget w, CLINK *clink, XmAnyCallbackStruct *cbs)
   process.c   function prototypes
 *********************************************************************/
 
-void guidance_spawn_callback( Widget w, char *command, void *call_data);
+void processSpawn_callback( Widget w, char *command, void *call_data);
 void relatedProcess_callback( void *widget, GCLINK *link, void *cbs);
 
 
@@ -374,7 +377,6 @@ void ClearChannelAccessChids( SLIST *proot);
 void  alCaAddEvents( SLIST *proot);
 void alReplaceGroupForceEvent( GLINK *glink, char *str);
 void alReplaceChanForceEvent( CLINK *clink, char *str);
-void alProcessX(void);          /* process X events */
 void alProcessCA(void);         /* process CA events */
 
 /********************************************************************
@@ -482,7 +484,6 @@ XtErrorMsgHandler trapExtraneousWarningsHandler();
 void pixelData();
 void createRuntimeWindow();
 void createMainWindow_callback();
-void blinking();
 void unmapwindow_callback();
 void remapwindow_callback();
 void resetBeep();
@@ -564,7 +565,7 @@ void ChannelGuidance_callback();
   process.c   function prototypes
 *********************************************************************/
 
-void guidance_spawn_callback();
+void processSpawn_callback();
 void relatedProcess_callback();
 
 /********************************************************************
@@ -739,7 +740,6 @@ void ClearChannelAccessChids();
 void alCaAddEvents();
 void alReplaceGroupForceEvent();
 void alReplaceChanForceEvent();
-void alProcessX();          /* process X events */
 void alProcessCA();         /* process CA events */
 
 /********************************************************************
