@@ -1,3 +1,10 @@
+/*
+ $Log$
+ Revision 1.2  1994/06/22 21:17:07  jba
+ Added cvs Log keyword
+
+ */
+
 /* axArea.h */
 
 /* share/src/act	@(#)axArea.h	1.6	G% */

@@ -1,3 +1,10 @@
+/*
+ $Log$
+ Revision 1.2  1994/06/22 21:17:19  jba
+ Added cvs Log keyword
+
+ */
+
 #ifndef INCclipboardOpsh
 #define INCclipboardOpsh 1
 

@@ -1,3 +1,10 @@
+/*
+ $Log$
+ Revision 1.2  1994/06/22 21:18:00  jba
+ Added cvs Log keyword
+
+ */
+
 static char *sccsId = "@(#)sllLib.c	1.7\t10/15/93";
 
 /*********************************************************

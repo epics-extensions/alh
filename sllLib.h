@@ -1,3 +1,10 @@
+/*
+ $Log$
+ Revision 1.2  1994/06/22 21:18:02  jba
+ Added cvs Log keyword
+
+ */
+
 #ifndef INCsllLibh
 #define INCsllLibh 1
 

@@ -1,3 +1,10 @@
+/*
+ $Log$
+ Revision 1.2  1994/06/22 21:17:51  jba
+ Added cvs Log keyword
+
+ */
+
 static char *sccsId = "@(#)property.c	1.9\t2/18/94";
 
 /* property.c */

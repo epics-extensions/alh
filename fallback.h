@@ -1,3 +1,10 @@
+/*
+ $Log$
+ Revision 1.2  1994/06/22 21:17:25  jba
+ Added cvs Log keyword
+
+ */
+
 static char *fallbackhsccsId = "@(#)fallback.h	1.5\t12/15/93";
 
 /* fallback.h 

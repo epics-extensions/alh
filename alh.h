@@ -1,3 +1,10 @@
+/*
+ $Log$
+ Revision 1.2  1994/06/22 21:16:48  jba
+ Added cvs Log keyword
+
+ */
+
 /* alh.h */
 
 /* alh.h - Alarm Handler 

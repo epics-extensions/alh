@@ -1,3 +1,10 @@
+/*
+ $Log$
+ Revision 1.2  1994/06/22 21:17:28  jba
+ Added cvs Log keyword
+
+ */
+
 static char *sccsId = "@(#)file.c	1.14\t2/3/94";
 
 /* file.c 

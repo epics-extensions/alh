@@ -1,3 +1,10 @@
+/*
+ $Log$
+ Revision 1.2  1994/06/22 21:17:41  jba
+ Added cvs Log keyword
+
+ */
+
 /* line.h */
 /* share/src/act	@(#)line.h	1.5	G% */
 /* line.h - Alarm Handler */

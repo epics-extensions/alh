@@ -1,3 +1,10 @@
+/*
+ $Log$
+ Revision 1.2  1994/06/22 21:17:54  jba
+ Added cvs Log keyword
+
+ */
+
 static char *sccsId = "@(#)scroll.c	1.16\t2/18/94";
 
 /* scroll.c */

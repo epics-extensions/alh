@@ -1,3 +1,10 @@
+/*
+ $Log$
+ Revision 1.2  1994/06/22 21:16:38  jba
+ Added cvs Log keyword
+
+ */
+
 /* alLib.h */
 /* share/src/alh        @(#)alLib.h	1.11     10/15/93 */
 /*  alh  -  Alarm Handler

@@ -1,3 +1,10 @@
+/*
+ $Log$
+ Revision 1.2  1994/06/22 21:17:02  jba
+ Added cvs Log keyword
+
+ */
+
 static char *axSccsId = "@(#)ax.h	1.11\t12/15/93";
 
 /* ax.h  */

@@ -1,3 +1,10 @@
+/*
+ $Log$
+ Revision 1.2  1994/06/22 21:16:43  jba
+ Added cvs Log keyword
+
+ */
+
 static char *sccsId = "@(#)alView.c	1.6\t9/20/93";
 
 /*  alView.c
