@@ -1,61 +1,15 @@
 #
 # $Id$
 #
-# $Log$
-# Revision 1.14  1999/01/19 20:13:57  jba
-# Start of code cleanup. No functional changes. Modified comments, removed
-# unused code, used c beautifier, etc.
-#
-# Revision 1.13  1998/08/05 20:28:22  jba
-# Reading config file modified to compare whole word of command
-# (GROUP,CHANNEL,$GUIDANCE,...)instead of first letter.
-# GUIDANCE modified to display urls. (on netscape browser).
-# The alhConfig file specification is now either URL guidance -
-#     $GUIDANCE  http://www.aps.anl.gov/asd/controls
-# or text guidance -
-#     $GUIDANCE
-#     This is the first line of text guidance.
-#     This is the second line of text guidance.
-#     $END
-#
-# Revision 1.12  1998/07/16 17:45:18  jba
-# Moved productDescriptionShell code from libUnix to alh. (libUnix removed)
-#
-# Revision 1.11  1998/06/22 18:42:10  jba
-# Merged the new alh-options created at DESY MKS group:
-#  -D Disable Writing, -S Passive Mode, -T AlarmLogDated, -P Printing
-#
-# Revision 1.10  1997/09/12 19:27:24  jba
-# Removed dependancy on libUnix (product description shell)
-#
-# Revision 1.9  1996/11/19 19:40:21  jba
-# Fixed motif delete window actions, and fixed size of force PV window.
-#
-# Revision 1.8  1995/10/20 18:15:24  jba
-# Fixed.
-#
-# Revision 1.6  1995/02/28  16:43:23  jba
-# ansi c changes
-#
-# Revision 1.5  1995/02/16  22:52:40  jba
-# Added Xext for Motif2.0
-#
-# Revision 1.4  1994/11/09  20:33:18  jba
-# Motif references changed to $(MOTIF_INC) and $(MOTIF_LIB)
-#
-# Revision 1.3  1994/10/25  15:50:29  winans
-# hanged the SRCS macro to SRCS.c and SRCS.cc
-#
-# Revision 1.2  1994/09/15  21:19:02  jba
-# Mods for new CONFIG definitions
-#
-#
 
 EPICS = ../../../..
 include Target.include
 include $(EPICS)/config/CONFIG_EXTENSIONS
 
 DEPLIBS = $(EPICS_BASE_LIB)/libca.a $(EPICS_BASE_LIB)/libCom.a
+
+# baseR3.13.0.beta12 and later
+awAlh_CFLAGS += -DALH_HELP_URL="\"http://www.aps.anl.gov/asd/controls/epics/EpicsDocumentation/ExtensionsManuals/AlarmHandler/alh.html\""
 
 USR_CFLAGS = -DACCESS_SECURITY
 USR_INCLUDES = -I$(MOTIF_INC) -I$(X11_INC)
@@ -69,6 +23,7 @@ USR_LDLIBS = -lca -lCom -lXmu -lXm -lXt -lXext -lX11
 
 SRCS.c =  ../acknowledge.c  \
 		../alCA.c \
+		../alCaCommon.c \
 		../alConfig.c \
 		../alFilter.c \
 		../alInitialize.c \
@@ -102,6 +57,7 @@ SRCS.c =  ../acknowledge.c  \
 
 OBJS =  acknowledge.o  \
 		alCA.o \
+		alCaCommon.o \
 		alConfig.o \
 		alFilter.o \
 		alInitialize.o \
@@ -130,8 +86,7 @@ OBJS =  acknowledge.o  \
 		property.o \
 		scroll.o \
 		showmask.o \
-		sllLib.o \
-		testalarm.o
+		sllLib.o
 
 SRCS1.c =  ../printer.c  
 

@@ -101,7 +101,7 @@ void propShowDialog(ALINK *area,Widget menuButton)
 	/* dismiss Dialog */
 	if (propWindow && propWindow->propDialog && 
 	    XtIsManaged(propWindow->propDialog)) {
-		propDismissCallback(NULL, propWindow, NULL);
+		propDismissCallback(NULL, (XtPointer)propWindow, NULL);
 		return;
 	}
 

@@ -78,7 +78,7 @@ Widget   menuButton;
 	/* dismiss Dialog */
 	if (forceMaskWindow && forceMaskWindow->maskDialog && 
 	    XtIsManaged(forceMaskWindow->maskDialog)) {
-		forceMaskDismissCallback(NULL, forceMaskWindow, NULL);
+		forceMaskDismissCallback(NULL, (XtPointer)forceMaskWindow, NULL);
 		return;
 	}
 

@@ -116,7 +116,7 @@ static char *alhhsccsId = "@(#) $Id$";
 
 typedef struct {
 	char *label;
-	void (*callback)(Widget, void *, void *);
+	void (*callback)(Widget, XtPointer, XtPointer);
 	XtPointer data;
 } ActionAreaItem;
 

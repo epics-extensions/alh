@@ -83,7 +83,7 @@ void forcePVShowDialog(ALINK *area,Widget menuButton)
 	/* dismiss Dialog */
 	if (forcePVWindow && forcePVWindow->forcePVDialog && 
 	    XtIsManaged(forcePVWindow->forcePVDialog)) {
-		forcePVDismissCallback(NULL, forcePVWindow, NULL);
+		forcePVDismissCallback(NULL, (XtPointer)forcePVWindow, NULL);
 		return;
 	}
 

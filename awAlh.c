@@ -294,7 +294,7 @@ static void alhFileCallback(Widget widget,XtPointer calldata,XtPointer cbs)
 	case MENU_FILE_CLOSE:
 
 		/* "Close" was selected. */
-		unmapArea_callback(area->toplevel,area->form_main,cbs);
+		unmapArea_callback(area->toplevel,area->form_main,(XmAnyCallbackStruct *)cbs);
 		break;
 
 	case MENU_FILE_QUIT:
@@ -333,12 +333,12 @@ static void alhActionCallback(Widget widget,XtPointer calldata,XtPointer cbs)
 			line = (struct anyLine *)link->lineTreeW;
 			if (line && line->pwindow == (void *)area->selectionWindow ){
 
-				ack_callback(widget,line,cbs);
+				ack_callback(widget,line,(XmAnyCallbackStruct *)cbs);
 			}
 			else {
 				line = (struct anyLine *)link->lineGroupW;
 				if (line && line->pwindow == (void *)area->selectionWindow ){
-					ack_callback(widget,line,cbs);
+					ack_callback(widget,line,(XmAnyCallbackStruct *)cbs);
 				}
 			}
 		} else {
@@ -356,7 +356,7 @@ static void alhActionCallback(Widget widget,XtPointer calldata,XtPointer cbs)
 			line = (struct anyLine *)link->lineGroupW;
 		if (line){
 			wline=(WLINE *)line->wline;
-			guidanceCallback(wline->guidance,(GCLINK *)link, cbs);
+			guidanceCallback(wline->guidance,(GCLINK *)link,(XmAnyCallbackStruct *) cbs);
 		}
 		else {
 			createDialog(area->form_main,XmDIALOG_WARNING,

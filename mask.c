@@ -79,7 +79,7 @@ void maskShowDialog(ALINK *area,Widget menuButton)
 	/* dismiss Dialog */
 	if (maskWindow && maskWindow->maskDialog && 
 	    XtIsManaged(maskWindow->maskDialog)) {
-		maskDismissCallback(NULL, maskWindow, NULL);
+		maskDismissCallback(NULL, (XtPointer)maskWindow, NULL);
 		return;
 	}
 

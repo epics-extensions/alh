@@ -845,7 +845,7 @@ XtPointer call_data)
 			continue;
 		}
 		XFlush(display);
-		XmUpdateDisplay(client_data);
+		XmUpdateDisplay((Widget)client_data);
 		while ( fgets(line,159,ffp) ) {
 			sscanf(line,"%4s %4s %3s %3s %3s %3s %4s",
 			    &un1,&month,&day,&hour,&min,&un2,&year);
