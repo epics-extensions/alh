@@ -263,6 +263,8 @@ void exit_quit(Widget w, XtPointer clientdata, XtPointer calldata)
 		if (area->forceMaskWindow) free(area->forceMaskWindow);
 		if (area->forcePVWindow) free(area->forcePVWindow);
 		if (area->maskWindow) free(area->maskWindow);
+		if (area->beepSevrWindow) free(area->beepSevrWindow);
+		if (area->noAckWindow) free(area->noAckWindow);
 		if (area->pmainGroup) free(area->pmainGroup);
 		free(area);
 	}
