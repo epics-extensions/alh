@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.15  1997/09/12 19:29:15  jba
+ Removed unnecessary link tests.
+
  Revision 1.14  1997/03/31 16:45:16  jba
  Bug fix to SEVRCOMMAND for UP_ANY and DOWN_ANY.
  Bug fix to ALARMCOUNTFILTER.
@@ -340,6 +343,7 @@ void alPrecedeGroup(parent,sibling,glink)
 GLINK *parent;
 GLINK *sibling,*glink;
 {
+	    if (parent == NULL || glink == NULL )  return;
         sllPrecede(&(parent->subGroupList),(SNODE *)sibling,(SNODE *)glink);
         glink->parent = parent;
 }
@@ -351,6 +355,8 @@ void alPrecedeChan(parent,sibling,clink)
 GLINK *parent;
 CLINK *sibling,*clink;
 {
+
+	    if (parent == NULL || clink == NULL )  return;
         sllPrecede(&(parent->chanList),(SNODE *)sibling,(SNODE *)clink);
         clink->parent = parent;
 }
@@ -406,6 +412,7 @@ GLINK *pt;
 struct guideLink *guidelist; 
 struct groupData *gdata;
 
+	if (glink) {
         /* free all channels */
         cnode = sllFirst(&(glink->chanList));
         while (cnode) {
@@ -444,6 +451,7 @@ struct groupData *gdata;
         }
         free(gdata);
         free(glink);
+	}
 }
 
 
