@@ -2,7 +2,10 @@
 # $Id$
 #
 # $Log$
-# Revision 1.4  1994/11/09 20:33:18  jba
+# Revision 1.5  1995/02/16 22:52:40  jba
+# Added Xext for Motif2.0
+#
+# Revision 1.4  1994/11/09  20:33:18  jba
 # Motif references changed to $(MOTIF_INC) and $(MOTIF_LIB)
 #
 # Revision 1.3  1994/10/25  15:50:29  winans
@@ -21,12 +24,12 @@ DEPLIBS = $(EPICS_BASE_LIB)/libca.a $(EPICS_BASE_LIB)/libCom.a
 
 USR_CFLAGS = -DACCESS_SECURITY -I$(MOTIF_INC) -I$(X11_INC)
 USR_LDFLAGS = -L$(MOTIF_LIB) -L$(X11_LIB)
-USR_LDLIBS = -lca -lCom -lXm -lXt -lX11 -lm
+USR_LDLIBS = -lca -lCom -lXm -lXt -lXext -lX11 
 
 # use following 3 lines if USR_CFLAGS contains -DIWantGreeting
 #DEPLIBS = $(EPICS_BASE_LIB)/libca.a $(EPICS_BASE_LIB)/libCom.a $(EPICS_EXTENSIONS_LIB)/libUnix.a
 #USR_LDFLAGS = -L$(EPICS_EXTENSIONS_LIB) -L$(MOTIF_LIB) -L$(X11_LIB)
-#USR_LDLIBS = -lca -lCom -lUnix -lXm -lXt -lX11 -lm
+#USR_LDLIBS = -lca -lCom -lUnix -lXm -lXt -lXext -lX11
 
 SRCS.c =  ../acknowledge.c  \
 		../alCA.c \
