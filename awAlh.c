@@ -93,6 +93,7 @@ void awUpdateRowWidgets(line)                 Update line widgets
 #define MENU_ACTION_FORCE_MASK	10304
 #define MENU_ACTION_MODIFY_MASK	10305
 #define MENU_ACTION_BEEPSEVR	10306
+#define MENU_ACTION_NOACKTIMER	10307
 
 
 #define	MENU_VIEW_CONFIG		10400
@@ -201,6 +202,8 @@ Widget alhCreateMenu(Widget parent,XtPointer user_data)
 		             alhActionCallback, (XtPointer)MENU_ACTION_MODIFY_MASK, (MenuItem *)NULL, 0 },
 		         { "Beep Severity ...",  ToggleButtonGadgetClass, 'B', "Ctrl<Key>B", "Ctrl+B",
 		             alhActionCallback, (XtPointer)MENU_ACTION_BEEPSEVR, (MenuItem *)NULL, 0 },
+		         { "NoAck for One Hour ...",  ToggleButtonGadgetClass, 'N', "Ctrl<Key>N", "Ctrl+N",
+		             alhActionCallback, (XtPointer)MENU_ACTION_NOACKTIMER, (MenuItem *)NULL, 0 },
 		         {NULL},
 		     	};
 /* ******************************************** Albert1 : ************************************ */
@@ -219,6 +222,8 @@ static MenuItem action_menuNew[] = {
 		             alhActionCallback, (XtPointer)MENU_ACTION_MODIFY_MASK, (MenuItem *)NULL, 0 },
 		         { "Beep Severity ...",  ToggleButtonGadgetClass, 'B', "Ctrl<Key>B", "Ctrl+B",
 		             alhActionCallback, (XtPointer)MENU_ACTION_BEEPSEVR, (MenuItem *)NULL, 0 },
+		         { "NoAck for One Hour ...",  ToggleButtonGadgetClass, 'N', "Ctrl<Key>N", "Ctrl+N",
+		             alhActionCallback, (XtPointer)MENU_ACTION_NOACKTIMER, (MenuItem *)NULL, 0 },
 			 /* Albert1 For MESSAGE BROADCAST: */
 #ifndef WIN32
 		         { "Send Message ...",  ToggleButtonGadgetClass, 'B', "Ctrl<Key>B", "Ctrl+B",
@@ -528,6 +533,17 @@ static void alhActionCallback(Widget widget,XtPointer calldata,XtPointer cbs)
 
 		if (area->selectionLink) {
 			beepSevrShowDialog(area, widget);
+		} else {
+			parent = area->form_main;
+			createDialog(parent,XmDIALOG_WARNING,
+			    "Please select an alarm group or channel first."," ");
+		}
+		break;
+
+	case MENU_ACTION_NOACKTIMER:
+
+		if (area->selectionLink) {
+			noAckShowDialog(area, widget);
 		} else {
 			parent = area->form_main;
 			createDialog(parent,XmDIALOG_WARNING,
