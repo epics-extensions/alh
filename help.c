@@ -1,28 +1,4 @@
-/*
- $Log$
- Revision 1.6  1998/07/23 16:22:31  jba
- Added code to free memory when finished with it.
-
- Revision 1.5  1998/05/12 18:22:49  evans
- Initial changes for WIN32.
-
- Revision 1.4  1995/10/20 16:50:43  jba
- Modified Action menus and Action windows
- Renamed ALARMCOMMAND to SEVRCOMMAND
- Added STATCOMMAND facility
- Added ALIAS facility
- Added ALARMCOUNTFILTER facility
- Make a few bug fixes.
-
- * Revision 1.3  1995/06/22  19:46:22  jba
- * Put group/channel alias in guidance window title bar.
- *
- * Revision 1.2  1994/06/22  21:17:36  jba
- * Added cvs Log keyword
- *
- */
-
-static char *sccsId = "@(#)help.c	1.12\t10/1/93";
+/* $Id$ */
 
 /***************************************************
 *   help.c 
@@ -38,6 +14,7 @@ static char *sccsId = "@(#)help.c	1.12\t10/1/93";
 *consecutive null strings indicates the end of help text.  
 *
 ********************************************************/
+
 #include <stdlib.h>
 
 #include <X11/StringDefs.h>
@@ -209,78 +186,56 @@ static char *choosegroup_help_str[] = {
         "",""};
 
 
-#ifdef __STDC__
-
 static void SetupHelpSelection( Widget w, int index);
 static void GroupHelpSelection( Widget w, int index);
-
-#else
-
-static void SetupHelpSelection();
-static void GroupHelpSelection();
-
-#endif /*__STDC__*/
-
- 
 
 
 /*******************************************************
 	delete an existing widget
 *******************************************************/
-void xs_ok_callback(w,client_data,call_data)
-Widget w;
-void *client_data;
-XmAnyCallbackStruct *call_data;
+void xs_ok_callback(Widget w,void *client_data,
+   XmAnyCallbackStruct *call_data)
 {
 	XtUnmanageChild(w);
 	XtDestroyWidget(w);
 }
 
-
 /*************************************************************
  *  xs_str_array_to_xmstr() : convert char ** to
  *	compound string
  ************************************************************/
-XmString xs_str_array_to_xmstr(cs,n)
-char *cs[];
-int n;
+XmString xs_str_array_to_xmstr(char *cs[],int n)
 {
-XmString xmstr,xmsep, xmstr1,xmstr2 ;
-XmString str;
-int i;
-/*
- * if the array is empty just return an empty string.
- */
-if (n <= 0) 
-	return(XmStringCreate("",XmSTRING_DEFAULT_CHARSET));
+	XmString xmstr,xmsep, xmstr1,xmstr2 ;
+	XmString str;
+	int i;
+	/*
+ 	* if the array is empty just return an empty string.
+ 	*/
+	if (n <= 0) 
+		return(XmStringCreate("",XmSTRING_DEFAULT_CHARSET));
 
-xmstr = (XmString) NULL;
-xmsep =  XmStringSeparatorCreate();
+	xmstr = (XmString) NULL;
+	xmsep =  XmStringSeparatorCreate();
 
-for (i=0;i<n;i++) {
-	xmstr1=xmstr;
-	if (i > 0) xmstr = XmStringConcat(xmstr1,xmsep);
-	XmStringFree(xmstr1);
-	xmstr1 = xmstr;
-	xmstr2 = XmStringCreate(cs[i],XmSTRING_DEFAULT_CHARSET);
-	xmstr = XmStringConcat(xmstr1,xmstr2);
-	XmStringFree(xmstr1);
-	XmStringFree(xmstr2);
-}
+	for (i=0;i<n;i++) {
+		xmstr1=xmstr;
+		if (i > 0) xmstr = XmStringConcat(xmstr1,xmsep);
+		XmStringFree(xmstr1);
+		xmstr1 = xmstr;
+		xmstr2 = XmStringCreate(cs[i],XmSTRING_DEFAULT_CHARSET);
+		xmstr = XmStringConcat(xmstr1,xmstr2);
+		XmStringFree(xmstr1);
+		XmStringFree(xmstr2);
+	}
 	XmStringFree(xmsep);
 	return (xmstr);
 }
 
-
-
-
 /*************************************************************
  *  the help button call back function from a dialog widget
  ************************************************************/
-void xs_help_callback(w,str,call_data)
-Widget w;
-char *str[];
-void *call_data;
+void xs_help_callback(Widget w,char *str[],void *call_data)
 {
 	int 	i,n;
 	Widget  dialog;
@@ -383,24 +338,22 @@ void *call_data;
 /**************************************************
  create help menu for setup window
 ***************************************************/
-void CreateGroupWindowHelpMenu(window_depth,w)
-int window_depth;
-  Widget w;
+void CreateGroupWindowHelpMenu(int window_depth,Widget w)
 {
   Arg wargs[5];
   Widget menu,buttons[8];
   Widget button; 		/*cascadebutton */
   int i,n;
 
-/* 
- * prepare Help pulldown menu here
- */
+	/* 
+ 	* prepare Help pulldown menu here
+ 	*/
 
   menu = XmCreatePulldownMenu(w,"Help",NULL,0);
 
-/*
- * add help buttons
- */
+	/*
+ 	* add help buttons
+ 	*/
   n=0;
   XtSetArg(wargs[n], XmNsubMenuId, menu); n++;
   button = XtCreateManagedWidget("Help",xmCascadeButtonWidgetClass,
@@ -414,28 +367,25 @@ int window_depth;
 
 }
 
-
-
 /**************************************************
  create help menu for setup window
 ***************************************************/
-void CreateSetupWindowHelpMenu(w)
-  Widget w;
+void CreateSetupWindowHelpMenu(Widget w)
 {
   Arg wargs[5];
   Widget menu,buttons[7];
   Widget button; 		/*cascadebutton */
   int i;
 
-/* 
- * prepare Help pulldown menu here
- */
+  /* 
+   * prepare Help pulldown menu here
+   */
 
   menu = XmCreatePulldownMenu(w,"Help",NULL,0);
 
-/*
- * add help buttons
- */
+  /*
+   * add help buttons
+   */
   XtSetArg(wargs[0], XmNsubMenuId, menu);
   button = XtCreateManagedWidget("Help",xmCascadeButtonWidgetClass,
                         w, wargs, 1);
@@ -451,12 +401,10 @@ void CreateSetupWindowHelpMenu(w)
 /****************************************************
   setup help  selection callback lists
 ****************************************************/
-static void SetupHelpSelection(w,index)
-Widget w;
-int index;
+static void SetupHelpSelection(Widget w,int index)
 {
 
-switch (index) {
+	switch (index) {
         case 0:
         XtAddCallback(w,XmNactivateCallback,
                 (XtCallbackProc)xs_help_callback,setup_help_str);
@@ -497,19 +445,16 @@ switch (index) {
                 (XtCallbackProc)xs_help_callback,open_close_help_str);
         break;
 
-        }
+	}
 }
         
-
 /***************************************************
   guidance selection callback lists
 ***************************************************/
-static void GroupHelpSelection(w,index)
-Widget w;
-int index;
+static void GroupHelpSelection(Widget w,int index)
 {
 
-switch (index) {
+	switch (index) {
         case 0:
         XtAddCallback(w,XmNactivateCallback,
                 (XtCallbackProc)xs_help_callback,close_help_str);
@@ -548,19 +493,14 @@ switch (index) {
         XtAddCallback(w,XmNactivateCallback,
                 (XtCallbackProc)xs_help_callback,choosegroup_help_str);
         break;
-        }
+	}
 }
 /******************************************************
   helpCallback
 ******************************************************/
-
-void helpCallback(widget, item, cbs)
-     Widget widget;
-     int item;
-     XmAnyCallbackStruct *cbs;
+void helpCallback(Widget widget,int item,XmAnyCallbackStruct *cbs)
 {
-
-     createDialog(widget,XmDIALOG_INFORMATION,"Help is not available in this release."," ");
+     createDialog(widget,XmDIALOG_INFORMATION,
+         "Help is not available in this release."," ");
 }
 
- 

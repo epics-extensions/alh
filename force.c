@@ -1,59 +1,11 @@
-/*
- $Log$
- Revision 1.11  1998/05/13 19:29:50  evans
- More WIN32 changes.
-
- Revision 1.10  1997/08/27 22:00:47  jba
- Added calls to XtFree.
-
- Revision 1.9  1997/04/17 18:39:47  jba
- Bug fix for mask.
-
- Revision 1.8  1997/04/17 18:31:46  jba
- Changed mask from char ro uchar.
-
- Revision 1.7  1997/04/17 18:01:15  jba
- Added calls to free allocated memory.
-
- Revision 1.6  1996/12/03 22:04:25  jba
- Changed unused Help ActionItem data to NULL.
-
- Revision 1.5  1996/11/19 19:40:24  jba
- Fixed motif delete window actions, and fixed size of force PV window.
-
- Revision 1.4  1995/10/20 16:50:40  jba
- Modified Action menus and Action windows
- Renamed ALARMCOMMAND to SEVRCOMMAND
- Added STATCOMMAND facility
- Added ALIAS facility
- Added ALARMCOUNTFILTER facility
- Make a few bug fixes.
-
- * Revision 1.2  1994/06/22  21:17:57  jba
- * Added cvs Log keyword
- *
- */
-
-static char *sccsId = "@(#)forcePV.c	1.12\t9/15/93";
+/* $Id$ */
 
 /*******************************************************
- * force.c: a popup dialog  window
-*
-*This file contains routines for modifing the forcePV.
-*
-------------
-|  PUBLIC  |
-------------
-*
-void forcePVUpdateDialog(area)   Update mask dialog widow
-     ALINK *area;
-*
-void forcePVShowDialog(area)          Create/show mask dialog 
-     ALINK *area;
+ * force.c
+ * This file contains routines for modifing the forcePV
+   using a popup dialog window
+*******************************************************/
 
-******************************************************************
-******************************************************************
-*/
 #include <stdlib.h>
 
 #include <Xm/Xm.h>
@@ -72,10 +24,11 @@ void forcePVShowDialog(area)          Create/show mask dialog
 #include <Xm/TextF.h>
 #include <Xm/ToggleBG.h>
 
-#include <axArea.h>
-#include <alLib.h>
-#include <ax.h>
+#include "axArea.h"
+#include "alLib.h"
+#include "ax.h"
 
+/* global variables */
 extern Pixel bg_pixel[ALARM_NSEV];
 
 struct forcePVWindow {
@@ -91,6 +44,7 @@ struct forcePVWindow {
     Widget forcePVresetValueTextW;
 };
 
+/* forward declarations */
 static void forcePVApplyCallback(Widget widget,XtPointer calldata,XtPointer cbs);
 static void forcePVCancelCallback(Widget widget,XtPointer calldata,XtPointer cbs);
 static void forcePVDismissCallback(Widget widget,XtPointer calldata,XtPointer cbs);
@@ -99,12 +53,11 @@ static void forcePVCreateDialog(ALINK*area);
 static void forcePVUpdateDialogWidgets(struct forcePVWindow *forcePVWindow);
 static void forcePVMaskChangeCallback( Widget widget, XtPointer calldata, XtPointer cbs);
 
+
 /******************************************************
   forcePVUpdateDialog
 ******************************************************/
-
-void forcePVUpdateDialog(area)
-     ALINK  *area;
+void forcePVUpdateDialog(ALINK *area)
 {
      struct forcePVWindow *forcePVWindow;
 
@@ -112,20 +65,16 @@ void forcePVUpdateDialog(area)
 
      if (!forcePVWindow)  return;
 
-     if (!forcePVWindow->forcePVDialog || !XtIsManaged(forcePVWindow->forcePVDialog)) return;
+     if (!forcePVWindow->forcePVDialog ||
+         !XtIsManaged(forcePVWindow->forcePVDialog)) return;
 
      forcePVUpdateDialogWidgets(forcePVWindow);
-
 }
-
 
 /******************************************************
   forcePVShowDialog
 ******************************************************/
-
-void forcePVShowDialog(area, menuButton)
-     ALINK    *area;
-     Widget   menuButton;
+void forcePVShowDialog(ALINK *area,Widget menuButton)
 {
      struct forcePVWindow *forcePVWindow;
 
@@ -156,15 +105,12 @@ void forcePVShowDialog(area, menuButton)
      XMapWindow(XtDisplay(forcePVWindow->forcePVDialog),
           XtWindow(XtParent(forcePVWindow->forcePVDialog)));
      if (menuButton) XtVaSetValues(menuButton, XmNset, TRUE, NULL);
-
 }
 
 /******************************************************
   forcePVUpdateDialogWidgets
 ******************************************************/
-
-static void forcePVUpdateDialogWidgets(forcePVWindow)
-     struct forcePVWindow *forcePVWindow;
+static void forcePVUpdateDialogWidgets(struct forcePVWindow *forcePVWindow)
 {
      struct gcData *pgcData;
      struct chanData *pcData;
@@ -208,13 +154,19 @@ static void forcePVUpdateDialogWidgets(forcePVWindow)
      if (!link) {
           XmTextFieldSetString(forcePVWindow->forcePVnameTextW,"");
           string = XmStringCreateSimple("-----");
-          XtVaSetValues(forcePVWindow->forcePVmaskStringLabelW, XmNlabelString, string, NULL);
+          XtVaSetValues(forcePVWindow->forcePVmaskStringLabelW,
+                XmNlabelString,string,NULL);
           XmStringFree(string);
-          XmToggleButtonSetState(forcePVWindow->forceMaskToggleButtonW[0],FALSE,TRUE);
-          XmToggleButtonSetState(forcePVWindow->forceMaskToggleButtonW[1],FALSE,TRUE);
-          XmToggleButtonSetState(forcePVWindow->forceMaskToggleButtonW[2],FALSE,TRUE);
-          XmToggleButtonSetState(forcePVWindow->forceMaskToggleButtonW[3],FALSE,TRUE);
-          XmToggleButtonSetState(forcePVWindow->forceMaskToggleButtonW[4],FALSE,TRUE);
+          XmToggleButtonSetState(forcePVWindow->forceMaskToggleButtonW[0],
+                FALSE,TRUE);
+          XmToggleButtonSetState(forcePVWindow->forceMaskToggleButtonW[1],
+                FALSE,TRUE);
+          XmToggleButtonSetState(forcePVWindow->forceMaskToggleButtonW[2],
+                FALSE,TRUE);
+          XmToggleButtonSetState(forcePVWindow->forceMaskToggleButtonW[3],
+                FALSE,TRUE);
+          XmToggleButtonSetState(forcePVWindow->forceMaskToggleButtonW[4],
+                FALSE,TRUE);
 
           XmTextFieldSetString(forcePVWindow->forcePVforceValueTextW,"");
           XmTextFieldSetString(forcePVWindow->forcePVresetValueTextW,"");
@@ -239,35 +191,41 @@ static void forcePVUpdateDialogWidgets(forcePVWindow)
 
      mask = pgcData->forcePVMask;
      if (mask.Cancel == 1 )
-          XmToggleButtonSetState(forcePVWindow->forceMaskToggleButtonW[0],TRUE,TRUE);
-     else XmToggleButtonSetState(forcePVWindow->forceMaskToggleButtonW[0],FALSE,TRUE);
+          XmToggleButtonSetState(forcePVWindow->forceMaskToggleButtonW[0],
+              TRUE,TRUE);
+     else XmToggleButtonSetState(forcePVWindow->forceMaskToggleButtonW[0],
+              FALSE,TRUE);
      if (mask.Disable == 1 )
-          XmToggleButtonSetState(forcePVWindow->forceMaskToggleButtonW[1],TRUE,TRUE);
-     else XmToggleButtonSetState(forcePVWindow->forceMaskToggleButtonW[1],FALSE,TRUE);
+          XmToggleButtonSetState(forcePVWindow->forceMaskToggleButtonW[1],
+              TRUE,TRUE);
+     else XmToggleButtonSetState(forcePVWindow->forceMaskToggleButtonW[1],                    FALSE,TRUE);
      if (mask.Ack == 1 )
-          XmToggleButtonSetState(forcePVWindow->forceMaskToggleButtonW[2],TRUE,TRUE);
-     else XmToggleButtonSetState(forcePVWindow->forceMaskToggleButtonW[2],FALSE,TRUE);
+          XmToggleButtonSetState(forcePVWindow->forceMaskToggleButtonW[2],
+              TRUE,TRUE);
+     else XmToggleButtonSetState(forcePVWindow->forceMaskToggleButtonW[2],
+              FALSE,TRUE);
      if (mask.AckT == 1 )
-          XmToggleButtonSetState(forcePVWindow->forceMaskToggleButtonW[3],TRUE,TRUE);
-     else XmToggleButtonSetState(forcePVWindow->forceMaskToggleButtonW[3],FALSE,TRUE);
+          XmToggleButtonSetState(forcePVWindow->forceMaskToggleButtonW[3],
+              TRUE,TRUE);
+     else XmToggleButtonSetState(forcePVWindow->forceMaskToggleButtonW[3],
+              FALSE,TRUE);
      if (mask.Log == 1 )
-          XmToggleButtonSetState(forcePVWindow->forceMaskToggleButtonW[4],TRUE,TRUE);
-     else XmToggleButtonSetState(forcePVWindow->forceMaskToggleButtonW[4],FALSE,TRUE);
+          XmToggleButtonSetState(forcePVWindow->forceMaskToggleButtonW[4],
+              TRUE,TRUE);
+     else XmToggleButtonSetState(forcePVWindow->forceMaskToggleButtonW[4],
+              FALSE,TRUE);
 
      sprintf(buff,"%d",pgcData->forcePVValue);
      XmTextFieldSetString(forcePVWindow->forcePVforceValueTextW,buff);
 
      sprintf(buff,"%d",pgcData->resetPVValue);
      XmTextFieldSetString(forcePVWindow->forcePVresetValueTextW,buff);
-
 }
 
 /******************************************************
   forcePVCreateDialog
 ******************************************************/
-
-static void forcePVCreateDialog(area)
-     ALINK    *area;
+static void forcePVCreateDialog(ALINK *area)
 {
      struct forcePVWindow *forcePVWindow;
 
@@ -539,8 +497,8 @@ static void forcePVCreateDialog(area)
 /******************************************************
   forcePVMaskChangeCallback
 ******************************************************/
-
-static void forcePVMaskChangeCallback(Widget widget, XtPointer calldata, XtPointer cbs)
+static void forcePVMaskChangeCallback(Widget widget, XtPointer calldata,
+     XtPointer cbs)
 {
      int index=(int)calldata;
      char *mask;
@@ -585,8 +543,8 @@ static void forcePVMaskChangeCallback(Widget widget, XtPointer calldata, XtPoint
 /******************************************************
   forcePVApplyCallback
 ******************************************************/
-
-static void forcePVApplyCallback(Widget widget, XtPointer calldata, XtPointer cbs)
+static void forcePVApplyCallback(Widget widget, XtPointer calldata,
+     XtPointer cbs)
 {
      struct forcePVWindow *forcePVWindow= (struct forcePVWindow *)calldata;
      short f1;
@@ -650,20 +608,23 @@ static void forcePVApplyCallback(Widget widget, XtPointer calldata, XtPointer cb
 /******************************************************
   forcePVHelpCallback
 ******************************************************/
-
-static void forcePVHelpCallback(Widget widget, XtPointer calldata, XtPointer cbs)
+static void forcePVHelpCallback(Widget widget, XtPointer calldata,
+    XtPointer cbs)
 {
      struct forcePVWindow *forcePVWindow= (struct forcePVWindow *)calldata;
 
      char *message1 =
-         "This dialog window allows an operator to specify or modify the forcePV\n"
+         "This dialog window allows an operator to specify"
+         " or modify the forcePV\n"
          "values for a selected group or channel.\n"
          "  \n"
-	     "NOTE: The force value must be set to a value different from the reset value.\n"
+	     "NOTE: The force value must be set to a value"
+         " different from the reset value.\n"
          "  \n"
-         "Press the Apply   button to change the forcePV values for the group or channel.\n"
+         "Press the Apply   button to change the forcePV"
+         " values for the group or channel.\n"
 	     "Press the Cancel button to abort current change.\n"
-         "Press the Dismiss button to close the modify Force PV dialog window.\n"
+         "Press the Dismiss button to close the Force PV dialog window.\n"
          "Press the Help    button to get this help description window.\n"
             ;
      char *message2 = "  ";
@@ -674,8 +635,8 @@ static void forcePVHelpCallback(Widget widget, XtPointer calldata, XtPointer cbs
 /******************************************************
   forcePVDismissCallback
 ******************************************************/
-
-static void forcePVDismissCallback(Widget widget, XtPointer calldata, XtPointer cbs)
+static void forcePVDismissCallback(Widget widget, XtPointer calldata,
+    XtPointer cbs)
 {
      struct forcePVWindow *forcePVWindow= (struct forcePVWindow *)calldata;
      Widget forcePVDialog;
@@ -690,21 +651,17 @@ static void forcePVDismissCallback(Widget widget, XtPointer calldata, XtPointer 
 /******************************************************
   forcePVCancelCallback
 ******************************************************/
-
-static void forcePVCancelCallback(Widget widget, XtPointer calldata, XtPointer cbs)
+static void forcePVCancelCallback(Widget widget, XtPointer calldata,
+    XtPointer cbs)
 {
      struct forcePVWindow *forcePVWindow= (struct forcePVWindow *)calldata;
      forcePVUpdateDialog((ALINK *)(forcePVWindow->area));
 }
 
-
 /******************************************************
   alOperatorForcePVChanEvent
 ******************************************************/
-
-void alOperatorForcePVChanEvent(clink,pvMask)
-     CLINK *clink;
-     MASK pvMask;
+void alOperatorForcePVChanEvent(CLINK *clink,MASK pvMask)
 {
      struct chanData *cdata;
      char s1[6],s2[6];
@@ -717,7 +674,5 @@ void alOperatorForcePVChanEvent(clink,pvMask)
      if (strcmp(s1,s2) != 0) {
           alChangeChanMask(clink,pvMask);
      }
-
 }
-
 

@@ -1,71 +1,9 @@
-/*
- $Log$
- Revision 1.3  1995/10/20 16:50:31  jba
- Modified Action menus and Action windows
- Renamed ALARMCOMMAND to SEVRCOMMAND
- Added STATCOMMAND facility
- Added ALIAS facility
- Added ALARMCOUNTFILTER facility
- Make a few bug fixes.
-
- * Revision 1.2  1994/06/22  21:17:21  jba
- * Added cvs Log keyword
- *
- */
-
-static char *sccsId = "@(#)current.c	1.8\t9/14/93";
-
-/* current.c	
- *      Author: Janet Anderson
- *      Date:   02-16-93
- *
- *      Experimental Physics and Industrial Control System (EPICS)
- *
- *      Copyright 1991, the Regents of the University of California,
- *      and the University of Chicago Board of Governors.
- *
- *      This software was produced under  U.S. Government contracts:
- *      (W-7405-ENG-36) at the Los Alamos National Laboratory,
- *      and (W-31-109-ENG-38) at Argonne National Laboratory.
- *
- *      Initial development by:
- *              The Controls and Automation Group (AT-8)
- *              Ground Test Accelerator
- *              Accelerator Technology Division
- *              Los Alamos National Laboratory
- *
- *      Co-developed with
- *              The Controls and Computing Group
- *              Accelerator Systems Division
- *              Advanced Photon Source
- *              Argonne National Laboratory
- *
- * Modification Log:
- * -----------------
- * .nn  mm-dd-yy        iii     Comment
- *      ...
- */
+/* $Id$ */
 /***********************************************************
-*
 *    current.c
-*
-*This file contains the routines for viewing the current alarm history.
-
-Routines defined in current.c:
-
--------------
-|   PUBLIC  |
--------------
-void currentAlarmHistoryWindow(area,widget)         Create/manage current alarm window
-void updateCurrentAlarmString(string)               Update XmString with new alarm
-void updateCurrentAlarmWindow(string)               Update window with new strings
-
--------------
-|  PRIVATE  |
--------------
-void closeCurrent_callback(w,popup_shell,call_data)  Close current alarm window
-*
+*This file contains the routines for viewing the current alarm history window
 **********************************************************/
+
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -80,15 +18,11 @@ void closeCurrent_callback(w,popup_shell,call_data)  Close current alarm window
 #include <Xm/Protocols.h>
 #include <Xm/Text.h>
 
-#include <alh.h>
-#include <axArea.h>
-#include <cadef.h>
-#include <ax.h>
+#include "alh.h"
+#include "axArea.h"
+#include "cadef.h"
+#include "ax.h"
  
-extern char * alarmSeverityString[];
-extern char * alarmStatusString[];
-
-/* global variables */
 struct currentData {
      time_t timeofday;
      char *name;
@@ -96,27 +30,22 @@ struct currentData {
      int   stat;
      char  value[MAX_STRING_SIZE];
 };
+
+/* global variables */
+extern char * alarmSeverityString[];
+extern char * alarmStatusString[];
+
 struct currentData currentAlarm[10];
 int currentAlarmIndex;
 
-
-#ifdef __STDC__
-
+/* forward declarations */
 void closeCurrent_callback( Widget w, Widget currentForm, caddr_t call_data);
-
-#else
-
-void closeCurrent_callback();
-
-#endif /*__STDC__*/
 
 
 /**************************************************************************
 	create scroll window for file view
 **************************************************************************/
-void currentAlarmHistoryWindow(area,menuButton)
-     ALINK *area;
-     Widget menuButton;
+void currentAlarmHistoryWindow(ALINK *area,Widget menuButton)
 {
      static Widget popup_shell,title,button;
      Widget previous;
@@ -126,12 +55,15 @@ void currentAlarmHistoryWindow(area,menuButton)
      
      if (!popup_shell) {
 
-          popup_shell = XtAppCreateShell("Alarm Handler: Current Alarm History", programName,
+          popup_shell = XtAppCreateShell(
+               "Alarm Handler: Current Alarm History",
+               programName,
                applicationShellWidgetClass, display, NULL, 0);
 
           /*  create current alarm view window */
 /*
-          popup_shell = XtVaCreatePopupShell("Alarm Handler: Current Alarm History",
+          popup_shell = XtVaCreatePopupShell(
+               "Alarm Handler: Current Alarm History",
                xmDialogShellWidgetClass,   area->runtimeForm,
                XmNautoUnmanage,            FALSE,
                NULL);
@@ -152,7 +84,8 @@ void currentAlarmHistoryWindow(area,menuButton)
           WM_DELETE_WINDOW = XmInternAtom(XtDisplay(popup_shell),
                "WM_DELETE_WINDOW", False);
           XmAddWMProtocolCallback(popup_shell,WM_DELETE_WINDOW,
-               (XtCallbackProc)closeCurrent_callback, (XtPointer)area->currentAlarmForm);
+               (XtCallbackProc)closeCurrent_callback,
+               (XtPointer)area->currentAlarmForm);
            
           /* add close button */
           button = XtVaCreateManagedWidget("Close",
@@ -169,7 +102,8 @@ void currentAlarmHistoryWindow(area,menuButton)
           previous = button;
           
           /* add title line */
-          title = XtVaCreateManagedWidget( "    TIME_STAMP        PROCESS_VARIABLE_NAME        STATUS     SEVERITY   VALUE       ",
+          title = XtVaCreateManagedWidget(
+               "    TIME_STAMP        PROCESS_VARIABLE_NAME        STATUS     SEVERITY   VALUE       ",
                xmLabelGadgetClass,        area->currentAlarmForm,
                XmNtopAttachment,          XmATTACH_FORM,
                XmNtopOffset,              10,
@@ -177,7 +111,6 @@ void currentAlarmHistoryWindow(area,menuButton)
                XmNleftWidget,             button,
                XmNrightAttachment,        XmATTACH_FORM,
                NULL);
-          
           
           /* create 10 label widgets  */
           for ( i=0;i<10;i++){
@@ -222,18 +155,12 @@ void currentAlarmHistoryWindow(area,menuButton)
                updateCurrentAlarmWindow(area);
           }
      }
-     
 }
-     
-     
      
 /**************************************************************************
 	close Current Alarm History window 
 **************************************************************************/
-void closeCurrent_callback(w,currentForm,call_data)
-     Widget w;
-     Widget currentForm;
-     caddr_t call_data;
+void closeCurrent_callback(Widget w,Widget currentForm,caddr_t call_data)
 {
      Widget menuButton;
 
@@ -248,12 +175,8 @@ void closeCurrent_callback(w,currentForm,call_data)
 /******************************************************************
       updateCurrent Alarm History strings
 *****************************************************************/
-
-void updateCurrentAlarmString(ptimeofday,name,value,stat,sev)
-     time_t *ptimeofday;
-     int stat,sev;
-     char *name;
-     char value[];
+void updateCurrentAlarmString(time_t *ptimeofday,char *name,char value[],
+     int stat,int sev)
 {
      int n;
 
@@ -265,20 +188,17 @@ void updateCurrentAlarmString(ptimeofday,name,value,stat,sev)
      strncpy(currentAlarm[n].value,value,MAX_STRING_SIZE);  
      n = (n+1)%10;
      currentAlarmIndex = n;
-
 }
 
 /******************************************************************
       updateCurrent Alarm History Window
 *****************************************************************/
-void updateCurrentAlarmWindow(area)
-     ALINK *area;
+void updateCurrentAlarmWindow(ALINK *area)
 {
      int i,j=0;
      XmString xstr;
      char *str;
      char buff[100];
-     
    
      if ( area->currentAlarmForm && XtIsManaged(area->currentAlarmForm) ) {
 
@@ -319,3 +239,4 @@ void resetCurrentAlarmWindow()
           currentAlarm[j].name = NULL;
      }
 }
+

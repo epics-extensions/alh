@@ -1,149 +1,35 @@
-/*
- $Log$
- Revision 1.5  1995/10/20 16:50:45  jba
- Modified Action menus and Action windows
- Renamed ALARMCOMMAND to SEVRCOMMAND
- Added STATCOMMAND facility
- Added ALIAS facility
- Added ALARMCOUNTFILTER facility
- Make a few bug fixes.
+/* $Id$ */
 
- * Revision 1.4  1995/06/22  19:48:53  jba
- * Added $ALIAS facility.
- *
- * Revision 1.3  1995/04/13  19:20:25  jba
- * Fixed bug in line mask size and initialization.
- *
- * Revision 1.2  1994/06/22  21:17:39  jba
- * Added cvs Log keyword
- *
- */
-
-static char *sccsId = "@(#)line.c	1.6\t9/14/93";
-
-/* line.c */
-/* 
- *      Author: Ben-chin Cha
- *      Date:   12-20-90
- *
- *      Experimental Physics and Industrial Control System (EPICS)
- *
- *      Copyright 1991, the Regents of the University of California,
- *      and the University of Chicago Board of Governors.
- *
- *      This software was produced under  U.S. Government contracts:
- *      (W-7405-ENG-36) at the Los Alamos National Laboratory,
- *      and (W-31-109-ENG-38) at Argonne National Laboratory.
- *
- *      Initial development by:
- *              The Controls and Automation Group (AT-8)
- *              Ground Test Accelerator
- *              Accelerator Technology Division
- *              Los Alamos National Laboratory
- *
- *      Co-developed with
- *              The Controls and Computing Group
- *              Accelerator Systems Division
- *              Advanced Photon Source
- *              Argonne National Laboratory
- *
- * Modification Log:
- * -----------------
- * .01  06-06-91        bkc     Modified group alarm summary: add VALID alarm,
- *                              remove INFO alarm
- * .02  07-16-92        jba     changed VALID_ALARM to INVALID_ALARM
- * .03  02-16-93        jba     Reorganized files for new user interface
- * .04  mm-dd-yy        iii     Comment
- *      ...
- */
-
-/*
-******************************************************************
-	routines defined in line.c
-******************************************************************
-         Routines for alloc, init, and update of a displayed line
-******************************************************************
--------------
-|   PUBLIC  |
--------------
-*
-void awUpdateChanLine(chanLine)		Update chanline message
-	struct chanLine *chanLine;
-
-*
-void awUpdateGroupLine(groupLine)	Update groupline message
-	struct groupLine *groupLine;
-
-*
-struct groupLine *
-awAllocGroupLine()			Allocate group line
-
-*
-struct chanLine *
-awAllocChanLine()			Allocate channel line
-
-
-*
-void awGroupMessage(groupLine)		Prepare group line message
-	struct groupLine *groupLine;
-
-*
-void awChanMessage(pchanLine)		prepare channel line message
-	struct chanLine *pchanLine;
-
-*
-void initLine(line)                     Initializes all line fields
-     struct anyLine *line;
-
-*
-void initializeLines(lines)             Initializes all subWindow lines
-     SNODE *lines;
-
-*
-void awGetMaskString(mask,s)		Get group mask string
-	short mask[ALARM_NMASK];
-	char *s;
-
-*************************************************************************
-*/
-
+/******************************************************************
+  Routines for alloc, init, and update of a displayed line
+******************************************************************/
 
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <alh.h>
-#include <alLib.h>
-#include <sllLib.h>
-#include <axSubW.h>
-#include <line.h>
-#include <axArea.h>
-#include <ax.h>
+#include <alarm.h>
 
+#include "alh.h"
+#include "alLib.h"
+#include "sllLib.h"
+#include "axSubW.h"
+#include "line.h"
+#include "axArea.h"
+#include "ax.h"
+
+/* global variables */
 extern char * alarmSeverityString[];
 extern char * alarmStatusString[];
 
 static char buff[LINEMESSAGE_SIZE];
 
-#ifndef INCalarmh
-#  include <alarm.h>
-#endif
-
 
 /********************************************************************* 
- *
- *
- *		void awGetMaskString(mask,s)
- *		short mask[ALARM_NMASK];
- *		char *s;
- *
  *  This function returns a string with 5 characters which shows
  *  the group mask.  The input to this function is the group
  *  mask array.
- *
  *********************************************************************/
-void awGetMaskString(mask,s)
-short mask[ALARM_NMASK];
-char *s;
+void awGetMaskString(short mask[ALARM_NMASK],char *s)
 {
 strcpy(s,"-----");
 if (mask[ALARMCANCEL] > 0) *s = 'C';
@@ -154,14 +40,8 @@ if (mask[ALARMLOG] > 0) *(s+4) = 'L';
 *(s+5) = '\0';
 }
 
-
-
 /*********************************************************************
- *
- *		struct chanLine *awAllocChanLine()
- *
  *  This function allocates space for new chanLine  
- *
  *********************************************************************/
 struct chanLine *awAllocChanLine()
 {
@@ -171,39 +51,23 @@ struct chanLine *pLine;
 }
 
 /*********************************************************************
- *
- *		struct groupLine *awAllocGroupLine()
- *
  *  This function allocates space for new groupLine 
- *
  *********************************************************************/
 struct groupLine *awAllocGroupLine()
 {
-struct groupLine *pLine;
+        struct groupLine *pLine;
         pLine = (struct groupLine *)calloc(1,sizeof(struct groupLine));
         return(pLine);
 }
 
 /********************************************************************* 
- *		awUpdateChanLine(chanLine)
- *		struct chanLine *chanLine;
- *
  *  This function updates the channel line mask , status & severity
- *		
- *		  -  update chanLine data
- *		        unackSevr
- *		        unackStat
- *		        curSevr
- *		        curStat
- *		        mask
- *		        message
- *
  *********************************************************************/
-void awUpdateChanLine(chanLine)
-struct chanLine *chanLine;
+void awUpdateChanLine(struct chanLine *chanLine)
 {
-struct chanData *cdata;
-CLINK *clink;
+        struct chanData *cdata;
+        CLINK *clink;
+
         clink = (CLINK *)chanLine->clink;
         if (!clink) return;
         cdata = clink->pchanData;
@@ -218,27 +82,15 @@ CLINK *clink;
         awChanMessage(chanLine);
 }
 
-
-
 /*************************************************************************** 
- *		awUpdateGroupine(groupLine)
- *		struct groupLine *groupLine;
- *
  *  This function updates the group line mask , status & severity, summary
- *
- *		  -  update groupLine data
- *		        unackSevr
- *		        mask
- *		        curSev
- *		        message
- *
  ***************************************************************************/
-void awUpdateGroupLine(groupLine)
-struct groupLine *groupLine;
+void awUpdateGroupLine(struct groupLine *groupLine)
 {
-struct groupData *gdata;
-GLINK *glink;
-int i;
+        struct groupData *gdata;
+        GLINK *glink;
+        int i;
+
         glink = (GLINK *)groupLine->glink;
         if (!glink) return;
         gdata = glink->pgroupData;
@@ -255,11 +107,11 @@ int i;
 /***************************************************
  prepare groupLine message from groupData
 ****************************************************/
-void awGroupMessage(groupLine)
-struct groupLine *groupLine;
+void awGroupMessage(struct groupLine *groupLine)
 {
-struct groupData *pData;
-GLINK *glink;
+        struct groupData *pData;
+        GLINK *glink;
+
         glink = ((GLINK *)groupLine->glink);
         if (!glink) return;
         pData = glink->pgroupData;
@@ -295,17 +147,14 @@ GLINK *glink;
         
 }
 
-
-
 /***************************************************
  prepare chanLine message from chanData
 ****************************************************/
-void awChanMessage(pchanLine)
-struct chanLine *pchanLine;
+void awChanMessage(struct chanLine *pchanLine)
 {
-MASK mask;
-struct chanData *pData;
-CLINK *clink;
+        MASK mask;
+        struct chanData *pData;
+        CLINK *clink;
 
         clink = ((CLINK *)pchanLine->clink);
         if (!clink) return;
@@ -323,22 +172,18 @@ CLINK *clink;
         alarmSeverityString[pData->curSevr]);
                 
         if (pData->unackSevr == 0) return;
-
                 
         sprintf(buff,",<%s,%s>",
         alarmStatusString[pData->unackStat],
         alarmSeverityString[pData->unackSevr]);
         strcat(pchanLine->message,buff);
                 
- 
 }
 
 /***************************************************
-  initLine
+  Initializes all line fields
 ****************************************************/
- 
-void initLine(line)
-     struct anyLine *line;
+void initLine(struct anyLine *line)
 {
           line->link = NULL;
           line->cosCallback = NULL;
@@ -349,13 +194,10 @@ void initLine(line)
           line->alias = 0;
 }
 
-
 /***************************************************
-  initializeLines
+ Initializes all subWindow lines
 ****************************************************/
- 
-void initializeLines(lines)
-     SNODE *lines;
+void initializeLines(SNODE *lines)
 {
      struct anyLine *line;
 

@@ -5,8 +5,8 @@
 #include <stdlib.h>
 #include <Xm/Xm.h>
 
-#include <alLib.h>
-#include <ax.h>
+#include "alLib.h"
+#include "ax.h"
 
 /************************************************************************
  Guidance display callback
@@ -82,7 +82,6 @@ void guidanceCopyGuideList(SLIST *pToGuideList,SLIST *pFromGuideList)
     char *buff;
     struct guideLink *guideLink;
     SNODE *node;
-    SLIST GuideList;
 
     node = sllFirst(pFromGuideList);
     while (node) {

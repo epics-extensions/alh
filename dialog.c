@@ -1,78 +1,9 @@
-/*
- $Log$
- Revision 1.8  1998/07/23 16:27:50  jba
- Changed XmStringCreateSimple to XmStringCreateLtoR.
+/* $Id$ */
 
- Revision 1.7  1998/06/03 12:57:14  evans
- Added destroy callback (killWidget) for errMsg.
-
- Revision 1.6  1998/06/02 19:40:50  evans
- Changed from using Fgmgr to using X to manage events and file
- descriptors.  (Fdmgr didn't work on WIN32.)  Uses XtAppMainLoop,
- XtAppAddInput, and XtAppAddTimeOut instead of Fdmgr routines.
- Updating areas is now in alCaUpdate, which is called every caDelay ms
- (currently 100 ms).  Added a general error message routine (errMsg)
- and an exception handler (alCAException).  Is working on Solaris and
- WIN32.
-
- Revision 1.5  1995/10/20 16:50:33  jba
- Modified Action menus and Action windows
- Renamed ALARMCOMMAND to SEVRCOMMAND
- Added STATCOMMAND facility
- Added ALIAS facility
- Added ALARMCOUNTFILTER facility
- Make a few bug fixes.
-
- * Revision 1.4  1995/06/22  19:40:23  jba
- * Started cleanup of file.
- *
- * Revision 1.3  1995/02/28  16:43:43  jba
- * ansi c changes
- *
- * Revision 1.2  1994/06/22  21:17:23  jba
- * Added cvs Log keyword
- *
- */
-
-static char *sccsId = "@(#)dialog.c	1.8\t2/3/94";
-
-/* dialog.c	
- *      Author: Ben-chin Cha
- *      Date:   12-20-90
- *
- *      Experimental Physics and Industrial Control System (EPICS)
- *
- *      Copyright 1991, the Regents of the University of California,
- *      and the University of Chicago Board of Governors.
- *
- *      This software was produced under  U.S. Government contracts:
- *      (W-7405-ENG-36) at the Los Alamos National Laboratory,
- *      and (W-31-109-ENG-38) at Argonne National Laboratory.
- *
- *      Initial development by:
- *              The Controls and Automation Group (AT-8)
- *              Ground Test Accelerator
- *              Accelerator Technology Division
- *              Los Alamos National Laboratory
- *
- *      Co-developed with
- *              The Controls and Computing Group
- *              Accelerator Systems Division
- *              Advanced Photon Source
- *              Argonne National Laboratory
- *
- * Modification Log:
- * -----------------
- * .01  10-04-91        bkc     Redesign the setup window,
- *                              resolve problems with new config,
- *				separate force variables / process
- *				reposition the group force dialog box
- * .02  02-16-93        jba     Reorganized file for new user interface
- * .03  12-16-93        jba     createFileDialog now returns Widget
- * .04  02-06-94        jba     Fixed dialog parent test
- * .nn  mm-dd-yy        iii     Comment
- *      ...
- */
+/****************************************************
+* dialog.c
+*This file contains routines for creating dialogs
+****************************************************/
 
 #include <stdio.h>
 
@@ -80,68 +11,20 @@ static char *sccsId = "@(#)dialog.c	1.8\t2/3/94";
 #include <Xm/MessageB.h>
 #include <Xm/FileSB.h>
 
-#include <alh.h>
-#include <axArea.h>
-#include <ax.h>
+#include "alh.h"
+#include "axArea.h"
+#include "ax.h"
 
 /* function prototypes */
 static void killWidget(Widget w, XtPointer clientdata, XtPointer calldata);
 
 
-/****************************************************
-*
-*This file contains routines for creating dialogs
-*
-****************************************************
---------------
-|   PUBLIC   |
---------------
-*
-Widget createFileDialog(parent,okCallback,      Create a fileSelectionBox
-     okParm,cancelCallback,cancelParm,
-     userParm,title,pattern,dirSpec)
-     Widget          parent;
-     void *  okCallback;
-     XtPointer       okParm;
-     void *  cancelCallback;
-     XtPointer       cancelParm;
-     XtPointer       userParm;
-     String          title;
-     String          pattern;
-     String          dirSpec;
-*
-void createDialog(parent,dialogType,          Create a Dialog, any type
-     message1,message2)
-     Widget          parent;
-     int             dialogType;
-     char           *message1;
-     char           *message2;
-*
-void createActionDialog(parent,dialogType,    Create an action Dialog, any type
-     message1,okCallback,okParm,userParm)
-     Widget          parent;
-     int            dialogType;
-     String         message1;
-     XtCallbackProc okCallback;
-     XtPointer      okParm;
-     XtPointer      userParm;
-****************************************************/
-
-
 /******************************************************
-  createFileDialog
+  Create a fileSelectionBox
 ******************************************************/
-
-Widget createFileDialog(parent,okCallback,okParm,cancelCallback,cancelParm,userParm,title,pattern,directory)
-     Widget          parent;
-     void *  okCallback;
-     XtPointer      okParm;
-     void *  cancelCallback;
-     XtPointer      cancelParm;
-     XtPointer      userParm;
-     String          title;
-     String          pattern;
-     String          directory;
+Widget createFileDialog(Widget parent,void *okCallback,XtPointer okParm,
+     void *cancelCallback,XtPointer cancelParm,XtPointer userParm,
+     String title,String pattern,String directory)
 {
      XmString        Xtitle;
      XmString        Xpattern;
@@ -160,8 +43,8 @@ Widget createFileDialog(parent,okCallback,okParm,cancelCallback,cancelParm,userP
           return(fileselectdialog);
      }
 
-
-     /* destroy runtimeToplevel fileselectdialog so we will not have exposure problems */
+     /* destroy runtimeToplevel fileselectdialog 
+        so we will not have exposure problems */
      if ( parent && fileselectdialog &&
           XtParent(XtParent(fileselectdialog)) != parent) {
           XtDestroyWidget(fileselectdialog); 
@@ -175,7 +58,8 @@ Widget createFileDialog(parent,okCallback,okParm,cancelCallback,cancelParm,userP
           XtVaSetValues(fileselectdialog,
                XmNallowShellResize, FALSE,
                NULL);
-          XtAddCallback(fileselectdialog,XmNhelpCallback,(XtCallbackProc)helpCallback,(XtPointer)NULL);
+          XtAddCallback(fileselectdialog,XmNhelpCallback,
+               (XtCallbackProc)helpCallback,(XtPointer)NULL);
      } else {
           XtVaGetValues(fileselectdialog, XmNdirectory, &Xcurrentdir, NULL);
           if (oldOk)     XtRemoveCallback(fileselectdialog,XmNokCallback,
@@ -200,8 +84,10 @@ Widget createFileDialog(parent,okCallback,okParm,cancelCallback,cancelParm,userP
      XmStringFree(Xpattern);
      XmStringFree(Xdirectory);
 
-     XtAddCallback(fileselectdialog,XmNokCallback, (XtCallbackProc)okCallback, (XtPointer)okParm);
-     XtAddCallback(fileselectdialog,XmNcancelCallback, (XtCallbackProc)cancelCallback,(XtPointer)cancelParm);
+     XtAddCallback(fileselectdialog,XmNokCallback,
+            (XtCallbackProc)okCallback, (XtPointer)okParm);
+     XtAddCallback(fileselectdialog,XmNcancelCallback,
+            (XtCallbackProc)cancelCallback,(XtPointer)cancelParm);
      oldOk = okCallback;
      oldCancel = cancelCallback;
      oldOkParm = okParm;
@@ -218,12 +104,7 @@ Widget createFileDialog(parent,okCallback,okParm,cancelCallback,cancelParm,userP
 /******************************************************
   createDialog
 ******************************************************/
-
-void createDialog(parent,dialogType,message1,message2)
-     Widget          parent;
-     int             dialogType;
-     char           *message1;
-     char           *message2;
+void createDialog(Widget parent,int dialogType,char *message1,char *message2)
 {
      static Widget   dialog = 0; /* make it static for reuse */
      XmString        str,str1,str2,string;
@@ -295,14 +176,8 @@ void createDialog(parent,dialogType,message1,message2)
 /******************************************************
   createActionDialog
 ******************************************************/
-
-void createActionDialog(parent,dialogType,message1,okCallback,okParm,userParm)
-     Widget          parent;
-     int            dialogType;
-     char           *message1;
-     XtCallbackProc okCallback;
-     XtPointer      okParm;
-     XtPointer      userParm;
+void createActionDialog(Widget parent,int dialogType,char *message1,
+     XtCallbackProc okCallback,XtPointer okParm,XtPointer userParm)
 {
      static Widget         dialog = 0; /* make it static for reuse */
      XmString              str;
@@ -414,6 +289,9 @@ void errMsg(const char *fmt, ...)
     }
 }
 
+/******************************************************
+  Static callback routine for destorying a widget 
+******************************************************/
 static void killWidget(Widget w, XtPointer clientdata, XtPointer calldata)
 {
     XtDestroyWidget(w);
