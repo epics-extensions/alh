@@ -665,7 +665,7 @@ static void alWriteGroupConfig(FILE * fw,SLIST *pgroup)
 		sevrCommand=(struct sevrCommand *)ellFirst(&gdata->sevrCommandList);
 		while (sevrCommand) {
 			fprintf(fw,"$SEVRCOMMAND  %s\n",sevrCommand->instructionString);
-			sevrCommand=(struct sevrCommand *)ellNext((void *)sevrCommand);
+			sevrCommand=(struct sevrCommand *)ellNext((ELLNODE *)sevrCommand);
 		}
 
 		if (glink->guidanceLocation!=NULL)
@@ -723,13 +723,13 @@ static void alWriteGroupConfig(FILE * fw,SLIST *pgroup)
 			sevrCommand=(struct sevrCommand *)ellFirst(&cdata->sevrCommandList);
 			while (sevrCommand) {
 				fprintf(fw,"$SEVRCOMMAND  %s\n",sevrCommand->instructionString);
-				sevrCommand=(struct sevrCommand *)ellNext((void *)sevrCommand);
+				sevrCommand=(struct sevrCommand *)ellNext((ELLNODE *)sevrCommand);
 			}
 
 			statCommand=(struct statCommand *)ellFirst(&cdata->statCommandList);
 			while (statCommand) {
 				fprintf(fw,"$STATCOMMAND  %s\n",statCommand->alhAlarmStatusString);
-				statCommand=(struct statCommand *)ellNext((void *)statCommand);
+				statCommand=(struct statCommand *)ellNext((ELLNODE *)statCommand);
 			}
 			cpt = sllNext(cpt);
 
@@ -933,7 +933,7 @@ void copySevrCommandList(ELLLIST *pListOld,ELLLIST *pListNew)
 		ptNew->direction = ptOld->direction;
 		ptNew->sev = ptOld->sev;
 		ellAdd(pListNew,(void *)ptNew);
-		ptOld=(struct sevrCommand *)ellNext((void *)ptOld);
+		ptOld=(struct sevrCommand *)ellNext((ELLNODE *)ptOld);
 	}
 }
 
@@ -957,7 +957,7 @@ void spawnSevrCommandList(ELLLIST *pList,int sev,int sevr_prev)
 				    sevr_prev==0)
 					processSpawn_callback(NULL,sevrCommand->command,NULL);
 			}
-			sevrCommand=(struct sevrCommand *)ellNext((void *)sevrCommand);
+			sevrCommand=(struct sevrCommand *)ellNext((ELLNODE *)sevrCommand);
 		}
 	}
 }
@@ -1052,7 +1052,7 @@ void copyStatCommandList(ELLLIST *pListOld,ELLLIST *pListNew)
 		ptNew->command =  ptNew->alhAlarmStatusString + (ptOld->command - ptOld->alhAlarmStatusString);
 		ptNew->stat = ptOld->stat;
 		ellAdd(pListNew,(void *)ptNew);
-		ptOld=(struct statCommand *)ellNext((void *)ptOld);
+		ptOld=(struct statCommand *)ellNext((ELLNODE *)ptOld);
 	}
 }
 
@@ -1068,7 +1068,7 @@ void spawnStatCommandList(ELLLIST *pList,int stat,int stat_prev)
 		while (statCommand) {
 			if (statCommand->stat == stat  )
 				processSpawn_callback(NULL,statCommand->command,NULL);
-			statCommand=(struct statCommand *)ellNext((void *)statCommand);
+			statCommand=(struct statCommand *)ellNext((ELLNODE *)statCommand);
 		}
 	}
 }
