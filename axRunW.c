@@ -40,7 +40,7 @@ static XtIntervalId blinkTimeoutId = (XtIntervalId)0;
 static char *bg_color[] = {"lightblue","yellow","red","white","white","grey"};
 
 static char *channel_bg_color = "lightblue";
-static char *silenced_bg_color = "grey";
+static char *silenced_bg_color = "lightpink";
 
 
 /* global variabless */
