@@ -427,7 +427,12 @@ Wed Oct  8 16:01:03 CDT 2003 ALH_1_2_13
 	Fixes made to Force Mask popup.
 	Removed old sccs id variable.
 
-Tue Jun  1 15:41:38 CDT 2004 ALH_1_2_14
+Wed Feb 25 22:28:56 CDT 2004 ALH_1_2_14
+	Change conditional from WIN32 to HAVE_SYSV_IPC.  Add appropriate conditional
+	to alh.h to define HAVE_SYSV_IPC as appropriate.  Ensure that alh.h is
+	included before conditionals depending on HAVE_SYSV_IPC.
+
+Tue Jun  1 15:41:38 CDT 2004 ALH_1_2_15
 	Added -desc_field option. - Albert Kagarmanov
 	Added acknowledge PV support  - Albert Kagarmanov
 	Portablility change for darwin-ppc - Eric Norum
