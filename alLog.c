@@ -96,7 +96,6 @@ extern int notsave;
 extern int use_CMLOG_alarm;
 extern int use_CMLOG_opmod;
 cmlog_client_t cmlog;
-char *cm_host;
 extern ALINK *alhArea;
 #endif
 
@@ -135,8 +134,6 @@ extern  char deviceName[64];       /* Albert1 reserved;  will be send to DB */
 void alCMLOGconnect(void)
 {
    cmlog = cmlog_open("alh");
-   cm_host = malloc(strlen(userID.myhostname)+strlen(userID.displayName)+4);
-   sprintf(cm_host, "%s (%s)", userID.myhostname, userID.displayName);
 }
 
 /***********************************************************************
@@ -170,10 +167,9 @@ int sev,int unackSevr,int ackT)
 		    0,			/* verbosity */
 		    0,			/* dummy severity */
 		    REGULAR_RECORD,	/* code */
-		    "alh-Alarm",	/* facility */
-		    "host=%s status=%s severity=%s device=%s message=%s "
+		    "Alarm",            /* facility */
+		    "status=%s severity=%s device=%s message=%s "
 		    "text=%s domain=%s value=%s",
-		    cm_host,
 		    alhAlarmStatusString[stat],
 		    alhAlarmSeverityString[sev],
 		    cdata->name,
@@ -216,9 +212,8 @@ void alLogConnection(const char *pvname,const char *ind)
 	    0,			/* verbosity */
 	    0,			/* dummy severity */
 	    CONNECT_ALARM,	/* code */
-	    "alh-Alarm",	/* facility */
-	    "host=%s status=%s severity=%s device=%s text=%s domain=%s",
-	    cm_host,
+	    "Alarm",	        /* facility */
+	    "status=%s severity=%s device=%s text=%s domain=%s",
 	    "CONNECT",
 	    "ERROR",
 	    pvname,
@@ -251,9 +246,8 @@ void alLogAckChan(struct anyLine *line)
 	    1,			/* verbosity */
 	    0,			/* dummy severity */
 	    ACK_CHANNEL,	/* code */
-	    "alh-Opmod",	/* facility */
-	    "host=%s status=%s severity=%s device=%s message=%s text=%s domain=%s",
-	    cm_host,
+	    "Opmod",	        /* facility */
+	    "status=%s severity=%s device=%s message=%s text=%s domain=%s",
 	    alhAlarmStatusString[line->curStat],
 	    alhAlarmSeverityString[line->curSevr],
 	    line->pname,
@@ -295,9 +289,8 @@ void alLogAckGroup(struct anyLine *line)
 	    1,			/* verbosity */
 	    0,			/* dummy severity */
 	    ACK_GROUP,		/* code */
-	    "alh-Opmod",	/* facility */
-	    "host=%s severity=%s device=%s message=%s text=%s domain=%s",
-	    cm_host,
+	    "Opmod",	        /* facility */
+	    "severity=%s device=%s message=%s text=%s domain=%s",
 	    alhAlarmSeverityString[line->curSevr],
 	    line->pname,
 	    (line->alias ? line->alias : "N/A"),
@@ -339,9 +332,8 @@ void alLogChangeChanMasks(CLINK *clink,int maskno,int maskid)
 	    2,			/* verbosity */
 	    0,			/* dummy severity */
 	    CHANGE_MASK,	/* code */
-	    "alh-Opmod",	/* facility */
-	    "host=%s device=%s message=%s text=%s domain=%s",
-	    cm_host,
+	    "Opmod",	        /* facility */
+	    "device=%s message=%s text=%s domain=%s",
 	    clink->pchanData->name,
 	    (clink->pchanData->alias ? clink->pchanData->alias : "N/A"),
 	    cm_text,
@@ -385,10 +377,9 @@ void alLogForcePVGroup(GLINK *glink,int ind)
 	      cmlog_logmsg(cmlog,
 		      2,	           /* verbosity */
 		      0,	           /* dummy severity */
-		      CHANGE_MASK_GROUP,   /* code */
-		      "alh-Opmod",         /* facility */
-		      "host=%s device=%s message=%s text=%s domain=%s",
-		      cm_host,
+		      FORCE_MASK_GROUP,    /* code */
+		      "Opmod",             /* facility */
+		      "device=%s message=%s text=%s domain=%s",
 		      gdata->name,
 		      (gdata->alias ? gdata->alias : "N/A"),
 		      cm_text,
@@ -416,9 +407,8 @@ void alLogForcePVGroup(GLINK *glink,int ind)
 		      2,	          /* verbosity */
 		      0,	          /* dummy severity */
 		      FORCE_MASK_GROUP,   /* code */
-		      "alh-Opmod",        /* facility */
-		      "host=%s device=%s message=%s text=%s domain=%s",
-		      cm_host,
+		      "Opmod",            /* facility */
+		      "device=%s message=%s text=%s domain=%s",
 		      gdata->name,
 		      (gdata->alias ? gdata->alias : "N/A"),
 		      cm_text,
@@ -459,9 +449,8 @@ void alLogResetPVGroup(GLINK *glink,int ind)
 		      2,	           /* verbosity */
 		      0,	           /* dummy severity */
 		      CHANGE_MASK_GROUP,   /* code */
-		      "alh-Opmod",         /* facility */
-		      "host=%s device=%s message=%s text=%s domain=%s",
-		      cm_host,
+		      "Opmod",             /* facility */
+		      "device=%s message=%s text=%s domain=%s",
 		      gdata->name,
 		      (gdata->alias ? gdata->alias : "N/A"),
 		      cm_text,
@@ -488,10 +477,9 @@ void alLogResetPVGroup(GLINK *glink,int ind)
 	      cmlog_logmsg(cmlog,
 		      2,	          /* verbosity */
 		      0,	          /* dummy severity */
-		      FORCE_MASK_GROUP,   /* code */
-		      "alh-Opmod",        /* facility */
-		      "host=%s device=%s message=%s text=%s domain=%s",
-		      cm_host,
+		      CHANGE_MASK_GROUP,  /* code */
+		      "Opmod",            /* facility */
+		      "device=%s message=%s text=%s domain=%s",
 		      gdata->name,
 		      (gdata->alias ? gdata->alias : "N/A"),
 		      cm_text,
@@ -531,10 +519,9 @@ void alLogForcePVChan(CLINK *clink,int ind)
 	      cmlog_logmsg(cmlog,
 		      2,	           /* verbosity */
 		      0,	           /* dummy severity */
-		      CHANGE_MASK,         /* code */
-		      "alh-Opmod",         /* facility */
-		      "host=%s device=%s message=%s text=%s domain=%s",
-		      cm_host,
+		      FORCE_MASK,          /* code */
+		      "Opmod",             /* facility */
+		      "device=%s message=%s text=%s domain=%s",
 		      cdata->name,
 		      (cdata->alias ? cdata->alias : "N/A"),
 		      cm_text,
@@ -562,9 +549,8 @@ void alLogForcePVChan(CLINK *clink,int ind)
 		      2,	          /* verbosity */
 		      0,	          /* dummy severity */
 		      FORCE_MASK,         /* code */
-		      "alh-Opmod",        /* facility */
-		      "host=%s device=%s message=%s text=%s domain=%s",
-		      cm_host,
+		      "Opmod",            /* facility */
+		      "device=%s message=%s text=%s domain=%s",
 		      cdata->name,
 		      (cdata->alias ? cdata->alias : "N/A"),
 		      cm_text,
@@ -606,9 +592,8 @@ void alLogResetPVChan(CLINK *clink,int ind)
 		      2,	           /* verbosity */
 		      0,	           /* dummy severity */
 		      CHANGE_MASK,         /* code */
-		      "alh-Opmod",         /* facility */
-		      "host=%s device=%s message=%s text=%s domain=%s",
-		      cm_host,
+		      "Opmod",             /* facility */
+		      "device=%s message=%s text=%s domain=%s",
 		      cdata->name,
 		      (cdata->alias ? cdata->alias : "N/A"),
 		      cm_text,
@@ -635,10 +620,9 @@ void alLogResetPVChan(CLINK *clink,int ind)
 	      cmlog_logmsg(cmlog,
 		      2,	          /* verbosity */
 		      0,	          /* dummy severity */
-		      FORCE_MASK,         /* code */
-		      "alh-Opmod",        /* facility */
-		      "host=%s device=%s message=%s text=%s domain=%s",
-		      cm_host,
+		      CHANGE_MASK,        /* code */
+		      "Opmod",            /* facility */
+		      "device=%s message=%s text=%s domain=%s",
 		      cdata->name,
 		      (cdata->alias ? cdata->alias : "N/A"),
 		      cm_text,
@@ -687,9 +671,8 @@ void alLogChangeGroupMasks(GLINK *glink,int maskno,int maskid)
 	    2,			/* verbosity */
 	    0,			/* dummy severity */
 	    CHANGE_MASK_GROUP,	/* code */
-	    "alh-Opmod",	/* facility */
-	    "host=%s device=%s message=%s text=%s domain=%s",
-	    cm_host,
+	    "Opmod",            /* facility */
+	    "device=%s message=%s text=%s domain=%s",
 	    glink->pgroupData->name,
 	    (glink->pgroupData->alias ? glink->pgroupData->alias : "N/A"),
 	    cm_text,
