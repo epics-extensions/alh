@@ -135,6 +135,7 @@ void alCaCancel(struct mainGroup *pmainGroup)
 		if (type == CHANNEL) {
 			alCaClearEvent(&((struct chanData *)gcdata)->evid);
 			alCaClearChannel(&((struct chanData *)gcdata)->chid);
+			alCaClearChannel(&((struct chanData *)gcdata)->ackPVId);
 			if(_description_field_flag) 
 			  alCaClearChannel(&((struct chanData *)gcdata)->descriptionId);
 		}
@@ -150,6 +151,7 @@ void alSetNotConnected(struct mainGroup *pmainGroup)
 {
 	GCLINK *gclink;
 	struct gcData *gcdata;
+	struct chanData *cdata;
 	int type;
 
 	if (!toBeConnectedCount) return;
@@ -168,9 +170,15 @@ void alSetNotConnected(struct mainGroup *pmainGroup)
 			errMsg("Severity PV %s for %s Not Connected\n",
 				gcdata->sevrPVName, gcdata->name);
 		}
-		if (type == CHANNEL && ((struct chanData *)gcdata)->chid &&
-		    !alCaIsConnected(((struct chanData *)gcdata)->chid)) {
-			alNewEvent(NOT_CONNECTED,ERROR_STATE,0,-1,"",(CLINK *)gclink);
+		if (type == CHANNEL ) {
+			cdata = ((struct chanData *)gcdata);
+			if (cdata && cdata->ackPVId && !alCaIsConnected(cdata->ackPVId) ) {
+				errMsg("Acknowledge PV %s for %s Not Connected\n",
+					cdata->ackPVName, cdata->name);
+			}
+			if (cdata  && cdata->chid  && !alCaIsConnected(cdata->chid)) {
+				alNewEvent(NOT_CONNECTED,ERROR_STATE,0,-1,"",(CLINK *)gclink);
+			}
 		}
 		gclink = nextGroupChannel(gclink,&type);
 	}
