@@ -20,14 +20,18 @@ TOP = ../../..
 include $(TOP)/config/CONFIG_EXTENSIONS
 
 # Debugging options
-#ifeq ($(OS_CLASS),solaris)
-#CC  = purify -first-only -chain-length=30 $($(ANSI)_$(CMPLR))
-#CXX = purify -first-only -chain-length=30 $($(CPLUSPLUS)_$(CXXCMPLR))
+ifeq ($(OS_CLASS),solaris)
+#PURIFY_FLAGS = -first-only -chain-length=26 -max_threads=256
+# Put the cache files in the appropriate bin directory
+#PURIFY_FLAGS += -always-use-cache-dir -cache-dir=$(shell $(PERL) $(TOP)/config/fullPathName.pl .)
+#CC  = purify $(PURIFY_FLAGS) $($(ANSI)_$(CMPLR))
+#CXX = purify $(PURIFY_FLAGS) $($(CPLUSPLUS)_$(CXXCMPLR))
 #HOST_OPT=NO
+
 #CC  = quantify  $($(ANSI)_$(CMPLR))
 #CXX = quantify  $($(CPLUSPLUS)_$(CXXCMPLR))
 #HOST_OPT=NO
-#endif
+endif
 
 I_WANT_CDEV             = NO
 I_WANT_GREETINGS        = NO
