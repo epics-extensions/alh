@@ -13,6 +13,8 @@ static char *versionhsccsId = "@(#) $Id$";
 #define ALH_REVISION      2
 #define ALH_MODIFICATION  3
 
+#define ALH_VERSION_STRING "ALH Version 1.2.3"
+
 #define ALH_CREDITS_STRING  \
           "Developed at Argonne National Laboratory\n\n" \
           "Authors: Ben-Chin Cha, Janet Anderson,\n" \
