@@ -424,6 +424,13 @@ void beepSevrUpdateDialog(ALINK *area);
 void beepSevrShowDialog(ALINK *area, Widget widget);
 
 /********************************************************************
+  noAck.c   function prototypes
+*********************************************************************/
+
+void noAckUpdateDialog(ALINK *area);
+void noAckShowDialog(ALINK *area, Widget widget);
+
+/********************************************************************
   property.c   function prototypes
 *********************************************************************/
 
