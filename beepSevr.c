@@ -50,7 +50,7 @@ static struct beepSevrWindow {
 	int beepSevr;
 };
 
-extern const char * alarmSeverityString[];
+extern const char * alhAlarmSeverityString[];
 
 /* forward declarations */
 static void beepSevrApplyCallback(Widget widget,XtPointer calldata,XtPointer cbs);
@@ -283,7 +283,7 @@ ALINK    *area;
 	for (i = 0; i < ALH_ALARM_NSEV-1; i++){
 		j=i+1;
 /*
-	    string = XmStringCreateSimple((char *)alarmSeverityString[j]);
+	    string = XmStringCreateSimple((char *)alhAlarmSeverityString[j]);
 		beepSevrToggleButtonW[i] = XtVaCreateManagedWidget("toggle_button",
 			xmToggleButtonGadgetClass, radiobox,
 			XmNlabelString, string,
@@ -292,7 +292,7 @@ ALINK    *area;
 		XmStringFree(string);
 */
 	    beepSevrToggleButtonW[i] = XmCreateToggleButtonGadget (radiobox,
-			 (char *)alarmSeverityString[j], NULL, 0);
+			 (char *)alhAlarmSeverityString[j], NULL, 0);
 		XtVaSetValues(beepSevrToggleButtonW[i], XmNuserData, area, NULL);
 		XtAddCallback(beepSevrToggleButtonW[i], XmNvalueChangedCallback,
 		    beepSevrChangeCallback, (XtPointer)j);
@@ -391,8 +391,7 @@ static void beepSevrApplyCallback(Widget widget,XtPointer calldata,XtPointer cbs
 	if (linkType == GROUP) {
 		alSetBeepSevrGroup((GLINK *)link,beepSevrWindow->beepSevr);
 	}
-	/*alLogSetBeepSevr(pgcData->name,(char *)alarmSeverityString[pgcData->beepSevr]);*/
-	alLogSetBeepSevr(pgcData->name,alarmSeverityString[pgcData->beepSevr]);
+	alLogSetBeepSevr(pgcData->name,alhAlarmSeverityString[pgcData->beepSevr]);
 
 	link->pmainGroup->modified = 1;
 
