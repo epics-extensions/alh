@@ -1,8 +1,11 @@
 /*
  $Log$
- Revision 1.2  1994/06/22 21:16:38  jba
- Added cvs Log keyword
+ Revision 1.3  1995/05/30 15:51:07  jba
+ Added ALARMCOMMAND facility
 
+ * Revision 1.2  1994/06/22  21:16:38  jba
+ * Added cvs Log keyword
+ *
  */
 
 /* alLib.h */
@@ -64,6 +67,8 @@
 #include <alh.h>
 #endif
 
+#include <ellLib.h>
+
 static char *alLibhSccsId = "@(#)alLib.h	1.11\t10/15/93";
 
 typedef struct mask {			/* mask bit setting */
@@ -85,8 +90,12 @@ struct gcData {
 	short resetPVValue;	/* PV value for reset mask */
 	MASK forcePVMask;	/* force Mask */
 	char *command;	 	/* command text */
+	ELLLIST alarmCommandList;	/* alarm command list */
 	short curSevr;		/* current severity */
 	short unackSevr;	/* highest unack severity */
+	chid forcechid;			/* forcePV channel id */
+	evid forceevid;			/* forcePV channel evid */
+	chid sevrchid;			/* group sevrPV channel id */
         };
 
 /* group data structure */
@@ -99,15 +108,16 @@ struct groupData {
 	short resetPVValue;		/* PV value for reset mask */
 	MASK forcePVMask;		/* force Mask */
 	char *command;	 		/* command text */
+	ELLLIST alarmCommandList;	/* alarm command list */
 	short curSevr;			/* current highestseverity from CA */
 	short unackSevr;		/* highest unack severity */
+	chid forcechid;			/* forcePV channel id */
+	evid forceevid;			/* forcePV channel evid */
+	chid sevrchid;			/* group sevrPV channel id */
 	char *treeSym;                  /* tree symbols for treeWindow display */
 	short mask[ALARM_NMASK];	/* no. of channels of masked types*/
 	short curSev[ALARM_NSEV];  	/* channels of different severity */
 	short unackSev[ALARM_NSEV];  	/* channels of unacknowledged sev */
-	chid forcechid;			/* forcePV channel id */
-	evid forceevid;			/* forcePV channel evid */
-	chid sevrchid;			/* group sevrPV channel id */
         };
 
 /* channel data structure */
@@ -120,8 +130,12 @@ struct chanData {
 	short resetPVValue;		/* PV value for reset mask */
 	MASK forcePVMask;		/* forced mask setting */
 	char *command;			/* command text */	
+	ELLLIST alarmCommandList;	/* alarm command list */
 	short curSevr;			/* channel severity from CA */
 	short unackSevr;		/* highest unack severity */
+	chid forcechid;		 	/* forcePV channel id */
+	evid forceevid;			/* forcePV channel evid */
+	chid sevrchid;		 	/* sevrPV channel id */
 	short type;			/* channel type */
 	MASK curMask;			/* current mask setting */
 	MASK defaultMask;		/* default mask setting */
@@ -130,9 +144,6 @@ struct chanData {
 	short unackStat;		/* unack status */
 	chid chid;			/* chid from CA search */
 	evid evid;			/* evid from CA add event */
-	chid forcechid;		 	/* forcePV channel id */
-	evid forceevid;			/* forcePV channel evid */
-	chid sevrchid;		 	/* sevrPV channel id */
         };
 
 /* group link  */

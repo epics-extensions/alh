@@ -1,8 +1,11 @@
 /*
  $Log$
- Revision 1.3  1995/02/28 16:43:46  jba
- ansi c changes
+ Revision 1.4  1995/05/30 15:58:03  jba
+ Added ALARMCOMMAND facility
 
+ * Revision 1.3  1995/02/28  16:43:46  jba
+ * ansi c changes
+ *
  * Revision 1.2  1994/06/22  21:17:25  jba
  * Added cvs Log keyword
  *
@@ -68,6 +71,7 @@ static String fallbackResources[] = {
          "*form_main.height: 600",
          "*form_main.x: 100",
          "*form_main.x: 200",
+         "*drawing_area.width: 1000",
          "*scale.value: 50",
          "*scale.highlightOnEnter: FALSE",
          "*scale.scaleMultiple: 5",

@@ -1,8 +1,11 @@
 /*
  $Log$
- Revision 1.4  1995/03/24 16:35:46  jba
- Bug fix and reorganized some files
+ Revision 1.5  1995/05/30 15:55:10  jba
+ Added ALARMCOMMAND facility
 
+ * Revision 1.4  1995/03/24  16:35:46  jba
+ * Bug fix and reorganized some files
+ *
  * Revision 1.3  1995/02/28  16:43:32  jba
  * ansi c changes
  *
@@ -64,6 +67,7 @@ extern struct setup psetup;
 /* external routines
 extern   alCaAddEvent();
 extern void updateLog();
+extern processSpawn_callback();
 */
 
 /*
@@ -314,14 +318,18 @@ CLINK *clink;
 {
     SNODE *pt,*next;
     struct guideLink *guidelist; 
+	struct chanData *cdata;
 
 	if (clink != NULL) {
+	    cdata = clink->pchanData;
 		if(clink->parent) sllRemove(&(clink->parent->chanList),(SNODE *)clink);
 
-        if (clink->pchanData->name) free(clink->pchanData->name);
-        if (strcmp(clink->pchanData->forcePVName,"-") != 0) free(clink->pchanData->forcePVName);
-        if (strcmp(clink->pchanData->sevrPVName,"-") != 0) free(clink->pchanData->sevrPVName);
-        if (clink->pchanData->command) free(clink->pchanData->command);
+        if (cdata->name) free(cdata->name);
+        if (strcmp(cdata->forcePVName,"-") != 0) free(cdata->forcePVName);
+        if (strcmp(cdata->sevrPVName,"-") != 0) free(cdata->sevrPVName);
+        if (cdata->command) free(cdata->command);
+
+        removeAlarmCommandList(&cdata->alarmCommandList);
 
         pt = sllFirst(&clink->GuideList);
         while (pt) {
@@ -347,6 +355,7 @@ GLINK *glink;
 SNODE *snode,*cnode,*gnode,*next;
 GLINK *pt;
 struct guideLink *guidelist; 
+struct groupData *gdata;
 
         /* free all channels */
         cnode = sllFirst(&(glink->chanList));
@@ -366,10 +375,13 @@ struct guideLink *guidelist;
 				gnode = next;       
 			}
 		} 
-        if (glink->pgroupData->name) free(glink->pgroupData->name);
-        if (strcmp(glink->pgroupData->forcePVName,"-") != 0) free(glink->pgroupData->forcePVName);
-        if (strcmp(glink->pgroupData->sevrPVName,"-") != 0) free(glink->pgroupData->sevrPVName);
-        if (glink->pgroupData->command) free(glink->pgroupData->command);
+	    gdata = glink->pgroupData;
+        if (gdata->name) free(gdata->name);
+        if (strcmp(gdata->forcePVName,"-") != 0) free(gdata->forcePVName);
+        if (strcmp(gdata->sevrPVName,"-") != 0) free(gdata->sevrPVName);
+        if (gdata->command) free(gdata->command);
+
+        removeAlarmCommandList(&gdata->alarmCommandList);
 
         snode = sllFirst(&glink->GuideList);
         while (snode) {
@@ -571,6 +583,10 @@ GLINK *alCopyGroup(glink)
 		strcpy(gdataNew->command,buff);
 	}
 
+
+	/* copy alarm commands */
+    copyAlarmCommandList(&gdata->alarmCommandList,&gdataNew->alarmCommandList);
+
 	/* copy sevrPV info */
 	buff = gdata->sevrPVName;
 	if (buff){
@@ -679,6 +695,9 @@ CLINK *alCopyChan(clink)
 		cdataNew->command = (char*)calloc(1,strlen(buff)+1);
 		strcpy(cdataNew->command,buff);
 	}
+
+	/* copy alarm commands */
+    copyAlarmCommandList(&cdata->alarmCommandList,&cdataNew->alarmCommandList);
 
 	/* copy sevrPV info */
 	buff = cdata->sevrPVName;
@@ -850,12 +869,14 @@ char value[MAX_STRING_SIZE];
 CLINK *clink;
 {
 struct chanData *cdata;
+struct groupData *gdata;
 GLINK *glink;
 MASK mask;
-int stat_prev,sevr_prev,h_unackSevr,h_unackStat;
+int stat_prev,sevr_prev,h_unackSevr,h_unackStat,sevrHold;
 time_t timeofday;
 int viewCount=0;
 int prevViewCount=0;
+int direction;
 
         if (clink == NULL ) return;
         if (sev >= ALARM_NSEV) sev = ALARM_NSEV-1;
@@ -867,6 +888,8 @@ int prevViewCount=0;
 
         stat_prev = cdata->curStat;
         sevr_prev = cdata->curSevr;
+
+if (sev == sevr_prev) printf ("alNewAlarm:### WARNING####  sev == sevr_prev for %s",cdata->name);
 
         cdata->curStat = stat;
         cdata->curSevr = sev;
@@ -894,6 +917,13 @@ int prevViewCount=0;
         timeofday = time(0L);
 
 /*
+ * spawn ALARMCOMMAND for the channel
+ */
+
+        spawnAlarmCommandList(&cdata->alarmCommandList,sev,sevr_prev);
+
+
+/*
  * log the channel alarm at the alarm logfile
  */
         if (mask.Log == 0)
@@ -917,18 +947,25 @@ int prevViewCount=0;
 
 
 /*
+ * spawn ALARMCOMMAND for all the parent groups
  * update curSev[] of all the parent groups
  */
-        if ( sev != sevr_prev ){
-        glink = clink->parent;
-        while (glink) {
-			glink->pgroupData->curSev[sevr_prev]--;
-			glink->pgroupData->curSev[sev]++;
-            glink->pgroupData->curSevr=alHighestSeverity(glink->pgroupData->curSev);
-			glink->modified = 1;
-			glink = glink->parent;
-		}
-		}
+    glink = clink->parent;
+    while (glink) {
+	    gdata = glink->pgroupData;
+        gdata->curSev[sevr_prev]--;
+        gdata->curSev[sev]++;
+        sevrHold=gdata->curSevr;            
+        gdata->curSevr=alHighestSeverity(gdata->curSev);
+
+        if ( sevrHold != gdata->curSevr ) {
+            spawnAlarmCommandList(&gdata->alarmCommandList,gdata->curSevr,sevrHold);
+        }
+
+        glink->modified = 1;
+        glink = glink->parent;
+    }
+
 
 
 /*

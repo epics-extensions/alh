@@ -1,8 +1,11 @@
 /*
  $Log$
- Revision 1.3  1995/02/28 16:43:27  jba
- ansi c changes
+ Revision 1.4  1995/05/30 15:55:08  jba
+ Added ALARMCOMMAND facility
 
+ * Revision 1.3  1995/02/28  16:43:27  jba
+ * ansi c changes
+ *
  * Revision 1.2  1994/06/22  21:16:26  jba
  * Added cvs Log keyword
  *
@@ -83,11 +86,25 @@ void alPrintConfig(pmainGroup)
 #define TRUE 1
 #endif
 
+#ifndef UP
+#define UP 1
+#endif
+
+#ifndef DOWN
+#define DOWN 0
+#endif
+
+/* ALARM_ANY must not be equal to any valid alarm severity value */
+#ifndef ALARM_ANY
+#define ALARM_ANY 4
+#endif
+
 #define BUF_SIZE 150
 #define GROUP_LINE 1
 #define CHANNEL_LINE 2
 
 extern int DEBUG;
+extern char *alarmSeverityString[];
 
 #ifdef __STDC__
 
@@ -98,8 +115,10 @@ static void GetIncludeLine( char *buf, GLINK **pglink,
 static void GetChannelLine( char *buf, GLINK **pglink, CLINK **pclink,
       int caConnect, struct mainGroup *pmainGroup);
 static void GetOptionalLine( FILE *fp, char *buf,
-    GLINK *glink, CLINK *clink, int context, int caConnect);
+    GCLINK *glink, int caConnect);
 static void alConfigTreePrint( FILE *fw, GLINK *glink, char  *treeSym);
+void addNewAlarmCommand(ELLLIST *pList, char *str);
+
 
 #else
 
@@ -109,9 +128,18 @@ static void GetChannelLine();
 static void GetIncludeLine();
 static void GetOptionalLine();
 static void alConfigTreePrint();
+void addNewAlarmCommand();
 
 #endif /*__STDC__*/
 
+/* alarm command list */
+struct alarmCommand {
+    ELLNODE node;       /* double link list node type */
+    int direction;      /* alarm severity direction */
+    int sev;            /* alarm severity level*/
+    char *instructionString;        /* instructionstring text address */
+    char *command;      /* command text address */
+};
 
 /*****************************************************
    utility routine 
@@ -135,7 +163,7 @@ int caConnect;
     char buf[BUF_SIZE];
     CLINK *clink;
     GLINK *glink;
-    int context=0;
+    GCLINK *gclink;
     int first_char;
 
     if (filename[0] == '\0') return;
@@ -157,20 +185,18 @@ int caConnect;
 
 	if(toupper(buf[first_char])=='G') {
 	    GetGroupLine(&buf[first_char],&glink,pmainGroup);
-	    context = GROUP_LINE;
-	    clink = NULL;
+	    gclink = (GCLINK *)glink;
 	    }
 	else if(toupper(buf[first_char])=='C') {
 	    GetChannelLine(&buf[first_char],&glink,&clink,caConnect,pmainGroup);
-	    context = CHANNEL_LINE;
+	    gclink = (GCLINK *)clink;
 	    }
 	else if(buf[first_char]=='$') {
-	    GetOptionalLine(fp,&buf[first_char],glink,clink,context,caConnect);
+	    GetOptionalLine(fp,&buf[first_char],gclink,caConnect);
 	    }
 	else if(toupper(buf[first_char])=='I') {
 	    GetIncludeLine(&buf[first_char],&glink,caConnect,pmainGroup);
-	    context = GROUP_LINE;
-	    clink = NULL;
+	    gclink = (GCLINK *)glink;
 	    }
 	else {
 	     
@@ -413,95 +439,58 @@ static void GetChannelLine(buf,pglink,pclink,caConnect,pmainGroup)
 /*******************************************************************
 	read the Optional Line from configuration file
 *******************************************************************/
-static void GetOptionalLine(fp,buf,glink,clink,context,caConnect)
+static void GetOptionalLine(fp,buf,gclink,caConnect)
     FILE *fp;
     char *buf;
-    GLINK *glink;
-    CLINK *clink;
-    int context;
+    GCLINK *gclink;
     int caConnect;
 {
-    struct groupData *gdata=NULL;
-    struct chanData *cdata=NULL;
+    struct gcData *gcdata;
     char command[20];
     char name[PVNAME_SIZE];
     char mask[6];
     short f1,f2;
+    char *str;
 
-    if(context==GROUP_LINE) {
-	if(glink==NULL) {
+	if(gclink==NULL) {
 	    print_error(buf,"Logic error: glink is NULL");
 	    return;
 	}
-	gdata = glink->pgroupData;
-    } else if(context==CHANNEL_LINE) {
-	if(clink==NULL) {
-	    print_error(buf,"Logic error: clink is NULL");
+	gcdata = gclink->pgcData;
+	if(gclink==NULL) {
+	    print_error(buf,"Logic error: gclink is NULL");
 	    return;
 	}
-	cdata = clink->pchanData;
-    } else {
-	print_error(buf,"No GROUP has been defined");
-	return;
-    	}
 
     if(buf[1]=='F') { /*FORCEPV*/
 	int rtn;
 
-	if(context==GROUP_LINE) {
-	    rtn = sscanf(buf,"%20s%32s%6s%hd%hd",command,name,
-		mask,&f1,&f2);
-	    if(rtn>=2) {
-		gdata->forcePVName = (char *)calloc(1,strlen(name)+1);
-		strcpy(gdata->forcePVName,name);
-        if (caConnect && strlen(gdata->forcePVName) > (size_t) 1)
-            alCaSearchName(gdata->forcePVName,&(gdata->forcechid));
-	    	}
-	    if(rtn>=3) alSetMask(mask,&(gdata->forcePVMask));
-	    if (rtn >= 4) gdata->forcePVValue = f1;
-	    if (rtn == 5) gdata->resetPVValue = f2;
+    rtn = sscanf(buf,"%20s%32s%6s%hd%hd",command,name,
+	mask,&f1,&f2);
+    if(rtn>=2) {
+	gcdata->forcePVName = (char *)calloc(1,strlen(name)+1);
+	strcpy(gcdata->forcePVName,name);
+    if (caConnect && strlen(gcdata->forcePVName) > (size_t) 1)
+        alCaSearchName(gcdata->forcePVName,&(gcdata->forcechid));
+  	}
+    if(rtn>=3) alSetMask(mask,&(gcdata->forcePVMask));
+    if (rtn >= 4) gcdata->forcePVValue = f1;
+    if (rtn == 5) gcdata->resetPVValue = f2;
 
-	    }
-
-	else {   /*must be CHANNEL_LINE*/
-	    rtn = sscanf(buf,"%20s%32s%6s%hd%hd",command,name,
-		mask,&f1,&f2);
-	    if(rtn>=2) {
-		cdata->forcePVName = (char *)calloc(1,strlen(name)+1);
-		strcpy(cdata->forcePVName,name);
-        if (caConnect && strlen(cdata->forcePVName) > (size_t) 1)
-            alCaSearchName(cdata->forcePVName,&(cdata->forcechid));
-	        }
-	    if(rtn>=3) alSetMask(mask,&cdata->forcePVMask);
-	    if (rtn >= 4) cdata->forcePVValue = f1;
-	    if (rtn == 5) cdata->resetPVValue = f2;
-	    }
 	return;
     }
 
     if(buf[1]=='S') { /*SEVRPV*/
 	int rtn;
 
-	if(context==GROUP_LINE) {
 	    rtn = sscanf(buf,"%20s%32s",command,name);
 	    if(rtn>=2) {
-		gdata->sevrPVName = (char *)calloc(1,strlen(name)+1);
-		strcpy(gdata->sevrPVName,name);
-        if (caConnect && strlen(gdata->sevrPVName) > (size_t) 1)
-            alCaSearchName(gdata->sevrPVName,&(gdata->sevrchid));
-	    	}
-	    }
-
-	else {/*must be CHANNEL_LINE*/
-	    rtn = sscanf(buf,"%20s%32s",command,name);
-	    if(rtn>=2) {
-		cdata->sevrPVName = (char *)calloc(1,strlen(name)+1);
-		strcpy(cdata->sevrPVName,name);
-        if (caConnect && strlen(cdata->sevrPVName) > (size_t) 1)
-            alCaSearchName(cdata->sevrPVName,&(cdata->sevrchid));
+		gcdata->sevrPVName = (char *)calloc(1,strlen(name)+1);
+		strcpy(gcdata->sevrPVName,name);
+        if (caConnect && strlen(gcdata->sevrPVName) > (size_t) 1)
+            alCaSearchName(gcdata->sevrPVName,&(gcdata->sevrchid));
 	    	}
 
-	    }
 	return;
     }
 
@@ -511,16 +500,23 @@ static void GetOptionalLine(fp,buf,glink,clink,context,caConnect)
 	sscanf(buf,"%20s",command);
 	len = strlen(command);
 	while( buf[len] == ' ' || buf[len] == '\t') len++;
-	if(context==GROUP_LINE) {
-	    gdata->command = (char *)calloc(1,strlen(&buf[len])+1);
-	    strcpy(gdata->command,&buf[len]);
-	    } 
-
-	else { /*must be CHANNEL_LINE*/
-	    cdata->command = (char *)calloc(1,strlen(&buf[len])+1);
-	    strcpy(cdata->command,&buf[len]);
- 	    }
+	gcdata->command = (char *)calloc(1,strlen(&buf[len])+1);
+	strcpy(gcdata->command,&buf[len]);
 	return;
+    }
+
+    if(buf[1]=='A') { /*ALARMCOMMAND*/
+    int len;
+
+        sscanf(buf,"%20s",command);
+        len = strlen(command);
+        while( buf[len] == ' ' || buf[len] == '\t') len++;
+        str = (char *)calloc(1,strlen(&buf[len]));
+        strcpy(str,&buf[len]);
+	    if(str[strlen(str)-1] == '\n') str[strlen(str)-1] = '\0'; 
+        addNewAlarmCommand(&gcdata->alarmCommandList,str);
+
+    return;
     }
 
     if(buf[1]=='G') { /*GUIDANCE*/
@@ -554,11 +550,11 @@ static void GetOptionalLine(fp,buf,glink,clink,context,caConnect)
 	    pgl->list=(char *)calloc(1,strlen(buf)+1-first_char);
 	    strcpy(pgl->list,&buf[first_char]);
 
-	    if(context==GROUP_LINE) sllAdd(&(glink->GuideList),(SNODE *)pgl);
-	    else sllAdd(&(clink->GuideList),(SNODE *)pgl);
+	    sllAdd(&(gclink->GuideList),(SNODE *)pgl);
 
 	}
 	
+    return;
     }
     print_error(buf,"Illegal Optional Line");
 }
@@ -595,6 +591,7 @@ char pvmask[6],curmask[6];
 
 SNODE *pt,*cpt,*cl,*gl;
 struct guideLink *guidelist;
+struct alarmCommand *alarmCommand;
 
         pt = sllFirst(pgroup);
         while (pt) {
@@ -647,6 +644,11 @@ struct guideLink *guidelist;
 			if (gdata->command!=NULL)
 			fprintf(fw,"$COMMAND  %s\n",gdata->command);
 
+            alarmCommand=(struct alarmCommand *)ellFirst(&gdata->alarmCommandList);
+            while (alarmCommand) {
+                fprintf(fw,"$ALARMCOMMAND  %s",alarmCommand->instructionString);
+                alarmCommand=(struct alarmCommand *)ellNext((void *)alarmCommand);
+            }
 
 
 			}
@@ -688,9 +690,15 @@ struct guideLink *guidelist;
 
 			if(strcmp(cdata->sevrPVName,"-") != 0)
 			fprintf(fw,"$SEVRPV   %-28s\n",cdata->sevrPVName);
+
 			if (cdata->command != NULL)
 			fprintf(fw,"$COMMAND  %s",cdata->command);
 
+            alarmCommand=(struct alarmCommand *)ellFirst(&cdata->alarmCommandList);
+            while (alarmCommand) {
+                fprintf(fw,"$ALARMCOMMAND  %s",alarmCommand->instructionString);
+                alarmCommand=(struct alarmCommand *)ellNext((void *)alarmCommand);
+            }
                         cpt = sllNext(cpt);
 
 
@@ -747,6 +755,7 @@ static void alConfigTreePrint(fw,glink,treeSym)
      struct guideLink *guidelist;
      SNODE	*pt;
      int length;
+     struct alarmCommand *alarmCommand;
 
      int symSize = 3;
      static char symMiddle[]="+--";
@@ -813,6 +822,12 @@ static void alConfigTreePrint(fw,glink,treeSym)
             if (gdata->command != NULL)
             fprintf(fw,"%s        COMMAND  %s",treeSym,gdata->command);
 
+            alarmCommand=(struct alarmCommand *)ellFirst(&gdata->alarmCommandList);
+            while (alarmCommand) {
+            fprintf(fw,"%s        ALARMCOMMAND  %s",treeSym, alarmCommand->instructionString);
+                alarmCommand=(struct alarmCommand *)ellNext((void *)alarmCommand);
+            }
+
             gl = sllFirst(&(glink->GuideList));
             if (gl) fprintf(fw,"%s        GUIDANCE\n",treeSym);
             while (gl) {
@@ -860,6 +875,12 @@ static void alConfigTreePrint(fw,glink,treeSym)
             if (cdata->command != NULL)
             fprintf(fw,"%s        COMMAND  %s",treeSym,cdata->command);
 
+            alarmCommand=ellFirst(cdata->alarmCommandList);
+            while (alarmCommand) {
+                fprintf(fw,"%s        ALARMCOMMAND  %s",treeSym,alarmCommand->instructionString);
+                alarmCommand=(struct alarmCommand *)ellNext((void *)alarmCommand);
+            }
+
             cl = sllFirst(&(clink->GuideList));
             if (cl)  fprintf(fw,"%s        GUIDANCE\n",treeSym);
             while (cl) {
@@ -904,4 +925,146 @@ void alPrintConfig(fw,pmainGroup)
 
 }
 
+
+/*******************************************************************
+    addNewAlarmCommand
+*******************************************************************/
+void addNewAlarmCommand(pList,str)
+    ELLLIST *pList;
+    char *str;
+{
+    struct alarmCommand *alarmCommand;
+    int len=0;
+    int i=0;
+    char *buf;
+
+    alarmCommand = (struct alarmCommand *)calloc(1, sizeof(struct alarmCommand)); 
+    alarmCommand->instructionString = str;
+    while( str[len] != ' ' && str[len] != '\t' && str[len] != '\0') len++;
+    while( str[len] == ' ' || str[len] == '\t') len++;
+    alarmCommand->command = &str[len];
+    if(str[0]=='D') {
+        alarmCommand->direction = DOWN;
+        len = 5;
+    } else {
+        alarmCommand->direction = UP;
+        len = 3;
+    }
+    for (i=0; i<ALARM_ANY; i++) {
+        if (strncmp(&str[len],alarmSeverityString[i],
+             strlen(alarmSeverityString[i]))==0) break;
+    }
+    alarmCommand->sev = i;
+    ellAdd(pList,(void *)alarmCommand);
+
+}
+
+
+/*******************************************************************
+    removeAlarmCommandList
+*******************************************************************/
+void removeAlarmCommandList(pList)
+    ELLLIST *pList;
+{
+    struct alarmCommand *alarmCommand;
+    ELLNODE *pt;
+
+    pt=ellFirst(pList);
+    while (pt) {
+        alarmCommand=(struct alarmCommand *)pt;
+        ellDelete(pList,pt);
+        pt=ellNext(pt);
+        free(alarmCommand->instructionString);
+        free(alarmCommand);
+    }
+}
+
+
+/*******************************************************************
+    copyAlarmCommandList
+*******************************************************************/
+void copyAlarmCommandList(pListOld,pListNew)
+    ELLLIST *pListOld;
+    ELLLIST *pListNew;
+{
+    struct alarmCommand *ptOld, *ptNew;
+
+    ptOld=(struct alarmCommand *)ellFirst(pListOld);
+    while (ptOld) {
+        ptNew = (struct alarmCommand *)calloc(1, sizeof(struct alarmCommand));
+        ptNew->instructionString = (char *)calloc(1,strlen(ptOld->instructionString)+1);
+        strcpy(ptNew->instructionString,ptOld->instructionString);
+        ptNew->command =  ptNew->instructionString + (ptOld->command - ptOld->instructionString);
+        ptNew->direction = ptOld->direction;
+        ptNew->sev = ptOld->sev;
+        ellAdd(pListNew,(void *)ptNew);
+        ptOld=(struct alarmCommand *)ellNext((void *)ptOld);
+    }
+}
+
+
+/*******************************************************************
+    spawnAlarmCommandList
+*******************************************************************/
+void spawnAlarmCommandList(pList,sev,sevr_prev)
+    ELLLIST *pList;
+{
+    struct alarmCommand *alarmCommand;
+    int direction;
+
+    alarmCommand=(struct alarmCommand *)ellFirst(pList);
+    if (alarmCommand) {
+        if ( sev > sevr_prev ) direction=UP;
+        else direction=DOWN;
+        while (alarmCommand) {
+            if (alarmCommand->direction==direction &
+                (alarmCommand->sev==ALARM_ANY || alarmCommand->sev==sev)) {
+                    processSpawn_callback(NULL,alarmCommand->command,NULL);
+            }
+            alarmCommand=(struct alarmCommand *)ellNext((void *)alarmCommand);
+        }
+    }
+}
+
+
+/*******************************************************************
+    getAlarmCommandListString
+*******************************************************************/
+void getStringAlarmCommandList(pList,pstr)
+    ELLLIST *pList;
+    char **pstr;
+{
+    char *str;
+    struct alarmCommand *alarmCommand;
+    ELLNODE *pt;
+    int i;
+
+    pt = ellFirst(pList);
+    i=0;
+    while (pt) {
+         alarmCommand = (struct alarmCommand *)pt;
+         i += strlen(alarmCommand->instructionString);
+         i += 1;
+         pt = ellNext(pt);
+    }
+    str = (char*)calloc(1,i+1);
+    pt = ellFirst(pList);
+    i=0;
+    while (pt) {
+         alarmCommand = (struct alarmCommand *)pt;
+         strcat(str,alarmCommand->instructionString);
+         pt = ellNext(pt);
+         if (pt) strcat(str,"\n");
+         i++;
+    }
+    *pstr = str;
+}
+
+/*
+printf (" alarmCommandString = %s\n",str);
+printf (" instructionString = %s\n",alarmCommand->instructionString);
+printf (" command = %s\n",alarmCommand->command);
+printf (" direction = %d\n",alarmCommand->direction);
+printf (" sev = %d\n",alarmCommand->sev);
+*/
 

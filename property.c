@@ -1,8 +1,11 @@
 /*
  $Log$
- Revision 1.3  1995/02/28 16:43:50  jba
- ansi c changes
+ Revision 1.4  1995/05/30 15:55:06  jba
+ Added ALARMCOMMAND facility
 
+ * Revision 1.3  1995/02/28  16:43:50  jba
+ * ansi c changes
+ *
  * Revision 1.2  1994/06/22  21:17:51  jba
  * Added cvs Log keyword
  *
@@ -88,6 +91,7 @@ struct propWindow {
     Widget forcePVvalueTextW;
     Widget forcePVresetValueTextW;
     Widget processTextW;
+    Widget alarmProcessTextW;
     Widget guidanceTextW;
 
 };
@@ -253,6 +257,7 @@ static void propUpdateDialogWidgets(propWindow)
           XmTextFieldSetString(propWindow->forcePVvalueTextW,'\0');
           XmTextFieldSetString(propWindow->forcePVresetValueTextW,'\0');
           XmTextFieldSetString(propWindow->processTextW,'\0');
+          XmTextFieldSetString(propWindow->alarmProcessTextW,'\0');
           XmTextSetString(propWindow->guidanceTextW, '\0');
          
           return;
@@ -352,6 +357,12 @@ static void propUpdateDialogWidgets(propWindow)
      XmTextFieldSetString(propWindow->processTextW,pgcData->command);
 
      /* ---------------------------------
+     Alarm Process Command
+     --------------------------------- */
+     getStringAlarmCommandList(&pgcData->alarmCommandList,&str);
+     XmTextSetString(propWindow->alarmProcessTextW,str);
+
+     /* ---------------------------------
      Guidance Text
      --------------------------------- */
      pt = sllFirst(&(link->GuideList));
@@ -392,11 +403,13 @@ static void propCreateDialog(area, link, linkType)
      Widget propDialogShell, propDialog, rc, forcePV_text_w, severityPVnameTextW,property_s;
      Widget rc3, rowcol, form, maskFrameW, alarmMaskStringLabelW;
      Widget nameLabelW, nameTextW;
-     Widget scrolledW;
+     Widget guidanceScrolledW;
+     Widget alarmProcessScrolledW;
      Widget forcePVlabel, severityPVlabel;
      Widget alarmMaskToggleButtonW[ALARM_NMASK];
      Widget forceMaskToggleButtonW[ALARM_NMASK];
      Widget processLabel, processTextW;
+     Widget alarmProcessLabel, alarmProcessTextW;
      Widget forcePVvalueLabel,forcePVnameTextW, forcePVvalueTextW, forcePVresetValueTextW, forcePVreset;
      Widget forcePVmaskStringLabelW, frame2, rowcol2, frame3, rowcol3, guidanceLabel, guidanceTextW;
      Widget toggle,alarmMaskLabel,forceMaskLabel,forcePVnameLabel;
@@ -746,6 +759,39 @@ static void propCreateDialog(area, link, linkType)
      XmStringFree(string);
 
      /* ---------------------------------
+     Alarm Process Command
+     --------------------------------- */
+     string = XmStringCreateSimple("Alarm Process Commands");
+     alarmProcessLabel = XtVaCreateManagedWidget("alarmProcessLabel",
+          xmLabelGadgetClass, form,
+          XmNlabelString,     string,
+          XmNcolumns,                80,
+          XmNtopAttachment,          XmATTACH_WIDGET,
+          XmNtopWidget,              processTextW,
+          XmNleftAttachment,         XmATTACH_FORM,
+          NULL);
+     XmStringFree(string);
+
+     /* Create Scrolled Window  */
+     alarmProcessScrolledW = XtVaCreateManagedWidget("alarmScrolledW",
+          xmScrolledWindowWidgetClass, form,
+          XmNscrollingPolicy,        XmAUTOMATIC,
+          XmNtopAttachment,          XmATTACH_WIDGET,
+          XmNtopWidget,              alarmProcessLabel,
+          XmNleftAttachment,         XmATTACH_FORM,
+          XmNrightAttachment,        XmATTACH_FORM,
+          NULL);
+
+     alarmProcessTextW = XtVaCreateManagedWidget("alarmProcessTextW",
+          xmTextWidgetClass, alarmProcessScrolledW,
+          XmNeditMode,               XmMULTI_LINE_EDIT,
+          XmNbackground,             textBackground,
+          NULL);
+
+     XtAddCallback(alarmProcessScrolledW, XmNactivateCallback,
+          (XtCallbackProc)XmProcessTraversal, (XtPointer)XmTRAVERSE_NEXT_TAB_GROUP);
+
+     /* ---------------------------------
      Guidance Text
      --------------------------------- */
      string = XmStringCreateSimple("Guidance                   ");
@@ -753,13 +799,13 @@ static void propCreateDialog(area, link, linkType)
           xmLabelGadgetClass, form,
           XmNlabelString,     string,
           XmNtopAttachment,   XmATTACH_WIDGET,
-          XmNtopWidget,       processTextW,
+          XmNtopWidget,       alarmProcessScrolledW,
           XmNleftAttachment,  XmATTACH_FORM,
           NULL);
      XmStringFree(string);
  
      /* Create Scrolled Window  */
-     scrolledW = XtVaCreateManagedWidget("scrolledW",
+     guidanceScrolledW = XtVaCreateManagedWidget("guidanceScrolledW",
           xmScrolledWindowWidgetClass, form,
           XmNscrollingPolicy,        XmAUTOMATIC,
           XmNtopAttachment,          XmATTACH_WIDGET,
@@ -770,7 +816,7 @@ static void propCreateDialog(area, link, linkType)
           NULL);
 
      guidanceTextW = XtVaCreateManagedWidget("guidanceTextW",
-          xmTextWidgetClass, scrolledW,
+          xmTextWidgetClass, guidanceScrolledW,
           XmNeditMode,               XmMULTI_LINE_EDIT,
           XmNbackground,             textBackground,
           NULL);
@@ -797,6 +843,7 @@ static void propCreateDialog(area, link, linkType)
      propWindow->forcePVvalueTextW = forcePVvalueTextW;
      propWindow->forcePVresetValueTextW = forcePVresetValueTextW;
      propWindow->processTextW = processTextW;
+     propWindow->alarmProcessTextW = alarmProcessTextW;
      propWindow->guidanceTextW = guidanceTextW;
      for (i = 0; i < ALARM_NMASK; i++){
           propWindow->alarmMaskToggleButtonW[i] = alarmMaskToggleButtonW[i];
@@ -957,6 +1004,23 @@ static void propApplyCallback(widget, propWindow, cbs)
      buff = XmTextFieldGetString(propWindow->processTextW);
      if (strlen(buff)) pgcData->command = buff;
      else pgcData->command = 0;
+
+     /* ---------------------------------
+     Alarm Process Commands
+     --------------------------------- */
+     removeAlarmCommandList(&(pgcData->alarmCommandList));
+
+     buff = XmTextGetString(propWindow->alarmProcessTextW);
+     if (strlen(buff)){
+          i=0;
+          while (TRUE) {
+               addNewAlarmCommand(pgcData->alarmCommandList,buff);
+               buff=strchr(buff,'\n');
+               if ( !buff ) break;
+               *buff='\0';
+               buff++;
+          }
+     }
 
      /* ---------------------------------
      Guidance Text
@@ -1146,6 +1210,9 @@ static GLINK *propCopyGroup(glink)
 		strcpy(gdataNew->command,buff);
 	}
 
+	/* copy alarm command */
+    copyAlarmCommandList(gdata->alarmCommandList,gdataNew->alarmCommandList);
+
 	/* copy sevrPV info */
 	buff = gdata->sevrPVName;
 	if(strcmp(buff,"-") != 0){
@@ -1210,14 +1277,15 @@ static CLINK *propCopyChannel(clink)
 static void propFreeGroup(glink)
      GLINK   *glink;
 {
-     SNODE *snode,*cnode,*gnode,*next;
-     GLINK *pt;
+     SNODE *snode,*next;
      struct guideLink *guideLink; 
 
      if (glink->pgroupData->name) free(glink->pgroupData->name);
      if (strcmp(glink->pgroupData->forcePVName,"-") != 0) free(glink->pgroupData->forcePVName);
      if (strcmp(glink->pgroupData->sevrPVName,"-") != 0) free(glink->pgroupData->sevrPVName);
      if (glink->pgroupData->command) free(glink->pgroupData->command);
+
+     removeAlarmCommandList(&glink->pgroupData->alarmCommandList);
 
      snode = sllFirst(&glink->GuideList);
      while (snode) {
@@ -1245,6 +1313,8 @@ static void propFreeChannel(clink)
         if (strcmp(clink->pchanData->forcePVName,"-") != 0) free(clink->pchanData->forcePVName);
         if (strcmp(clink->pchanData->sevrPVName,"-") != 0) free(clink->pchanData->sevrPVName);
         if (clink->pchanData->command) free(clink->pchanData->command);
+
+        removeAlarmCommandList(&clink->pchanData->alarmCommandList);
 
         pt = sllFirst(&clink->GuideList);
         while (pt) {
@@ -1328,6 +1398,12 @@ void propUndo(area, link, linkType, newLink)
      Related Process Command
      --------------------------------- */
      pgcData->command = newData->command;
+
+     /* ---------------------------------
+     Alarm Process Command
+     --------------------------------- */
+     removeAlarmCommandList(&pgcData->alarmCommandList);
+     pgcData->alarmCommandList = newData->alarmCommandList;
 
      /* ---------------------------------
      Guidance Text

@@ -1,8 +1,11 @@
 /*
  $Log$
- Revision 1.3  1995/03/24 16:35:49  jba
- Bug fix and reorganized some files
+ Revision 1.4  1995/05/30 15:58:07  jba
+ Added ALARMCOMMAND facility
 
+ * Revision 1.3  1995/03/24  16:35:49  jba
+ * Bug fix and reorganized some files
+ *
  * Revision 1.2  1994/06/22  21:16:59  jba
  * Added cvs Log keyword
  *
@@ -443,11 +446,8 @@ void redraw(subWindow,rowNumber)
           /* determine viewRowCount if not already set */
           if ( !subWindow->rowHeight){
 
-               XtVaGetValues(subWindow->scrolled_w,
-                    XmNheight,            &subWindow->viewHeight,
-                    NULL);
-
                XtVaGetValues(subWindow->drawing_area,
+                    XmNheight,            &subWindow->viewHeight,
                     XmNmarginHeight,      &subWindow->marginHeight,
                     NULL);
 

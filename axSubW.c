@@ -1,8 +1,11 @@
 /*
  $Log$
- Revision 1.3  1995/03/24 16:35:53  jba
- Bug fix and reorganized some files
+ Revision 1.4  1995/05/30 15:58:02  jba
+ Added ALARMCOMMAND facility
 
+ * Revision 1.3  1995/03/24  16:35:53  jba
+ * Bug fix and reorganized some files
+ *
  * Revision 1.2  1994/06/22  21:17:13  jba
  * Added cvs Log keyword
  *
@@ -449,26 +452,15 @@ void createSubWindowWidgets(subWindow,parent)
           NULL);
 
 
-     /* Create Scrolled Window  to provide proper methods and maybe a horizontal
-          scrollbar in future release */
-     subWindow->scrolled_w = XtVaCreateManagedWidget("scrolled_w",
-          xmScrolledWindowWidgetClass, parent,
-          XmNshadowThickness,        2,
-          XmNscrollingPolicy,        XmAPPLICATION_DEFINED,
-          XmNvisualPolicy,           XmVARIABLE,
+     /* Create DrawingArea to hold the line widgets */
+     subWindow->drawing_area = XtVaCreateManagedWidget("drawing_area",
+          xmDrawingAreaWidgetClass,  parent,
+          XmNresizePolicy,           XmRESIZE_NONE,
+          XmNmarginHeight,           3,
           XmNspacing,                0,
           XmNtopAttachment,          XmATTACH_FORM,
           XmNbottomAttachment,       XmATTACH_FORM,
           XmNleftAttachment,         XmATTACH_FORM,
-          XmNrightAttachment,        XmATTACH_FORM,
-          NULL);
-
-
-     /* Create DrawingArea to hold the line widgets */
-     subWindow->drawing_area = XtVaCreateManagedWidget("drawing_area",
-          xmDrawingAreaWidgetClass,  subWindow->scrolled_w,
-          XmNmarginHeight,           3,
-          XmNspacing,                0,
           NULL);
 
 }
@@ -560,11 +552,8 @@ void exposeResizeCallback(widget, subWindow, cbs)
      }
 */
      oldViewHeight = subWindow->viewHeight;
-     XtVaGetValues(subWindow->scrolled_w,
-          XmNheight,            &subWindow->viewHeight,
-          NULL);
-
      XtVaGetValues(subWindow->drawing_area,
+          XmNheight,            &subWindow->viewHeight,
           XmNmarginHeight,      &subWindow->marginHeight,
           NULL);
 
@@ -578,7 +567,6 @@ void exposeResizeCallback(widget, subWindow, cbs)
 printf (" subWindow=%d\n",subWindow);
 printf ("      viewHeight =%d \n",subWindow->viewHeight);
 printf ("      marginHeight=%d\n",subWindow->marginHeight);
-
 printf ("      viewRowCount=%d\n",subWindow->viewRowCount);
 printf ("      rowHeight=%d\n",subWindow->rowHeight);
 printf ("      oldViewRowCount=%d\n",subWindow->oldViewRowCount);

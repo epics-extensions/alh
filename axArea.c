@@ -1,8 +1,11 @@
 /*
  $Log$
- Revision 1.3  1995/02/28 16:43:36  jba
- ansi c changes
+ Revision 1.4  1995/05/30 15:58:05  jba
+ Added ALARMCOMMAND facility
 
+ * Revision 1.3  1995/02/28  16:43:36  jba
+ * ansi c changes
+ *
  * Revision 1.2  1994/06/22  21:17:05  jba
  * Added cvs Log keyword
  *
@@ -685,6 +688,7 @@ void createMainWindowWidgets(area)
      /* Create a Form for the treeWindow */
      area->treeWindowForm = XtVaCreateManagedWidget("treeForm",
           xmFormWidgetClass,         area->form_main,
+          XmNborderWidth,            1,
           XmNtopAttachment,          XmATTACH_WIDGET,
           XmNtopWidget,              area->menubar,
           XmNbottomAttachment,       XmATTACH_WIDGET,
@@ -702,6 +706,7 @@ void createMainWindowWidgets(area)
      /* Create a Form for the groupWindow */
      area->groupWindowForm = XtVaCreateManagedWidget("groupForm",
           xmFormWidgetClass,         area->form_main,
+          XmNborderWidth,            1,
           XmNtopAttachment,          XmATTACH_WIDGET,
           XmNtopWidget,              area->menubar,
           XmNbottomAttachment,       XmATTACH_WIDGET,
