@@ -1,8 +1,11 @@
 /*
  $Log$
- Revision 1.10  1995/11/13 22:31:13  jba
- Added beepseverity command, ansi changes and other changes.
+ Revision 1.11  1996/03/25 15:45:31  jba
+ Bug fix for spawn of SEVRCOMMAND for channel and all parent groups
 
+ * Revision 1.10  1995/11/13  22:31:13  jba
+ * Added beepseverity command, ansi changes and other changes.
+ *
  * Revision 1.9  1995/10/20  16:49:54  jba
  * Modified Action menus and Action windows
  * Renamed ALARMCOMMAND to SEVRCOMMAND
@@ -1049,20 +1052,6 @@ int prevViewCount=0;
 	if (DEBUG >=3) ALARM_COUNTER++;
 	
 /*
- * spawn SEVRCOMMAND for the channel
- */
-
-       if ( sev != sevr_prev )
-        spawnSevrCommandList(&cdata->sevrCommandList,sev,sevr_prev);
-
-/*
- * spawn STATCOMMAND for the channel
- */
-
-       if ( stat != stat_prev )
-        spawnStatCommandList(&cdata->statCommandList,stat,stat_prev);
-
-/*
  * log the channel alarm at the alarm logfile
  */
         if (mask.Log == 0)
@@ -1084,6 +1073,20 @@ int prevViewCount=0;
 		clink->modified = 1;
 		clink->pmainGroup->modified = TRUE;
 
+/*
+ * spawn SEVRCOMMAND for the channel
+ */
+
+       if ( sev != sevr_prev )
+        spawnSevrCommandList(&cdata->sevrCommandList,sev,sevr_prev);
+
+/*
+ * spawn STATCOMMAND for the channel
+ */
+
+       if ( stat != stat_prev )
+        spawnStatCommandList(&cdata->statCommandList,stat,stat_prev);
+
 
 /*
  * spawn SEVRCOMMAND for all the parent groups
@@ -1098,7 +1101,8 @@ int prevViewCount=0;
         gdata->curSevr=alHighestSeverity(gdata->curSev);
 
         if ( sevrHold != gdata->curSevr ) {
-            spawnSevrCommandList(&gdata->sevrCommandList,gdata->curSevr,sevrHold);
+            spawnSevrCommandList(&gdata->sevrCommandList,
+                 gdata->curSevr,sevrHold);
         }
 
         glink->modified = 1;
@@ -1483,6 +1487,7 @@ void alChangeChanMask(clink,mask)
   struct groupData *gdata;
   GLINK *parent;
   int change=0,saveSevr;
+  int sevrHold;
 
   cdata = clink->pchanData;
 
@@ -1507,13 +1512,26 @@ void alChangeChanMask(clink,mask)
 		if (cdata->unackSevr > NO_ALARM) 
 		    alAckChan(clink);
 		if (cdata->curSevr > NO_ALARM)  {
-		    parent = clink->parent;
-		    while(parent) {
-			gdata = (struct groupData *)(parent->pgroupData);
-			gdata->curSev[cdata->curSevr]--;
-			gdata->curSev[NO_ALARM]++;
-			parent = parent->parent;
-		    }
+			parent = clink->parent;
+			while(parent) {
+				gdata = (struct groupData *)(parent->pgroupData);
+				gdata->curSev[cdata->curSevr]--;
+				gdata->curSev[NO_ALARM]++;
+
+				/*
+				 * spawn SEVRCOMMAND for all the parent groups
+				 * update curSev[] of all the parent groups
+				 */
+				sevrHold=gdata->curSevr;
+				gdata->curSevr=alHighestSeverity(gdata->curSev);
+				if ( sevrHold != gdata->curSevr ) {
+					spawnSevrCommandList(&gdata->sevrCommandList,
+						gdata->curSevr,sevrHold);
+				}
+
+   		         parent->modified = 1;
+				parent = parent->parent;
+			}
 		}
 
 	    }
@@ -1547,6 +1565,17 @@ if (mask.Disable != cdata->curMask.Disable) {
 				gdata = (struct groupData *)(parent->pgroupData);
 				gdata->curSev[cdata->curSevr]--;
 				gdata->curSev[0]++;
+                /*
+                 * spawn SEVRCOMMAND for all the parent groups
+                 * update curSev[] of all the parent groups
+                 */
+                sevrHold=gdata->curSevr;            
+                gdata->curSevr=alHighestSeverity(gdata->curSev);
+                if ( sevrHold != gdata->curSevr ) {
+                    spawnSevrCommandList(&gdata->sevrCommandList,gdata->curSevr,sevrHold);
+                }
+    
+                parent->modified = 1;
 				parent = parent->parent;
 				}
 			}
@@ -1577,24 +1606,25 @@ if (mask.Ack != cdata->curMask.Ack) {
 
 	if (mask.Ack == 0 && mask.Cancel ==0 && mask.Disable == 0) {
 		if (cdata->curSevr > 0 ) {
+            /*
+             * update unackSev[] of all parent groups
+             */
 			parent = clink->parent;
-			while(parent) {
-				gdata = (struct groupData *)(parent->pgroupData);
-				gdata->curSev[cdata->curSevr]--;
-				gdata->curSev[0]++;
-				parent = parent->parent;
-				}
-			saveSevr = cdata->curSevr;
-			cdata->curSevr = 0;
-			alNewAlarm(cdata->curStat,saveSevr,cdata->value,clink);
-
-			}
-
-		}
+            while(parent) {
+                 gdata = (struct groupData *)(parent->pgroupData);
+                 gdata->curSev[cdata->curSevr]--;
+                 gdata->curSev[0]++;
+                 parent = parent->parent;
+            }
+            saveSevr = cdata->curSevr;
+            cdata->curSevr = 0;
+            alNewAlarm(cdata->curStat,saveSevr,cdata->value,clink);
+        }
 
 
 	}
 
+}
 if (mask.AckT != cdata->curMask.AckT) {
 	alUpdateGroupMask(clink,ALARMACKT,mask.AckT);
 
