@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.7  1997/08/27 22:06:56  jba
+ Fixed alLogConnection comment.
+
  Revision 1.6  1996/03/25 15:46:11  jba
  Removed unused alOpenLogFiles references.
 
@@ -329,7 +332,7 @@ alLogForcePVGroup(glink,ind)				Log force PV group
 alLogResetPVGroup(glink,ind) 				Log reset PV group
 alLogForcePVChan(clink,ind)				Log force PV channel
 alLogResetPVChan(clink,ind)				Log reset PV channel
-alLogConnection(pname,ind)				Log unconnected pvname
+alLogConnection(pname,text)				Log unconnected pvname
 alLogExit()						Log exit ALH
 alLogChangeGroupMasks(glink,choosegroupData)		Log change group Masks
 alLogSetupConfigFile(filename)				Log setup config file
