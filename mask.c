@@ -1,80 +1,9 @@
-/*
- $Log$
- Revision 1.8  1998/08/05 18:20:11  jba
- Added silenceOneHour button.
- Moved silenceForever button to Setup menu.
- Added logging for operator silence changes.
+/* $Id$ */
 
- Revision 1.7  1998/05/13 19:29:51  evans
- More WIN32 changes.
-
- Revision 1.6  1996/12/03 22:04:29  jba
- Changed unused Help ActionItem data to NULL.
-
- Revision 1.5  1996/11/19 19:40:27  jba
- Fixed motif delete window actions, and fixed size of force PV window.
-
- Revision 1.4  1995/10/20 16:50:48  jba
- Modified Action menus and Action windows
- Renamed ALARMCOMMAND to SEVRCOMMAND
- Added STATCOMMAND facility
- Added ALIAS facility
- Added ALARMCOUNTFILTER facility
- Make a few bug fixes.
-
- * Revision 1.3  1995/06/22  19:46:52  jba
- * Started cleanup of file.
- *
- * Revision 1.2  1994/06/22  21:17:44  jba
- * Added cvs Log keyword
- *
- */
-
-static char *sccsId = "@(#)mask.c	1.4\t9/9/93";
-
-/* mask.c 
- *
- *      Author: Ben-chin Cha
- *      Date:   12-20-90
- *
- *      Experimental Physics and Industrial Control System (EPICS)
- *
- *      Copyright 1991, the Regents of the University of California,
- *      and the University of Chicago Board of Governors.
- *
- *      This software was produced under  U.S. Government contracts:
- *      (W-7405-ENG-36) at the Los Alamos National Laboratory,
- *      and (W-31-109-ENG-38) at Argonne National Laboratory.
- *
- *      Initial development by:
- *              The Controls and Automation Group (AT-8)
- *              Ground Test Accelerator
- *              Accelerator Technology Division
- *              Los Alamos National Laboratory
- *
- *      Co-developed with
- *              The Controls and Computing Group
- *              Accelerator Systems Division
- *              Advanced Photon Source
- *              Argonne National Laboratory
- *
- * Modification Log:
- * -----------------
- * .01  02-16-93        jba     Reorganized files for new user interface
- * .nn  mm-dd-yy        iii     Comment
- *      ...
- */
-
-/*
-******************************************************************
-	routines defined in mask.c
-*******************************************************************
-*
+/*******************************************************************
 *	This file contains alh routines for modifying masks
-*
-******************************************************************
-*/
-
+******************************************************************/
+
 #include <stdlib.h>
 
 #include <Xm/Xm.h>
@@ -88,10 +17,10 @@ static char *sccsId = "@(#)mask.c	1.4\t9/9/93";
 #include <Xm/RowColumn.h>
 #include <Xm/ToggleBG.h>
 
-#include <axArea.h>
-#include <alLib.h>
-#include <alh.h>
-#include <ax.h>
+#include "axArea.h"
+#include "alLib.h"
+#include "alh.h"
+#include "ax.h"
 
 typedef struct {
     char *label;
@@ -111,6 +40,7 @@ struct maskWindow {
     Widget nameTextW;
 };
 
+/* forward declarations */
 static void maskDismissCallback(Widget widget,XtPointer calldata,XtPointer cbs);
 static void maskHelpCallback(Widget widget,XtPointer calldata,XtPointer cbs);
 static void maskActivateCallback( Widget widget,XtPointer calldata,XtPointer cbs);
@@ -121,9 +51,7 @@ static void maskUpdateDialogWidgets(struct maskWindow *maskWindow);
 /******************************************************
   maskUpdateDialog
 ******************************************************/
-
-void maskUpdateDialog(area)
-     ALINK  *area;
+void maskUpdateDialog(ALINK *area)
 {
      struct maskWindow *maskWindow;
 
@@ -131,20 +59,16 @@ void maskUpdateDialog(area)
 
      if (!maskWindow)  return;
 
-     if (!maskWindow->maskDialog || !XtIsManaged(maskWindow->maskDialog)) return;
+     if (!maskWindow->maskDialog ||
+         !XtIsManaged(maskWindow->maskDialog)) return;
 
      maskUpdateDialogWidgets(maskWindow);
-
 }
-
 
 /******************************************************
   maskShowDialog
 ******************************************************/
-
-void maskShowDialog(area, menuButton)
-     ALINK    *area;
-     Widget   menuButton;
+void maskShowDialog(ALINK *area,Widget menuButton)
 {
      struct maskWindow *maskWindow;
 
@@ -175,15 +99,12 @@ void maskShowDialog(area, menuButton)
      XMapWindow(XtDisplay(maskWindow->maskDialog),
           XtWindow(XtParent(maskWindow->maskDialog)));
      if (menuButton) XtVaSetValues(menuButton, XmNset, TRUE, NULL);
-
 }
 
 /******************************************************
   maskUpdateDialogWidgets
 ******************************************************/
-
-static void maskUpdateDialogWidgets(maskWindow)
-     struct maskWindow *maskWindow;
+static void maskUpdateDialogWidgets(struct maskWindow *maskWindow)
 {
      struct gcData *pgcData;
      GCLINK *link;
@@ -221,15 +142,12 @@ static void maskUpdateDialogWidgets(maskWindow)
      }
      XtVaSetValues(maskWindow->nameTextW, XmNlabelString, string, NULL);
      XmStringFree(string);
-
 }
 
 /******************************************************
   maskCreateDialog
 ******************************************************/
-
-static void maskCreateDialog(area)
-     ALINK    *area;
+static void maskCreateDialog(ALINK *area)
 {
      struct maskWindow *maskWindow;
 
@@ -327,7 +245,8 @@ static void maskCreateDialog(area)
                XmNtopOffset,        10,
                NULL);
           for (j = 0; j < num_buttons; j++){
-               pushButtonW = XtVaCreateManagedWidget(maskItem[i].choice[j].label,
+               pushButtonW = XtVaCreateManagedWidget(
+                    maskItem[i].choice[j].label,
                     xmPushButtonWidgetClass, form,
                     XmNuserData,             (XtPointer)area,
                     XmNleftAttachment,       XmATTACH_POSITION,
@@ -339,7 +258,8 @@ static void maskCreateDialog(area)
                     j != num_buttons-1? XmATTACH_POSITION : XmATTACH_FORM,
                     XmNrightPosition,        TIGHTNESS*(j+3) + (TIGHTNESS-1),
                     NULL);
-               XtAddCallback(pushButtonW, XmNactivateCallback,(XtCallbackProc)maskActivateCallback,
+               XtAddCallback(pushButtonW, XmNactivateCallback,
+                    (XtCallbackProc)maskActivateCallback,
                     (XtPointer)maskItem[i].choice[j].index);
           }
           prev=labelW;
@@ -361,25 +281,25 @@ static void maskCreateDialog(area)
      maskWindow->nameTextW = nameTextW;
 
      XtRealizeWidget(maskDialogShell);
-
 }
-
 
 /******************************************************
   maskHelpCallback
 ******************************************************/
-
 static void maskHelpCallback(Widget widget,XtPointer calldata,XtPointer cbs)
 {
      struct maskWindow *maskWindow=(struct maskWindow *)calldata;
 
      char *message1 = 
-         "This dialog window allows an operator to change individual mask field\n"
+         "This dialog window allows an operator"
+         " to change individual mask field\n"
          "values for a group or channel.\n"
-         "Changing a mask field value for a group means changing the mask field\n"
+         "Changing a mask field value for a group"
+         " means changing the mask field\n"
          "value for all channels in the group.\n"
          "  \n"
-         "Press the Dismiss button to close the Modify Mask Settings dialog window.\n"
+         "Press the Dismiss button to close the"
+         " Modify Mask Settings dialog window.\n"
          "Press the Help    button to get this help description window.\n"
             ;
      char * message2 = "  ";
@@ -392,8 +312,8 @@ static void maskHelpCallback(Widget widget,XtPointer calldata,XtPointer cbs)
 /******************************************************
   maskDismissCallback
 ******************************************************/
-
-static void maskDismissCallback(Widget widget,XtPointer calldata,XtPointer cbs)
+static void maskDismissCallback(Widget widget,XtPointer calldata,
+    XtPointer cbs)
 {
      struct maskWindow *maskWindow=(struct maskWindow *)calldata;
      Widget maskDialog;
@@ -403,15 +323,13 @@ static void maskDismissCallback(Widget widget,XtPointer calldata,XtPointer cbs)
      XUnmapWindow(XtDisplay(maskDialog), XtWindow(XtParent(maskDialog)));
      if (maskWindow->menuButton)
           XtVaSetValues(maskWindow->menuButton, XmNset, FALSE, NULL);
-
 }
-
 
 /***************************************************
   maskActivateCallback
 ****************************************************/
-
-static void maskActivateCallback(Widget widget,XtPointer calldata,XtPointer cbs)
+static void maskActivateCallback(Widget widget,XtPointer calldata,
+    XtPointer cbs)
 {
      int index=(int)calldata;
      ALINK *area;
