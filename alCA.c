@@ -1,5 +1,9 @@
 /*
  $Log$
+ Revision 1.15  1998/06/09 16:46:56  evans
+ Changed exception handler to quit ater 25 exceptions to avoid swamping
+ the interface.
+
  Revision 1.14  1998/06/02 19:40:44  evans
  Changed from using Fgmgr to using X to manage events and file
  descriptors.  (Fdmgr didn't work on WIN32.)  Uses XtAppMainLoop,
@@ -1405,6 +1409,22 @@ char *str;
 
 static void alCAException(struct exception_handler_args args)
 {
+#define MAX_EXCEPTIONS 25    
+    static int nexceptions=0;
+    static int ended=0;
+
+    if(ended) return;
+    if(nexceptions++ > MAX_EXCEPTIONS) {
+	ended=1;
+	errMsg("alCAException: Channel Access Exception:\n"
+	  "Too many exceptions [%d]\n"
+	  "No more will be handled\n"
+	  "Please fix the problem and restart ALH\n",
+	  MAX_EXCEPTIONS);
+	ca_add_exception_event(NULL, NULL);
+	return;
+    }
+    
     errMsg("alCAException: Channel Access Exception:\n"
       "  Channel Name: %s\n"
       "  Native Type: %s\n"
