@@ -25,7 +25,8 @@ static char *sccsId = "@@(#) $Id$";
 
 #define BLINK_DELAY 1000     /* ms */
 static XtIntervalId blinkTimeoutId = (XtIntervalId)0;
-static char *bg_color[] = {"lightblue","yellow","red","white","grey"};
+static char *bg_color[] = {"lightblue","yellow","red","white","white","grey"};
+
 static char *channel_bg_color = "lightblue";
 
 /* global variabless */
@@ -34,9 +35,9 @@ extern Display *display;
 extern struct setup psetup;
 extern char *programName;
 extern Pixmap ALH_pixmap;
-Pixel bg_pixel[ALARM_NSEV];
+Pixel bg_pixel[ALH_ALARM_NSEV];
 Pixel channel_bg_pixel;
-char *bg_char[] = {" ", "Y", "R", "V" };
+char *bg_char[] = {" ", "Y", "R", "V", "E"," " };
 
 /* forward declarations */
 static void axExit_callback(Widget w,ALINK *area,XmAnyCallbackStruct *call_data);
@@ -216,9 +217,11 @@ static void blinking(XtPointer pointer, XtIntervalId *id)
 
 	if (!blinking2State) {
 
-		if (psetup.highestSevr > 0 || blinkPixel != bg_pixel[0]) {
+		if (psetup.highestSevr > 0 ||
+			 psetup.highestUnackSevr > 0 ||
+			 blinkPixel != bg_pixel[0]) {
 
-			if (psetup.highestUnackSevr > 0)
+			if (psetup.highestUnackSevr > psetup.highestSevr)
 				blinkPixel = bg_pixel[psetup.highestUnackSevr];
 			else
 				blinkPixel = bg_pixel[psetup.highestSevr];
@@ -280,9 +283,9 @@ XmAnyCallbackStruct *call_data)
 {
 	psetup.silenceCurrent = psetup.silenceCurrent?FALSE:TRUE;
 	if (psetup.silenceCurrent)
-		alLogOpMod("Silence Current set to TRUE");
+		alLogOpMod("Silence Current set to TRUE\n");
 		else
-		alLogOpMod("Silence Current set to FALSE");
+		alLogOpMod("Silence Current set to FALSE\n");
 }
 
 /***************************************************
@@ -300,13 +303,13 @@ XmAnyCallbackStruct *call_data)
 		    (unsigned long)(1000*seconds),
 		    (XtTimerCallbackProc)silenceOneHourReset,
 		    (XtPointer)area);
-		alLogOpMod("Silence One Hour set to TRUE");
+		alLogOpMod("Silence One Hour set to TRUE\n");
 	} else {
 		if (intervalId) {
 			XtRemoveTimeOut(intervalId);
 			intervalId = NULL;
 		}
-		alLogOpMod("Silence One Hour set to FALSE");
+		alLogOpMod("Silence One Hour set to FALSE\n");
 	}
 }
 
@@ -317,9 +320,9 @@ void silenceForeverChangeState(ALINK *area)
 {
 	psetup.silenceForever = psetup.silenceForever?FALSE:TRUE;
 	if (psetup.silenceForever)
-		alLogOpMod("Silence Forever set to TRUE");
+		alLogOpMod("Silence Forever set to TRUE\n");
 		else
-		alLogOpMod("Silence Forever set to FALSE");
+		alLogOpMod("Silence Forever set to FALSE\n");
 	changeSilenceForeverText(area);
 }
 
@@ -362,7 +365,7 @@ void pixelData(Widget iconBoard)
 
 	/* get bg color pixel */
 	dsply = XtDisplay(iconBoard);
-	for (n=1;n<ALARM_NSEV;n++)
+	for (n=1;n<ALH_ALARM_NSEV;n++)
 		bg_pixel[n] = COLOR(dsply,bg_color[n]);
 
 	channel_bg_pixel = COLOR(dsply,channel_bg_color);

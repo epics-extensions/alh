@@ -14,6 +14,8 @@ static char *alhhsccsId = "@(#) $Id$";
 #include <Xm/Xm.h>
 #include <Xm/RowColumn.h>
 
+#include "alarm.h"
+
 /* WIN32 differences */
 #ifdef WIN32
 /* Hummingbird extra functions including lprintf
@@ -35,6 +37,18 @@ static char *alhhsccsId = "@(#) $Id$";
 #include "sllLib.h"
 #include "dbDefs.h"
 
+
+/* ------- Definitions for channels in error state ----- */
+/* ALARM_NSEV and ALARM_NSTATUS defined in epics/base alarm.h */
+
+#define ERROR_STATE      ALARM_NSEV
+#define ALH_ALARM_NSEV     ALARM_NSEV + 1
+
+#define NOT_CONNECTED            ALARM_NSTATUS
+#define NO_READ_ACCESS           ALARM_NSTATUS +1
+#define NO_WRITE_ACCESS          ALARM_NSTATUS +2
+#define ALH_ALARM_NSTATUS  ALARM_NSTATUS + 3
+/* ----------------------------------------------------- */
 
 /* size of name */
 #define NAMEDEFAULT_SIZE  150           /* file name size  */

@@ -339,12 +339,12 @@ int alViewMaxSevrNGroupW(GCLINK *linkStart,int n)
 			if (glink->viewCount) {
 				glink->pgroupData->curSevr = alHighestSeverity(glink->pgroupData->curSev);
 				sevr = Mmax(sevr,glink->pgroupData->curSevr);
-				if (sevr >= ALARM_NSEV-1) break;
+				if (sevr >= ALH_ALARM_NSEV-1) break;
 				count++;
 			}
 			glink = (GLINK *)sllNext(glink);
 		}
-		if (sevr >= ALARM_NSEV-1) return(sevr);
+		if (sevr >= ALH_ALARM_NSEV-1) return(sevr);
 		if (glink) {
 			return(sevr);
 		}
@@ -356,7 +356,7 @@ int alViewMaxSevrNGroupW(GCLINK *linkStart,int n)
 			sevr = Mmax(sevr,clink->pchanData->curSevr);
 			count++;
 		}
-		if (sevr >= ALARM_NSEV-1) break;
+		if (sevr >= ALH_ALARM_NSEV-1) break;
 		clink = (CLINK *)sllNext(clink);
 	}
 	return(sevr);
@@ -385,10 +385,10 @@ int alViewMaxSevrNTreeW(GLINK *glinkStart,int n)
 			clink = (CLINK *)sllFirst(&(glink->chanList));
 			while (clink){
 				sevr = Mmax(sevr,clink->pchanData->curSevr);
-				if (sevr >= ALARM_NSEV-1) break;
+				if (sevr >= ALH_ALARM_NSEV-1) break;
 				clink = (CLINK *)sllNext(clink);
 			}
-			if (sevr >= ALARM_NSEV-1) break;
+			if (sevr >= ALH_ALARM_NSEV-1) break;
 			count++;
 			glink = (GLINK *)sllFirst(&glink->subGroupList);
 		}
@@ -396,7 +396,7 @@ int alViewMaxSevrNTreeW(GLINK *glinkStart,int n)
 			if (glink->viewCount)
 				glink->pgroupData->curSevr = alHighestSeverity(glink->pgroupData->curSev);
 			sevr = Mmax(sevr,glink->pgroupData->curSevr);
-			if (sevr >= ALARM_NSEV-1) break;
+			if (sevr >= ALH_ALARM_NSEV-1) break;
 			count += glink->viewCount;
 			pt = sllNext(glink);
 			while (!pt){

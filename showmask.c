@@ -24,6 +24,8 @@ static char *sccsId = "@(#) $Id$";
 #include "alh.h"
 #include "ax.h"
 
+extern int _passive_flag;
+
 static struct forceMaskWindow {
 	void   *area;
 	Widget menuButton;
@@ -402,6 +404,9 @@ ALINK    *area;
 		    XmNmarginHeight,     0,
 		    XmNuserData,         (XtPointer)alarmMaskStringLabelW,
 		    NULL);
+		if (_passive_flag && i == ALARMACKT ) {
+			XtVaSetValues(alarmMaskToggleButtonW[i], XmNsensitive, FALSE, NULL);
+		}
 		XtAddCallback(alarmMaskToggleButtonW[i], XmNvalueChangedCallback,
 		    (XtCallbackProc)forceMaskChangeCallback, (XtPointer)i);
 	}
@@ -491,11 +496,14 @@ static void forceMaskHelpCallback(Widget widget,XtPointer calldata,XtPointer cbs
 	"  \n"
 	"Setting the mask for a group means setting the mask for all channels in the group.\n"
 	"  \n"
+    "\nChanging NoAck Transient Alarm is not allowed when executing in passive state\n "
+	"  \n"
 	"Press the Apply   button to force the mask on the selected channel or on\n"
 	"                  all channels in the selected group.\n"
 	"Press the Reset   button to reset channel mask(s) to their initial values.\n"
 	"Press the Dismiss button to close the Force Mask dialog window.\n"
 	"Press the Help    button to get this help description window.\n"
+    "  \n"
 	;
 	char * message2 = "  ";
 
@@ -531,7 +539,7 @@ static void forceMaskApplyCallback(Widget widget,XtPointer calldata,XtPointer cb
 	alSetMask(buff,&mask);
 	XtFree(buff);
 	if (linkType == CHANNEL) {
-		alOperatorForcePVChanEvent((CLINK *)link,mask);
+		alChangeChanMask((CLINK *)link,mask);
 		alCaFlushIo();
 		alLogForcePVChan((CLINK *)link,OPERATOR);
 		cdata = (struct chanData *)pgcData;
@@ -573,7 +581,7 @@ static void forceMaskResetCallback(Widget widget,XtPointer calldata,XtPointer cb
 
 	if (linkType == CHANNEL) {
 		cdata = (struct chanData *)link->pgcData;
-		alOperatorForcePVChanEvent((CLINK *)link,cdata->defaultMask);
+		alChangeChanMask((CLINK *)link,cdata->defaultMask);
 		alCaFlushIo();
 		alLogResetPVChan((CLINK *)link,OPERATOR);
 		cdata = (struct chanData *)pgcData;

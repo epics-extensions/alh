@@ -12,12 +12,16 @@ static char *sccsId = "@(#) $Id$";
 #include <Xm/MessageB.h>
 #include <Xm/FileSB.h>
 
-#include "alh.h"
-#include "axArea.h"
 #include "ax.h"
+
+extern Display *display;
+extern int _no_error_popup;
+
+static Widget warningbox = NULL;
 
 /* function prototypes */
 static void killWidget(Widget w, XtPointer clientdata, XtPointer calldata);
+static void logMessageString(Widget w, XtPointer clientdata, XtPointer calldata);
 
 
 /******************************************************
@@ -252,14 +256,14 @@ XtCallbackProc okCallback,XtPointer okParm,XtPointer userParm)
 }
 
 /******************************************************
-  Error handler
+  Error message popup
 ******************************************************/
 void errMsg(const char *fmt, ...)
 {
-	Widget warningbox,child;
-	XmString cstring;
+	XmString cstring,cstringOld,cstringNew;
 	va_list vargs;
 	static char lstring[1024];  /* DANGER: Fixed buffer size */
+	static int warningboxMessages = 0;
 	int nargs=10;
 	Arg args[10];
 
@@ -267,7 +271,36 @@ void errMsg(const char *fmt, ...)
 	vsprintf(lstring,fmt,vargs);
 	va_end(vargs);
 
-	if(lstring[0] != '\0') {
+	if(lstring[0] == '\0') return;
+
+	if (_no_error_popup) {
+		alLogOpMod(lstring);
+		return;
+	}
+
+	if (warningbox) {
+
+		if (warningboxMessages > 30) return;
+
+		cstring=XmStringCreateLtoR(lstring,XmSTRING_DEFAULT_CHARSET);
+		XtVaGetValues(warningbox, XmNmessageString, &cstringOld, NULL);
+		cstringNew = XmStringConcat(cstringOld,cstring);
+		XmStringFree(cstring);
+		XmStringFree(cstringOld);
+		if (warningboxMessages == 30){
+			cstring=XmStringCreateLtoR(
+				"\nOnly first 30 messages are displayed and logged\n",
+				XmSTRING_DEFAULT_CHARSET);
+			cstringOld = cstringNew;
+			cstringNew = XmStringConcat(cstringOld,cstring);
+			XmStringFree(cstring);
+			XmStringFree(cstringOld);
+		}
+		XtVaSetValues(warningbox, XmNmessageString, cstringNew, NULL);
+		XmStringFree(cstringNew);
+		warningboxMessages += 1;
+		XtManageChild(warningbox);
+	} else {
 		XBell(display,50); 
 		XBell(display,50); 
 		XBell(display,50);
@@ -280,24 +313,68 @@ void errMsg(const char *fmt, ...)
 		warningbox=XmCreateWarningDialog(topLevelShell,"warningMessage",
 		    args,nargs);
 		XmStringFree(cstring);
-		child=XmMessageBoxGetChild(warningbox,XmDIALOG_CANCEL_BUTTON);
-		XtDestroyWidget(child);
-		child=XmMessageBoxGetChild(warningbox,XmDIALOG_HELP_BUTTON);
-		XtDestroyWidget(child);
-		XtManageChild(warningbox);
+		XtDestroyWidget(XmMessageBoxGetChild(warningbox,XmDIALOG_CANCEL_BUTTON));
+		XtDestroyWidget(XmMessageBoxGetChild(warningbox,XmDIALOG_HELP_BUTTON));
+		XtAddCallback(warningbox,XmNokCallback,logMessageString,NULL);
 		XtAddCallback(warningbox,XmNokCallback,killWidget,NULL);
-#ifdef WIN32
-		lprintf("%s\n",lstring);
-#else
-		fprintf(stderr,"%s\n",lstring);
-#endif
+		warningboxMessages = 1;
+		XtManageChild(warningbox);
 	}
 }
 
 /******************************************************
-  Static callback routine for destorying a widget 
+  Fatal error message popup
+******************************************************/
+void fatalErrMsg(const char *fmt, ...)
+{
+	va_list vargs;
+	static char lstring[1024];  /* DANGER: Fixed buffer size */
+	int nargs=10;
+	Arg args[10];
+
+	va_start(vargs,fmt);
+	vsprintf(lstring,fmt,vargs);
+	va_end(vargs);
+
+	if(lstring[0] == '\0') return;
+
+	errMsg(lstring);
+	if (warningbox) XtAddCallback(warningbox,XmNokCallback,exit_quit,NULL);
+}
+
+/******************************************************
+  Static callback routine for logging a widget's messageString to opMod log file
+******************************************************/
+static void logMessageString(Widget w, XtPointer clientdata, XtPointer calldata)
+{
+	XmString cstring;
+	XmStringContext context;
+	char *lstring;
+	XmStringCharSet tag;
+	XmStringDirection direction;
+	Boolean separator;
+
+	XtVaGetValues(w, XmNmessageString, &cstring, NULL);
+	if (!XmStringInitContext(&context,cstring)) {
+		XmStringFree(cstring);
+		return;
+	}
+
+	while (XmStringGetNextSegment(context,&lstring,&tag,&direction,&separator)){
+		alLogOpMod(lstring);
+		XtFree(lstring);
+	}
+	XmStringFree(cstring);
+	XmStringFreeContext(context);
+}
+
+/******************************************************
+  Static callback routine for destroying a widget 
 ******************************************************/
 static void killWidget(Widget w, XtPointer clientdata, XtPointer calldata)
 {
 	XtDestroyWidget(w);
+	if (w == warningbox) {
+		warningbox = NULL;
+	}
 }

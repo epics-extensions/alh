@@ -20,8 +20,8 @@ static char *sccsId = "@(#) $Id$";
 #include "ax.h"
 
 /* global variables */
-extern char * alarmSeverityString[];
-extern char * alarmStatusString[];
+extern char * alhAlarmSeverityString[];
+extern char * alhAlarmStatusString[];
 
 static char buff[LINEMESSAGE_SIZE];
 
@@ -64,27 +64,25 @@ void awUpdateChanLine(struct anyLine *chanLine)
 	cdata = clink->pchanData;
 	chanLine->unackSevr = cdata->unackSevr;
 	chanLine->curSevr = cdata->curSevr;
-	chanLine->unackStat = cdata->unackStat;
 	chanLine->curStat = cdata->curStat;
-	if (cdata->curMask.Disable == MASK_ON)
+	if (cdata->curMask.Disable == MASK_ON || cdata->curMask.Cancel == MASK_ON)
 		chanLine->curSevr = 0;
 	alGetMaskString(cdata->curMask,buff);
 	sprintf(chanLine->mask,"<%s>",buff);
 
 	strcpy(chanLine->message," ");
-	if (cdata->curMask.Disable ) return;
+	if (cdata->curMask.Disable || cdata->curMask.Cancel) return;
 
 	if (cdata->curSevr == 0 && cdata->unackSevr == 0) return;
 
 	sprintf(chanLine->message,"<%s,%s>",
-	    alarmStatusString[cdata->curStat],
-	    alarmSeverityString[cdata->curSevr]);
+	    alhAlarmStatusString[cdata->curStat],
+	    alhAlarmSeverityString[cdata->curSevr]);
 
 	if (cdata->unackSevr == 0) return;
 
-	sprintf(buff,",<%s,%s>",
-	    alarmStatusString[cdata->unackStat],
-	    alarmSeverityString[cdata->unackSevr]);
+	sprintf(buff,",<%s>",
+	    alhAlarmSeverityString[cdata->unackSevr]);
 	strcat(chanLine->message,buff);
 }
 
@@ -102,8 +100,9 @@ void awUpdateGroupLine(struct anyLine *groupLine)
 	gdata = glink->pgroupData;
 	awGetMaskString(gdata->mask,buff);
 	sprintf(groupLine->mask,"<%s>",buff);
-	for (i=0;i<ALARM_NSEV;i++)
+	for (i=0;i<ALH_ALARM_NSEV;i++){
 		groupLine->curSev[i] = gdata->curSev[i];
+	}
 	groupLine->unackSevr = alHighestSeverity(gdata->unackSev);
 	groupLine->curSevr = alHighestSeverity(gdata->curSev);
 
@@ -111,9 +110,11 @@ void awUpdateGroupLine(struct anyLine *groupLine)
 	if (groupLine->unackSevr == 0 && alHighestSeverity(gdata->curSev) == 0)
 		return;
 
-	sprintf(groupLine->message,"(%d,%d,%d,%d)",
+	sprintf(groupLine->message,"(%d,%d,%d,%d,%d)",
+	    gdata->curSev[ERROR_STATE],
 	    gdata->curSev[INVALID_ALARM],
-	    gdata->curSev[MAJOR_ALARM],gdata->curSev[MINOR_ALARM],
+	    gdata->curSev[MAJOR_ALARM],
+	    gdata->curSev[MINOR_ALARM],
 	    gdata->curSev[NO_ALARM]);
 }
 

@@ -18,6 +18,13 @@ static char *axhsccsId = "@(#) $Id$";
 #include "axArea.h"
 
 /********************************************************************
+  alarm.c   function prototypes
+*********************************************************************/
+
+void alhAlarmStringInit();
+
+
+/********************************************************************
   axArea.c   function prototypes
 *********************************************************************/
 
@@ -90,12 +97,13 @@ void createDialog( Widget parent, int dialogType, char *message1, char *message2
 void createActionDialog( Widget parent, int dialogType, String message1,
 XtCallbackProc okCallback, XtPointer okParm, XtPointer userParm);
 void errMsg(const char *fmt, ...);
+void fatalErrMsg(const char *fmt, ...);
 
 /********************************************************************
   file.c   function prototypes
 *********************************************************************/
 
-void exit_quit( Widget w, ALINK *area, XmAnyCallbackStruct *call_data);
+void exit_quit(Widget w, XtPointer clientdata, XtPointer calldata);
 void fileSetupCallback( Widget widget, int client_data, XmFileSelectionBoxCallbackStruct *cbs);
 void fileCancelCallback( Widget widget, ALINK *area, XmFileSelectionBoxCallbackStruct *cbs);
 void fileSetupInit(Widget widget,int argc,char *argv[]);
@@ -180,11 +188,9 @@ CLINK *alCreateChannel();
 void alSetMask( char *s4, MASK *mask);
 void alGetMaskString( MASK mask, char *s);
 void alNewAlarm( int stat, int sev, char *value, CLINK *clink);
-void alNewEvent(int stat,int sevr,int acks,char *value,CLINK *clink);
+void alNewEvent(int stat,int sevr,int acks,int ackt,char *value,CLINK *clink);
 void alHighestSystemSeverity(GLINK * glink);
-int alHighestSeverity( short sevr[ALARM_NSEV]);
-void alAckChan( CLINK *clink);
-void alAckGroup( GLINK *glink);
+int alHighestSeverity( short sevr[ALH_ALARM_NSEV]);
 void alForceChanMask( CLINK *clink, int index, int op);
 void alForceGroupMask( GLINK *glink, int index, int op);
 void alChangeChanMask( CLINK *clink, MASK mask);
@@ -192,29 +198,33 @@ void alChangeGroupMask( GLINK *glink, MASK mask);
 void alResetGroupMask( GLINK *glink);
 char *alAlarmGroupName( GLINK *link);
 int alProcessExists( GCLINK *link);
+void alSetUnackSevChan(CLINK *clink,int newSevr);
 
 /********************************************************************
   alLog.c   function prototypes
 *********************************************************************/
 
 void alLogAlarm( time_t *ptimeofdayAlarm, struct chanData *cdata, int stat,
-int sev, int h_unackStat, int h_unackSevr);
+int sev, int acks, int ackt);
 void alLogConnection(const char *pvname,const char *ind);
-void alLogGblAckChan( struct chanData *cdata);
 void alLogAckChan( struct anyLine *line);
 void alLogAckGroup( struct anyLine *line);
-void alLogChanChangeMasks( CLINK *clink, int maskno, int maskid);
+void alLogChangeChanMasks( CLINK *clink, int maskno, int maskid);
+void alLogChangeGroupMasks( GLINK *glink, int maskno, int maskid);
 void alLogForcePVGroup( GLINK *glink, int ind);
 void alLogResetPVGroup( GLINK *glink, int ind);
 void alLogForcePVChan( CLINK *clink, int ind);
 void alLogResetPVChan( CLINK *clink, int ind);
 void alLogOpMod(char *);
 void alLogExit(void);
-void alLogChangeGroupMasks( GLINK *glink, int maskno, int maskid);
 void alLogSetupConfigFile( char *filename);
 void alLogSetupAlarmFile( char *filename);
 void alLogSetupOpmodFile( char *filename);
 void alLogSetupSaveConfigFile( char *filename);
+void alLog2DBAckChan (char *name);
+void alLogNotSaveStart(int not_save_time);
+void alLogNotSaveFinish();
+void alLog2DBMask (char *name);
 
 #ifdef CMLOG
 void alConnect(void);
@@ -299,7 +309,6 @@ void forceMaskUpdateDialog(ALINK *area);
 
 void forcePVShowDialog(ALINK *area,Widget menuButton);
 void forcePVUpdateDialog(ALINK *area);
-void alOperatorForcePVChanEvent( CLINK *clink, MASK pvMask);
 
 /********************************************************************
   alCA.c   function prototypes
@@ -320,6 +329,7 @@ void alCaAddEvent(chid chid,evid *pevid,void *clink);
 void alCaAddForcePVEvent(chid chid,void *link,evid *pevid,int type);
 void alCaPutGblAck(chid chid,short *psevr);
 void alCaPutSevrValue(chid chid,short *psevr);
+void alCaPutGblAckT(chid chid, short *pstate);
 
 /********************************************************************
   alTest.c   function prototypes

@@ -15,7 +15,14 @@ program DB_PORT {
 /* #define PERL_CALL */
 
 #include <stdio.h>
-#include <sys/msg.h> 
+#include <stdlib.h>
+#include <string.h>
+#ifdef WIN32
+#include <process.h>
+#else
+#include <unistd.h>
+#include <sys/msg.h>
+#endif
 #include <errno.h>
 
 #ifdef  PERL_CALL
@@ -44,6 +51,7 @@ static struct timeval TIMEOUT = { 10, 0 };
 
 #define DEBUG 1
 
+int put2RPC(char *host ,int port,char *msg,int len);
 
 char msg[250];
 

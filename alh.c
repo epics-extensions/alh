@@ -28,10 +28,6 @@ extern XtAppContext appContext;
 extern Display *display;
 XFontStruct *font_info;
 
-/* externals */
-extern Widget createAndPopupProductDescriptionShell();
-
-
 /******************************************************
   main
 ******************************************************/
@@ -61,11 +57,14 @@ void main(int argc,char *argv[])
 	/* load fixed font */
 	font_info = XLoadQueryFont(display,"fixed");
 
-	/* setup area and configuration */
-	fileSetupInit(topLevelShell,argc,argv);
+	/* initialize alh status and severity values */
+	alhAlarmStringInit();
 
 	sprintf(alhVersionString,"ALH Version %d.%d.%d  (%s)",
 	    ALH_VERSION,ALH_REVISION,ALH_MODIFICATION,EPICS_VERSION_STRING);
+
+	/* setup area and configuration */
+	fileSetupInit(topLevelShell,argc,argv);
 
 	/* display alh credits window */
 #if  IWantGreetings
@@ -83,3 +82,4 @@ void main(int argc,char *argv[])
 	/* Start main loop */
 	XtAppMainLoop(appContext);
 }
+

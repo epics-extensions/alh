@@ -15,7 +15,6 @@ static char *sccsId = "@(#) $Id$";
 #include "alLib.h"
 #include "alh.h"
 #include "ax.h"
-#include "alarmString.h"
 
 #ifndef TRUE
 #define TRUE 1
@@ -31,13 +30,19 @@ static char *sccsId = "@(#) $Id$";
 
 /* ALARM_ANY must not be equal to any valid alarm severity value */
 #ifndef ALARM_ANY
-#define ALARM_ANY ALARM_NSEV 
+#define ALARM_ANY ALH_ALARM_NSEV 
 #endif
 /* UP_ALARM must not be equal to any valid alarm severity value */
 #ifndef UP_ALARM
 #define UP_ALARM ALARM_ANY + 1
 #endif
 
+extern char * alhAlarmStatusString[];
+extern char * alhAlarmSeverityString[];
+
+extern int _global_flag;
+extern int _passive_flag;
+extern int _transients_flag;
 extern int DEBUG;
 extern int _DB_call_flag;
 char applicationName[64];  /* Albert1 applicationName = mainGroupName will be send to DB */
@@ -56,7 +61,7 @@ struct sevrCommand {
 struct statCommand {
 	ELLNODE node;       /* double link list node type */
 	int stat;            /* alarm status value*/
-	char *alarmStatusString;        /* alarmStatusString text address */
+	char *alhAlarmStatusString;        /* alarmStatusString text address */
 	char *command;      /* command text address */
 };
 
@@ -78,7 +83,7 @@ static void alConfigTreePrint( FILE *fw, GLINK *glink, char  *treeSym);
 *******************************************************/
 static void print_error(char *buf,char *message)
 {
-	printf("%sError in previous line: %s\n",buf,message);
+	errMsg("Input error: %s: %s\n",message,buf);
 }
 
 /*******************************************************************
@@ -135,8 +140,8 @@ int caConnect)
 		}
 		else if(buf[first_char]=='#') {
 		}
-		else if(first_char){
-			printf("Illegal line: %s\n",buf);
+		else {
+			print_error(buf,"Invalid input line");
 		}
 	}
 
@@ -165,7 +170,7 @@ struct mainGroup *pmainGroup)
 	rtn = sscanf(buf,"%20s%32s%32s",command,parent,name);
 
 	if(rtn!=3) {
-		print_error(buf,"Illegal Group command");
+		print_error(buf,"Invalid GROUP command");
 		return;
 	}
 
@@ -200,7 +205,7 @@ struct mainGroup *pmainGroup)
 		parent_link = parent_link->parent;
 
 	if(parent_link==NULL) {
-		print_error(buf,"can not find parent");
+		print_error(buf,"Can not find parent");
 		return;
 	}
 
@@ -231,7 +236,7 @@ struct mainGroup *pmainGroup)
 	rtn = sscanf(buf,"%20s%32s%s",command,parent,name);
 
 	if(rtn!=3) {
-		print_error(buf,"Illegal Include command");
+		print_error(buf,"Invalid INCLUDE command");
 		return;
 	}
 
@@ -249,7 +254,7 @@ struct mainGroup *pmainGroup)
 	alGetConfig(pmainGroup,filename,caConnect);
 
 	if ( !pmainGroup->p1stgroup) {
-		print_error(buf,"Ignoring Invalid Include file");
+		print_error(buf,"Ignoring Invalid INCLUDE file");
 		return;
 	}
 	glink = pmainGroup->p1stgroup;
@@ -275,7 +280,7 @@ struct mainGroup *pmainGroup)
 		parent_link = parent_link->parent;
 
 	if(parent_link==NULL) {
-		print_error(buf,"can not find parent");
+		print_error(buf,"Can not find parent");
 		return;
 	}
 
@@ -313,7 +318,7 @@ int caConnect,struct mainGroup *pmainGroup)
 	if (strcmp (token[0], "CDEV") == 0)
 	{
 		if (rtn < 4) {
-			print_error(buf,"Illegal CDEV command");
+			print_error(buf,"Invalid CDEV command");
 			return;
 		}
 
@@ -327,7 +332,7 @@ int caConnect,struct mainGroup *pmainGroup)
 	else	
 	{
 		if (rtn<3) {
-			print_error(buf,"Illegal CHANNEL command");
+			print_error(buf,"Invalid CHANNEL command");
 			return;
 		}
 
@@ -341,6 +346,7 @@ int caConnect,struct mainGroup *pmainGroup)
 	cdata = clink->pchanData;
 	strncpy(cdata->name,name,PVNAME_SIZE);
 
+
 	if (mask[0]) {
 		alSetMask(mask,&(cdata->defaultMask));
 		alChangeChanMask(clink,cdata->defaultMask);
@@ -352,7 +358,7 @@ int caConnect,struct mainGroup *pmainGroup)
 		parent_link = parent_link->parent;
 
 	if(parent_link==NULL) {
-		print_error(buf,"can not find parent");
+		print_error(buf,"Can not find parent");
 		return;
 	}
 
@@ -361,8 +367,10 @@ int caConnect,struct mainGroup *pmainGroup)
 	*pglink = clink->parent;
 	*pclink = clink;
 
+	cdata->curSevr=ERROR_STATE;
+	cdata->curStat=NOT_CONNECTED;
 	while(parent_link!=NULL) {
-		parent_link->pgroupData->curSev[NO_ALARM] ++;
+		parent_link->pgroupData->curSev[ERROR_STATE] ++;
 		parent_link->pgroupData->unackSev[NO_ALARM] ++;
 		parent_link = parent_link->parent;
 	}
@@ -370,6 +378,11 @@ int caConnect,struct mainGroup *pmainGroup)
 	if (caConnect && strlen(cdata->name) > (size_t) 1) {
 		alCaConnectChannel(cdata->name,&cdata->chid,clink);
 		alCaAddEvent(cdata->chid,&cdata->evid,clink);
+		if (_transients_flag && _global_flag && !_passive_flag){
+			/* NOTE: ackt and curMask.AckT have opposite meaning */
+			short ackt = (cdata->curMask.AckT+1)%2;
+			alCaPutGblAckT(cdata->chid,&ackt);
+		}
 	}
 
 }
@@ -396,9 +409,9 @@ int context,int caConnect)
 		sscanf(buf,"%20s",command);
 		len = strlen(command);
 		while( buf[len] == ' ' || buf[len] == '\t') len++;
-		for (i=1; i<ALARM_NSEV; i++) {
-			if (strncmp(&buf[len],alarmSeverityString[i],
-			    strlen(alarmSeverityString[i]))==0){
+		for (i=1; i<ALH_ALARM_NSEV; i++) {
+			if (strncmp(&buf[len],alhAlarmSeverityString[i],
+			    strlen(alhAlarmSeverityString[i]))==0){
 				psetup.beepSevr = i;
 			}
 		}
@@ -566,7 +579,7 @@ int context,int caConnect)
 					    strncmp("$End",&buf[first_char],4) == 0)
 						return;
 					else {
-						print_error(buf,"Illegal End");
+						print_error(buf,"Invalid End");
 						return;
 					}
 				}
@@ -580,7 +593,7 @@ int context,int caConnect)
 
 		return;
 	}
-	print_error(buf,"Illegal Optional Line");
+	print_error(buf,"Invalid Optional Line");
 }
 
 /*******************************************************************
@@ -592,7 +605,7 @@ void alWriteConfig(char *filename,struct mainGroup *pmainGroup)
 	fw = fopen(filename,"w");
 	if (!fw) return;
 	if (psetup.beepSevr != 1)
-		fprintf(fw,"$BEEPSEVERITY  %s\n",alarmSeverityString[psetup.beepSevr]);
+		fprintf(fw,"$BEEPSEVERITY  %s\n",alhAlarmSeverityString[psetup.beepSevr]);
 	alWriteGroupConfig(fw,(SLIST *)&(pmainGroup->p1stgroup));
 	fclose(fw);
 }
@@ -713,7 +726,7 @@ static void alWriteGroupConfig(FILE * fw,SLIST *pgroup)
 
 			statCommand=(struct statCommand *)ellFirst(&cdata->statCommandList);
 			while (statCommand) {
-				fprintf(fw,"$STATCOMMAND  %s\n",statCommand->alarmStatusString);
+				fprintf(fw,"$STATCOMMAND  %s\n",statCommand->alhAlarmStatusString);
 				statCommand=(struct statCommand *)ellNext((void *)statCommand);
 			}
 			cpt = sllNext(cpt);
@@ -874,9 +887,9 @@ void addNewSevrCommand(ELLLIST *pList,char *str)
 		sevrCommand->direction = UP;
 		len = 3;
 	}
-	for (i=0; i<ALARM_NSEV; i++) {
-		if (strncmp(&str[len],alarmSeverityString[i],
-		    strlen(alarmSeverityString[i]))==0) break;
+	for (i=0; i<ALH_ALARM_NSEV; i++) {
+		if (strncmp(&str[len],alhAlarmSeverityString[i],
+		    strlen(alhAlarmSeverityString[i]))==0) break;
 	}
 	if (strncmp(&str[len],"ALARM",5)==0) sevrCommand->sev = UP_ALARM;
 	else sevrCommand->sev = i;
@@ -988,13 +1001,13 @@ void addNewStatCommand(ELLLIST *pList,char *str)
 	int i=0;
 
 	statCommand = (struct statCommand *)calloc(1, sizeof(struct statCommand));
-	statCommand->alarmStatusString = str;
+	statCommand->alhAlarmStatusString = str;
 	while( str[len] != ' ' && str[len] != '\t' && str[len] != '\0') len++;
 	while( str[len] == ' ' || str[len] == '\t') len++;
 	statCommand->command = &str[len];
-	for (i=0; i<ALARM_NSTATUS; i++) {
-		if (strncmp(str,alarmStatusString[i],
-		    strlen(alarmStatusString[i]))==0) break;
+	for (i=0; i<ALH_ALARM_NSTATUS; i++) {
+		if (strncmp(str,alhAlarmStatusString[i],
+		    strlen(alhAlarmStatusString[i]))==0) break;
 	}
 	statCommand->stat = i;
 	ellAdd(pList,(void *)statCommand);
@@ -1014,7 +1027,7 @@ void removeStatCommandList(ELLLIST *pList)
 		statCommand=(struct statCommand *)pt;
 		ellDelete(pList,pt);
 		pt=ellNext(pt);
-		free(statCommand->alarmStatusString);
+		free(statCommand->alhAlarmStatusString);
 		/* ?????????
 		       free(statCommand->command);
 		       */
@@ -1032,9 +1045,9 @@ void copyStatCommandList(ELLLIST *pListOld,ELLLIST *pListNew)
 	ptOld=(struct statCommand *)ellFirst(pListOld);
 	while (ptOld) {
 		ptNew = (struct statCommand *)calloc(1, sizeof(struct statCommand));
-		ptNew->alarmStatusString = (char *)calloc(1,strlen(ptOld->alarmStatusString)+1);
-		strcpy(ptNew->alarmStatusString,ptOld->alarmStatusString);
-		ptNew->command =  ptNew->alarmStatusString + (ptOld->command - ptOld->alarmStatusString);
+		ptNew->alhAlarmStatusString = (char *)calloc(1,strlen(ptOld->alhAlarmStatusString)+1);
+		strcpy(ptNew->alhAlarmStatusString,ptOld->alhAlarmStatusString);
+		ptNew->command =  ptNew->alhAlarmStatusString + (ptOld->command - ptOld->alhAlarmStatusString);
 		ptNew->stat = ptOld->stat;
 		ellAdd(pListNew,(void *)ptNew);
 		ptOld=(struct statCommand *)ellNext((void *)ptOld);
@@ -1072,7 +1085,7 @@ void getStringStatCommandList(ELLLIST *pList,char **pstr)
 	i=0;
 	while (pt) {
 		statCommand = (struct statCommand *)pt;
-		i += strlen(statCommand->alarmStatusString);
+		i += strlen(statCommand->alhAlarmStatusString);
 		i += 1;
 		pt = ellNext(pt);
 	}
@@ -1081,7 +1094,7 @@ void getStringStatCommandList(ELLLIST *pList,char **pstr)
 	i=0;
 	while (pt) {
 		statCommand = (struct statCommand *)pt;
-		strcat(str,statCommand->alarmStatusString);
+		strcat(str,statCommand->alhAlarmStatusString);
 		pt = ellNext(pt);
 		if (pt) strcat(str,"\n");
 		i++;

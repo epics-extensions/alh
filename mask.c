@@ -24,6 +24,8 @@ static char *sccsId = "@(#) $Id$";
 #include "alh.h"
 #include "ax.h"
 
+extern int _passive_flag;
+
 typedef struct {
 	char *label;
 	int index;
@@ -166,7 +168,7 @@ static void maskCreateDialog(ALINK *area)
 		         { "Add/Cancel Alarms",         {{"Add",    0},{"Cancel",  1},{"Reset", 2}}},
 		         { "Enable/Disable Alarms",     {{"Enable",10},{"Disable",11},{"Reset",12}}},
 		         { "Ack/NoAck Alarms",          {{"Ack",   20},{"NoAck",  21},{"Reset",22}}},
-		         { "Ack/NoAck Transient Alarms",{{"Ack",   30},{"NoAck",  31},{"Reset",32}}},
+		         { "Ack/NoAck Transient Alarms",{{"AckT",  30},{"NoAckT", 31},{"Reset",32}}},
 		         { "Log/NoLog Alarms",          {{"Log",   40},{"NoLog",  41},{"Reset",42}}},
 		     	};
 	int num_buttons = 3;
@@ -263,10 +265,12 @@ static void maskCreateDialog(ALINK *area)
 			XtAddCallback(pushButtonW, XmNactivateCallback,
 			    (XtCallbackProc)maskActivateCallback,
 			    (XtPointer)maskItem[i].choice[j].index);
+			if (_passive_flag && i == ALARMACKT ) { /* ACKT */
+				XtVaSetValues(pushButtonW, XmNsensitive, FALSE, NULL);
+			}
 		}
 		prev=labelW;
 	}
-
 
 	XtManageChild(form);
 
@@ -298,6 +302,9 @@ static void maskHelpCallback(Widget widget,XtPointer calldata,XtPointer cbs)
 	" means changing the mask field\n"
 	"value for all channels in the group.\n"
 	"  \n"
+	"Changing Ack/NoAck Transient Alarms is "
+	"not allowed when executing in passive state "
+	"  \n\n"
 	"Press the Dismiss button to close the"
 	" Modify Mask Settings dialog window.\n"
 	"Press the Help    button to get this help description window.\n"
@@ -352,7 +359,7 @@ XtPointer cbs)
 			alLogChangeGroupMasks(link,maskno,maskid);
 		} else {
 			alForceChanMask(link,maskid,maskno);
-			alLogChanChangeMasks(link,maskno,maskid);
+			alLogChangeChanMasks(link,maskno,maskid);
 		}
 		silenceCurrentReset(area);
 	} else {

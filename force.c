@@ -29,7 +29,7 @@ static char *sccsId = "@(#) $Id$";
 #include "ax.h"
 
 /* global variables */
-extern Pixel bg_pixel[ALARM_NSEV];
+extern Pixel bg_pixel[ALH_ALARM_NSEV];
 
 struct forcePVWindow {
 	void *area;
@@ -654,23 +654,5 @@ XtPointer cbs)
 {
 	struct forcePVWindow *forcePVWindow= (struct forcePVWindow *)calldata;
 	forcePVUpdateDialog((ALINK *)(forcePVWindow->area));
-}
-
-/******************************************************
-  alOperatorForcePVChanEvent
-******************************************************/
-void alOperatorForcePVChanEvent(CLINK *clink,MASK pvMask)
-{
-	struct chanData *cdata;
-	char s1[6],s2[6];
-
-	cdata = clink->pchanData;
-
-	alGetMaskString(cdata->curMask,s1);
-	alGetMaskString(pvMask,s2);
-
-	if (strcmp(s1,s2) != 0) {
-		alChangeChanMask(clink,pvMask);
-	}
 }
 

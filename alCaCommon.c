@@ -222,7 +222,6 @@ void alSetNotConnected(SLIST *proot)
 	GCLINK *gclink;
 	struct gcData *gcdata;
 	int type;
-	char buff[81];
 
 	if (!proot) return;
 	if (!toBeConnectedCount) return;
@@ -231,16 +230,16 @@ void alSetNotConnected(SLIST *proot)
 	while (gclink) {
 		gcdata = gclink->pgcData;
 		if ( gcdata->forcechid && !alCaIsConnected(gcdata->forcechid) ) {
-			sprintf(buff, "%s--(%s)", gcdata->name, gcdata->forcePVName);
-			alLogConnection(buff, "Not Connected (Force    PVName)");
+			errMsg("Force PV %s for %s Not Connected\n",
+				gcdata->forcePVName, gcdata->name);
 		}
 		if (gcdata->sevrchid && !alCaIsConnected(gcdata->sevrchid) ) {
-			sprintf(buff, "%s--(%s)", gcdata->name, gcdata->sevrPVName);
-			alLogConnection(buff, "Not Connected (Sevr     PVName)");
+			errMsg("Severity PV %s for %s Not Connected\n",
+				gcdata->sevrPVName, gcdata->name);
 		}
 		if (type == CHANNEL && ((struct chanData *)gcdata)->chid &&
 		    !alCaIsConnected(((struct chanData *)gcdata)->chid)) {
-			alNewAlarm(COMM_ALARM,INVALID_ALARM,"0",(CLINK *)gclink);
+			alNewEvent(NOT_CONNECTED,ERROR_STATE,0,1,"",(CLINK *)gclink);
 		}
 		gclink = nextGroupChannel(gclink,&type);
 	}
@@ -258,12 +257,12 @@ void alChannelForceEvent(CLINK *clink,short value)
 
 	cdata->PVValue = value;
 	if (value == cdata->forcePVValue) {
-		alOperatorForcePVChanEvent(clink, cdata->forcePVMask);
+		alChangeChanMask(clink, cdata->forcePVMask);
 		alCaFlushIo();
 		alLogForcePVChan(clink, AUTOMATIC);
 	}
 	if (value == cdata->resetPVValue) {
-		alOperatorForcePVChanEvent(clink, cdata->defaultMask);
+		alChangeChanMask(clink, cdata->defaultMask);
 		alCaFlushIo();
 		alLogResetPVChan(clink, AUTOMATIC);
 	}
@@ -325,7 +324,7 @@ void registerCA(void *dummy, int fd, int opened)
 		while(cur) {
 			if(cur->fd == fd) {
 				errMsg("Tried to add a second callback "
-				    "for file descriptor %d",fd);
+				    "for file descriptor %d\n",fd);
 				return;
 			}
 			cur=cur->prev;
@@ -334,7 +333,7 @@ void registerCA(void *dummy, int fd, int opened)
 		cur=(struct FDLIST *)calloc(1,sizeof(struct FDLIST));
 		if(cur == NULL) {
 			errMsg("Could not allocate space to keep track of "
-			    "file descriptor %d",fd);
+			    "file descriptor %d\n",fd);
 			return;
 		}
 		cur->prev=lastFdInList;
@@ -361,7 +360,7 @@ void registerCA(void *dummy, int fd, int opened)
 			else next->prev=cur->prev;
 			free(cur);
 		} else {
-			errMsg("Error removing callback for file descriptor %d",fd);
+			errMsg("Error removing callback for file descriptor %d\n",fd);
 		}
 	}
 }

@@ -9,14 +9,14 @@ static char *sccsId = "@(#) $Id$";
 #include <stdio.h>
 #include <signal.h>
 #include <errno.h>
-#include <sys/msg.h>  
-#include <pwd.h>
 
 #ifndef WIN32
 /* WIN32 does not have dirent.h used by opendir, closedir */
+#include <sys/msg.h>  
+#include <sys/stat.h>  
+#include <pwd.h>
 #include <unistd.h>  
 #include <dirent.h>
-#include <sys/msg.h>  
 #include <fcntl.h>
 #else
 #include <process.h>
@@ -26,6 +26,7 @@ static char *sccsId = "@(#) $Id$";
 #include <Xm/Xm.h>
 
 #include "alh.h"
+#include "version.h"
 #include "alLib.h"
 #include "axArea.h"
 #include "ax.h"
@@ -43,6 +44,11 @@ char *displayName;
 };
 
 struct UserInfo userID; 
+
+int _no_error_popup=0;       /* No popup window. Error messages logged to opMod  file. */
+
+int _global_flag=0;          /* Global execution mode. */
+int _transients_flag=0;      /* Do ca_put of config file value for ackt */
 
 int _read_only_flag=0;       /* Read-only flag.          Albert    */
 int _passive_flag=0;         /* Passive flag.            Albert    */
@@ -81,6 +87,7 @@ extern Widget blinkToplevel;     /* for locking status marking                */
 char masterStr[64],slaveStr[64]; /* titles of Master/Slave +- printer/database*/
 XtIntervalId lockTimeoutId=NULL;   
 extern XFontStruct *font_info;
+extern char alhVersionString[60];
  
 #ifdef CMLOG
 				/* CMLOG flags & variables */
@@ -128,6 +135,10 @@ static struct command_line_data commandLine = {
 #define PARM_HELP			15
 #define PARM_ALARM_LOG_CMLOG		16
 #define PARM_OPMOD_LOG_CMLOG		17
+#define PARM_GLOBAL			18
+#define PARM_CAPUT_ACK_TRANSIENTS	19
+#define PARM_VERSION			20
+#define PARM_NO_ERROR_POPUP		21
 
 struct parm_data
 {
@@ -138,27 +149,34 @@ struct parm_data
 
 /* order of elements matters: long before short to prevent ambiguity */
 static struct parm_data ptable[] = {
-		{ "-v",		2,	PARM_DEBUG },
-		{ "-c",		2,	PARM_ACT },
-		{ "-f",		2,	PARM_ALL_FILES_DIR },
-		{ "-l",		2,	PARM_LOG_DIR },
+		{ "-a",		2,	PARM_ALARM_LOG_FILE },
 #ifdef CMLOG
 		{ "-aCM",	4,	PARM_ALARM_LOG_CMLOG },
+#endif
+ 		{ "-B",		2,	PARM_MESSAGE_BROADCAST }, /* Albert */
+		{ "-c",		2,	PARM_ACT },
+ 		{ "-caputackt",	2,	PARM_CAPUT_ACK_TRANSIENTS },
+		{ "-D",		2,	PARM_READONLY },
+		{ "-debug",	2,	PARM_DEBUG },
+		{ "-f",		2,	PARM_ALL_FILES_DIR },
+ 		{ "-global",	2,	PARM_GLOBAL },
+		{ "-help",	5,	PARM_HELP },
+		{ "-L",		2,	PARM_LOCK },     /* Albert */
+		{ "-l",		2,	PARM_LOG_DIR },
+		{ "-m",		2,	PARM_ALARM_LOG_MAX },
+		{ "-noerrorpopup",	2,	PARM_NO_ERROR_POPUP },
+              	{ "-O",		2,	PARM_DATABASE }, /* Albert */
+		{ "-o",		2,	PARM_OPMOD_LOG_FILE },
+#ifdef CMLOG
 		{ "-oCM",	4,	PARM_OPMOD_LOG_CMLOG },
 #endif
-		{ "-a",		2,	PARM_ALARM_LOG_FILE },
-		{ "-o",		2,	PARM_OPMOD_LOG_FILE },
-		{ "-m",		2,	PARM_ALARM_LOG_MAX },
-              	{ "-O",		2,	PARM_DATABASE }, /* Albert */
 		{ "-P",		2,	PARM_PRINTER },
-		{ "-T",		2,	PARM_DATED },
 		{ "-S",		2,	PARM_PASSIVE },
 		{ "-s",		2,	PARM_SILENT },
-		{ "-D",		2,	PARM_READONLY },
-		{ "-L",		2,	PARM_LOCK },     /* Albert */
- 		{ "-B",		2,	PARM_MESSAGE_BROADCAST }, /* Albert */
-		{ "-help",	5,	PARM_HELP },
-	        { NULL,		-1,     -1 }};
+		{ "-T",		2,	PARM_DATED },
+		{ "-v",		2,	PARM_VERSION },
+		{ "-version",	2,	PARM_VERSION },
+ 		{ NULL,		-1,     -1 }};
 
 /* forward declarations */
 static void saveConfigFile_callback(Widget widget,char *filename,
@@ -168,12 +186,14 @@ static void fileSetup(char *filename,ALINK *area,int fileType,int programId,
 Widget widget);
 static int checkFilename(char *filename,int fileType);
 static int getCommandLineParms(int argc, char** argv);
+int getUserInfo();
 
 /***************************************************
  exit and quit application
 ***************************************************/
-void exit_quit(Widget w,ALINK *area,XmAnyCallbackStruct *call_data)
+void exit_quit(Widget w, XtPointer clientdata, XtPointer calldata)
 {
+	ALINK *area = (ALINK *)clientdata;
 	GLINK *proot=0;
 	if(_message_broadcast_flag && amIsender) {
         createDialog(blinkToplevel,XmDIALOG_MESSAGE,
@@ -459,7 +479,8 @@ int programId,Widget widget)
 			break;
 
 		case 4:
-			createDialog(fileSelectionBox,XmDIALOG_ERROR,filename," write error.");
+			/*createDialog(fileSelectionBox,XmDIALOG_ERROR,filename," write error.");*/
+			fatalErrMsg("Write error for file %s.\n",filename);
 			break;
 		default:
 			break;
@@ -484,11 +505,13 @@ int programId,Widget widget)
 				exit(1);
 			      }
                               fclose(fp);     
+#ifndef WIN32
 			    if((lockFileDeskriptor=open(lockFileName,O_RDWR,0644)) == 0)
 			      { 
 				perror("Can't open locking file for rw");
 				exit(1);
 			      }
+#endif
 			    if (DEBUG) fprintf(stderr,"INIT: deskriptor for %s=%d\n",
 					       lockFileName,lockFileDeskriptor);
                             strcpy(masterStr,"Master");
@@ -523,12 +546,14 @@ int programId,Widget widget)
 			      }
                               fclose(fpL);
 			      fclose(fpI);
+#ifndef WIN32
 			    if((messBroadcastDeskriptor=
 				open(messBroadcastLockFileName,O_RDWR,0644)) == 0)
 			      { 
 				perror("Can't open messBroadcast file for rw");
 				exit(1);
 			      }
+#endif
 			    if (DEBUG) fprintf(stderr,"INIT: deskriptor for %s=%d\n",
 					  messBroadcastLockFileName,messBroadcastDeskriptor);
                           broadcastMessTesting(widget);
@@ -794,7 +819,7 @@ static int getCommandLineParms(int argc, char** argv)
 					finished=1;
 					break;
 				case PARM_PASSIVE:
-					_read_only_flag=1; /* Passive-option. Albert */
+					/*_read_only_flag=1;*/ /* Passive-option. Albert */
 					_passive_flag=1;
 					finished=1;
 					break;
@@ -824,9 +849,25 @@ static int getCommandLineParms(int argc, char** argv)
 					_message_broadcast_flag=1;/* Mess. Broadcast Albert */
 					finished=1;
 					break;
+				case PARM_NO_ERROR_POPUP:
+					_no_error_popup=1;
+					finished=1;
+					break;
+				case PARM_GLOBAL:
+					_global_flag=1;
+					finished=1;
+					break;
+				case PARM_CAPUT_ACK_TRANSIENTS:
+					_transients_flag=1;
+					finished=1;
+					break;
 				case PARM_HELP:
 					printUsage(argv[0]);
 					finished=1;
+					break;
+				case PARM_VERSION:
+					fprintf(stderr,"%s\n",alhVersionString);
+					exit(1);
 					break;
 				default:
 					parm_error=1;
@@ -834,7 +875,7 @@ static int getCommandLineParms(int argc, char** argv)
 				}
 			}
 		}
-		if(ptable[j].parm==NULL)
+		if (!finished && !parm_error)
 		{
 			if(i+1==argc)
 			{
@@ -853,7 +894,6 @@ static int getCommandLineParms(int argc, char** argv)
 
 	if (_lock_flag) commandLine.alarmLogFileMaxRecords = 0;
 
-
 if(_printer_flag&&!_lock_flag)
   {
   fprintf(stderr,"use -P together with -L\n");
@@ -868,6 +908,7 @@ if(_DB_call_flag&&!_lock_flag)
 
 	if(parm_error)
 	{
+  		fprintf(stderr,"\nInvalid command line option %s",argv[i-1]);
 		printUsage(argv[0]);
 		return 1;
 	}
@@ -883,27 +924,34 @@ static void printUsage(char *pgm)
 	fprintf(stderr,"where:\n");
 	fprintf(stderr,"  configfile       Alarm configuration filename ["DEFAULT_CONFIG"]\n");
 	fprintf(stderr,"OPTIONS:\n");
-	fprintf(stderr,"  -c               Alarm Configuration Tool mode\n");
-	fprintf(stderr,"  -f filedir       Directory for config files [.]\n");
-	fprintf(stderr,"  -l logdir        Directory for log files [.]\n");
 	fprintf(stderr,"  -a alarmlogfile  Alarm log filename ["DEFAULT_ALARM"]\n");
-	fprintf(stderr,"  -o opmodlogfile  OpMod log filename ["DEFAULT_OPMOD"]\n");
 #ifdef CMLOG		
 	fprintf(stderr,"  -aCM             Alarm log using CMLOG\n");
+#endif			
+	fprintf(stderr,"  -B               Message Broadcast System\n");
+	fprintf(stderr,"  -c               Alarm Configuration Tool mode\n");
+	fprintf(stderr,"  -caputackt       Caput config file ackt settings to channels (if global and active)\n");
+	fprintf(stderr,"  -D               Disable alarm and opmod log writing\n");
+	fprintf(stderr,"  -f filedir       Directory for config files [.]\n");
+	fprintf(stderr,"  -global          Global mode (acks and ackt fields) \n");
+	fprintf(stderr,"  -help            Print usage\n");
+	fprintf(stderr,"  -L               Locking system\n");
+	fprintf(stderr,"  -l logdir        Directory for log files [.]\n");
+	fprintf(stderr,"  -m maxrecords    Alarm log file max records [2000]\n");
+	fprintf(stderr,"  -noerrorpopup    Do not display error popup window (errors are logged).\n");
+	fprintf(stderr,"  -O key           Database call\n");
+	fprintf(stderr,"  -o opmodlogfile  OpMod log filename ["DEFAULT_OPMOD"]\n");
+#ifdef CMLOG		
 	fprintf(stderr,"  -oCM             OpMod log using CMLOG\n");
 #endif			
-	fprintf(stderr,"  -m maxrecords    Alarm log file max records [2000]\n");
-	fprintf(stderr,"  -s               Silent (no alarm beeping)\n");
-	fprintf(stderr,"  -D               Disable alarm and opmod log writing\n");
-	fprintf(stderr,"  -S               Passive (-D plus no global acknowledge)\n");
-	fprintf(stderr,"  -T               AlarmLogDated\n");
 	fprintf(stderr,"  -P key           Print to TCP printer\n");
-	fprintf(stderr,"  -L               Locking system\n");
-	fprintf(stderr,"  -O key           Database call\n");
-	fprintf(stderr,"  -B               Message Broadcast System\n");
+	fprintf(stderr,"  -S               Passive (no caputs - acks field, ackt field, sevrpv)\n");
+	fprintf(stderr,"  -s               Silent (no alarm beeping)\n");
+	fprintf(stderr,"  -T               AlarmLogDated\n");
+	fprintf(stderr,"  -v               Debug output\n");
+	fprintf(stderr,"  -version         Print version number\n");
 	exit(1);
 }
-
 
 /******************************************************
   fileSetupInit
@@ -1110,6 +1158,7 @@ struct passwd *pp;
 int effective_uid;
 int ret=0;
 
+#ifndef WIN32
     effective_uid = geteuid();
     if ((pp = getpwuid(effective_uid))) 
       {
@@ -1137,6 +1186,7 @@ int ret=0;
     userID.real_world_name=real_world_name;
     userID.myhostname=myhostname;
     userID.displayName=displayName;
+#endif
     return(ret);
 }
 

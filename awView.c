@@ -546,34 +546,6 @@ void redraw(struct subWindow *subWindow,int rowNumber)
 		link = (GCLINK *)(subWindow->alViewNext)(link,&linkType);
 		initSevrBelow(subWindow,link);
 	}
-
-	/******************************
-	          printf (" subWindow->viewHeight=%d subWindow->marginHeight=%d subWindow->rowHeight=%d \n",
-	          subWindow->viewHeight,subWindow->marginHeight,subWindow->rowHeight);
-	          line = (struct anyLine *)sllFirst(subWindow->lines);
-	          while (line){
-	          Position y;
-	          Dimension height;
-	
-	               printf ("line->lineNo = %d\n",line->lineNo);
-	               if (line->link) printf ("name=%s\n", ((GCLINK *)line->link)->pgcData->name);
-	               wline = (WLINE *)line->wline;
-	               printf ("wline = %d\n",wline);
-	               if (wline) printf ("wline->row_widget = %d\n",wline->row_widget);
-	               if (wline->row_widget){
-	                    XtVaGetValues(wline->row_widget,XmNy,&y,NULL);
-	                    XtVaGetValues(subWindow->drawing_area,XmNheight,&height,NULL);
-	                    printf("y =%d  height=%d\n",y,height); 
-	                }
-	               if (wline->row_widget){
-	                    XtVaGetValues(wline->row_widget,XmNy,&y,NULL);
-	                    printf("y =%d\n",y); 
-	                }
-	
-	               printf("managed =%d\n",XtIsManaged(wline->row_widget)); 
-	               line = (struct anyLine *)sllNext(line);
-	          }
-	***************************/
 }
 
 /***************************************************

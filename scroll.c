@@ -56,8 +56,9 @@ static void closeFileViewShell(w,operandFile,call_data)
 #include "alh.h"
 #include "ax.h"
 
-
+ 
 extern Display *display;
+extern int _global_flag;
 
 #define MAX_NUM_OF_LOG_FILES 5000  /* # of log files for browser */
 static XmTextPosition positionSearch;
@@ -90,9 +91,9 @@ int viewFileUsedLength[N_LOG_FILES];        /* used length of file. */
 int viewFileMaxLength[N_LOG_FILES];        /* max length of file. */
 unsigned char *viewFileString[N_LOG_FILES];    /* contents of file. */
 
-Widget viewTextWidget[N_LOG_FILES];        /* view text widget */
+Widget viewTextWidget[N_LOG_FILES] = {0,0,0};        /* view text widget */
 Widget browserWidget;  /* Albert */
-Widget viewFilenameWidget[N_LOG_FILES]; /* view filename widget */
+Widget viewFilenameWidget[N_LOG_FILES] = {0,0,0}; /* view filename widget */
 
 extern int alarmLogFileOffsetBytes; /* alarm log file current offset in bytes */
 extern int alarmLogFileStringLength;  /* alarm log file record length*/
@@ -338,8 +339,11 @@ void fileViewWindow(Widget w,int option,Widget menuButton)
 			ac++;
 			XtSetArg (al[ac], XmNleftAttachment, XmATTACH_FORM);  
 			ac++;
-			title = XtCreateManagedWidget("    TIME_STAMP        PROCESS_VARIABLE_NAME        CURRENT_STATUS              HIGHEST_UNACK_STATUS              VALUE",
-			    xmLabelGadgetClass,app_shell,al,ac);
+		if (_global_flag) 
+			title = XtCreateManagedWidget("TIME_STAMP               PROCESS_VARIABLE_NAME     CURRENT_STATUS           UNACK_SEV  ACKT  VALUE",
+				xmLabelGadgetClass,app_shell,al,ac);
+		else title = XtCreateManagedWidget("TIME_STAMP               PROCESS_VARIABLE_NAME     CURRENT_STATUS           VALUE",
+				xmLabelGadgetClass,app_shell,al,ac);
 			previous = title;
 
 		}
@@ -348,7 +352,7 @@ void fileViewWindow(Widget w,int option,Widget menuButton)
 		ac = 0;
 		XtSetArg (al[ac], XmNrows, 24);  
 		ac++; 
-		XtSetArg (al[ac], XmNcolumns, 80);  
+		XtSetArg (al[ac], XmNcolumns, 120);  
 		ac++;
 		XtSetArg (al[ac], XmNscrollVertical, True);  
 		ac++;
@@ -461,6 +465,8 @@ void updateLog(int fileIndex,char *string)
 	int oldUsedLength = viewFileUsedLength[fileIndex];
 
 
+	if (viewTextWidget[fileIndex] == NULL) return;
+
 	/* simply return if the file string does not exist */
 	if (viewFileString[fileIndex] == NULL) return;
 
@@ -549,6 +555,7 @@ void updateLog(int fileIndex,char *string)
 
 }
 
+
 /******************************************************************
    updateAlarmLog in scroll window
 *****************************************************************/
@@ -559,6 +566,7 @@ void updateAlarmLog(int fileIndex,char *string)
 	int startPosition,endPosition;
 	int pos=0;/* Albert1 */
 
+	if (viewTextWidget[fileIndex] == NULL) return;
 
 if(viewTextWidget[fileIndex])
 	XtVaGetValues(viewTextWidget[fileIndex],
@@ -617,6 +625,7 @@ else return;      /* Albert1 */
 void browser_fileViewWindow(Widget w,int option,Widget menuButton)
 {
 	static Widget alarm_shell=NULL;
+	static Widget opmod_shell=NULL;
 	Widget app_shell=NULL,title,button,button1;
 	Widget previous;
 	char sbuf[120];
@@ -641,9 +650,16 @@ void browser_fileViewWindow(Widget w,int option,Widget menuButton)
 	char defaultString_fy[5],defaultString_fmo[3],defaultString_fd[3],defaultString_fh[3]="00",defaultString_fmi[3]="00";
 	char defaultString_ty[5],defaultString_tmo[3],defaultString_td[3],defaultString_th[3]="24",defaultString_tmi[3]="00";
 	/* End definitions for search routins. Albert */
-        option=ALARM_FILE;
-	operandFile = ALARM_FILE;
-	app_shell = alarm_shell;
+	switch (option) {
+	case ALARM_FILE:
+		operandFile = ALARM_FILE;
+		app_shell = alarm_shell;
+		break;
+	case OPMOD_FILE:
+		operandFile = OPMOD_FILE;
+		app_shell = opmod_shell;
+		break;
+	}
 
 	if (app_shell && XtIsManaged(app_shell)) {
 
@@ -676,7 +692,7 @@ void browser_fileViewWindow(Widget w,int option,Widget menuButton)
 			fprintf(stderr, "Can't open file %s\n",filename);
 			return;
 		}
-		if(alarmLogFileMaxRecords)fseek(fp,0,SEEK_SET);
+		if(option==ALARM_FILE && alarmLogFileMaxRecords)fseek(fp,0,SEEK_SET);
 
 	if (stat(filename, &statbuf) == 0)
 		viewFileUsedLength[operandFile] = statbuf.st_size;
@@ -703,7 +719,7 @@ void browser_fileViewWindow(Widget w,int option,Widget menuButton)
 	    viewFileUsedLength[operandFile], fp);
 
 	/* close up the file */
-		if(alarmLogFileMaxRecords)fseek(fp,alarmLogFileOffsetBytes,SEEK_SET);
+		if(option==ALARM_FILE && alarmLogFileMaxRecords)fseek(fp,alarmLogFileOffsetBytes,SEEK_SET);
 		fclose (fp) ; /* ????? Albert1 */
 
 	if (!app_shell) {
@@ -720,7 +736,17 @@ void browser_fileViewWindow(Widget w,int option,Widget menuButton)
 		ac++;
 		XtSetArg(al[ac], XmNautoUnmanage, FALSE); 
 		ac++;
-		str = XmStringLtoRCreate("Alarm Log File", XmSTRING_DEFAULT_CHARSET);
+		switch (option) {
+		case CONFIG_FILE:
+			str = XmStringLtoRCreate("Configuration File", XmSTRING_DEFAULT_CHARSET);
+			break;
+		case ALARM_FILE:
+			str = XmStringLtoRCreate("Alarm Log File", XmSTRING_DEFAULT_CHARSET);
+			break;
+		case OPMOD_FILE:
+			str = XmStringLtoRCreate("Operator Mod File", XmSTRING_DEFAULT_CHARSET);
+			break;
+		}
 		XtSetArg(al[ac], XmNdialogTitle, str); 
 		ac++;
 		app_shell = XmCreateFormDialog(XtParent(w), "SCROLL", al, ac);
@@ -737,7 +763,14 @@ void browser_fileViewWindow(Widget w,int option,Widget menuButton)
 			XmAddWMProtocolCallback(XtParent(app_shell),WM_DELETE_WINDOW,
 			    (XtCallbackProc)closeFileViewShell, (XtPointer)operandFile);
 		}
+		switch (option) {
+		case ALARM_FILE:
 			alarm_shell = app_shell;
+			break;
+		case OPMOD_FILE:
+			opmod_shell = app_shell;
+			break;
+		}
 
 		/* add close button */
 		ac = 0;
@@ -1002,7 +1035,7 @@ void browser_fileViewWindow(Widget w,int option,Widget menuButton)
 
 			showAllButton=XtVaCreateManagedWidget("Show Current File",
 			    xmPushButtonWidgetClass,rowcol2, NULL);
-			XtAddCallback(showAllButton, XmNactivateCallback,showAllCallback,NULL);
+			XtAddCallback(showAllButton, XmNactivateCallback,showAllCallback,(XtPointer)option);
 
 			XtManageChild(rowcol2);
 			previous = rowcol2;   /* Albert */
@@ -1021,9 +1054,21 @@ void browser_fileViewWindow(Widget w,int option,Widget menuButton)
 			ac++; /* was button. Albert */
 			XtSetArg (al[ac], XmNleftAttachment, XmATTACH_FORM);  
 			ac++;
-			title = XtCreateManagedWidget("    TIME_STAMP        PROCESS_VARIABLE_NAME        CURRENT_STATUS              HIGHEST_UNACK_STATUS              VALUE",
-			    xmLabelGadgetClass,app_shell,al,ac);
+		switch (option) {
+		case ALARM_FILE:
+			if (_global_flag) 
+				title = XtCreateManagedWidget("TIME_STAMP        PROCESS_VARIABLE_NAME        CURRENT_STATUS           UNACK_SEV  ACKT  VALUE",
+			  		xmLabelGadgetClass,app_shell,al,ac);
+			else title = XtCreateManagedWidget("TIME_STAMP        PROCESS_VARIABLE_NAME         CURRENT_STATUS              VALUE",
+			   		xmLabelGadgetClass,app_shell,al,ac);
+			break;
+		case OPMOD_FILE:
+				title = XtCreateManagedWidget("TIME_STAMP        LOG_MESSAGE",
+			   		xmLabelGadgetClass,app_shell,al,ac);
+			break;
+		}
 			previous = title;
+
 
 
 		/* create text widget */
@@ -1081,8 +1126,17 @@ void browser_fileViewWindow(Widget w,int option,Widget menuButton)
 **************************************************************************/
 static void showAllCallback(Widget w,XtPointer client_data,XtPointer call_data)
 {
-	XmTextSetString(browserWidget,
-	    (char *)viewFileString[ALARM_FILE]);
+	switch ((int)call_data) {
+	case ALARM_FILE:
+		XmTextSetString(browserWidget,
+	    		(char *)viewFileString[ALARM_FILE]);
+		break;
+	case OPMOD_FILE:
+		XmTextSetString(browserWidget,
+	    		(char *)viewFileString[OPMOD_FILE]);
+		break;
+	}
+
 	XtManageChild(browserWidget);
 }
 

@@ -26,8 +26,8 @@ static char *sccsId = "@(#) $Id$";
 #include "ax.h"
 
 /* global variables */
-extern char * alarmSeverityString[];
-extern char * alarmStatusString[];
+extern char * alhAlarmSeverityString[];
+extern char * alhAlarmStatusString[];
 
 /* forward declarations */
 void closeCurrentCallback( Widget w, Widget currentForm, caddr_t call_data);
@@ -176,8 +176,8 @@ char value[],int stat,int sevr)
 		"  %-24s :  %-28s %-10s %-10s %s",
 		ctime(ptimeofday),
 		name,
-		alarmStatusString[stat],
-		alarmSeverityString[sevr],
+		alhAlarmStatusString[stat],
+		alhAlarmSeverityString[sevr],
 		value);
 	n = (n+1)%10;
 	area->currentAlarmIndex = n;

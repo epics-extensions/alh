@@ -29,6 +29,7 @@ char buff[250];
 
 int printerInit(char *,int);
 int put2printer(char *,int,char *,int);
+int compressMsg(char * msg, char *compress_buff);
 
 int main(argc,argv)
 int argc;

@@ -105,7 +105,6 @@ extern Pixel bg_pixel[];
 extern Pixel channel_bg_pixel;
 extern struct setup psetup;
 extern Widget versionPopup;
-extern int _time_flag; /* Dated flag. Albert*/
 extern int _message_broadcast_flag; /* messages sending flag. Albert1*/
 extern int messBroadcastDeskriptor;
 extern char messBroadcastInfoFileName[250];
@@ -215,57 +214,27 @@ static MenuItem action_menuNew[] = {
 		             alhViewCallback, (XtPointer)MENU_VIEW_COLLAPSEBRANCH,    (MenuItem *)NULL, 0 },
 		         { "",                       SeparatorGadgetClass,  '\0', NULL, NULL,
 		             NULL,    NULL,   (MenuItem *)NULL, 0 },
-
-		         { "Current Alarm History Window",  ToggleButtonGadgetClass, 'H', NULL, NULL,
-		             alhViewCallback, (XtPointer)MENU_VIEW_CURRENT,           (MenuItem *)NULL, 0 },
-		         { "Configuration File Window",     ToggleButtonGadgetClass, 'f', NULL, NULL,
-		             alhViewCallback, (XtPointer)MENU_VIEW_CONFIG,            (MenuItem *)NULL, 0 },
-#ifdef CMLOG
-		         { "Start CMLOG Log Browser", PushButtonGadgetClass, 's', NULL, NULL,
-		             alhViewCallback, (XtPointer)MENU_VIEW_CMLOG, (MenuItem *)NULL, 0 },
-#endif
-		         { "Alarm Log File Window",         ToggleButtonGadgetClass, 'r', NULL, NULL,
-		             alhViewCallback, (XtPointer)MENU_VIEW_ALARMLOG,         (MenuItem *)NULL, 0 },
-		         { "Operation Log File Window",     ToggleButtonGadgetClass, 'O', NULL, NULL,
-		             alhViewCallback, (XtPointer)MENU_VIEW_OPMOD,         (MenuItem *)NULL, 0 },
-		         { "Group/Channel Properties Window", ToggleButtonGadgetClass, 'W', NULL, NULL,
-		             alhViewCallback, (XtPointer)MENU_VIEW_PROPERTIES,    (MenuItem *)NULL, 0 },
-
-		         {NULL},
-		     	};
-/* ****************************************************************************Albert1: */
-	static MenuItem view_menuNew[] = {
-		         { "Expand One Level",       PushButtonGadgetClass, 'L', "None<Key>plus", "+",
-		             alhViewCallback, (XtPointer)MENU_VIEW_EXPANDCOLLAPSE1,   (MenuItem *)NULL, 0 },
-		         { "Expand Branch",          PushButtonGadgetClass, 'B', "None<Key>asterisk", "*",
-		             alhViewCallback, (XtPointer)MENU_VIEW_EXPANDBRANCH,      (MenuItem *)NULL, 0 },
-		         { "Expand All",             PushButtonGadgetClass, 'A', "Ctrl<Key>asterisk", "Ctrl+*",
-		             alhViewCallback, (XtPointer)MENU_VIEW_EXPANDALL,         (MenuItem *)NULL, 0 },
-		         { "Collapse Branch",        PushButtonGadgetClass, 'C', "None<Key>minus", "-",
-		             alhViewCallback, (XtPointer)MENU_VIEW_COLLAPSEBRANCH,    (MenuItem *)NULL, 0 },
-		         { "",                       SeparatorGadgetClass,  '\0', NULL, NULL,
-		             NULL,    NULL,   (MenuItem *)NULL, 0 },
 		         { "Current Alarm History Window",  ToggleButtonGadgetClass, 'H', NULL, NULL,
 		             alhViewCallback, (XtPointer)MENU_VIEW_CURRENT,         (MenuItem *)NULL, 0 },
 		         { "Configuration File Window",     ToggleButtonGadgetClass, 'f', NULL, NULL,
 		             alhViewCallback, (XtPointer)MENU_VIEW_CONFIG,           (MenuItem *)NULL, 0 },
+#ifdef CMLOG
+                         { "Start CMLOG Log Browser", PushButtonGadgetClass, 's', NULL, NULL,
+                             alhViewCallback, (XtPointer)MENU_VIEW_CMLOG, (MenuItem *)NULL, 0 },
+#endif
 		         { "Alarm Log File Window",         ToggleButtonGadgetClass, 'r', NULL, NULL,
 		             alhViewCallback, (XtPointer)MENU_VIEW_ALARMLOG,         (MenuItem *)NULL, 0 },
-		/* Next Callback for AlarmLog Browser adding. Albert */
 		         { "Browser For Alarm Log",         ToggleButtonGadgetClass, 's', NULL, NULL,
-		             alhViewBrowserCallback, (XtPointer)MENU_VIEW_ALARMLOG,         (MenuItem *)NULL, 0 },
-
+		            alhViewBrowserCallback, (XtPointer)MENU_VIEW_ALARMLOG,         (MenuItem *)NULL, 0 },
 		         { "Operation Log File Window",     ToggleButtonGadgetClass, 'O', NULL, NULL,
 		             alhViewCallback, (XtPointer)MENU_VIEW_OPMOD,         (MenuItem *)NULL, 0 },
 		         { "Browser For Operation Log",         ToggleButtonGadgetClass, 'e', NULL, NULL,
 		             alhViewBrowserCallback, (XtPointer)MENU_VIEW_OPMOD,         (MenuItem *)NULL, 0 },
-		/* End. Albert */
 		         { "Group/Channel Properties Window", ToggleButtonGadgetClass, 'W', NULL, NULL,
 		             alhViewCallback, (XtPointer)MENU_VIEW_PROPERTIES,    (MenuItem *)NULL, 0 },
 
 		         {NULL},
 		     	};
-/* ******************************************************************************End ofAlbert1 */
 
 	static MenuItem setup_beep_menu[] = {
 		         { "Minor",      PushButtonGadgetClass, 'M', NULL, NULL,
@@ -322,10 +291,7 @@ static MenuItem action_menuNew[] = {
         else
         widget = buildPulldownMenu(menubar, "Action",   'A', TRUE, action_menuNew, user_data);
         
-        if(!_time_flag)
 	widget = buildPulldownMenu(menubar, "View",     'V', TRUE, view_menu, user_data);
-        else  /* Albert1 */
-	widget = buildPulldownMenu(menubar, "View",     'V', TRUE, view_menuNew, user_data);
 
 	widget = buildPulldownMenu(menubar, "Setup",    'S', TRUE, setup_menu, user_data);
 
@@ -644,7 +610,16 @@ static void alhViewBrowserCallback(Widget widget,XtPointer item,XtPointer cbs)
 
 		XtVaGetValues(widget, XmNuserData, &area, NULL);
 		dialog=XmCreateFileSelectionDialog(area->form_main,"dialog",NULL,0);
-
+	switch ( ch )
+	  {
+	  case MENU_VIEW_ALARMLOG:
+	    	XtVaSetValues(dialog,XmNuserData,ALARM_FILE,NULL);
+	   	 break;
+	  case MENU_VIEW_OPMOD:
+	    	XtVaSetValues(dialog,XmNuserData,OPMOD_FILE,NULL);
+	   	 break;
+	    
+	  }     
 		XtAddCallback(dialog,XmNokCallback,(XtCallbackProc)browserFBSDialogCbOk,widget);
 		XtAddCallback(dialog,XmNcancelCallback,(XtCallbackProc)browserFBSDialogCbCancel,NULL);
 		XtUnmanageChild(XmFileSelectionBoxGetChild(dialog,
@@ -678,11 +653,13 @@ XmSelectionBoxCallbackStruct *call_data)
 {
 	ALINK   *area;
 	char *s;
+	int fileType;
 	XmStringGetLtoR(call_data->value,XmSTRING_DEFAULT_CHARSET,&s);
 	strcpy(FS_filename,s);
 	XtFree(s);
+	XtVaGetValues(w, XmNuserData, &fileType, NULL);
 	XtVaGetValues(wdgt, XmNuserData, &area, NULL);
-	browser_fileViewWindow(area->form_main,ALARM_FILE,wdgt); /* ALARM_FILE??????? Albert1 */
+	browser_fileViewWindow(area->form_main,fileType,wdgt); /* Albert1 */
 	XtUnmanageChild(w);
 }
 

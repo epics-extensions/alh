@@ -29,7 +29,7 @@ static char *sccsId = "@(#) $Id$";
 #include "alLib.h"
 #include "ax.h"
 
-extern Pixel bg_pixel[ALARM_NSEV];
+extern Pixel bg_pixel[ALH_ALARM_NSEV];
 
 struct propWindow {
 	void *area;

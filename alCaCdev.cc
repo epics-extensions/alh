@@ -24,9 +24,7 @@ extern "C" {
 extern void 	alChannelForceEvent	(void *, short);
 extern void 	alGroupForceEvent	(void *, short);
 extern void 	alLogConnection		(char *, char *);
-extern void 	alNewAlarm		(int, int, char *, void *);
-extern void 	alNewEvent		(int, int, int, char *, void *);
-extern void 	alAckChan		(void *);
+extern void 	alNewEvent		(int, int, int, int, char *, void *);
 extern void 	registerCA		(void *, int, int);
 }
 
@@ -400,7 +398,7 @@ void	alCaAddEvent	(chid 	chid,
                signal->device(), signal->attribute());
     fflush (stderr);
 #endif
-    alNewAlarm (COMM_ALARM, INVALID_ALARM, "0", clink);
+    alNewEvent (NOT_CONNECTED, ERROR_STATE, 0, 0, "0", clink);
   }
 
   *pevid = (evid)monitor;
@@ -514,7 +512,7 @@ static void closeConnectionEvent (int, void *, cdevRequestObject &, cdevData &)
  
 /******************************************************************************
     alCaNewAlarmEvent get channel sevr, status, value
-    then invoke alNewAlarm  & update value of SevrPVName
+    then invoke alNewEvent  & update value of SevrPVName
 ******************************************************************************/
 static void alCaNewAlarmEvent (int 			status,
                            void 		*arg,
@@ -548,7 +546,6 @@ static void alCaNewAlarmEvent (int 			status,
         // if this is the first event, let's turn off any associated alarms
         if (monitor->cb_status() == CDEV_NOTCONNECTED)
           toBeConnectedCount--;
-          // alAckChan (monitor->data());	// gee, I hope this works
 
         // hey, cdevData can do the value --> string conversion for us!
         if (result.get ("value", valstr, MAX_STRING_SIZE) == CDEV_SUCCESS)
@@ -571,28 +568,25 @@ static void alCaNewAlarmEvent (int 			status,
         // has changed
         if (changed)
           alNewEvent
-            (monitor->status(), monitor->severity(), 0, pstr, monitor->data());
+            (monitor->status(), monitor->severity(), 0, 0, pstr, monitor->data());
       }
       break;
         
       case CDEV_NOACCESS:
       {
-        alNewAlarm (READ_ACCESS_ALARM, INVALID_ALARM, "0", monitor->data());
-        alLogConnection (buff, "No read access (Channel  PVname)");
+        alNewEvent (NO_READ_ACCESS, ERROR_STATE, 0, 0, "0", monitor->data());
       }
       break;
         
       case CDEV_DISCONNECTED:
       {
-        alNewAlarm (COMM_ALARM, INVALID_ALARM, "0", monitor->data());
-        alLogConnection (buff, "Not Connected (Channel  PVname)");
+        alNewEvent (NOT_CONNECTED, ERROR_STATE, 0, 0, "0", monitor->data());
       }
       break;
         
       default:
       {
-        alNewAlarm (COMM_ALARM, INVALID_ALARM, "0", monitor->data());
-        alLogConnection (buff, "Error while monitoring (Channel  PVname)");
+        alNewEvent (NOT_CONNECTED, ERROR_STATE, 0, 0, "0", monitor->data());
       }
       break;
   }

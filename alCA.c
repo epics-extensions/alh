@@ -14,11 +14,13 @@ static char *sccsId = "@(#) $Id$";
 #define DEBUG_CALLBACKS 0
 
 /* global variables */
-static char buff[100];
+extern int _global_flag;
+extern int _passive_flag;
 int toBeConnectedCount = 0;
-unsigned long caDelay = 100;        /* ms */
-XtIntervalId caTimeoutId = (XtIntervalId) 0;
 extern XtAppContext appContext;
+
+static XtIntervalId caTimeoutId = (XtIntervalId) 0;
+static unsigned long caDelay = 100;        /* ms */
 
 /* forward declarations */
 static void alCaNewAlarmEvent(struct event_handler_args args);
@@ -70,6 +72,7 @@ void alCaFlushIo()
  *********************************************************************/
 void alCaInit()
 {
+	int status;
 
 #if DEBUG_CALLBACKS
 	{
@@ -78,15 +81,22 @@ void alCaInit()
 #endif
 
 	/* Initialize channel access */
-	SEVCHK(ca_task_initialize(), "alCaInit: error in ca_task_initialize");
+	status = ca_task_initialize();
+	if (status != ECA_NORMAL){
+		errMsg("ca_task_initialize failed: Return status: %s\n",ca_message(status));
+	}
 
 	/* Register exception handler */
-	SEVCHK(ca_add_exception_event(alCaException, NULL),
-	    "alCaInit: error in ca_add_exception_event");
+	status = ca_add_exception_event(alCaException, NULL);
+	if (status != ECA_NORMAL){
+		errMsg("ca_add_exception_event failed: Return status: %s\n",ca_message(status));
+	}
 
 	/* Register file descriptor callback */
-	SEVCHK(ca_add_fd_registration(registerCA, NULL),
-	    "alCaInit: error in ca_add_fd_registration");
+	status = ca_add_fd_registration(registerCA, NULL);
+	if (status != ECA_NORMAL){
+		errMsg("ca_add_fd_registration failed: Return status: %s\n",ca_message(status));
+	}
 
 	/* Start the CA poll and update areas timer proc */
 	caTimeoutId = XtAppAddTimeOut(appContext, caDelay, alCaUpdate, NULL);
@@ -118,14 +128,18 @@ void alCaPoll()
  *********************************************************************/
 void alCaStop()
 {
+	int status;
+
 	/* cancel timeout */
 	if (caTimeoutId) {
 		XtRemoveTimeOut(caTimeoutId);
 		caTimeoutId = (XtIntervalId) 0;
 	}
 	/* and close channel access */
-	SEVCHK(ca_task_exit(), "alCaStop: error in ca_task_exit");
-
+	status = ca_task_exit();
+	if (status != ECA_NORMAL){
+		errMsg("ca_task_exit failed: Return status: %s\n",ca_message(status));
+	}
 }
 
 /*********************************************************************
@@ -140,12 +154,16 @@ void alCaConnectChannel(char *name, chid * pchid, void *puser)
 
 	toBeConnectedCount++;
 	status = ca_search_and_connect(name, pchid, alCaChannelConnectionEvent, puser);
-	if (status != ECA_NORMAL) alLogConnection(ca_name(*pchid),
-	    "alCaConnectChannel:ca_search_and_connect failed.");
+	if (status != ECA_NORMAL) {
+		errMsg("ca_search_and_connect failed for PV %s "
+			"Return status: %s\n",ca_name(*pchid),ca_message(status));
+	}
 
 	status = ca_replace_access_rights_event(*pchid, alCaChannelAccessRightsEvent);
-	if (status != ECA_NORMAL) alLogConnection(ca_name(*pchid),
-	    "alCaConnectChannel:ca_replace_access_rights_event failed.");
+	if (status != ECA_NORMAL) {
+		errMsg("ca_replace_access_rights_event failed for PV %s "
+			"Return status: %s\n",ca_name(*pchid),ca_message(status));
+	}
 }
 
 /*********************************************************************
@@ -160,11 +178,15 @@ void alCaConnectForcePV(char *name, chid * pchid, void *puser)
 
 	toBeConnectedCount++;
 	status = ca_search_and_connect(name, pchid, alCaForcePVConnectionEvent, puser);
-	if (status != ECA_NORMAL) alLogConnection(ca_name(*pchid),
-	    "alCaConnectForcePV:ca_search_and_connect failed.");
+	if (status != ECA_NORMAL){
+		errMsg("ca_search_and_connect failed for Force PV %s "
+			"Return status: %s\n",ca_name(*pchid),ca_message(status));
+	}
 	status = ca_replace_access_rights_event(*pchid, alCaForcePVAccessRightsEvent);
-	if (status != ECA_NORMAL) alLogConnection(ca_name(*pchid),
-	    "alCaConnectForcePV:ca_replace_access_rights_event failed.");
+	if (status != ECA_NORMAL){
+		errMsg("ca_replace_access_rights_event failed for Force PV %s "
+			"Return status: %s\n",ca_name(*pchid),ca_message(status));
+	}
 }
 
 /*********************************************************************
@@ -179,11 +201,15 @@ void alCaConnectSevrPV(char *name, chid * pchid, void *puser)
 
 	toBeConnectedCount++;
 	status = ca_search_and_connect(name, pchid, alCaSevrPVConnectionEvent, puser);
-	if (status != ECA_NORMAL) alLogConnection(ca_name(*pchid),
-	    "alCaConnectSevrPV:ca_search_and_connect failed.");
+	if (status != ECA_NORMAL){
+		errMsg("ca_search_and_connect failed for Severity PV %s "
+			"Return status: %s\n",ca_name(*pchid),ca_message(status));
+	}
 	status = ca_replace_access_rights_event(*pchid, alCaSevrPVAccessRightsEvent);
-	if (status != ECA_NORMAL) alLogConnection(ca_name(*pchid),
-	    "alCaConnectSevrPV:ca_replace_access_rights_event failed.");
+	if (status != ECA_NORMAL){
+		errMsg("ca_replace_access_rights_event failed for Severity PV %s "
+			"Return status: %s\n",ca_name(*pchid),ca_message(status));
+	}
 }
 
 /*********************************************************************
@@ -196,8 +222,10 @@ void alCaClearChannel(chid * pchid)
 	if (!*pchid) return;
 
 	status = ca_clear_channel(*pchid);
-	if (status != ECA_NORMAL)
-		alLogConnection(ca_name(*pchid), "alCaClearChannel:ca_clear_channel failed.");
+	if (status != ECA_NORMAL){
+		errMsg("ca_clear_channel failed for PV %s "
+			"Return status: %s\n",ca_name(*pchid),ca_message(status));
+	}
 	*pchid = NULL;
 }
 
@@ -212,8 +240,10 @@ void alCaClearEvent(evid * pevid)
 	if (!*pevid) return;
 
 	status = ca_clear_event(*pevid);
-	if (status != ECA_NORMAL) alLogConnection(ca_name((*pevid)->chan),
-	    "alCaClearEvent:ca_clear_event failed.");
+	if (status != ECA_NORMAL){
+		errMsg("ca_clear_event failed for PV %s "
+			"Return status: %s\n",ca_name((*pevid)->chan),ca_message(status));
+	}
 	*pevid = NULL;
 }
 
@@ -233,8 +263,10 @@ void alCaAddEvent(chid chid, evid * pevid, void *clink)
 	    (float) 0, (float) 0, (float) 0,
 	    pevid,
 	    DBE_ALARM);
-	if (status != ECA_NORMAL) alLogConnection(ca_name(chid),
-	    "alCaAddEvent:ca_add_masked_array_event failed.");
+	if (status != ECA_NORMAL){
+		errMsg("ca_add_masked_array_event failed for PV %s "
+			"Return status: %s\n",ca_name(chid),ca_message(status));
+	}
 }
 
 /*********************************************************************
@@ -250,8 +282,7 @@ void alCaAddForcePVEvent(chid chid, void *link, evid * pevid, int type)
 	if (type == CHANNEL) pFunc = alCaChannelForceEvent;
 	else if (type == GROUP) pFunc = alCaGroupForceEvent;
 	else {
-		alLogConnection(ca_name(chid),
-		    "alCaAddForcePVEvent:Invalid type.");
+		errMsg("alCaAddForcePVEvent: Invalid type for %s\n",ca_name(chid));
 		return;
         }
 
@@ -262,8 +293,10 @@ void alCaAddForcePVEvent(chid chid, void *link, evid * pevid, int type)
 	    (float) 0, (float) 0, (float) 0,
 	    pevid,
 	    DBE_VALUE);
-	if (status != ECA_NORMAL) alLogConnection(ca_name(chid),
-	    "alCaAddForcePVEvent:ca_add_masked_array_event failed.");
+	if (status != ECA_NORMAL){
+		errMsg("alCaAddForcePVEvent: ca_add_masked_array_event failed for Force PV %s "
+			"Return status: %s\n",ca_name(chid),ca_message(status));
+	}
 }
 
 /*********************************************************************
@@ -276,8 +309,27 @@ void alCaPutGblAck(chid chid, short *psevr)
 	if (ca_field_type(chid) == TYPENOTCONN) return;
 
 	status = ca_put(DBR_PUT_ACKS, chid, psevr);
-	if (status != ECA_NORMAL)
-		alLogConnection(ca_puser(chid), "alCaPutGblAck:ca_put failed.");
+	if (status != ECA_NORMAL) {
+		errMsg("alCaPutGblAck: ca_put alarm acknowledgement failed for PV %s "
+			"Return status: %s\n",ca_name(chid),ca_message(status));
+	}
+}
+
+
+/*********************************************************************
+ global modify acknowledge transients fields
+ *********************************************************************/
+void alCaPutGblAckT(chid chid, short *pstate)
+{
+	int status;
+
+	if (ca_field_type(chid) == TYPENOTCONN) return;
+
+	status = ca_put(DBR_PUT_ACKT, chid, pstate);
+	if (status != ECA_NORMAL) {
+		errMsg("alCaPutGblAckT: ca_put acknowledge transients failed for PV %s\n"
+			"Return status: %s\n",ca_name(chid),ca_message(status));
+	}
 }
 
 
@@ -297,8 +349,10 @@ void alCaPutSevrValue(chid chid, short *psevr)
 	if (!chid || ca_field_type(chid) == TYPENOTCONN) return;
 
 	status = ca_put(DBR_SHORT, chid, psevr);
-	if (status != ECA_NORMAL)
-		alLogConnection(ca_name(chid), "alCaPutSevrValue:ca_put failed.");
+	if (status != ECA_NORMAL) {
+		errMsg("alCaPutSevrValue: ca_put failed for Severity PV %s\n"
+			"Return status: %s\n",ca_name(chid),ca_message(status));
+	}
 }
 
 
@@ -319,13 +373,12 @@ static void alCaNewAlarmEvent(struct event_handler_args args)
 
 	switch (args.status) {
 	case ECA_NORMAL:
-		alNewEvent(stat, sevr, acks, value, args.usr);
-		break;
-	case ECA_NORDACCESS:
-		alNewAlarm(READ_ACCESS_ALARM, INVALID_ALARM, value, args.usr);
+		alNewEvent(stat, sevr, acks, ackt, value, args.usr);
 		break;
 	default:
-		alNewAlarm(COMM_ALARM, INVALID_ALARM, value, args.usr);
+		errMsg("alCaNewAlarmEvent failed: Return status: %s "
+		" for PV %s\n",ca_message(args.status),ca_name(args.chid));
+		break;
 	}
 }
 
@@ -336,10 +389,10 @@ static void alCaChannelAccessRightsEvent(struct access_rights_handler_args args)
 {
 	if (ca_field_type(args.chid) == TYPENOTCONN) return;
 	if (!ca_read_access(args.chid)) {
-		alNewAlarm(READ_ACCESS_ALARM, INVALID_ALARM, "0", ca_puser(args.chid));
+		alNewAlarm(NO_READ_ACCESS, ERROR_STATE, "0", ca_puser(args.chid));
 	}
-	if (!ca_write_access(args.chid)) {
-		alLogConnection(ca_name(args.chid), "No write access (Channel PVName)");
+	if (!ca_write_access(args.chid) && _global_flag && !_passive_flag) {
+		alNewAlarm(NO_WRITE_ACCESS, ERROR_STATE, "0", ca_puser(args.chid));
 	}
 }
 
@@ -350,9 +403,8 @@ static void alCaChannelAccessRightsEvent(struct access_rights_handler_args args)
 static void alCaForcePVAccessRightsEvent(struct access_rights_handler_args args)
 {
 	if (ca_field_type(args.chid) == TYPENOTCONN) return;
-	sprintf(buff, "%s--(%s)", (char *)ca_puser(args.chid), ca_name(args.chid));
 	if (!ca_read_access(args.chid)) {
-		alLogConnection(buff, "No read access (Force PVName)");
+		errMsg("No read access for Force PV %s\n",ca_name(args.chid));
 	}
 }
 
@@ -363,9 +415,8 @@ static void alCaForcePVAccessRightsEvent(struct access_rights_handler_args args)
 static void alCaSevrPVAccessRightsEvent(struct access_rights_handler_args args)
 {
 	if (ca_field_type(args.chid) == TYPENOTCONN) return;
-	sprintf(buff, "%s--(%s)", (char *)ca_puser(args.chid), ca_name(args.chid));
-	if (!ca_write_access(args.chid)) {
-		alLogConnection(buff, "No write access (Sevr PVName)");
+	if (!ca_write_access(args.chid) && _global_flag && !_passive_flag) {
+		errMsg("No write access for Severity PV %s\n",ca_name(args.chid));
 	}
 }
 
@@ -378,9 +429,9 @@ static void alCaChannelConnectionEvent(struct connection_handler_args args)
 	if (args.op == CA_OP_CONN_UP) {
 		toBeConnectedCount--;
 	} else if (args.op == CA_OP_CONN_DOWN) {
-		alNewAlarm(COMM_ALARM, INVALID_ALARM, "0", ca_puser(args.chid));
+		alNewAlarm(NOT_CONNECTED, ERROR_STATE, "0", ca_puser(args.chid));
 	} else {
-		alLogConnection(ca_name(args.chid), "Unknown Connnection Event (Channel PVName)");
+		errMsg("Unknown Connnection Event for PV %s\n",ca_name(args.chid));
 	}
 }
 
@@ -390,13 +441,14 @@ static void alCaChannelConnectionEvent(struct connection_handler_args args)
  *********************************************************************/
 static void alCaForcePVConnectionEvent(struct connection_handler_args args)
 {
-	sprintf(buff, "%s--(%s)", (char *)ca_puser(args.chid), ca_name(args.chid));
 	if (args.op == CA_OP_CONN_UP) {
 		toBeConnectedCount--;
 	} else if (args.op == CA_OP_CONN_DOWN) {
-		alLogConnection(buff, "Not Connected (Force PVName)");
+		errMsg("Not Connected: Force PV %s for %s\n",
+			ca_name(args.chid),(char *)ca_puser(args.chid));
 	} else {
-		alLogConnection(buff, "Unknown Connnection Event (Force PVName)");
+		errMsg("Unknown Connection Event Force PV %s for %s\n",
+			ca_name(args.chid),(char *)ca_puser(args.chid));
 	}
 }
 
@@ -406,13 +458,14 @@ static void alCaForcePVConnectionEvent(struct connection_handler_args args)
  *********************************************************************/
 static void alCaSevrPVConnectionEvent(struct connection_handler_args args)
 {
-	sprintf(buff, "%s--(%s)", (char *)ca_puser(args.chid), ca_name(args.chid));
 	if (args.op == CA_OP_CONN_UP) {
 		toBeConnectedCount--;
 	} else if (args.op == CA_OP_CONN_DOWN) {
-		alLogConnection(buff, "Not Connected (Sevr PVName)");
+		errMsg("Not Connected: Severity PV %s for %s\n",
+			ca_name(args.chid),(char *)ca_puser(args.chid));
 	} else {
-		alLogConnection(buff, "Unknown Connnection Event (Sevr PVName)");
+		errMsg("Unknown Connection Event Severity PV %s for %s\n",
+			ca_name(args.chid),(char *)ca_puser(args.chid));
 	}
 }
 
@@ -425,7 +478,8 @@ static void alCaGroupForceEvent(struct event_handler_args args)
 	if (args.status == ECA_NORMAL) {
 		alGroupForceEvent(args.usr, *(short *) args.dbr);
 	} else {
-		alLogConnection(ca_name(args.chid), "alCaGroupForceEvent invalid args.status.");
+		errMsg("alCaGroupForceEvent failed: Return status: %s\n"
+		" for PV %s\n",ca_message(args.status),ca_name(args.chid));
 	}
 }
 
@@ -437,7 +491,8 @@ static void alCaChannelForceEvent(struct event_handler_args args)
 	if (args.status == ECA_NORMAL) {
 		alChannelForceEvent(args.usr, *(short *) args.dbr);
 	} else {
-		alLogConnection(ca_name(args.chid), "alCaChannelForceEvent invalid args.status.");
+		errMsg("alCaGroupForceEvent: Return status: %s\n"
+		" for PV %s\n",ca_message(args.status),ca_name(args.chid));
 	}
 }
 
@@ -472,38 +527,12 @@ static void alCaException(struct exception_handler_args args)
 	if (ended) return;
 	if (nexceptions++ > MAX_EXCEPTIONS) {
 		ended = 1;
-		errMsg("alCaException: Channel Access Exception:\n"
-		    "Too many exceptions [%d]\n"
-		    "No more will be handled\n"
-		    "Please fix the problem and restart ALH",
+		errMsg("Channel Access Exception: Too many exceptions [%d]\n",
 		    MAX_EXCEPTIONS);
 		ca_add_exception_event(NULL, NULL);
 		return;
 	}
-	errMsg("alCaException: Channel Access Exception:\n"
-	    "  Channel Name: %s\n"
-	    "  Native Type: %s\n"
-	    "  Native Count: %hu\n"
-	    "  Access: %s%s\n"
-	    "  IOC: %s\n"
-	    "  Message: %s\n"
-	    "  Context: %s\n"
-	    "  Requested Type: %s\n"
-	    "  Requested Count: %ld\n"
-	    "  Source File: %s\n"
-	    "  Line number: %u",
-	    args.chid ? ca_name(args.chid) : "Unavailable",
-	    args.chid ? dbf_type_to_text(ca_field_type(args.chid)) : "Unavailable",
-	    args.chid ? ca_element_count(args.chid) : 0,
-	    args.chid ? (ca_read_access(args.chid) ? "R" : "") : 
-	"Unavailable",
-	    args.chid ? (ca_write_access(args.chid) ? "W" : "") : 
-	"",
-	    args.chid ? ca_host_name(args.chid) : "Unavailable",
+	errMsg("Channel Access Exception: %s  Context: %s\n",
 	    ca_message(args.stat) ? ca_message(args.stat) : "Unavailable",
-	    args.ctx ? args.ctx : "Unavailable",
-	    dbf_type_to_text(args.type),
-	    args.count,
-	    args.pFile ? args.pFile : "Unavailable",
-	    args.pFile ? args.lineNo : 0);
+	    args.ctx ? args.ctx : "Unavailable");
 }

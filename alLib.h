@@ -8,8 +8,6 @@
 #define INCalLibh 1
 
 #include "cadef.h"
-#include "alarm.h"
-#include "db_access.h"
 
 #include "alh.h"
 #include "sllLib.h"
@@ -80,8 +78,8 @@ struct groupData {
 	chid sevrchid;			/* group sevrPV channel id */
 	char *treeSym;                  /* tree symbols for treeWindow display */
 	short mask[ALARM_NMASK];	/* no. of channels of masked types*/
-	short curSev[ALARM_NSEV];  	/* channels of different severity */
-	short unackSev[ALARM_NSEV];  	/* channels of unacknowledged sev */
+	short curSev[ALH_ALARM_NSEV];  	/* channels of different severity */
+	short unackSev[ALH_ALARM_NSEV];  	/* channels of unacknowledged sev */
 };
 
 /* channel data structure */

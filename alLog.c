@@ -6,27 +6,6 @@
 
 static char *sccsId = "@@(#) $Id$";
 
-/************************************************************************
-	PUBLIC	Routines for logging messages:
-
-alLogAlarm(cdata,stat,sev,h_unackStat,h_unackSevr)	Log new alarms
-alLogGblAckChan(cdata)				Log global acknowledgement channel
-alLogAckChan(cline)					Log acknowledged channel
-alLogAckGroup(gline)					Log acknowledged group
-alLogChanChangeMasks(cdata)				Log change channel Masks
-alLogForcePVGroup(glink,ind)				Log force PV group
-alLogResetPVGroup(glink,ind) 				Log reset PV group
-alLogForcePVChan(clink,ind)				Log force PV channel
-alLogResetPVChan(clink,ind)				Log reset PV channel
-alLogExit()						Log exit ALH
-alLogChangeGroupMasks(glink,choosegroupData)		Log change group Masks
-alLogSetupConfigFile(filename)				Log setup config file
-alLogSetupAlarmFile(filename)				Log setup alarm log file
-alLogSetupOpmodFile(filename)				Log setup opmod log file
-alLogSetupSaveConfigFile(filename)			Log setup save config file
-
-************************************************************************/
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -59,6 +38,7 @@ static char *masksdata[] = {
 	        "Log / NoLog "
 };
 
+char *ackTransientsString[] = {"ackT","noackT"};
 
 struct setup psetup = {         /* initial files & beeping setup */
 	    "",    /* config file name */
@@ -84,9 +64,10 @@ FILE *fo;       /* write opmod file pointer */
 FILE *fl;       /* write alarm log file pointer */
 
 char buff[260];
-extern char * alarmSeverityString[];
-extern char * alarmStatusString[];
+extern char * alhAlarmSeverityString[];
+extern char * alhAlarmStatusString[];
 
+extern int _global_flag;
 extern int _read_only_flag;         /* RO flag. Albert */
 extern int tm_day_old;              /* Midnight switch. Albert */
 extern int _printer_flag;           /* Printer flag. Albert */
@@ -98,6 +79,7 @@ extern int _lock_flag;
 int write2MQ(int, char *);
 int write2msgQ(int, char *);
 #endif
+int filePrintf(FILE *fPointer,char *buf,time_t *ptime,int typeOfRecord);
 
 char *digit2month[12]={"Jan","Feb","Mar","Apr","May","Jun","Jul","Aug",
 		       "Sep","Oct","Nov","Dec"};
@@ -170,14 +152,19 @@ void alCMLOGdisconnect(void)
  * log the channel alarm at the alarm logfile
  ***********************************************************************/
 void alLogAlarm(time_t *ptimeofdayAlarm,struct chanData *cdata,int stat,
-int sev,int h_unackStat,int h_unackSevr)
+int sev,int unackSevr,int ackT)
 {
+
 #ifdef CMLOG
    if (use_CMLOG_alarm && masterFlag) {
 	char cm_text[80];
-	sprintf(cm_text, "(%s / %s)",
-	    alarmStatusString[h_unackStat],
-	    alarmSeverityString[h_unackSevr]);
+        if (_global_flag) {
+		sprintf(cm_text, "(%s / %s)",
+		    alhAlarmSeverityString[unackSevr],
+		    ackTransientsString[ackT]);
+        } else {
+		sprintf(cm_text, "( / )");
+	}
 
 	cmlog_logmsg(cmlog,
 	    0,			/* verbosity */
@@ -186,8 +173,8 @@ int sev,int h_unackStat,int h_unackSevr)
 	    "alh-Alarm",	/* facility */
 	    "host=%s status=%s severity=%s device=%s text=%s domain=%s value=%s",
 	    cm_host,
-	    alarmStatusString[stat],
-	    alarmSeverityString[sev],
+	    alhAlarmStatusString[stat],
+	    alhAlarmSeverityString[sev],
 	    cdata->name,
 	    cm_text,
 	    alhArea->blinkString,
@@ -195,13 +182,24 @@ int sev,int h_unackStat,int h_unackSevr)
    }
 #endif
 
-	sprintf(buff,
-	    "%-28s %-12s %-16s %-12s %-16s %-40.40s\n",
-	    cdata->name,
-	    alarmStatusString[stat],alarmSeverityString[sev],
-	    alarmStatusString[h_unackStat],
-	    alarmSeverityString[h_unackSevr],
-	    cdata->value);
+        if (_global_flag) {
+		sprintf(buff,
+			"%-28s %-12s %-16s %-12s %-5s %-40.40s\n",
+			cdata->name,
+			alhAlarmStatusString[stat],
+			alhAlarmSeverityString[sev],
+			alhAlarmSeverityString[unackSevr],
+			ackTransientsString[ackT],
+			cdata->value);
+        } else {
+
+		sprintf(buff,
+			"%-28s %-12s %-16s %-40.40s\n",
+			cdata->name,
+			alhAlarmStatusString[stat],
+			alhAlarmSeverityString[sev],
+			cdata->value);
+	}
 	filePrintf(fl,buff,ptimeofdayAlarm,REGULAR_RECORD);
 }
 
@@ -237,11 +235,15 @@ void alLogConnection(const char *pvname,const char *ind)
 void alLogAckChan(struct anyLine *line)
 {
 #ifdef CMLOG
-   if (use_CMLOG_opmod) {
+    if (use_CMLOG_opmod) {
 	char cm_text[80];
-	sprintf(cm_text, "Global Ack Channel (%s / %s)",
-	    alarmStatusString[line->unackStat],
-	    alarmSeverityString[line->unackSevr]);
+        if (_global_flag) {
+		sprintf(cm_text, "Global Ack Channel (%s / %s)",
+		    alhAlarmSeverityString[line->unackSevr],
+		    ackTransientsString[line->ackT]);
+	} else {
+		sprintf(cm_text, "Local Ack Channel ( / )");
+	}
 
 	cmlog_logmsg(cmlog,
 	    1,			/* verbosity */
@@ -250,30 +252,24 @@ void alLogAckChan(struct anyLine *line)
 	    "alh-Opmod",	/* facility */
 	    "host=%s status=%s severity=%s device=%s text=%s domain=%s",
 	    cm_host,
-	    alarmStatusString[line->curStat],
-	    alarmSeverityString[line->curSevr],
+	    alhAlarmStatusString[line->curStat],
+	    alhAlarmSeverityString[line->curSevr],
 	    line->pname,
 	    cm_text,
 	    alhArea->blinkString);
    }
 #endif
 
-	sprintf(buff,"Ack Channel--- %-28s %-16s %-16s\n",line->pname,
-	    alarmSeverityString[line->unackSevr],
-	    alarmSeverityString[line->curSevr]);
+        if (_global_flag) {
+	    sprintf(buff,"Global Ack Channel--- %-28s %-16s %-16s\n",line->pname,
+		alhAlarmSeverityString[line->unackSevr],
+		alhAlarmSeverityString[line->curSevr]);
+	} else {
+	    sprintf(buff,"Local Ack Channel--- %-28s %-16s %-16s\n",line->pname,
+		alhAlarmSeverityString[line->unackSevr],
+		alhAlarmSeverityString[line->curSevr]);
+	}
 	filePrintf(fo,buff,NULL,ACK_CHANNEL);  /* update the file */	
-}
-
-/***********************************************************************
- * global log ackchan received on operation file
- ***********************************************************************/
-void alLogGblAckChan(struct chanData *cdata)
-{
-	sprintf(buff,"Gbl Ack Channel--- %-28s %-16s %-16s\n",cdata->name,
-	    alarmSeverityString[cdata->unackSevr],
-	    alarmSeverityString[cdata->curSevr]);
-	filePrintf(fo,buff,NULL,0);        /* update the file */
-
 }
 
 /***********************************************************************
@@ -284,8 +280,13 @@ void alLogAckGroup(struct anyLine *line)
 #ifdef CMLOG
    if (use_CMLOG_opmod) {
 	char cm_text[80];
-	sprintf(cm_text, "Global Ack Group (%s)",
+        if (_global_flag) {
+	    sprintf(cm_text, "Global Ack Group (%s)",
 	    alarmSeverityString[line->unackSevr]);
+	} else {
+	    sprintf(cm_text, "Local Ack Group (%s)",
+	    alarmSeverityString[line->unackSevr]);
+	}
 
 	cmlog_logmsg(cmlog,
 	    1,			/* verbosity */
@@ -301,16 +302,22 @@ void alLogAckGroup(struct anyLine *line)
    }
 #endif
 
-	sprintf(buff,"Ack Group---   %-28s %-16s %-16s\n",line->pname,
-	    alarmSeverityString[line->unackSevr],
-	    alarmSeverityString[alHighestSeverity(line->curSev)]);
-	filePrintf(fo,buff,NULL,0);        /* update the file */
+        if (_global_flag) {
+	    sprintf(buff,"Global Ack Group---   %-28s %-16s %-16s\n",line->pname,
+		alhAlarmSeverityString[line->unackSevr],
+		alhAlarmSeverityString[alHighestSeverity(line->curSev)]);
+	} else {
+	    sprintf(buff,"Local Ack Group---   %-28s %-16s %-16s\n",line->pname,
+		alhAlarmSeverityString[line->unackSevr],
+		alhAlarmSeverityString[alHighestSeverity(line->curSev)]);
+	}
+	    filePrintf(fo,buff,NULL,0);        /* update the file */
 }
 
 /***********************************************************************
  * log change channel Masks on operation file
  ***********************************************************************/
-void alLogChanChangeMasks(CLINK *clink,int maskno,int maskid)
+void alLogChangeChanMasks(CLINK *clink,int maskno,int maskid)
 {
 	char buff1[6];
 	alGetMaskString(clink->pchanData->curMask,buff1);
@@ -724,7 +731,8 @@ void alLogSetupSaveConfigFile(char *filename)
  ***********************************************************************/
 void alLogOpMod(char *text)
 {
-	sprintf(buff,"%s\n",text);
+	if (text[strlen(text)-1] == '\n') sprintf(buff,"%s",text);
+	else sprintf(buff,"%s\n",text);
 	filePrintf(fo,buff,NULL,0);        /* update the file */
 }
 
@@ -752,7 +760,7 @@ save all recordName if someone acknowledges group)
  ***********************************************************************/
 
 
-alLog2DBAckChan (char *name)
+void alLog2DBAckChan (char *name)
 {
 	sprintf(buff,"Ack Channel--- %-28s\n",name);
 	filePrintf(fo,buff,NULL,ACK_GROUP);  /* update the file */	
@@ -761,7 +769,7 @@ alLog2DBAckChan (char *name)
  * log changeMask in special format on operation file and DB (need for forse
 save all recordName if someone acknowledges group)
  ***********************************************************************/
-alLog2DBMask (char *name)
+void alLog2DBMask (char *name)
 {
 	sprintf(buff,"Group Mask ID --- %-28s\n",name);
 	filePrintf(fo,buff,NULL,CHANGE_MASK_GROUP);  /* update the file */	
@@ -797,6 +805,8 @@ int filePrintf(FILE *fPointer,char *buf,time_t *ptime,int typeOfRecord)
   struct tm *tms;
   char buf_tmp[32];
   time_t timeofday;
+
+  if(!fPointer) return (-1);
 
   if((!masterFlag) && (fPointer==fl)) return (0);
   if(_message_broadcast_flag && notsave && (fPointer==fl) ) return (0);
@@ -883,7 +893,9 @@ int filePrintf(FILE *fPointer,char *buf,time_t *ptime,int typeOfRecord)
   if( (_printer_flag) && (fPointer==fl) &&printerMsgQId ) 
     {
       sprintf(DBbuff,"%d %d %s %s",ALARM_LOG_DB, typeOfRecord+1,buf_tmp,buff); 
+#ifndef WIN32
       write2MQ(printerMsgQId, DBbuff);
+#endif
     }
   
   if(_DB_call_flag && DBMsgQId ) 
@@ -905,7 +917,9 @@ int filePrintf(FILE *fPointer,char *buf,time_t *ptime,int typeOfRecord)
           fprintf(stderr,"\nBad fPointer for writing\n"); 
 	  return (ret);
 	}
+#ifndef WIN32
       write2MQ(DBMsgQId, DBbuff);      
+#endif
     }
   
 return (ret);

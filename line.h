@@ -7,9 +7,8 @@
 #ifndef INClineh
 #define INClineh
 
-#include "alarm.h"
-
 #include "sllLib.h"
+#include "alh.h"
 
 static char *linehsccsId = "@(#) $Id$";
 
@@ -30,13 +29,10 @@ struct anyLine {
 	char message[LINEMESSAGE_SIZE]; /* summary message string */
 	void *wline;                    /* address of line_widget */
 	int linkType;                   /* type of gclink group or channel */
-	int unackSevr;                  /* highest unack severity */
 	int curSevr;                    /* current severity */
-
+	int unackSevr;                  /* highest unack severity */
 	int curStat;                    /* Channel: current status */
-	int unackStat;                  /* Channel: unack status */
-
-	short curSev[ALARM_NSEV];       /* Group: channels current sevr */
+	short curSev[ALH_ALARM_NSEV];   /* Group: current sevr channel counts*/
 };
 
 struct widgetLine {

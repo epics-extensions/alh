@@ -37,12 +37,14 @@ static char *sccsId = "@(#) $Id$";
 char *silenceString[] = {"Off","On"};
 
 /* global variables */
+extern int _global_flag;
+extern int _passive_flag;
 extern int toBeConnectedCount;
 extern int DEBUG;
 extern SLIST *areaList;
 extern struct setup psetup;
 extern Display *display;
-extern char *alarmSeverityString[];
+extern char *alhAlarmSeverityString[];
 
 ALINK *alhArea;
 
@@ -261,7 +263,7 @@ void setupConfig(char *filename,int program,ALINK *areaOld)
 					"Configuration file error: ",filename);
 		} else {
 			area = NULL;
-			printf ("ALH Error: Invalid config file: %s\n",filename);
+			errMsg ("ALH Error: Invalid config file: %s\n",filename);
 			exit_quit(NULL, area, NULL);
 		}
 	}
@@ -376,10 +378,12 @@ void createMainWindowWidgets(ALINK *area)
 {
 	char actTitle[] = "Alarm Configuration Tool";
 	char alhTitle[] = "Alarm Handler";
+	char execMode[35] = "Execution Mode: ";
 	XmString    str;
 	char   *app_name;
 	char   *title_str;
 	int len = 0;
+	Widget label_executionMode;
 
 	if (area->toplevel) return;
 
@@ -469,9 +473,13 @@ void createMainWindowWidgets(ALINK *area)
 	/* Add scale drag Callback */
 	XtAddCallback(area->scale, XmNdragCallback, (XtCallbackProc)scale_callback, area);
 
-	/* Create group alarm decoder label for the messageArea */
-	area->label_mask = XtVaCreateManagedWidget(
-	    "Mask <CDATL>: <Cancel,Disable,noAck,noackT,noLog>",
+	/* Create execution mode indicator label for the messageArea */
+    if (_global_flag ) strcat(execMode,"GLOBAL  ");
+    else strcat(execMode,"LOCAL  ");
+    if (_passive_flag ) strcat(execMode,"PASSIVE ");
+    else strcat(execMode,"ACTIVE ");
+	label_executionMode = XtVaCreateManagedWidget(
+	    execMode,
 	    xmLabelGadgetClass,        area->messageArea,
 	    XmNmarginHeight,           3,
 	    XmNalignment,              XmALIGNMENT_BEGINNING,
@@ -482,8 +490,20 @@ void createMainWindowWidgets(ALINK *area)
 	    NULL);
 
 	/* Create group alarm decoder label for the messageArea */
+	area->label_mask = XtVaCreateManagedWidget(
+	    "Mask <CDATL>: <Cancel,Disable,noAck,noackT,noLog>",
+	    xmLabelGadgetClass,        area->messageArea,
+	    XmNmarginHeight,           3,
+	    XmNalignment,              XmALIGNMENT_BEGINNING,
+	    XmNtopAttachment,          XmATTACH_WIDGET,
+	    XmNtopWidget,              label_executionMode,
+	    XmNleftAttachment,         XmATTACH_POSITION,
+	    XmNleftPosition,           1,
+	    NULL);
+
+	/* Create group alarm decoder label for the messageArea */
 	area->label_groupAlarm = XtVaCreateManagedWidget(
-	    "Group Alarm Counts: (INVALID,MAJOR,MINOR,NOALARM)",
+	    "Group Alarm Counts: (ERROR,INVALID,MAJOR,MINOR,NOALARM)",
 	    xmLabelGadgetClass,        area->messageArea,
 	    XmNmarginHeight,           3,
 	    XmNalignment,              XmALIGNMENT_BEGINNING,
@@ -495,7 +515,7 @@ void createMainWindowWidgets(ALINK *area)
 
 	/* Create filenameTitle label for the messageArea */
 	area->label_channelAlarm = XtVaCreateManagedWidget(
-	    "Channel Alarm Data: Current<Status,Severity>,Highest Unack<Status,Severity>",
+	    "Channel Alarm Data: <Current Status,Current Severity>,<Highest Unack Severity>",
 	    xmLabelGadgetClass,        area->messageArea,
 	    XmNmarginHeight,           3,
 	    XmNalignment,              XmALIGNMENT_BEGINNING,
@@ -588,7 +608,7 @@ void createMainWindowWidgets(ALINK *area)
 	XmStringFree(str);
 
 	/* Create BeepSeverity string for the messageArea */
-	str = XmStringCreateSimple(alarmSeverityString[psetup.beepSevr]);
+	str = XmStringCreateSimple(alhAlarmSeverityString[psetup.beepSevr]);
 	area->beepSeverity = XtVaCreateManagedWidget("beepSeverity",
 	    xmLabelGadgetClass,        area->messageArea,
 	    XmNlabelString,            str,
@@ -781,7 +801,7 @@ void changeBeepSeverityText(ALINK *area)
 	XmString    str;
 
 	if (area->beepSeverity) {
-		str = XmStringCreateSimple(alarmSeverityString[psetup.beepSevr]);
+		str = XmStringCreateSimple(alhAlarmSeverityString[psetup.beepSevr]);
 		XtVaSetValues(area->beepSeverity,
 		    XmNlabelString,            str,
 		    NULL);

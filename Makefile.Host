@@ -7,12 +7,13 @@ include $(TOP)/config/CONFIG_EXTENSIONS
 
 I_WANT_CDEV             = NO
 I_WANT_GREETINGS        = NO
-I_WANT_CMLOG		= YES
+I_WANT_CMLOG		= NO
+#I_WANT_CMLOG		= YES
 
 # These should really be done in <TOP>/config/RELEASE, but
 # defining things here overrides these values.
 #CMLOG=/opt/OPI/cmlog
-EPICS_BASE=/home/controls/epics/baseR3.13.1
+##EPICS_BASE=/home/controls/epics/baseR3.13.1
 
 ifeq ($(I_WANT_GREETINGS),YES)
 alh_CFLAGS += -DIWantGreetings
@@ -51,14 +52,14 @@ ifeq ($(I_WANT_CDEV),YES)
   cdev_DIR = $(CDEV_LIB)
 
 ifeq ($(ANSI), GCC)
-  PROD_LIBS_DEFAULT += EpicsCa ca
+  PROD_LIBS += EpicsCa ca
   EpicsCa_DIR = $(CDEV_LIB)
 endif
   SYS_PROD_LIBS_DEFAULT += y l
 
   alh_SRCS         += alCaCdev.cc
 else
-  PROD_LIBS_DEFAULT += ca
+  PROD_LIBS += ca Com
 
   alh_SRCS         += alCA.c
 endif
@@ -66,14 +67,17 @@ endif
 INCLUDES += -I/usr/contrib/X11R5/include -I$(MOTIF_INC) -I$(X11_INC)
 
 # baseR3.13.0.beta12 and later
-awAlh_CFLAGS += -DALH_HELP_URL="\"http://www.aps.anl.gov/asd/controls/epics/EpicsDocumentation/ExtensionsManuals/AlarmHandler/alh.html\""
+awAlh_CFLAGS += -DALH_HELP_URL="\"http://www.aps.anl.gov/asd/controls/epics/EpicsDocumentation/ExtensionsManuals/AlarmHandler/ALHUserGuide/ALHUserGuide.html\""
 
 # Debugging options
+#ifneq ($(HOST_ARCH),WIN32)
 #CC = purify -first-only -chain-length=25  $($(ANSI)_$(CMPLR))
 #CXX = purify -first-only -chain-length=25  $($(CPLUSPLUS)_$(CXXCMPLR))
 #HOST_OPT=NO
+#endif
 
 alh_SRCS += acknowledge.c
+alh_SRCS += alarm.c
 alh_SRCS += alCaCommon.c
 alh_SRCS += alConfig.c
 alh_SRCS += alFilter.c
@@ -113,17 +117,10 @@ PROD_WIN32 = alh
 USR_CFLAGS_WIN32 += /DWIN32 /D_WINDOWS
 USR_LDFLAGS_WIN32 += /SUBSYSTEM:WINDOWS
 
-PROD_LIBS_DEFAULT += Com
-USR_LIBS_DEFAULT = Xmu Xm Xt X11
-USR_LIBS_Linux +=  Xmu Xm Xt X11 Xp
+PROD_LIBS += Com
+PROD_LIBS_DEFAULT += Xmu Xm Xt X11
+PROD_LIBS_Linux +=  Xmu Xm Xt X11 Xp
 
-ifeq ($(EXCEED),Exceed5)
-USR_LIBS_WIN32 += XmStatic Xt XlibGUI Xlib
-else
-USR_LIBS_WIN32 += XmStatic HCLXt XlibGUI Xlib
-endif
-
-Xp_DIR = $(MOTIF_LIB)
 Xmu_DIR = $(X11_LIB)
 Xm_DIR = $(MOTIF_LIB)
 Xt_DIR = $(X11_LIB)
@@ -137,15 +134,18 @@ ifeq ($(EXCEED),Exceed6)
   PROD_LIBS_WIN32 = XmStatic HCLXt XlibGUI Xlib HCLXmu
 endif
 ifeq ($(EXCEED),Exceed6.1)
-  PROD_LIBS_WIN32 = XmStatic XMSTATXT XlibGUI Xlib
-  USR_CFLAGS_WIN32 += -DXMSTATIC
+  PROD_LIBS_WIN32 = HCLXm HCLXt XlibGUI Xlib
+  #PROD_LIBS_WIN32 = XmStatic XMSTATXT XlibGUI Xlib
+  #USR_CFLAGS_WIN32 += -DXMSTATIC
 endif
 
-XlibGUI_DIR = $(X11_LIB)
-XmStatic_DIR = $(MOTIF_LIB)
+#XmStatic_DIR = $(MOTIF_LIB)
+HCLXm_DIR = $(MOTIF_LIB)
 HCLXt_DIR = $(X11_LIB)
+XlibGUI_DIR = $(X11_LIB)
 Xlib_DIR = $(X11_LIB)
-
+#HCLXmu_DIR = $(X11_LIB)
+#XMSTATXT_DIR = $(X11_LIB)
 
 RCS_WIN32 += alh.rc
 

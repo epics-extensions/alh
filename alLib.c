@@ -16,16 +16,22 @@ static char *sccsId = "@(#) $Id$";
 #include "alLib.h"
 #include "ax.h"
 
+extern char * alhAlarmSeverityString[];
+extern char * alhAlarmStatusString[];
+
 /* global variables */
+extern int _passive_flag;
+extern int _global_flag;
+extern int _DB_call_flag;
 extern int DEBUG;
 extern int ALARM_COUNTER;
 extern struct setup psetup;
-extern _DB_call_flag; /* Albert1 */ 
 
 /* forward declarations */
 static void alarmCountFilter_callback(XtPointer cd, XtIntervalId *id);
 static void alNewAlarmProcess(int stat,int sev,char *value,
 CLINK *clink,time_t timeofday);
+void alSetAckTChan(CLINK *clink,int ackt);
 
 
 /**********************************************************************
@@ -553,22 +559,35 @@ static void alarmCountFilter_callback(XtPointer cd, XtIntervalId *id)
   alNewEvent
 ******************************************************/
 
-void alNewEvent(int stat,int sevr,int acks,char *value,CLINK *clink)
+void alNewEvent(int stat,int sevr,int acks,int ackt,char *value,CLINK *clink)
 {
 	struct chanData *cdata;
 	COUNTFILTER *countFilter;
+	time_t alarmTime;
+	int newAckt;
 
 	cdata = clink->pchanData;
+
+	if (_global_flag) {
+		/* NOTE: ackt and curMask.AckT have opposite meaning */
+		newAckt = (ackt+1)%2; 
+		if (cdata->unackSevr != acks) {
+			alSetUnackSevChan(clink,acks);
+		}
+		if (cdata->curMask.AckT != newAckt) {
+			alSetAckTChan(clink,newAckt);
+		}
+		if (cdata->curStat == stat && cdata->curSevr == sevr &&
+			cdata->curMask.Log == 0) {
+			alarmTime = time(0L);
+			alLogAlarm(&alarmTime,cdata,stat,sevr,acks,newAckt);
+		}
+	}
 	countFilter = cdata->countFilter;
 	if ((!countFilter && (cdata->curStat != stat || cdata->curSevr != sevr)) ||
 	    (countFilter && (countFilter->stat != stat || countFilter->sev != sevr)))
 	{
 		alNewAlarm(stat,sevr,value,clink);
-	}
-	else if (cdata->unackSevr > 0)
-	{
-		alLogGblAckChan(cdata);
-		alAckChan(clink);
 	}
 }
 
@@ -589,7 +608,6 @@ void alNewAlarm(int stat,int sev,char *value,CLINK *clink)
 
 	/* set time of alarm */
 	alarmTime = time(0L);
-
 	if (!countFilter) {
 		alNewAlarmProcess(stat,sev,value,clink,alarmTime);
 		return;
@@ -643,13 +661,13 @@ CLINK *clink,time_t timeofday)
 	struct groupData *gdata;
 	GLINK *glink;
 	MASK mask;
-	int stat_prev,sevr_prev,h_unackSevr,h_unackStat,sevrHold;
+	int stat_prev,sevr_prev,sevrHold;
 	int viewCount=0;
 	int prevViewCount=0;
 
 	if (clink == NULL ) return;
-	if (sev >= ALARM_NSEV) sev = ALARM_NSEV-1;
-	if (stat >= ALARM_NSTATUS) stat = ALARM_NSTATUS-1;
+	if (sev >= ALH_ALARM_NSEV) sev = ALH_ALARM_NSEV-1;
+	if (stat >= ALH_ALARM_NSTATUS) stat = ALH_ALARM_NSTATUS-1;
 	cdata = clink->pchanData;
 	mask = cdata->curMask;
 
@@ -665,22 +683,15 @@ CLINK *clink,time_t timeofday)
 	viewCount = awViewViewCount((void *)clink);
 	clink->viewCount = viewCount;
 
-	if (sev > cdata->unackSevr) {
-		h_unackSevr = sev;
-		h_unackStat = stat;
-	}
-	else {
-		h_unackSevr = cdata->unackSevr;
-		h_unackStat = cdata->unackStat;
+ 	/*
+ 	 * log the channel alarm at the alarm logfile
+ 	 */
+ 	if (mask.Log == 0) {
+		alLogAlarm(&timeofday,cdata,stat,sev,
+			cdata->unackSevr,cdata->curMask.AckT);
 	}
 
 	if (DEBUG >=3) ALARM_COUNTER++;
-
-	/*
-	 * log the channel alarm at the alarm logfile
-	 */
-	if (mask.Log == 0)
-		alLogAlarm(&timeofday,cdata,stat,sev,h_unackStat,h_unackSevr);
 
 	/* 
 	 * disabled alarm special handling 
@@ -706,7 +717,9 @@ CLINK *clink,time_t timeofday)
 
 	if ( sev != sevr_prev ) {
 		spawnSevrCommandList(&cdata->sevrCommandList,sev,sevr_prev);
-		if (cdata->sevrchid) alCaPutSevrValue(cdata->sevrchid,&cdata->curSevr);
+		if (_global_flag && !_passive_flag) {
+			if (cdata->sevrchid) alCaPutSevrValue(cdata->sevrchid,&cdata->curSevr);
+		}
 	}
 
 	/*
@@ -732,7 +745,9 @@ CLINK *clink,time_t timeofday)
 		if ( sevrHold != gdata->curSevr ) {
 			spawnSevrCommandList(&gdata->sevrCommandList,
 			    gdata->curSevr,sevrHold);
-			if (gdata->sevrchid) alCaPutSevrValue(gdata->sevrchid,&gdata->curSevr);
+			if (_global_flag && !_passive_flag) {
+				if (gdata->sevrchid) alCaPutSevrValue(gdata->sevrchid,&gdata->curSevr);
+			}
 		}
 
 		glink->modified = 1;
@@ -750,43 +765,26 @@ CLINK *clink,time_t timeofday)
 	if ( mask.Ack == 1) return;
 
 	/*
-	 * transient alarm not required to acknowledge
+	 * update unackSev[] and unackSevr of all parent groups
+ 	 * transient alarm not required to acknowledge
 	 */
-	if ( mask.AckT == 1 && cdata->unackSevr > 0 && sev == 0)
-	{ 
-		alAckChan(clink);
-		return;
+	if (!_global_flag) {
+		if (sev >= cdata->unackSevr) {
+			alSetUnackSevChan(clink,sev);
+		} else {
+			if (mask.AckT==1) {
+				alSetUnackSevChan(clink,sev);
+			}
+		}
 	}
 
 	/*
 	 * reset silenceCurrent state to FALSE
 	 */
-
 	if (psetup.silenceCurrent && sev >= psetup.beepSevr)
 		silenceCurrentReset(clink->pmainGroup->area);
 
-	/*
-	 * update unackSev[] of all parent groups and log it
-	 */
-
-	if ( sev > cdata->unackSevr) {
-		glink = clink->parent;
-		while (glink) {
-			glink->pgroupData->unackSev[cdata->unackSevr]--;
-			glink->pgroupData->unackSev[sev]++;
-			glink->pgroupData->unackSevr = alHighestSeverity(glink->pgroupData->unackSev);
-			glink->modified = 1;
-			glink = glink->parent;
-		}
-
-	}
-
-
-
-	if (cdata->unackSevr < sev)  {
-		cdata->unackSevr = sev;
-		cdata->unackStat = stat;
-	}
+	cdata->unackStat = stat;
 }
 
 /******************************************************************
@@ -808,89 +806,13 @@ void alHighestSystemSeverity(GLINK *glink)
 /******************************************************************
 	highest group severity 
 *****************************************************************/
-int alHighestSeverity(short sevr[ALARM_NSEV])
+int alHighestSeverity(short sevr[ALH_ALARM_NSEV])
 {
 	int j=0;
-	for (j=ALARM_NSEV-1;j>0;j--) {
+	for (j=ALH_ALARM_NSEV-1;j>0;j--) {
 		if (sevr[j] > 0) return(j);
 	}
 	return(0);
-}
-
-/*************************************************************    
- * decrement GroupData after channel acknowledgement
- ***************************************************************/
-void alAckChan(CLINK *clink)
-{
-	GLINK *parent;
-	struct chanData *cdata;
-	struct groupData *gdata;
-
-	/*
-	 * if no alarm exists
-	 */
-	cdata = (struct chanData *)clink->pchanData;
-	if (cdata->unackSevr == 0) return;
-
-
-	/*
-	 * update all parent groups
-	 */
-	parent = (GLINK *)clink->parent;
-	while (parent) {
-		gdata = (struct groupData *)parent->pgroupData;
-		gdata->unackSev[cdata->unackSevr]--;
-		gdata->unackSev[0]++;
-		gdata->unackSevr = alHighestSeverity(gdata->unackSev);
-		parent->modified = 1;
-		parent = parent->parent;
-	}
-
-	/* 
-	 * reset after acknowledgement
-	 */
-	cdata->unackSevr = 0;
-	cdata->unackStat = 0;
-	clink->modified = 1;
-
-	clink->pmainGroup->modified = TRUE;
-
-}
-
-/*************************************************************    
-	ackgroup  update al data structure
- ***************************************************************/
-void alAckGroup(GLINK *glink)
-{
-	CLINK *clink;
-	GLINK *group;
-	struct chanData *cdata;
-	SLIST *list;
-	SNODE *pt;
-
-	if (glink == NULL) return;
-
-	list = &(glink->chanList);
-	pt = sllFirst(list);
-	while (pt) {
-		clink = (CLINK *)pt;
-		cdata = clink->pchanData;
-		if (cdata->unackSevr > 0) {
-			if(_DB_call_flag)  alLog2DBAckChan(cdata->name);
-			alCaPutGblAck(cdata->chid,&cdata->unackSevr);
-			alAckChan(clink);
-		}
-		pt = sllNext(pt);
-	}
-
-	list = &(glink->subGroupList);
-	pt = sllFirst(list);
-	while (pt) {
-		group = (GLINK *)pt;
-		if (alHighestSeverity(group->pgroupData->unackSev) > 0)
-			alAckGroup(group);
-		pt = sllNext(pt);
-	}
 }
 
 /*************************************************************    
@@ -947,6 +869,9 @@ void alForceChanMask(CLINK *clink,int index,int op)
 	}
 
 	alChangeChanMask(clink,mask);
+
+	if(_DB_call_flag)  alLog2DBMask(clink->pchanData->name);
+
 }
 
 /************************************************************************* 
@@ -965,7 +890,6 @@ void alForceGroupMask(GLINK *glink,int index,int op)
 	while (pt) {
 		clink = (CLINK *)pt;
 		alForceChanMask(clink,index,op);
-		if(_DB_call_flag)  alLog2DBMask(clink->pchanData->name);
 		pt = sllNext(pt);
 	}
 	/*
@@ -997,7 +921,7 @@ static void alUpdateGroupMask(CLINK *clink,int index,int op)
 			gdata = parent->pgroupData;
 			if (gdata->mask[index] > 0) gdata->mask[index]--;
 			else 
-				printf("Error:alUpdateGroupMask, mask[%d] < 1",index);
+				errMsg("Error:alUpdateGroupMask, mask[%d] < 1",index);
 			parent->modified = 1;
 			parent = parent->parent;
 		}
@@ -1044,15 +968,15 @@ void alChangeChanMask(CLINK *clink,MASK mask)
 		change =1;
 
 		if (mask.Cancel == 1 ) {
-
 			if (cdata->evid) alCaClearEvent(&cdata->evid);
-
-
 			if (cdata->curMask.Disable  == 0) {
-
 				if (cdata->unackSevr > NO_ALARM)
-					alAckChan(clink);
+					alSetUnackSevChan(clink,NO_ALARM);
 				if (cdata->curSevr > NO_ALARM)  {
+/*
+					cdata->curSevr = NO_ALARM;
+					cdata->curStat = NO_ALARM;
+*/
 					parent = clink->parent;
 					while(parent) {
 						gdata = (struct groupData *)(parent->pgroupData);
@@ -1060,9 +984,9 @@ void alChangeChanMask(CLINK *clink,MASK mask)
 						gdata->curSev[NO_ALARM]++;
 
 						/*
-										 * spawn SEVRCOMMAND for all the parent groups
-										 * update curSev[] of all the parent groups
-										 */
+						 * spawn SEVRCOMMAND for all the parent groups
+						 * update curSev[] of all the parent groups
+						 */
 						sevrHold=gdata->curSevr;
 						gdata->curSevr=alHighestSeverity(gdata->curSev);
 						if ( sevrHold != gdata->curSevr ) {
@@ -1074,16 +998,36 @@ void alChangeChanMask(CLINK *clink,MASK mask)
 						parent = parent->parent;
 					}
 				}
-
 			}
-
-			cdata->curSevr = NO_ALARM;
 
 		}
 
-		if (mask.Cancel == 0)
-			if (cdata->evid == NULL)
-				alCaAddEvent(cdata->chid,&cdata->evid,clink);
+		if (mask.Cancel == 0 && cdata->evid == NULL) {
+/*
+			if (cdata->curMask.Disable  == 0) {
+				if (cdata->unackSevr == NO_ALARM)
+					alSetUnackSevChan(clink,ERROR_STATE);
+				if (cdata->curSevr == NO_ALARM)  {
+					cdata->curSevr = ERROR_STATE;
+					cdata->curStat = NOT_CONNECTED;
+					parent = clink->parent;
+					while(parent) {
+						gdata = (struct groupData *)(parent->pgroupData);
+						gdata->curSev[cdata->curSevr]--;
+						gdata->curSev[ERROR_STATE]++;
+						parent->modified = 1;
+						parent = parent->parent;
+					}
+				}
+			}
+*/
+			if (cdata->curMask.Disable  == 0 && cdata->curSevr > 0) {
+				saveSevr = cdata->curSevr;
+				cdata->curSevr = NO_ALARM;
+				alNewAlarmProcess(cdata->curStat,saveSevr,cdata->value,clink,time(0L));
+			}
+			alCaAddEvent(cdata->chid,&cdata->evid,clink);
+		}
 
 	}
 
@@ -1095,7 +1039,7 @@ void alChangeChanMask(CLINK *clink,MASK mask)
 		change = 1;
 		if (mask.Disable == 1 && mask.Cancel == 0) {
 			if (cdata->unackSevr > 0)  {
-				alAckChan(clink);
+				alSetUnackSevChan(clink,NO_ALARM);
 			}
 
 			if (cdata->curSevr > 0) {
@@ -1103,17 +1047,15 @@ void alChangeChanMask(CLINK *clink,MASK mask)
 				while(parent) {
 					gdata = (struct groupData *)(parent->pgroupData);
 					gdata->curSev[cdata->curSevr]--;
-					gdata->curSev[0]++;
-					/*
-					                 * spawn SEVRCOMMAND for all the parent groups
-					                 * update curSev[] of all the parent groups
-					                 */
+					gdata->curSev[NO_ALARM]++;
+					/* spawn SEVRCOMMAND for all the parent groups
+					 * update curSev[] of all the parent groups
+					 */
 					sevrHold=gdata->curSevr;
 					gdata->curSevr=alHighestSeverity(gdata->curSev);
 					if ( sevrHold != gdata->curSevr ) {
 						spawnSevrCommandList(&gdata->sevrCommandList,gdata->curSevr,sevrHold);
 					}
-
 					parent->modified = 1;
 					parent = parent->parent;
 				}
@@ -1125,9 +1067,8 @@ void alChangeChanMask(CLINK *clink,MASK mask)
 		if (mask.Disable == 0 && mask.Cancel == 0) {
 			if (cdata->curSevr > 0) {
 				saveSevr = cdata->curSevr;
-				cdata->curSevr = 0;
-				alNewAlarm(cdata->curStat,saveSevr,cdata->value,clink);
-
+				cdata->curSevr = NO_ALARM;
+				alNewAlarmProcess(cdata->curStat,saveSevr,cdata->value,clink,time(0L));
 			}
 		}
 
@@ -1140,14 +1081,16 @@ void alChangeChanMask(CLINK *clink,MASK mask)
 
 		change = 1;
 		if (mask.Ack == 1 ) {
-			if (cdata->unackSevr > 0 ) alAckChan(clink);
+			if (cdata->unackSevr > 0 ) {
+				alSetUnackSevChan(clink,NO_ALARM);
+			}
 		}
 
 		if (mask.Ack == 0 && mask.Cancel ==0 && mask.Disable == 0) {
 			if (cdata->curSevr > 0 ) {
 				/*
-				             * update unackSev[] of all parent groups
-				             */
+				 * update unackSev[] of all parent groups
+				 */
 				parent = clink->parent;
 				while(parent) {
 					gdata = (struct groupData *)(parent->pgroupData);
@@ -1157,7 +1100,7 @@ void alChangeChanMask(CLINK *clink,MASK mask)
 				}
 				saveSevr = cdata->curSevr;
 				cdata->curSevr = 0;
-				alNewAlarm(cdata->curStat,saveSevr,cdata->value,clink);
+				alNewAlarmProcess(cdata->curStat,saveSevr,cdata->value,clink,time(0L));
 			}
 
 
@@ -1165,11 +1108,15 @@ void alChangeChanMask(CLINK *clink,MASK mask)
 
 	}
 	if (mask.AckT != cdata->curMask.AckT) {
-		alUpdateGroupMask(clink,ALARMACKT,mask.AckT);
-
-		cdata->curMask.AckT = mask.AckT;
-
-		change = 1;
+		if (!_global_flag) {
+			alUpdateGroupMask(clink,ALARMACKT,mask.AckT);
+			cdata->curMask.AckT = mask.AckT;
+			change = 1;
+		} else {
+			/* NOTE: ackt and curMask.AckT have opposite meaning */
+			short ackt = (mask.AckT+1)%2;
+			alCaPutGblAckT(cdata->chid,&ackt);
+		}
 	}
 
 	if (mask.Log != cdata->curMask.Log) {
@@ -1185,7 +1132,6 @@ void alChangeChanMask(CLINK *clink,MASK mask)
 	 * set current mask to new mask
 	 */
 
-	cdata->curMask = mask;
 	if (change == 1) {
 		clink->modified = 1;
 		clink->pmainGroup->modified = TRUE;
@@ -1285,4 +1231,60 @@ int alProcessExists(GCLINK *link)
 	if (link->pgcData->command)  return(TRUE);
 	return(FALSE);
 }
+
+/***************************************************
+  alSetUnackSev
+****************************************************/
+static void alSetUnackSevGroup(GLINK *glink,int newSevr,int oldSevr)
+{
+	struct groupData * gdata;
+
+	gdata = (struct groupData *)glink->pgroupData;
+	gdata->unackSev[oldSevr]--;
+	gdata->unackSev[newSevr]++;
+	gdata->unackSevr = alHighestSeverity(gdata->unackSev);
+	glink->modified = 1;
+	if (glink->parent) alSetUnackSevGroup(glink->parent,newSevr,oldSevr);
+}
+
+/***************************************************
+  alSetUnackSev
+****************************************************/
+void alSetUnackSevChan(CLINK *clink,int newSevr)
+{
+	int oldSevr;
+
+	oldSevr = clink->pchanData->unackSevr;
+	if (oldSevr == newSevr) return;
+	clink->pchanData->unackSevr = newSevr;
+	clink->modified = 1;
+	clink->pmainGroup->modified = TRUE;
+	if (clink->parent) alSetUnackSevGroup(clink->parent,newSevr,oldSevr);
+}
+
+
+/***************************************************
+  set new channel unacknowledge transients setting
+****************************************************/
+void alSetAckTChan(CLINK *clink,int newAckT)
+{
+	struct chanData *cdata;
+	int oldAckT;
+ 
+	cdata = clink->pchanData;
+
+	oldAckT = cdata->curMask.AckT;
+	if (oldAckT == newAckT) return;
+
+	if (newAckT == FALSE && (cdata->unackSevr > cdata->curSevr)) {
+	    alSetUnackSevChan(clink,cdata->curSevr);
+	}
+
+	alUpdateGroupMask(clink,ALARMACKT,newAckT);
+	cdata->curMask.AckT = newAckT;
+
+	clink->modified = 1;
+	clink->pmainGroup->modified = TRUE;
+}
+
 
