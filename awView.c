@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.11  1996/12/13 22:18:15  jba
+ Bug fix.
+
  Revision 1.10  1995/11/13 22:31:19  jba
  Added beepseverity command, ansi changes and other changes.
 
@@ -998,6 +1001,6 @@ void invokeDialogUpdate(area)
      GCLINK *gclink;
 
      gclink = area->selectionLink;
-     if (gclink->modified) axUpdateDialogs(area);
+     if (gclink && gclink->modified) axUpdateDialogs(area);
 
 }
