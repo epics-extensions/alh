@@ -809,15 +809,8 @@ CLINK *clink,time_t timeofday)
 *****************************************************************/
 void alHighestSystemSeverity(GLINK *glink)
 {
-	int unack,curSevr;
-
-	psetup.highestSevr = 0;
-	psetup.highestUnackSevr = 0;
-	curSevr = alHighestSeverity(glink->pgroupData->curSev);
-	unack = alHighestSeverity(glink->pgroupData->unackSev);
-	if (curSevr > psetup.highestSevr) psetup.highestSevr = curSevr;
-	if (unack > psetup.highestUnackSevr)
-		psetup.highestUnackSevr = unack;
+	psetup.highestSevr = alHighestSeverity(glink->pgroupData->curSev);
+	psetup.highestUnackSevr = alHighestSeverity(glink->pgroupData->unackSev);
 }
 
 /******************************************************************
