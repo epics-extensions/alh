@@ -241,6 +241,7 @@ Tue Jun 22 11:12:51 CDT 1999
 
 Wed Jul 14 16:24:06 CDT 1999
 	Updates to handle global acks and ackt fields and related changes.
+	Created version 1.2.1
 
 date:1999/07/21 23:02:10
 	Cdev and Exceed changes.
@@ -279,6 +280,7 @@ Thu Oct 14 10:11:23 CDT 1999
 	Fixed alarm channel count for INCLUDE files.
 	Fix for ca put of ACKT values when config file is read.
 	Fix for alarm sevr of initially canceled and disabled channels.
+	Created version 1.2.2
 	
 Tue Oct 26 09:14:53 CDT 1999
 	Run window now displays color of highest unack alarm.
@@ -291,10 +293,16 @@ Tue Nov  2 14:10:45 CST 1999
 
 Fri Nov 12 16:27:37 CST 1999
 	Don't set unack global sevr from alarm events if curMask.Ack==true
+	Created version 1.2.3
+
+1999/12/08 19:41:11;  author: jba
+	Changed win32 compile option to start with slash for consistancy.
+	Initialized parent_link to null.
 
 Mon Apr 24 09:40:43 CDT 2000 -  V1.2.4
 	Simplified alHighestSystemSeverity calculation.
 	Added new alarm event error checking.
+	Created version 1.2.4
 
 Wed Aug  9 09:16:57 CDT 2000 - V1.2.5
 	Fixed some memory leaks in scroll.c and dialog.c and file.c.
@@ -303,18 +311,28 @@ Wed Aug  9 09:16:57 CDT 2000 - V1.2.5
 	Added acks and ackt fields to countFilter structure in alLib.h.
 	Modified the handling of new events when a count Filter exists,
 	see comment table in alLib.c (near line 630 ).
+	Created version 1.2.5
+
+2000/08/15 17:00:20;  author: lange
+	Added startup code for HP C++-Linker
 
 Tue Sep 26 10:30:55 CDT 2000
 	Added audio for WIN32 and fixed some memory leaks.
 
 Thu Oct  5 14:49:17 CDT 2000 - V1.2.6
 	Added audio for solaris.
+	Created version 1.2.6
+
+2000/10/09 21:06:33;  author: jba
+	Made changes for building with solaris 6.
 
 Tue Oct 17 14:08:17 CDT 2000 - V1.2.7
 	Change to build with baseR3.14.
+	Created version 1.2.7
 
 Tue Oct 24 16:01:07 CDT 2000 - V1.2.8
 	More changes to build with baseR3.14.
+	Created version 1.2.8
 
 Tue Feb 13 09:24:37 CST 2001 - V1.2.9
 	Fixed bug in new alarm event filtering.
@@ -322,7 +340,26 @@ Tue Feb 13 09:24:37 CST 2001 - V1.2.9
 
 Tue Feb 20 09:42:46 CST 2001 - V1.2.9
 	Reinstated update of current alarm history when window not displayed.
+	Created version 1.2.9
+
+2001/10/09 18:07:47;  author:  evans
+	Fixed code to not use ALH_Pixmap as XmNiconPixmap for WIN32, since Exceed
+	trashes it.
+
+2002/01/17 22:00:04;  author: jba
+	Changed HOST_ARCH to OS_CLASS in Makefile.Host
+
+2002/02/04 19:56:15;  author: jba
+	Set ellNext parm cast to ELLNODE* to avoid compiler warnings.
+
+2002/05/17 20:51:09;  author: jba
+	Added const to avoid compiler warnings.
 
 Tue Jul 23 16:21:37 CDT 2002
-  Added license information to source files. Added LICENSE file.
+	Added license information to source files. Added LICENSE file.
+	Created version 1.2.10
+
+Wed Sep 11 10:20:10 CDT 2002
+	Added missing notes to alh.notes file.
+	Initialized FILE fl and fo to zero to avoid compiler warnings.
 
