@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.8  1997/04/17 18:31:46  jba
+ Changed mask from char ro uchar.
+
  Revision 1.7  1997/04/17 18:01:15  jba
  Added calls to free allocated memory.
 
@@ -549,7 +552,7 @@ static void forcePVMaskChangeCallback(widget, index, cbs)
      int index;
      XmAnyCallbackStruct *cbs;
 {
-     char *mask;
+     uchar *mask;
      Widget maskWidget;
      XmString string;
 
