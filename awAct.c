@@ -78,32 +78,32 @@ Widget actCreateMenu(Widget parent,XtPointer user_data)
 	Widget     widget;
 	static MenuItem file_menu[] = {
 		/*
-		         { "New",        &xmPushButtonGadgetClass, 'N', "Ctrl<Key>N", "Ctrl+N",
+		         { "New",        PushButtonGadgetClass, 'N', "Ctrl<Key>N", "Ctrl+N",
 		             actFileCallback, (XtPointer)MENU_FILE_NEW,      (MenuItem *)NULL },
 		*/
-		         { "Open ...",   &xmPushButtonGadgetClass, 'O', "Ctrl<Key>O", "Ctrl+O",
+		         { "Open ...",   PushButtonGadgetClass, 'O', "Ctrl<Key>O", "Ctrl+O",
 		             actFileCallback, (XtPointer)MENU_FILE_OPEN,       (MenuItem *)NULL },
 		/*
-		         { "Close",       &xmPushButtonGadgetClass, 'C', NULL, NULL,
+		         { "Close",       PushButtonGadgetClass, 'C', NULL, NULL,
 		             actFileCallback, (XtPointer)MENU_FILE_CLOSE,       (MenuItem *)NULL },
-		         { "Close All",   &xmPushButtonGadgetClass, 'A', NULL, NULL,
+		         { "Close All",   PushButtonGadgetClass, 'A', NULL, NULL,
 		             actFileCallback, (XtPointer)MENU_FILE_CLOSEALL,     (MenuItem *)NULL },
 		*/
-		         { "Save",       &xmPushButtonGadgetClass, 'S', "Ctrl<Key>S", "Ctrl+S",
+		         { "Save",       PushButtonGadgetClass, 'S', "Ctrl<Key>S", "Ctrl+S",
 		             actFileCallback, (XtPointer)MENU_FILE_SAVE,       (MenuItem *)NULL },
-		         { "Save As ...",&xmPushButtonGadgetClass, 'A', NULL, NULL,
+		         { "Save As ...",PushButtonGadgetClass, 'A', NULL, NULL,
 		             actFileCallback, (XtPointer)MENU_FILE_SAVEAS,     (MenuItem *)NULL },
-		         { "",           &xmSeparatorGadgetClass, '\0', NULL, NULL,
+		         { "",           SeparatorGadgetClass, '\0', NULL, NULL,
 		             NULL,        NULL,                            (MenuItem *)NULL },
-		         { "Activate ALH ...",  &xmPushButtonGadgetClass, 'A', NULL, NULL,
+		         { "Activate ALH ...",  PushButtonGadgetClass, 'A', NULL, NULL,
 		             actFileCallback, (XtPointer)MENU_FILE_ALH,      (MenuItem *)NULL },
-		         { "",           &xmSeparatorGadgetClass, '\0', NULL, NULL,
+		         { "",           SeparatorGadgetClass, '\0', NULL, NULL,
 		             NULL,        NULL,                            (MenuItem *)NULL },
-		         { "Tree Report ...",  &xmPushButtonGadgetClass, 'P', NULL, NULL,
+		         { "Tree Report ...",  PushButtonGadgetClass, 'P', NULL, NULL,
 		             actFileCallback, (XtPointer)MENU_FILE_PRINT,      (MenuItem *)NULL },
-		         { "",           &xmSeparatorGadgetClass, '\0', NULL, NULL,
+		         { "",           SeparatorGadgetClass, '\0', NULL, NULL,
 		             NULL,        NULL,                            (MenuItem *)NULL },
-		         { "Exit",       &xmPushButtonGadgetClass, 'X', "Ctrl<Key>X", "Ctrl+X",
+		         { "Exit",       PushButtonGadgetClass, 'X', "Ctrl<Key>X", "Ctrl+X",
 		             actFileCallback, (XtPointer)MENU_FILE_QUIT,       (MenuItem *)NULL },
 		         {NULL},
 		     	};
@@ -111,71 +111,71 @@ Widget actCreateMenu(Widget parent,XtPointer user_data)
 	static MenuItem edit_menu[] = {
 
 		/*   ACCELERATORS DONT WORK YET
-		         { "Undo",       &xmPushButtonGadgetClass, 'U', "Alt<Key>BackSpace<Key>", "Alt+BackSpace",
+		         { "Undo",       PushButtonGadgetClass, 'U', "Alt<Key>BackSpace<Key>", "Alt+BackSpace",
 		             actEditCallback, (XtPointer)MENU_EDIT_UNDO,   (MenuItem *)NULL },
-		         { "",           &xmSeparatorGadgetClass, '\0', NULL, NULL,
+		         { "",           SeparatorGadgetClass, '\0', NULL, NULL,
 		             NULL,        NULL,                        (MenuItem *)NULL },
-		         { "Cut",        &xmPushButtonGadgetClass, 't', "Shift<Key>Delete<Key>", "Shift+Del",
+		         { "Cut",        PushButtonGadgetClass, 't', "Shift<Key>Delete<Key>", "Shift+Del",
 		             actEditCallback, (XtPointer)MENU_EDIT_CUT,    (MenuItem *)NULL },
-		         { "Copy",       &xmPushButtonGadgetClass, 'C', "Ctrl<Key>Insert<Key>", "Ctrl+Ins",
+		         { "Copy",       PushButtonGadgetClass, 'C', "Ctrl<Key>Insert<Key>", "Ctrl+Ins",
 		             actEditCallback, (XtPointer)MENU_EDIT_COPY,   (MenuItem *)NULL },
-		         { "Paste",      &xmPushButtonGadgetClass, 'P', "Shift<Key>Insert<Key>", "Shift+Ins",
+		         { "Paste",      PushButtonGadgetClass, 'P', "Shift<Key>Insert<Key>", "Shift+Ins",
 		             actEditCallback, (XtPointer)MENU_EDIT_PASTE,  (MenuItem *)NULL },
 		*/
 		/*   UNDO DOES NOT WORK YET
-		         { "Undo",       &xmPushButtonGadgetClass, 'U', NULL, NULL,
+		         { "Undo",       PushButtonGadgetClass, 'U', NULL, NULL,
 		             actEditCallback, (XtPointer)MENU_EDIT_UNDO,   (MenuItem *)NULL },
-		         { "",           &xmSeparatorGadgetClass, '\0', NULL, NULL,
+		         { "",           SeparatorGadgetClass, '\0', NULL, NULL,
 		             NULL,        NULL,                        (MenuItem *)NULL },
 		*/
-		         { "Cut",        &xmPushButtonGadgetClass, 't', NULL, NULL,
+		         { "Cut",        PushButtonGadgetClass, 't', NULL, NULL,
 		             actEditCallback, (XtPointer)MENU_EDIT_CUT,    (MenuItem *)NULL },
-		         { "Copy",       &xmPushButtonGadgetClass, 'C', NULL, NULL,
+		         { "Copy",       PushButtonGadgetClass, 'C', NULL, NULL,
 		             actEditCallback, (XtPointer)MENU_EDIT_COPY,   (MenuItem *)NULL },
-		         { "Paste",      &xmPushButtonGadgetClass, 'P', NULL, NULL,
+		         { "Paste",      PushButtonGadgetClass, 'P', NULL, NULL,
 		             actEditCallback, (XtPointer)MENU_EDIT_PASTE,  (MenuItem *)NULL },
-		         { "",           &xmSeparatorGadgetClass, '\0', NULL, NULL,
+		         { "",           SeparatorGadgetClass, '\0', NULL, NULL,
 		             NULL,        NULL,                        (MenuItem *)NULL },
-		         { "Clear",      &xmPushButtonGadgetClass, 'e', NULL, NULL,
+		         { "Clear",      PushButtonGadgetClass, 'e', NULL, NULL,
 		             actEditCallback, (XtPointer)MENU_EDIT_CLEAR,      (MenuItem *)NULL },
 		         {NULL},
 		     	};
 
 	static MenuItem insert_menu[] = {
-		         { "Group ...",       &xmPushButtonGadgetClass, 'G', NULL, NULL,
+		         { "Group ...",       PushButtonGadgetClass, 'G', NULL, NULL,
 		             actInsertCallback, (XtPointer)MENU_INSERT_GROUP,   (MenuItem *)NULL },
-		         { "Channel ...",        &xmPushButtonGadgetClass, 'C', NULL, NULL, 
+		         { "Channel ...",        PushButtonGadgetClass, 'C', NULL, NULL, 
 		             actInsertCallback, (XtPointer)MENU_INSERT_CHANNEL,     (MenuItem *)NULL },
-		         { "Runtime Include...", &xmPushButtonGadgetClass, 'F', NULL, NULL,
+		         { "Runtime Include...", PushButtonGadgetClass, 'F', NULL, NULL,
 		             actInsertCallback, (XtPointer)MENU_INSERT_INCLUDE, (MenuItem *)NULL },
-		         { "File ...", &xmPushButtonGadgetClass, 'F', NULL, NULL,
+		         { "File ...", PushButtonGadgetClass, 'F', NULL, NULL,
 		             actInsertCallback, (XtPointer)MENU_INSERT_FILE, (MenuItem *)NULL },
 		         {NULL},
 		     	};
 
 	static MenuItem view_menu[] = {
-		         { "Expand One Level", &xmPushButtonGadgetClass, 'O', "None<Key>plus", "+",
+		         { "Expand One Level", PushButtonGadgetClass, 'O', "None<Key>plus", "+",
 		             actViewCallback, (XtPointer)MENU_VIEW_EXPANDCOLLAPSE1,          (MenuItem *)NULL },
-		         { "Expand Branch",          &xmPushButtonGadgetClass, 'B', "None<Key>asterisk", "*",
+		         { "Expand Branch",          PushButtonGadgetClass, 'B', "None<Key>asterisk", "*",
 		             actViewCallback, (XtPointer)MENU_VIEW_EXPANDBRANCH,      (MenuItem *)NULL },
-		         { "Expand All",             &xmPushButtonGadgetClass, 'A',"Ctrl<Key>asterisk", "Ctrl+*",
+		         { "Expand All",             PushButtonGadgetClass, 'A',"Ctrl<Key>asterisk", "Ctrl+*",
 		             actViewCallback, (XtPointer)MENU_VIEW_EXPANDALL,         (MenuItem *)NULL },
-		         { "Collapse Branch",        &xmPushButtonGadgetClass, 'C', "None<Key>minus", "-",
+		         { "Collapse Branch",        PushButtonGadgetClass, 'C', "None<Key>minus", "-",
 		             actViewCallback, (XtPointer)MENU_VIEW_COLLAPSEBRANCH,    (MenuItem *)NULL },
-		         { "",                       &xmSeparatorGadgetClass, '\0', NULL, NULL,
+		         { "",                       SeparatorGadgetClass, '\0', NULL, NULL,
 		             NULL,    NULL,                         (MenuItem *)NULL },
-		         { "Properties Window",  &xmToggleButtonGadgetClass, 'W', NULL, NULL,
+		         { "Properties Window",  ToggleButtonGadgetClass, 'W', NULL, NULL,
 		             actViewCallback, (XtPointer)MENU_VIEW_PROPERTIES,          (MenuItem *)NULL },
 		         {NULL},
 		     	};
 
 	static MenuItem help_menu[] = {
 		/* HELP NOT IMPLEMENTED YET
-		         { "Help Topics",       &xmPushButtonGadgetClass, 'H', NULL, NULL,
+		         { "Help Topics",       PushButtonGadgetClass, 'H', NULL, NULL,
 		             actHelpCallback, (XtPointer)MENU_HELP_TOPICS,      (MenuItem *)NULL },
 		*/
 		#if  XmVersion && XmVersion >= 1002
-		         { "About ALH",         &xmPushButtonGadgetClass, 'A', NULL, NULL,
+		         { "About ALH",         PushButtonGadgetClass, 'A', NULL, NULL,
 		             actHelpCallback, (XtPointer)MENU_HELP_ABOUT, (MenuItem *)NULL },
 		#endif
 		         {NULL},

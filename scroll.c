@@ -1,4 +1,4 @@
-/* scroll.c */
+/* Scroll.c */
 
 /************************DESCRIPTION***********************************
   This file contains the routines for viewing the alarm
@@ -30,8 +30,11 @@ static void closeFileViewShell(w,operandFile,call_data)
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/stat.h>
-#include <dirent.h>
 #include <ctype.h>
+#ifndef WIN32
+#include <dirent.h>
+#endif
+
 
 #include <Xm/Xm.h>
 #include <Xm/RowColumn.h>
@@ -46,6 +49,8 @@ static void closeFileViewShell(w,operandFile,call_data)
 #include <Xm/ToggleB.h>
 #include <Xm/RowColumn.h>
 #include <Xm/TextF.h>
+#include <X11/Intrinsic.h>
+#include <X11/Xlib.h>
 #include <X11/cursorfont.h>
 
 #include "alh.h"
@@ -616,7 +621,9 @@ void browser_fileViewWindow(Widget w,int option,Widget menuButton)
 	Widget app_shell=NULL,title,button,button1;
 	Widget previous;
 	char sbuf[120];
+#ifndef WIN32
 	DIR *directory;
+#endif
 	struct stat statbuf;         /* Information on a file. */
 	FILE *fp = NULL;             /* Pointer to open file.  */
 	char filename[120];
@@ -655,6 +662,7 @@ void browser_fileViewWindow(Widget w,int option,Widget menuButton)
 	XtVaSetValues(menuButton, XmNset, TRUE, NULL);
 
 	       strcpy(filename,FS_filename);       
+#ifndef WIN32
 		directory = opendir(filename);
 		if (directory) {
 		        closedir(directory);
@@ -662,6 +670,7 @@ void browser_fileViewWindow(Widget w,int option,Widget menuButton)
 			createDialog(w,XmDIALOG_WARNING,sbuf," ");
 			return;
 			}
+#endif
 		if ((fp = fopen(filename, "r")) == NULL) {
 			sprintf(sbuf, "fileViewWindow: Can't open file %s\n",filename);
 			createDialog(w,XmDIALOG_WARNING,sbuf," ");
@@ -1090,8 +1099,10 @@ XtPointer call_data)
   char month[10], day[10], hour[10], min[10], year[10], un1[10],un2[10];
   Boolean found;
   char *p;
+#ifndef WIN32
   DIR *directory;
   struct dirent *rdr;
+#endif
   char fname[120];
   char FSnameshort[120];
   char buf1[13],  buf2[13]; 
@@ -1146,6 +1157,7 @@ XtPointer call_data)
   dirForAlLog=XtCalloc(1,MAX_NUM_OF_LOG_FILES);
   strcpy( FSnameshort, (const char *)shortfile(FS_filename) );
   strncpy(dirForAlLog,FS_filename,strlen(FS_filename)-strlen(FSnameshort)-1);
+#ifndef WIN32
   if ( (directory=opendir( (char *) dirForAlLog)) == NULL)
        {
        fprintf(stderr,"%s-wrong directory\n",dirForAlLog);
@@ -1162,15 +1174,17 @@ XtPointer call_data)
        XtFree(tmi);
        return;
        }
+#endif
 
   string_with=XmTextGetString(text_with);
   selectedText=XtCalloc(1,viewFileMaxLength[ALARM_FILE]);
   if (!waitCursor) waitCursor=XCreateFontCursor(display,XC_watch);
   attrs.cursor=waitCursor;
-  XChangeWindowAttributes(display, XtWindow (client_data),CWCursor,&attrs);
+  XChangeWindowAttributes(display,XtWindow((Widget)client_data),CWCursor,&attrs);
   XFlush(display);
   
   len=strlen(FSnameshort)-10;   /*  length of name without "extension" */
+#ifndef WIN32
   while((rdr=readdir(directory))) 
     {
     if( strncmp(rdr->d_name,FSnameshort,len )) continue;
@@ -1194,9 +1208,11 @@ XtPointer call_data)
        XtFree(tmi);
        return;
        }
+#endif
 
   v=(char **) calloc(sizeof(char *),count);
   i=0;
+#ifndef WIN32
   while((rdr=readdir(directory))) {
     if( strncmp(rdr->d_name,FSnameshort,len )) continue;
     if(!extensionIsDate(rdr->d_name+len))      continue; 
@@ -1206,6 +1222,7 @@ XtPointer call_data)
     i++;
   }
   closedir(directory);
+#endif
 
   /* BinarySortAlgoritm from C&R */
   for (gap = count/2; gap > 0; gap /= 2)
@@ -1289,7 +1306,7 @@ XtPointer call_data)
 	}
         if (!found) continue;
       }
-      if( strlen(selectedText) > (viewFileMaxLength[ALARM_FILE] -2*159) )
+      if( strlen(selectedText) >(size_t)(viewFileMaxLength[ALARM_FILE] -2*159) )
         {
 
 	createDialog((Widget) w, XmDIALOG_ERROR,
@@ -1321,7 +1338,7 @@ XtPointer call_data)
 
   XmTextSetString(browserWidget,selectedText);
   attrs.cursor=None;
-  XChangeWindowAttributes(display, XtWindow (client_data),CWCursor,&attrs);
+  XChangeWindowAttributes(display,XtWindow ((Widget)client_data),CWCursor,&attrs);
   XFlush(display);
   XtManageChild(browserWidget);
   XtFree(selectedText);

@@ -22,10 +22,12 @@ void awUpdateRowWidgets(line)                 Update line widgets
 
 #include <stdlib.h>
 #include <stdio.h>
+#ifndef WIN32
 #include <unistd.h>
+#include <pwd.h>
+#endif
 #include <errno.h>
 #include <sys/types.h>
-#include <pwd.h>
 
 
 #include <Xm/Xm.h>
@@ -138,107 +140,109 @@ static void messBroadcastFileUnlock();
 Widget alhCreateMenu(Widget parent,XtPointer user_data)
 {
 	static MenuItem file_menu[] = {
-		         { "Open ...",   &xmPushButtonGadgetClass, 'O', "Ctrl<Key>O", "Ctrl+O",
+		         { "Open ...",   PushButtonGadgetClass, 'O', "Ctrl<Key>O", "Ctrl+O",
 		             alhFileCallback, (XtPointer)MENU_FILE_OPEN,   (MenuItem *)NULL, 0 },
-		         { "Save As ...",&xmPushButtonGadgetClass, 'v', NULL, NULL,
+		         { "Save As ...",PushButtonGadgetClass, 'v', NULL, NULL,
 		             alhFileCallback, (XtPointer)MENU_FILE_SAVEAS, (MenuItem *)NULL , 0},
-		         { "",           &xmSeparatorGadgetClass, '\0', NULL, NULL,
+		         { "",           SeparatorGadgetClass, '\0', NULL, NULL,
 		             NULL,    NULL,   (MenuItem *)NULL },
-		         { "Close",      &xmPushButtonGadgetClass, 'C', NULL, NULL,
+		         { "Close",      PushButtonGadgetClass, 'C', NULL, NULL,
 		             alhFileCallback, (XtPointer)MENU_FILE_CLOSE,  (MenuItem *)NULL, 0 },
-		         { "",           &xmSeparatorGadgetClass, '\0', NULL, NULL,
+		         { "",           SeparatorGadgetClass, '\0', NULL, NULL,
 		             NULL,    NULL,   (MenuItem *)NULL, 0 },
 		         {NULL},
 		     	};
 
 	static MenuItem action_menu[] = {
-		         { "Acknowledge Alarm",      &xmPushButtonGadgetClass, 'A', "Ctrl<Key>A", "Ctrl+A",
+		         { "Acknowledge Alarm",      PushButtonGadgetClass, 'A', "Ctrl<Key>A", "Ctrl+A",
 		             alhActionCallback, (XtPointer)MENU_ACTION_ACK,      (MenuItem *)NULL, 0 },
-		         { "Display Guidance",       &xmPushButtonGadgetClass, 'G', "Ctrl<Key>G", "Ctrl+G",
+		         { "Display Guidance",       PushButtonGadgetClass, 'G', "Ctrl<Key>G", "Ctrl+G",
 		             alhActionCallback, (XtPointer)MENU_ACTION_GUIDANCE, (MenuItem *)NULL, 0 },
-		         { "Start Related Process",  &xmPushButtonGadgetClass, 'P', "Ctrl<Key>P", "Ctrl+P",
+		         { "Start Related Process",  PushButtonGadgetClass, 'P', "Ctrl<Key>P", "Ctrl+P",
 		             alhActionCallback, (XtPointer)MENU_ACTION_PROCESS,  (MenuItem *)NULL, 0 },
-		         { "Force Process Variable ...", &xmToggleButtonGadgetClass, 'V', "Ctrl<Key>V", "Ctrl+V",
+		         { "Force Process Variable ...", ToggleButtonGadgetClass, 'V', "Ctrl<Key>V", "Ctrl+V",
 		             alhActionCallback, (XtPointer)MENU_ACTION_FORCEPV, (MenuItem *)NULL, 0 },
-		         { "Force Mask ...",          &xmToggleButtonGadgetClass, 'M',"Ctrl<Key>M", "Ctrl+M",
+		         { "Force Mask ...",          ToggleButtonGadgetClass, 'M',"Ctrl<Key>M", "Ctrl+M",
 		             alhActionCallback, (XtPointer)MENU_ACTION_FORCE_MASK, (MenuItem *)NULL, 0 },
-		         { "Modify Mask Settings ...",  &xmToggleButtonGadgetClass, 'S', "Ctrl<Key>S", "Ctrl+S",
+		         { "Modify Mask Settings ...",  ToggleButtonGadgetClass, 'S', "Ctrl<Key>S", "Ctrl+S",
 		             alhActionCallback, (XtPointer)MENU_ACTION_MODIFY_MASK, (MenuItem *)NULL, 0 },
 		         {NULL},
 		     	};
 /* ******************************************** Albert1 : ************************************ */
 static MenuItem action_menuNew[] = {
-		         { "Acknowledge Alarm",      &xmPushButtonGadgetClass, 'A', "Ctrl<Key>A", "Ctrl+A",
+		         { "Acknowledge Alarm",      PushButtonGadgetClass, 'A', "Ctrl<Key>A", "Ctrl+A",
 		             alhActionCallback, (XtPointer)MENU_ACTION_ACK,      (MenuItem *)NULL, 0 },
-		         { "Display Guidance",       &xmPushButtonGadgetClass, 'G', "Ctrl<Key>G", "Ctrl+G",
+		         { "Display Guidance",       PushButtonGadgetClass, 'G', "Ctrl<Key>G", "Ctrl+G",
 		             alhActionCallback, (XtPointer)MENU_ACTION_GUIDANCE, (MenuItem *)NULL, 0 },
-		         { "Start Related Process",  &xmPushButtonGadgetClass, 'P', "Ctrl<Key>P", "Ctrl+P",
+		         { "Start Related Process",  PushButtonGadgetClass, 'P', "Ctrl<Key>P", "Ctrl+P",
 		             alhActionCallback, (XtPointer)MENU_ACTION_PROCESS,  (MenuItem *)NULL, 0 },
-		         { "Force Process Variable ...", &xmToggleButtonGadgetClass, 'V', "Ctrl<Key>V", "Ctrl+V",
+		         { "Force Process Variable ...", ToggleButtonGadgetClass, 'V', "Ctrl<Key>V", "Ctrl+V",
 		             alhActionCallback, (XtPointer)MENU_ACTION_FORCEPV, (MenuItem *)NULL, 0 },
-		         { "Force Mask ...",          &xmToggleButtonGadgetClass, 'M',"Ctrl<Key>M", "Ctrl+M",
+		         { "Force Mask ...",          ToggleButtonGadgetClass, 'M',"Ctrl<Key>M", "Ctrl+M",
 		             alhActionCallback, (XtPointer)MENU_ACTION_FORCE_MASK, (MenuItem *)NULL, 0 },
-		         { "Modify Mask Settings ...",  &xmToggleButtonGadgetClass, 'S', "Ctrl<Key>S", "Ctrl+S",
+		         { "Modify Mask Settings ...",  ToggleButtonGadgetClass, 'S', "Ctrl<Key>S", "Ctrl+S",
 		             alhActionCallback, (XtPointer)MENU_ACTION_MODIFY_MASK, (MenuItem *)NULL, 0 },
 			 /* Albert1 For MESSAGE BROADCAST: */
-		         { "Send Message ...",  &xmToggleButtonGadgetClass, 'B', "Ctrl<Key>B", "Ctrl+B",
+#ifndef WIN32
+		         { "Send Message ...",  ToggleButtonGadgetClass, 'B', "Ctrl<Key>B", "Ctrl+B",
 		             messBroadcast, (XtPointer) NULL, (MenuItem *)NULL, 0 },
+#endif
 		         {NULL},
 		     	};
 /* ******************************************** End Albert1 ********************************** */
 
 	static MenuItem view_menu[] = {
-		         { "Expand One Level",       &xmPushButtonGadgetClass, 'L', "None<Key>plus", "+",
+		         { "Expand One Level",       PushButtonGadgetClass, 'L', "None<Key>plus", "+",
 		             alhViewCallback, (XtPointer)MENU_VIEW_EXPANDCOLLAPSE1,   (MenuItem *)NULL, 0 },
-		         { "Expand Branch",          &xmPushButtonGadgetClass, 'B', "None<Key>asterisk", "*",
+		         { "Expand Branch",          PushButtonGadgetClass, 'B', "None<Key>asterisk", "*",
 		             alhViewCallback, (XtPointer)MENU_VIEW_EXPANDBRANCH,      (MenuItem *)NULL, 0 },
-		         { "Expand All",             &xmPushButtonGadgetClass, 'A', "Ctrl<Key>asterisk", "Ctrl+*",
+		         { "Expand All",             PushButtonGadgetClass, 'A', "Ctrl<Key>asterisk", "Ctrl+*",
 		             alhViewCallback, (XtPointer)MENU_VIEW_EXPANDALL,         (MenuItem *)NULL, 0 },
-		         { "Collapse Branch",        &xmPushButtonGadgetClass, 'C', "None<Key>minus", "-",
+		         { "Collapse Branch",        PushButtonGadgetClass, 'C', "None<Key>minus", "-",
 		             alhViewCallback, (XtPointer)MENU_VIEW_COLLAPSEBRANCH,    (MenuItem *)NULL, 0 },
-		         { "",                       &xmSeparatorGadgetClass,  '\0', NULL, NULL,
+		         { "",                       SeparatorGadgetClass,  '\0', NULL, NULL,
 		             NULL,    NULL,   (MenuItem *)NULL, 0 },
-		         { "Current Alarm History Window",  &xmToggleButtonGadgetClass, 'H', NULL, NULL,
+		         { "Current Alarm History Window",  ToggleButtonGadgetClass, 'H', NULL, NULL,
 		             alhViewCallback, (XtPointer)MENU_VIEW_CURRENT,         (MenuItem *)NULL, 0 },
-		         { "Configuration File Window",     &xmToggleButtonGadgetClass, 'f', NULL, NULL,
+		         { "Configuration File Window",     ToggleButtonGadgetClass, 'f', NULL, NULL,
 		             alhViewCallback, (XtPointer)MENU_VIEW_CONFIG,           (MenuItem *)NULL, 0 },
-		         { "Alarm Log File Window",         &xmToggleButtonGadgetClass, 'r', NULL, NULL,
+		         { "Alarm Log File Window",         ToggleButtonGadgetClass, 'r', NULL, NULL,
 		             alhViewCallback, (XtPointer)MENU_VIEW_ALARMLOG,         (MenuItem *)NULL, 0 },
-		         { "Operation Log File Window",     &xmToggleButtonGadgetClass, 'O', NULL, NULL,
+		         { "Operation Log File Window",     ToggleButtonGadgetClass, 'O', NULL, NULL,
 		             alhViewCallback, (XtPointer)MENU_VIEW_OPMOD,         (MenuItem *)NULL, 0 },
-		         { "Group/Channel Properties Window", &xmToggleButtonGadgetClass, 'W', NULL, NULL,
+		         { "Group/Channel Properties Window", ToggleButtonGadgetClass, 'W', NULL, NULL,
 		             alhViewCallback, (XtPointer)MENU_VIEW_PROPERTIES,    (MenuItem *)NULL, 0 },
 
 		         {NULL},
 		     	};
 /* ****************************************************************************Albert1: */
 	static MenuItem view_menuNew[] = {
-		         { "Expand One Level",       &xmPushButtonGadgetClass, 'L', "None<Key>plus", "+",
+		         { "Expand One Level",       PushButtonGadgetClass, 'L', "None<Key>plus", "+",
 		             alhViewCallback, (XtPointer)MENU_VIEW_EXPANDCOLLAPSE1,   (MenuItem *)NULL, 0 },
-		         { "Expand Branch",          &xmPushButtonGadgetClass, 'B', "None<Key>asterisk", "*",
+		         { "Expand Branch",          PushButtonGadgetClass, 'B', "None<Key>asterisk", "*",
 		             alhViewCallback, (XtPointer)MENU_VIEW_EXPANDBRANCH,      (MenuItem *)NULL, 0 },
-		         { "Expand All",             &xmPushButtonGadgetClass, 'A', "Ctrl<Key>asterisk", "Ctrl+*",
+		         { "Expand All",             PushButtonGadgetClass, 'A', "Ctrl<Key>asterisk", "Ctrl+*",
 		             alhViewCallback, (XtPointer)MENU_VIEW_EXPANDALL,         (MenuItem *)NULL, 0 },
-		         { "Collapse Branch",        &xmPushButtonGadgetClass, 'C', "None<Key>minus", "-",
+		         { "Collapse Branch",        PushButtonGadgetClass, 'C', "None<Key>minus", "-",
 		             alhViewCallback, (XtPointer)MENU_VIEW_COLLAPSEBRANCH,    (MenuItem *)NULL, 0 },
-		         { "",                       &xmSeparatorGadgetClass,  '\0', NULL, NULL,
+		         { "",                       SeparatorGadgetClass,  '\0', NULL, NULL,
 		             NULL,    NULL,   (MenuItem *)NULL, 0 },
-		         { "Current Alarm History Window",  &xmToggleButtonGadgetClass, 'H', NULL, NULL,
+		         { "Current Alarm History Window",  ToggleButtonGadgetClass, 'H', NULL, NULL,
 		             alhViewCallback, (XtPointer)MENU_VIEW_CURRENT,         (MenuItem *)NULL, 0 },
-		         { "Configuration File Window",     &xmToggleButtonGadgetClass, 'f', NULL, NULL,
+		         { "Configuration File Window",     ToggleButtonGadgetClass, 'f', NULL, NULL,
 		             alhViewCallback, (XtPointer)MENU_VIEW_CONFIG,           (MenuItem *)NULL, 0 },
-		         { "Alarm Log File Window",         &xmToggleButtonGadgetClass, 'r', NULL, NULL,
+		         { "Alarm Log File Window",         ToggleButtonGadgetClass, 'r', NULL, NULL,
 		             alhViewCallback, (XtPointer)MENU_VIEW_ALARMLOG,         (MenuItem *)NULL, 0 },
 		/* Next Callback for AlarmLog Browser adding. Albert */
-		         { "Browser For Alarm Log",         &xmToggleButtonGadgetClass, 's', NULL, NULL,
+		         { "Browser For Alarm Log",         ToggleButtonGadgetClass, 's', NULL, NULL,
 		             alhViewBrowserCallback, (XtPointer)MENU_VIEW_ALARMLOG,         (MenuItem *)NULL, 0 },
 
-		         { "Operation Log File Window",     &xmToggleButtonGadgetClass, 'O', NULL, NULL,
+		         { "Operation Log File Window",     ToggleButtonGadgetClass, 'O', NULL, NULL,
 		             alhViewCallback, (XtPointer)MENU_VIEW_OPMOD,         (MenuItem *)NULL, 0 },
-		         { "Browser For Operation Log",         &xmToggleButtonGadgetClass, 'e', NULL, NULL,
+		         { "Browser For Operation Log",         ToggleButtonGadgetClass, 'e', NULL, NULL,
 		             alhViewBrowserCallback, (XtPointer)MENU_VIEW_OPMOD,         (MenuItem *)NULL, 0 },
 		/* End. Albert */
-		         { "Group/Channel Properties Window", &xmToggleButtonGadgetClass, 'W', NULL, NULL,
+		         { "Group/Channel Properties Window", ToggleButtonGadgetClass, 'W', NULL, NULL,
 		             alhViewCallback, (XtPointer)MENU_VIEW_PROPERTIES,    (MenuItem *)NULL, 0 },
 
 		         {NULL},
@@ -246,43 +250,43 @@ static MenuItem action_menuNew[] = {
 /* ******************************************************************************End ofAlbert1 */
 
 	static MenuItem setup_beep_menu[] = {
-		         { "Minor",      &xmPushButtonGadgetClass, 'M', NULL, NULL,
+		         { "Minor",      PushButtonGadgetClass, 'M', NULL, NULL,
 		             alhSetupCallback, (XtPointer)MENU_SETUP_BEEP_MINOR,  (MenuItem *)NULL, 0 },
-		         { "Major",      &xmPushButtonGadgetClass, 'A', NULL, NULL,
+		         { "Major",      PushButtonGadgetClass, 'A', NULL, NULL,
 		             alhSetupCallback, (XtPointer)MENU_SETUP_BEEP_MAJOR,  (MenuItem *)NULL, 0 },
-		         { "Invalid",      &xmPushButtonGadgetClass, 'V', NULL, NULL,
+		         { "Invalid",      PushButtonGadgetClass, 'V', NULL, NULL,
 		             alhSetupCallback, (XtPointer)MENU_SETUP_BEEP_INVALID,  (MenuItem *)NULL, 0 },
 		         {NULL},
 		     	};
 
 	static MenuItem setup_filter_menu[] = {
-		         { "No filter",      &xmPushButtonGadgetClass, 'N', NULL, NULL,
+		         { "No filter",      PushButtonGadgetClass, 'N', NULL, NULL,
 		             alhSetupCallback, (XtPointer)MENU_SETUP_FILTER_NONE,  (MenuItem *)NULL, 0 },
-		         { "Active Alarms Only",      &xmPushButtonGadgetClass, 'A', NULL, NULL,
+		         { "Active Alarms Only",      PushButtonGadgetClass, 'A', NULL, NULL,
 		             alhSetupCallback, (XtPointer)MENU_SETUP_FILTER_ACTIVE,  (MenuItem *)NULL, 0 },
-		         { "Unacknowledged Alarms Only",      &xmPushButtonGadgetClass, 'U', NULL, NULL,
+		         { "Unacknowledged Alarms Only",      PushButtonGadgetClass, 'U', NULL, NULL,
 		             alhSetupCallback, (XtPointer)MENU_SETUP_FILTER_UNACK,  (MenuItem *)NULL, 0 },
 		         {NULL},
 		     	};
 
 	static MenuItem setup_menu[] = {
-		         { "Display Filter...",        &xmPushButtonGadgetClass, 'F', NULL, NULL,
+		         { "Display Filter...",        PushButtonGadgetClass, 'F', NULL, NULL,
 		                                      0, 0,    (MenuItem *)setup_filter_menu, 0 },
-		         { "Beep Severity...",       &xmPushButtonGadgetClass, 'B', NULL, NULL,
+		         { "Beep Severity...",       PushButtonGadgetClass, 'B', NULL, NULL,
 		                                      0, 0,    (MenuItem *)setup_beep_menu, 0 },
-		         { "Silence Forever",  &xmToggleButtonGadgetClass, 'S', NULL, NULL,
+		         { "Silence Forever",  ToggleButtonGadgetClass, 'S', NULL, NULL,
 		             alhSetupCallback, (XtPointer)MENU_SETUP_SILENCE_FOREVER,(MenuItem *)NULL, 0 },
-		         { "New Alarm Log File Name...",  &xmPushButtonGadgetClass, 'L', NULL, NULL,
+		         { "New Alarm Log File Name...",  PushButtonGadgetClass, 'L', NULL, NULL,
 		             alhSetupCallback, (XtPointer)MENU_SETUP_ALARMLOG,     (MenuItem *)NULL, 0 },
-		         { "New Oper. Log File Name...",  &xmPushButtonGadgetClass, 'O', NULL, NULL,
+		         { "New Oper. Log File Name...",  PushButtonGadgetClass, 'O', NULL, NULL,
 		             alhSetupCallback, (XtPointer)MENU_SETUP_OPMOD,     (MenuItem *)NULL, 0 },
 		         {NULL},
 		     	};
 
 	static MenuItem help_menu[] = {
-		         { "Help",       &xmPushButtonGadgetClass, 'H', "Ctrl<Key>H", "Ctrl+H",
+		         { "Help",       PushButtonGadgetClass, 'H', "Ctrl<Key>H", "Ctrl+H",
 		             alhHelpCallback, (XtPointer)MENU_HELP_HELP, (MenuItem *)NULL, 0 },
-		         { "About ALH",     &xmPushButtonGadgetClass, 'A', NULL, NULL,
+		         { "About ALH",     PushButtonGadgetClass, 'A', NULL, NULL,
 		             alhHelpCallback, (XtPointer)MENU_HELP_ABOUT, (MenuItem *)NULL, 0 },
 		         {NULL},
 		     	};
@@ -617,8 +621,8 @@ static void alhViewBrowserCallback(Widget widget,XtPointer item,XtPointer cbs)
 		XtVaGetValues(widget, XmNuserData, &area, NULL);
 		dialog=XmCreateFileSelectionDialog(area->form_main,"dialog",NULL,0);
 
-		XtAddCallback(dialog,XmNokCallback,browserFBSDialogCbOk,widget);
-		XtAddCallback(dialog,XmNcancelCallback,browserFBSDialogCbCancel,NULL);
+		XtAddCallback(dialog,XmNokCallback,(XtCallbackProc)browserFBSDialogCbOk,widget);
+		XtAddCallback(dialog,XmNcancelCallback,(XtCallbackProc)browserFBSDialogCbCancel,NULL);
 		XtUnmanageChild(XmFileSelectionBoxGetChild(dialog,
 		    XmDIALOG_HELP_BUTTON));
 
@@ -658,13 +662,13 @@ XmSelectionBoxCallbackStruct *call_data)
 	XtUnmanageChild(w);
 }
 
+#ifndef WIN32
 /******************************************************
 Send Message widget
 ******************************************************/
 static void messBroadcast(Widget widget,XtPointer item,XtPointer cbs)  /* Albert1 */
 {
     Widget dialog, text_w;
-    void canselMessBroadcast(), writeMessBroadcast(), helpMessBroadcast();
     ALINK   *area;
     XtVaGetValues(widget, XmNuserData, &area, NULL);
     
@@ -823,6 +827,7 @@ XtUnmanageChild(w);
  lockf(messBroadcastDeskriptor, F_ULOCK, 0L);
 }
 
+#endif
  
 /******************************************************
   alhSetupCallback

@@ -7,16 +7,18 @@
 static char *sccsId = "@(#) $Id$";
 #include <stdlib.h>
 #include <stdio.h>
-#include <unistd.h>  /* Albert1 */
 #include <fcntl.h>   /* Albert1 */
 #include <signal.h>
 
 #include <errno.h>
-#include <sys/msg.h>  
 
 #ifndef WIN32
 /* WIN32 does not have dirent.h used by opendir, closedir */
+#include <unistd.h>  /* Albert1 */
 #include <dirent.h>
+#include <sys/msg.h>  
+#else
+#include <process.h>
 #endif
 #include <ctype.h>
 
@@ -182,6 +184,7 @@ void exit_quit(Widget w,ALINK *area,XmAnyCallbackStruct *call_data)
 	if (area  && area->pmainGroup) free(area->pmainGroup);
 	if (area) free(area);
 	XtDestroyWidget(topLevelShell);
+#ifndef WIN32
 	if(_lock_flag)  {
 	  lockf(lockFileDeskriptor,     F_ULOCK, 0L); /* Albert1 */
 	  if (lockTimeoutId) {
@@ -193,8 +196,9 @@ void exit_quit(Widget w,ALINK *area,XmAnyCallbackStruct *call_data)
 	    XtRemoveTimeOut(broadcastMessTimeoutId);
 	  }
 	}
-	
+
 	} 
+#endif
 	
 	exit(0);
 }
@@ -226,22 +230,10 @@ static int checkFilename(char *filename,int fileType)
 {
 	FILE *tt = 0;
 
-#ifndef WIN32
-	DIR *directory;
-#endif
-
 	if ( filename[0] == '\0') return 2;
 
 	if ( DEBUG == 1 )
 		printf("\nFilename is %s \n", filename);
-
-#ifndef WIN32
-	directory = opendir(filename);
-	if (directory) {
-		closedir(directory);
-		return 1;
-	}
-#endif     
 
 	switch (fileType) {
 	case FILE_CONFIG:
@@ -275,9 +267,8 @@ static int checkFilename(char *filename,int fileType)
 		if(!tt) strcpy(filename,"/tmp/AlhDisableWriting");
 		tt = fopen(filename,"w");
 		if (!tt) {
-			printf(stderr,"can't read OPMOD or ALARMLOG and /tmp directory \n");
+			fprintf(stderr,"can't read OPMOD or ALARMLOG and /tmp directory \n");
 			exit(1);
-		printf("fp=%d\n",tt);
 		}
 		}
 		if (!tt){
@@ -427,10 +418,12 @@ int programId,Widget widget)
 		case 3:
 			strcpy(str, filename);
 			strcat(str," already exists.  Overwrite?");
-			filename_dup = strdup(filename);
+			filename_dup = malloc(strlen(filename)+1);
+			if ( filename_dup ) strcpy(filename_dup,filename);
 			createActionDialog(fileSelectionBox,XmDIALOG_WARNING, str ,
 			    (XtCallbackProc)saveConfigFile_callback,
 			    (XtPointer)filename_dup,(XtPointer)area);
+			free(filename_dup);
 			break;
 
 		case 4:
@@ -501,6 +494,7 @@ int programId,Widget widget)
 			  signal(SIGINT,broadcastMess_exit_quit); 
 			  }
 
+#ifndef WIN32
 			if( _printer_flag)
 			  {
 			    struct msqid_ds buf;  
@@ -542,6 +536,7 @@ int programId,Widget widget)
 			    }
 			  }
 			
+#endif
 
 
 
@@ -584,8 +579,10 @@ int programId,Widget widget)
 
 		case FILE_SAVEAS:
 		case FILE_SAVE:
-			filename_dup = strdup(filename);
+			filename_dup = malloc(strlen(filename)+1);
+			if ( filename_dup ) strcpy(filename_dup,filename);
 			saveConfigFile_callback(widget,filename_dup,(void *)NULL);
+			free(filename_dup);
 			break;
 
 		case FILE_PRINT:
@@ -624,9 +621,6 @@ XmAnyCallbackStruct *cbs)
 	XtUnmanageChild(widget);
 	/* unmanage the fileSelection dialog */
 	createFileDialog(0,0,0,0,0,0,0,0,0);
-
-	/* Free the filename string copy */
-	free(filename);
 }
 
 /******************************************************
@@ -956,6 +950,7 @@ char *argv[];
 /* *******************************Albert1: ************************************* */
 void masterTesting()
 {
+#ifndef WIN32
         if ( lockf(lockFileDeskriptor, F_TLOCK, 0L) < 0 ) {
 	  if ((errno == EAGAIN || errno == EACCES )) {
 	      masterFlag=0;
@@ -973,8 +968,9 @@ void masterTesting()
             XtVaSetValues(blinkToplevel,XmNtitle,masterStr,NULL);
 	  }
 	
-	lockTimeoutId = XtAppAddTimeOut(appContext, lockDelay,masterTesting , NULL);
+	lockTimeoutId = XtAppAddTimeOut(appContext, lockDelay,(XtTimerCallbackProc)masterTesting , NULL);
 
+#endif
 }
 
 void broadcastMessTesting(Widget w)
@@ -988,7 +984,7 @@ char *blank;
 int notsave_time;
 void notsaveProc();
 
-broadcastMessTimeoutId=XtAppAddTimeOut(appContext,broadcastMessDelay,broadcastMessTesting,w);
+broadcastMessTimeoutId=XtAppAddTimeOut(appContext,broadcastMessDelay,(XtTimerCallbackProc)broadcastMessTesting,w);
 if ( (fp=fopen(messBroadcastInfoFileName,"r")) == NULL )
   {
     perror("broadcastMessTesting: can't open messBroadcastInfoFileName!!!!");
@@ -1019,7 +1015,7 @@ if(strncmp(blank+1,rebootString,strlen(rebootString)-1 )==0) {
   if(DEBUG) fprintf(stderr,"notsave_time=%d",notsave_time);
   if( (notsave_time <= 0) || (notsave_time > max_not_save_time) ) return;
   notsave=1;
-  XtAppAddTimeOut(appContext,notsave_time*1000*60 , notsaveProc, w);
+  XtAppAddTimeOut(appContext,notsave_time*1000*60 ,(XtTimerCallbackProc) notsaveProc, w);
 
 }
 }

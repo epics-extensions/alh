@@ -30,12 +30,12 @@ alLogSetupSaveConfigFile(filename)			Log setup save config file
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include <sys/msg.h>
 #include <errno.h>
 #ifdef WIN32
 #include <process.h>
 #else
 #include <unistd.h>
+#include <sys/msg.h>
 #endif
 
 #include "alh.h"
@@ -92,8 +92,10 @@ extern int masterFlag;
 extern int printerMsgQId;
 extern int _lock_flag;
 
+#ifndef WIN32
 int write2MQ(int, char *);
 int write2msgQ(int mq, char *mes);
+#endif
 
 char *digit2month[12]={"Jan","Feb","Mar","Apr","May","Jun","Jul","Aug",
 		       "Sep","Oct","Nov","Dec"};
@@ -194,12 +196,13 @@ int sev,int h_unackStat,int h_unackSevr)
 		}
 
 		if(masterFlag) fprintf(fl,"%s",buff);
+#ifndef WIN32
 		if(_printer_flag&&masterFlag) 
 		  write2MQ(printerMsgQId, printerBuff); /* Albert */
                 if(_DB_call_flag&&masterFlag) {
 		  write2MQ(DBMsgQId, DBbuf);      /* Albert */
 		}
-
+#endif
 		/*---------------
 			        (void)fprintf(fl,"%-157s\n",alarmLogFileEndString);
 		                fseek(fl,-alarmLogFileStringLength,SEEK_CUR);
@@ -209,10 +212,12 @@ int sev,int h_unackStat,int h_unackSevr)
 		fflush(fl);
 	} else {
 		if(masterFlag) fprintf(fl,"%s",buff);  /*Albert*/
+#ifndef WIN32
 		if(_printer_flag&&masterFlag) write2MQ(printerMsgQId,printerBuff);
                 if(_DB_call_flag&&masterFlag) {
 		  write2MQ(DBMsgQId, DBbuf);      /* Albert */
 		}
+#endif
 
 		fflush(fl);
 	}
@@ -654,6 +659,7 @@ void alLogOpMod(char *text)
   NOTE: We send sevirity first.
 ***********************************************************************/
 
+#ifndef WIN32
 int write2MQ(int mq,char *message)
 {
   char buf[60];
@@ -706,5 +712,4 @@ int write2msgQ(int mq, char *mes)
   return(0);
 }
 
-
-
+#endif

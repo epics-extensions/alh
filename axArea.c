@@ -17,7 +17,9 @@ static char *sccsId = "@(#) $Id$";
 #include <Xm/LabelG.h>
 #include <Xm/Protocols.h>
 #include <Xm/PushB.h>
+#include <Xm/PushBG.h>
 #include <Xm/Scale.h>
+#include <Xm/SeparatoG.h>
 #include <Xm/Text.h>
 #include <Xm/ToggleB.h>
 #include <Xm/ToggleBG.h>
@@ -56,6 +58,7 @@ int tearOff, MenuItem *items, XtPointer user_data)
 	Widget PullDown, cascade, widget;
 	int i;
 	XmString str;
+    WidgetClass *xmclass[] = { &xmPushButtonGadgetClass, &xmSeparatorGadgetClass, &xmToggleButtonGadgetClass };
 
 	/* Pulldown menus are built from cascade buttons, so this function
 	      * also includes pullright menus.  Create the menu, the cascade button
@@ -90,19 +93,19 @@ int tearOff, MenuItem *items, XtPointer user_data)
 			    items[i].label, items[i].mnemonic, FALSE, items[i].subitems, user_data);
 		else {
 			widget = XtVaCreateManagedWidget(items[i].label,
-			    *items[i].class, PullDown,
+			    *xmclass[items[i].class], PullDown,
 			    XmNuserData,    user_data,
 			    NULL);
 
 			/* Make spacing of toggle button items the same as pushButtons */
-			if (items[i].class == &xmToggleButtonWidgetClass ||
-			    items[i].class == &xmToggleButtonGadgetClass)
+			if (xmclass[items[i].class] == &xmToggleButtonWidgetClass ||
+			    xmclass[items[i].class] == &xmToggleButtonGadgetClass)
 				XtVaSetValues(widget, XmNmarginHeight, 1, NULL);
 
 			/* Set initial state of of toggle button items */
-			if (items[i].class == &xmToggleButtonWidgetClass ||
-			    items[i].class == &xmToggleButtonGadgetClass)
-				XmToggleButtonSetState(widget,items[i].initial_state,FALSE);
+			if (xmclass[items[i].class] == &xmToggleButtonWidgetClass ||
+			    xmclass[items[i].class] == &xmToggleButtonGadgetClass)
+				XmToggleButtonSetState(widget,(Boolean)items[i].initial_state,FALSE);
 		}
 		/* Whether the item is a real item or a cascade button with a
 		         * menu, it can still have a mnemonic.  */
@@ -123,8 +126,8 @@ int tearOff, MenuItem *items, XtPointer user_data)
 		         */
 		if (items[i].callback)
 			XtAddCallback(widget,
-			    (items[i].class == &xmToggleButtonWidgetClass ||
-			    items[i].class == &xmToggleButtonGadgetClass)?
+			    (xmclass[items[i].class] == &xmToggleButtonWidgetClass ||
+			    xmclass[items[i].class] == &xmToggleButtonGadgetClass)?
 			    XmNvalueChangedCallback : /* ToggleButton class */
 			XmNactivateCallback,      /* PushButton class */
 			items[i].callback, items[i].callback_data);

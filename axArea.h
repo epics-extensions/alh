@@ -9,9 +9,15 @@
 
 static char *axAreahsccsId = "@(#) $Id$";
 
+#include <X11/Intrinsic.h>
+#include <X11/Xlib.h>
 #include <Xm/Xm.h>
 
 #include "sllLib.h"
+
+#define PushButtonGadgetClass 0
+#define SeparatorGadgetClass 1
+#define ToggleButtonGadgetClass 2
 
 typedef struct  areaLink{
 	SNODE            node;
@@ -72,14 +78,14 @@ typedef struct  areaLink{
 
 typedef struct _menu_item {
 	char        *label;         /* the label for the item */
-	WidgetClass *class;         /* pushbutton, label, separator... */
+	int          class;         /* pushbutton, label, separator... */
 	char         mnemonic;      /* mnemonic; NULL if none */
 	char        *accelerator;   /* accelerator; NULL if none */
 	char        *accel_text;    /* to be converted to compound string */
 	void (*callback)( Widget,XtPointer,XtPointer);  /* routine to call; NULL if note */
 	XtPointer    callback_data; /* client_data for callback() */
 	struct _menu_item *subitems; /* pullright menu items, if not NULL */
-	int  initial_state; /* initial state of toggleButton/toggleButtonGadget menu items */
+	short  initial_state; /* initial state of toggleButton/toggleButtonGadget menu items */
 } MenuItem;
 
 #endif /* INCaxAreah */

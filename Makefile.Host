@@ -5,9 +5,13 @@
 TOP = ../../..
 include $(TOP)/config/CONFIG_EXTENSIONS
 
+#WINE32 build only
+#Valid values are Exceed5, Exceed6, or Exceed6.1
+EXCEED = Exceed6.1
+
 I_WANT_CDEV             = NO
 I_WANT_GREETINGS        = NO
- 
+
 ifeq ($(I_WANT_GREETINGS),YES)
 alh_CFLAGS += -DIWantGreetings
 alh_SRCS += productDescriptionShell.c
@@ -28,18 +32,18 @@ ifeq ($(I_WANT_CDEV),YES)
  
   USR_LDFLAGS      += -Wl,-E
  
-  PROD_LIBS_DEFAULT += -lcdev
+  PROD_LIBS += -lcdev
   cdev_DIR = $(CDEV_LIB)
 
 ifeq ($(ANSI), GCC)
-  PROD_LIBS_DEFAULT += EpicsCa ca
+  PROD_LIBS += EpicsCa ca
   EpicsCa_DIR = $(CDEV_LIB)
 endif
   SYS_PROD_LIBS_DEFAULT += y l
  
   alh_SRCS         += alCaCdev.cc
 else
-  PROD_LIBS_DEFAULT += ca
+  PROD_LIBS += ca
  
   alh_SRCS         += alCA.c
 endif
@@ -88,30 +92,38 @@ alh_Db_SRCS = alh_DB.c
 alh_printer_SRCS = printer.c
 
 PROD_DEFAULT = alh alh_printer alh_DB
-PROD_WIN32 = alh alh_DB
+PROD_WIN32 = alh
 
 USR_CFLAGS_WIN32 += /DWIN32 /D_WINDOWS
 USR_LDFLAGS_WIN32 += /SUBSYSTEM:WINDOWS
 
-PROD_LIBS_DEFAULT += Com
-USR_LIBS_DEFAULT = Xmu Xm Xt X11
-USR_LIBS_Linux +=  Xmu Xm Xt X11 Xp
+PROD_LIBS += Com
+PROD_LIBS_DEFAULT += Xmu Xm Xt X11
+PROD_LIBS_Linux +=  Xmu Xm Xt X11 Xp
 
-ifeq ($(EXCEED),Exceed5)
-USR_LIBS_WIN32 += XmStatic Xt XlibGUI Xlib
-else
-USR_LIBS_WIN32 += XmStatic HCLXt XlibGUI Xlib
-endif
-
-Xp_DIR = $(MOTIF_LIB)
 Xmu_DIR = $(X11_LIB)
 Xm_DIR = $(MOTIF_LIB)
 Xt_DIR = $(X11_LIB)
 X11_DIR = $(X11_LIB)
+Xp_DIR = $(MOTIF_LIB)
+
+ifeq ($(EXCEED),Exceed5)
+  PROD_LIBS_WIN32 = XmStatic Xt XlibGUI Xlib Xmu
+endif
+ifeq ($(EXCEED),Exceed6)
+  PROD_LIBS_WIN32 = XmStatic HCLXt XlibGUI Xlib HCLXmu
+endif
+ifeq ($(EXCEED),Exceed6.1)
+  PROD_LIBS_WIN32 = XmStatic XMSTATXT XlibGUI Xlib
+  USR_CFLAGS += -DXMSTATIC
+endif
+
 XlibGUI_DIR = $(X11_LIB)
 XmStatic_DIR = $(MOTIF_LIB)
 HCLXt_DIR = $(X11_LIB)
 Xlib_DIR = $(X11_LIB)
+HCLXmu_DIR = $(X11_LIB)
+XMSTATXT_DIR = $(X11_LIB)
 
 
 RCS_WIN32 += alh.rc
