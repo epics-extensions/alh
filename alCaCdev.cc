@@ -37,16 +37,7 @@ extern "C" {
 #include "fdmgr.h"
 #include "cadef.h"
 
-#include "alh.h"
-
-extern XtAppContext appContext;
-extern void 	alChannelForceEvent	(void *, short);
-extern void 	alGroupForceEvent	(void *, short);
-extern void 	alNewEvent		(int, int, int, int, char *, void *);
-extern void 	registerCA		(void *, int, int);
-extern void		alUpdateAreas();
-extern void		errMsg(const char *fmt, ...);
-}
+#include "ax.h"
 
 static void alFdmgrAddCdev (int fd, int opened, void *);
 
@@ -63,9 +54,9 @@ static void alFdmgrAddCdev (int fd, int opened, void *);
 extern int _global_flag;
 extern int _passive_flag;
 int toBeConnectedCount = 0;
-unsigned long caDelay = 100;     /* ms */
 extern XtIntervalId  caTimeoutId=(XtIntervalId)0;
 static int	cdev_finished = 0;
+unsigned long caDelay = 100;     /* ms */
 
 //------------------------------
 // Define statics 
@@ -76,10 +67,7 @@ static char         buff[511];
 //------------------------------
 // forward declarations
 static void alCaNewAlarmEvent   (int, void *, cdevRequestObject &, cdevData &);
-static void alCaChannelForceEvent       (int, void *, cdevRequestObject &, cdevData
- &);
-static void alCaGroupForceEvent         (int, void *, cdevRequestObject &, cdevData
- &);
+static void alCaForcePVValueEvent (int, void *, cdevRequestObject &, cdevData &);
 static void SevrChangeConnEvent (int, void *, cdevRequestObject &, cdevData &);
 static void alCaUpdate(XtPointer cd, XtIntervalId *id);
 
@@ -475,14 +463,12 @@ void	alCaAddEvent	(chid 	chid,
   alCaAddForcePVEvent
   ******************************************************************************/
 void    alCaAddForcePVEvent	(chid 	chid,
-                                 void 	*link,
-                                 evid 	*pevid,
-                                 int 	type)
+                                 void 	*userdata,
+                                 evid 	*pevid)
 {
   cdevSignal		*signal = (cdevSignal *)chid;
   cdevMonitor		*monitor;
   cdevData 		ctx;
-  cdevCallbackFunction	func;
 
   if (!signal)
   {
@@ -493,15 +479,11 @@ void    alCaAddForcePVEvent	(chid 	chid,
   monitor = new cdevMonitor (signal);
   sprintf (buff, "%s %s", signal->device(), signal->attribute());
 
-  if (type == GROUP)
-    func = alCaGroupForceEvent;
-  else if (type == CHANNEL)
-    func = alCaChannelForceEvent;
   else errMsg ("alCaAddForcePVEvent: Invalid type error\n");
 
   ctx.insert ("value", 0);
   
-  if (monitor->start (func, link, ctx) != CDEV_SUCCESS)
+  if (monitor->start (alCaForcePVValueEvent, userdata, ctx) != CDEV_SUCCESS)
     errMsg("alCaAddForcePVEvent: error starting monitor\n");
   
   *pevid = (evid)monitor;
@@ -703,9 +685,9 @@ static void alCaNewAlarmEvent (int 			status,
 }
 
 /******************************************************************************
- *  Group Force Event Callback
+ *  ForcePV Value Event Callback
 ******************************************************************************/
-static void alCaGroupForceEvent (int 		status,
+static void alCaForcePVValueEvent (int 		status,
                              void 		*arg,
                              cdevRequestObject 	&req,
                              cdevData		&result)
@@ -721,11 +703,11 @@ static void alCaGroupForceEvent (int 		status,
      (char *)monitor->data(), req.device().name(), req.message());
         
       case CDEV_SUCCESS:
-        short value;
+        double value;
 
         toBeConnectedCount--;
         result.get ("value", &value);
-        alGroupForceEvent (monitor->data(), value);
+        alForcePVValueEvent (monitor->data(), value);
         break;
         
       case CDEV_NOACCESS:
@@ -747,56 +729,6 @@ static void alCaGroupForceEvent (int 		status,
   monitor->cb_status (status);
 }
  
-/******************************************************************************
- *  Channel Force Event Callback
-******************************************************************************/
-static void alCaChannelForceEvent (int 			status,
-                               void 			*arg,
-                               cdevRequestObject 	&req,
-                               cdevData			&result)
-{
-  cdevMonitor	*monitor = (cdevMonitor *)arg;
-  
-  if (cdev_finished) return;
-  
-  sprintf
-    (buff, "%s--(%s %s)",
-     (char *)monitor->data(), req.device().name(), req.message());
-  
-  switch(status)
-  {
-      case CDEV_RECONNECTED:
-        errMsg("Reconnected   (Force Ch PVName) %s--(%s %s)\n",
-     (char *)monitor->data(), req.device().name(), req.message());
-        
-      case CDEV_SUCCESS:
-        short value;
-
-        toBeConnectedCount--;
-        result.get ("value", &value);
-        alChannelForceEvent (monitor->data(), value);
-        break;
-        
-      case CDEV_NOACCESS:
-        errMsg("No read access (Force Ch PVname) %s--(%s %s)\n",
-     (char *)monitor->data(), req.device().name(), req.message());
-        break;
-        
-      case CDEV_DISCONNECTED:
-        errMsg("Not Connected (Force Ch PVName) %s--(%s %s)\n",
-     (char *)monitor->data(), req.device().name(), req.message());
-        break;
-        
-      default:
-        errMsg("Error while monitoring (Force Ch PVName) %s--(%s %s)\n",
-     (char *)monitor->data(), req.device().name(), req.message());
-        break;
-  }
-
-  monitor->cb_status (status);
-}
- 
-
 /******************************************************************************
  alFdmgrAddCdev
 ******************************************************************************/

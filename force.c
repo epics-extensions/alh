@@ -21,6 +21,7 @@
 static char *sccsId = "@(#) $Id$";
 
 #include <stdlib.h>
+#include <ctype.h>
 
 #include <Xm/Xm.h>
 #include <Xm/AtomMgr.h>
@@ -38,6 +39,7 @@ static char *sccsId = "@(#) $Id$";
 #include <Xm/TextF.h>
 #include <Xm/ToggleBG.h>
 
+#include "postfix.h"
 #include "axArea.h"
 #include "alLib.h"
 #include "ax.h"
@@ -52,11 +54,13 @@ struct forcePVWindow {
 	Widget nameLabelW;
 	Widget nameTextW;
 	Widget forcePVnameTextW;
-	Widget forcePVDisabledToggleButton;
+	Widget forcePVdisabledToggleButton;
 	Widget forcePVmaskStringLabelW;
 	Widget forceMaskToggleButtonW[ALARM_NMASK];
 	Widget forcePVforceValueTextW;
 	Widget forcePVresetValueTextW;
+    Widget forcePVCalcExpressionTextW;
+    Widget forcePVCalcPVTextW[NO_OF_CALC_PVS];
 };
 
 /* forward declarations */
@@ -67,6 +71,9 @@ static void forcePVHelpCallback(Widget widget,XtPointer calldata,XtPointer cbs);
 static void forcePVCreateDialog(ALINK*area);
 static void forcePVUpdateDialogWidgets(struct forcePVWindow *forcePVWindow);
 static void forcePVMaskChangeCallback( Widget widget, XtPointer calldata, XtPointer cbs);
+static void forcePVUpdateFields(GCLINK* gclink,FORCEPV* pfPV,int context);
+static void forcePVCalcPerform(GCLINK* gclink,int linktype);
+static void forcePVNewValueEvent(GCLINK* gclink,short linktype,double value);
 
 
 /******************************************************
@@ -128,11 +135,11 @@ void forcePVShowDialog(ALINK *area,Widget menuButton)
 static void forcePVUpdateDialogWidgets(struct forcePVWindow *forcePVWindow)
 {
 	struct gcData *pgcData;
-	struct chanData *pcData;
 	GCLINK *link;
-	int linkType;
+	int i,linkType;
 	XmString string;
 	char buff[MAX_STRING_LENGTH];
+	char buff1[MAX_STRING_LENGTH];
 	MASK mask;
 
 	if (! forcePVWindow || !forcePVWindow->forcePVDialog ) return;
@@ -165,7 +172,7 @@ static void forcePVUpdateDialogWidgets(struct forcePVWindow *forcePVWindow)
 	XtVaSetValues(forcePVWindow->nameTextW, XmNlabelString, string, NULL);
 	XmStringFree(string);
 
-	if (!link) {
+	if (!link || !pgcData->pforcePV) {
 		XmTextFieldSetString(forcePVWindow->forcePVnameTextW,"");
 		string = XmStringCreateSimple("-----");
 		XtVaSetValues(forcePVWindow->forcePVmaskStringLabelW,
@@ -184,28 +191,29 @@ static void forcePVUpdateDialogWidgets(struct forcePVWindow *forcePVWindow)
 
 		XmTextFieldSetString(forcePVWindow->forcePVforceValueTextW,"");
 		XmTextFieldSetString(forcePVWindow->forcePVresetValueTextW,"");
+        XmTextFieldSetString(forcePVWindow->forcePVCalcExpressionTextW,"");
+        for (i=0;i<NO_OF_CALC_PVS;i++){
+            XmTextFieldSetString(forcePVWindow->forcePVCalcPVTextW[i],"");
+        }
 		return;
 	}
-
-	pgcData = link->pgcData;
-	linkType =getSelectionLinkTypeArea(forcePVWindow->area);
-	if (linkType == CHANNEL) pcData = (struct chanData *)pgcData;
 
 	/* ---------------------------------
 	     Force Process Variable
 	     --------------------------------- */
-	if(strcmp(pgcData->forcePVName,"-") != 0)
-		XmTextFieldSetString(forcePVWindow->forcePVnameTextW,pgcData->forcePVName);
+	if(pgcData->pforcePV->name)
+		XmTextFieldSetString(forcePVWindow->forcePVnameTextW,pgcData->pforcePV->name);
 	else XmTextFieldSetString(forcePVWindow->forcePVnameTextW,"");
 
-	XmToggleButtonGadgetSetState(forcePVWindow->forcePVDisabledToggleButton,pgcData->forcePVDisabled,FALSE);
+	XmToggleButtonGadgetSetState(forcePVWindow->forcePVdisabledToggleButton,
+		pgcData->pforcePV->disabled,FALSE);
 
-	alGetMaskString(pgcData->forcePVMask,buff);
+	alGetMaskString(pgcData->pforcePV->forceMask,buff);
 	string = XmStringCreateSimple(buff);
 	XtVaSetValues(forcePVWindow->forcePVmaskStringLabelW, XmNlabelString, string, NULL);
 	XmStringFree(string);
 
-	mask = pgcData->forcePVMask;
+	mask = pgcData->pforcePV->forceMask;
 	if (mask.Cancel == 1 )
 		XmToggleButtonSetState(forcePVWindow->forceMaskToggleButtonW[0],
 		    TRUE,TRUE);
@@ -214,7 +222,8 @@ static void forcePVUpdateDialogWidgets(struct forcePVWindow *forcePVWindow)
 	if (mask.Disable == 1 )
 		XmToggleButtonSetState(forcePVWindow->forceMaskToggleButtonW[1],
 		    TRUE,TRUE);
-	else XmToggleButtonSetState(forcePVWindow->forceMaskToggleButtonW[1],                    FALSE,TRUE);
+	else XmToggleButtonSetState(forcePVWindow->forceMaskToggleButtonW[1],
+			FALSE,TRUE);
 	if (mask.Ack == 1 )
 		XmToggleButtonSetState(forcePVWindow->forceMaskToggleButtonW[2],
 		    TRUE,TRUE);
@@ -231,12 +240,31 @@ static void forcePVUpdateDialogWidgets(struct forcePVWindow *forcePVWindow)
 	else XmToggleButtonSetState(forcePVWindow->forceMaskToggleButtonW[4],
 	    FALSE,TRUE);
 
-	sprintf(buff,"%d",pgcData->forcePVValue);
+	sprintf(buff,"%g",pgcData->pforcePV->forceValue);
 	XmTextFieldSetString(forcePVWindow->forcePVforceValueTextW,buff);
 
-	if (pgcData->resetPVValue == pgcData->forcePVValue ) sprintf(buff,"%s","NE");
-	else sprintf(buff,"%d",pgcData->resetPVValue);
+	sprintf(buff1,"%g",pgcData->pforcePV->resetValue);
+	if (!strcmp(buff,buff1)) sprintf(buff,"%s","NE");
+	else sprintf(buff,"%g",pgcData->pforcePV->resetValue);
 	XmTextFieldSetString(forcePVWindow->forcePVresetValueTextW,buff);
+
+	if(pgcData->pforcePV->pcalc){
+		if (pgcData->pforcePV->pcalc->expression)
+			XmTextFieldSetString(forcePVWindow->forcePVCalcExpressionTextW,
+				pgcData->pforcePV->pcalc->expression);
+		else XmTextFieldSetString(forcePVWindow->forcePVCalcExpressionTextW,"");
+		for (i=0;i<NO_OF_CALC_PVS;i++){
+			if (pgcData->pforcePV->pcalc->name[i])
+				XmTextFieldSetString(forcePVWindow->forcePVCalcPVTextW[i],
+					pgcData->pforcePV->pcalc->name[i]);
+			else XmTextFieldSetString(forcePVWindow->forcePVCalcPVTextW[i],"");
+		}
+	} else {
+        XmTextFieldSetString(forcePVWindow->forcePVCalcExpressionTextW,"");
+        for (i=0;i<NO_OF_CALC_PVS;i++){
+            XmTextFieldSetString(forcePVWindow->forcePVCalcPVTextW[i],"");
+        }
+	}
 }
 
 /******************************************************
@@ -249,17 +277,22 @@ static void forcePVCreateDialog(ALINK *area)
 	Widget forcePVDialogShell, forcePVDialog;
 	Widget form;
 	Widget nameLabelW, nameTextW;
-	Widget forcePVDisabledToggleButton;
+	Widget forcePVdisabledToggleButton;
 	Widget forceMaskToggleButtonW[ALARM_NMASK];
 	Widget forcePVforceValueLabel,forcePVnameTextW, forcePVforceValueTextW,
 	    forcePVresetValueTextW, forcePVresetValueLabel;
-	Widget forcePVmaskStringLabelW, frame2, rowcol2, frame3,
+	Widget forcePVmaskStringLabelW, frame2, form2, frame3,
 	    rowcol3;
 	Widget forceMaskLabel, forcePVnameLabel;
 	Widget prev;
+	Widget frame4, form3, forcePVCalcLabel,forcePVCalcExpressionLabel;
+	Widget forcePVCalcExpressionTextW;
+	Widget forcePVCalcPVLabel[NO_OF_CALC_PVS], forcePVCalcPVTextW[NO_OF_CALC_PVS];
 	int i;
 	Pixel textBackground;
 	XmString string;
+    char letter[]={"ABCDEF"};
+	char pvid[]="A ";
 	static ActionAreaItem forcePV_items[] = {
 		         { "Apply",   forcePVApplyCallback,   NULL    },
 		         { "Cancel",  forcePVCancelCallback,  NULL    },
@@ -349,7 +382,7 @@ static void forcePVCreateDialog(ALINK *area)
 	    XmNbottomAttachment,  XmATTACH_FORM,
 	    NULL);
 
-	rowcol2 = XtVaCreateWidget("rowcol2",
+	form2 = XtVaCreateWidget("form2",
 	    xmFormWidgetClass, frame2,
 	    XmNtopAttachment,          XmATTACH_FORM,
 	    XmNleftAttachment,         XmATTACH_FORM,
@@ -357,23 +390,23 @@ static void forcePVCreateDialog(ALINK *area)
 	    XmNmarginHeight,     0,
 	    NULL);
 
-    forcePVDisabledToggleButton = XtVaCreateManagedWidget(
+    forcePVdisabledToggleButton = XtVaCreateManagedWidget(
 		"ForcePV Disabled",
-        xmToggleButtonGadgetClass, rowcol2,
+        xmToggleButtonGadgetClass, form2,
         NULL);
 
-	string = XmStringCreateSimple("Force Process Variable Name    ");
+	string = XmStringCreateSimple("Force Process Variable Name (or CALC):");
 	forcePVnameLabel = XtVaCreateManagedWidget("forcePVnameLabel",
-	    xmLabelGadgetClass, rowcol2,
+	    xmLabelGadgetClass, form2,
 	    XmNlabelString,            string,
 	    XmNtopAttachment,          XmATTACH_WIDGET,
-        XmNtopWidget,              forcePVDisabledToggleButton,
+        XmNtopWidget,              forcePVdisabledToggleButton,
 		XmNtopOffset,              10,
 	    NULL);
 	XmStringFree(string);
 
 	forcePVnameTextW = XtVaCreateManagedWidget("forcePVnameTextW",
-	    xmTextFieldWidgetClass, rowcol2,
+	    xmTextFieldWidgetClass, form2,
 	    XmNspacing,                0,
 	    XmNmarginHeight,           0,
 	    XmNcolumns,                30,
@@ -387,9 +420,9 @@ static void forcePVCreateDialog(ALINK *area)
 	XtAddCallback(forcePVnameTextW, XmNactivateCallback,
 	    (XtCallbackProc)XmProcessTraversal, (XtPointer)XmTRAVERSE_NEXT_TAB_GROUP);
 
-	string = XmStringCreateSimple("Force Mask:  ");
+	string = XmStringCreateSimple("Force Mask ");
 	forceMaskLabel = XtVaCreateManagedWidget("forceMaskLabel",
-	    xmLabelGadgetClass, rowcol2,
+	    xmLabelGadgetClass, form2,
 	    XmNlabelString,            string,
 	    XmNtopAttachment,          XmATTACH_WIDGET,
 	    XmNtopWidget,              forcePVnameTextW,
@@ -400,7 +433,7 @@ static void forcePVCreateDialog(ALINK *area)
 
 	string = XmStringCreateSimple("-----");
 	forcePVmaskStringLabelW = XtVaCreateManagedWidget("forcePVmaskStringLabelW",
-	    xmLabelGadgetClass, rowcol2,
+	    xmLabelGadgetClass, form2,
 	    XmNlabelString,            string,
 	    XmNtopAttachment,          XmATTACH_WIDGET,
 	    XmNtopWidget,              forcePVnameTextW,
@@ -410,7 +443,7 @@ static void forcePVCreateDialog(ALINK *area)
 	XmStringFree(string);
 
 	frame3 = XtVaCreateManagedWidget("frame3",
-	    xmFrameWidgetClass, rowcol2,
+	    xmFrameWidgetClass, form2,
 	    XmNtopAttachment,          XmATTACH_WIDGET,
 	    XmNtopWidget,              prev,
 	    XmNleftAttachment,         XmATTACH_FORM,
@@ -435,9 +468,9 @@ static void forcePVCreateDialog(ALINK *area)
 
 	XtManageChild(rowcol3);
 
-	string = XmStringCreateSimple("Force Value: ");
+	string = XmStringCreateSimple("Force Value ");
 	forcePVforceValueLabel = XtVaCreateManagedWidget("forcePVvalue",
-	    xmLabelGadgetClass, rowcol2,
+	    xmLabelGadgetClass, form2,
 	    XmNlabelString,            string,
 	    XmNtopAttachment,          XmATTACH_WIDGET,
 	    XmNtopWidget,              prev,
@@ -446,11 +479,10 @@ static void forcePVCreateDialog(ALINK *area)
 	XmStringFree(string);
 
 	forcePVforceValueTextW = XtVaCreateManagedWidget("forcePVforceValueTextW",
-	    xmTextFieldWidgetClass, rowcol2,
+	    xmTextFieldWidgetClass, form2,
 	    XmNspacing,                0,
 	    XmNmarginHeight,           0,
-	    XmNcolumns,                5,
-	    XmNmaxLength,              5,
+	    XmNcolumns,                8,
 	    XmNbackground,             textBackground,
 	    XmNtopAttachment,          XmATTACH_WIDGET,
 	    XmNtopWidget,              prev,
@@ -461,9 +493,9 @@ static void forcePVCreateDialog(ALINK *area)
 	XtAddCallback(forcePVforceValueTextW, XmNactivateCallback,
 	    (XtCallbackProc)XmProcessTraversal, (XtPointer)XmTRAVERSE_NEXT_TAB_GROUP);
 
-	string = XmStringCreateSimple("Reset Value: ");
+	string = XmStringCreateSimple("Reset Value ");
 	forcePVresetValueLabel = XtVaCreateManagedWidget("forcePVresetValueLabel",
-	    xmLabelGadgetClass, rowcol2,
+	    xmLabelGadgetClass, form2,
 	    XmNlabelString,            string,
 	    XmNtopAttachment,          XmATTACH_WIDGET,
 	    XmNtopWidget,              forcePVforceValueLabel,
@@ -472,11 +504,10 @@ static void forcePVCreateDialog(ALINK *area)
 	XmStringFree(string);
 
 	forcePVresetValueTextW = XtVaCreateManagedWidget("forcePVresetValueTextW",
-	    xmTextFieldWidgetClass, rowcol2,
+	    xmTextFieldWidgetClass, form2,
 	    XmNspacing,                0,
 	    XmNmarginHeight,           0,
-	    XmNcolumns,                5,
-	    XmNmaxLength,              5,
+	    XmNcolumns,                8,
 	    XmNbackground,             textBackground,
 	    XmNtopAttachment,          XmATTACH_WIDGET,
 	    XmNtopWidget,              forcePVforceValueTextW,
@@ -486,6 +517,97 @@ static void forcePVCreateDialog(ALINK *area)
 
 	XtAddCallback(forcePVresetValueTextW, XmNactivateCallback,
 	    (XtCallbackProc)XmProcessTraversal, (XtPointer)XmTRAVERSE_NEXT_TAB_GROUP);
+
+	frame4 = XtVaCreateManagedWidget("frame4",
+	    xmFrameWidgetClass, form2,
+	    XmNtopAttachment,   XmATTACH_WIDGET,
+	    XmNtopWidget,       forcePVresetValueTextW,
+	    XmNleftAttachment,  XmATTACH_FORM,
+	    XmNrightAttachment,  XmATTACH_FORM,
+	    NULL);
+
+	form3 = XtVaCreateWidget("form3",
+	    xmFormWidgetClass, frame4,
+	    XmNspacing,          0,
+	    XmNmarginHeight,     0,
+	    NULL);
+
+	string = XmStringCreateSimple("Force CALC");
+	forcePVCalcLabel = XtVaCreateManagedWidget("forcePVCalcLabel",
+	    xmLabelGadgetClass, form3,
+	    XmNlabelString,            string,
+	    XmNtopAttachment,          XmATTACH_WIDGET,
+	    XmNtopWidget,              forcePVresetValueLabel,
+	    XmNleftAttachment,         XmATTACH_FORM,
+	    NULL);
+	XmStringFree(string);
+
+	string = XmStringCreateSimple("Expression: ");
+	forcePVCalcExpressionLabel = XtVaCreateManagedWidget("forcePVCalcExpression",
+	    xmLabelGadgetClass, form3,
+	    XmNlabelString,            string,
+	    XmNtopAttachment,          XmATTACH_WIDGET,
+	    XmNtopWidget,              forcePVCalcLabel,
+	    XmNleftAttachment,         XmATTACH_FORM,
+	    NULL);
+	XmStringFree(string);
+
+	forcePVCalcExpressionTextW = XtVaCreateManagedWidget("forcePVCalcExpressionTextW",
+	    xmTextFieldWidgetClass, form3,
+	    XmNspacing,                0,
+	    XmNmarginHeight,           0,
+/*
+	    XmNcolumns,                40,
+	    XmNmaxLength,              100,
+*/
+	    XmNbackground,             textBackground,
+	    XmNtopAttachment,          XmATTACH_WIDGET,
+	    XmNtopWidget,              forcePVCalcExpressionLabel,
+	    XmNleftAttachment,         XmATTACH_FORM,
+	    XmNrightAttachment,        XmATTACH_FORM,
+	    NULL);
+
+	XtAddCallback(forcePVforceValueTextW, XmNactivateCallback,
+	    (XtCallbackProc)XmProcessTraversal, (XtPointer)XmTRAVERSE_NEXT_TAB_GROUP);
+
+	prev = forcePVCalcExpressionTextW;
+
+	for (i=0;i<NO_OF_CALC_PVS;i++) {
+
+		pvid[0]=letter[i];
+		string = XmStringCreateSimple(pvid);
+
+		forcePVCalcPVLabel[i] = XtVaCreateManagedWidget("forcePVCalcPVLabel",
+		    xmLabelGadgetClass, form3,
+		    XmNlabelString,            string,
+		    XmNtopAttachment,          XmATTACH_WIDGET,
+		    XmNtopWidget,              prev,
+		    XmNleftAttachment,         XmATTACH_FORM,
+		    NULL);
+		XmStringFree(string);
+	
+		forcePVCalcPVTextW[i] = XtVaCreateManagedWidget("forcePVCalcPVTextW",
+		    xmTextFieldWidgetClass, form3,
+		    XmNspacing,                0,
+		    XmNmarginHeight,           0,
+		    XmNcolumns,                30,
+		    XmNmaxLength,              PVNAME_SIZE,
+		    XmNbackground,             textBackground,
+		    XmNtopAttachment,          XmATTACH_WIDGET,
+		    XmNtopWidget,              prev,
+		    XmNleftAttachment,         XmATTACH_WIDGET,
+		    XmNleftWidget,             forcePVCalcPVLabel[i],
+#if 0
+			XmNrightAttachment,         XmATTACH_POSITION,
+			XmNrightPosition,           50,
+#endif
+		    NULL);
+	
+		prev = forcePVCalcPVTextW[i];
+	
+		XtAddCallback(forcePVCalcPVTextW[i], XmNactivateCallback,
+		    (XtCallbackProc)XmProcessTraversal, (XtPointer)XmTRAVERSE_NEXT_TAB_GROUP);
+	}
 
 	/* Set the client data "Apply", "Cancel", "Dismiss" and "Help" button's callbacks. */
 	forcePV_items[0].data = (XtPointer)forcePVWindow;
@@ -498,11 +620,17 @@ static void forcePVCreateDialog(ALINK *area)
 	forcePVWindow->forcePVDialog = forcePVDialog;
 	forcePVWindow->nameLabelW = nameLabelW;
 	forcePVWindow->nameTextW = nameTextW;
-	forcePVWindow->forcePVDisabledToggleButton = forcePVDisabledToggleButton;
+	forcePVWindow->forcePVdisabledToggleButton = forcePVdisabledToggleButton;
 	forcePVWindow->forcePVnameTextW = forcePVnameTextW;
 	forcePVWindow->forcePVmaskStringLabelW = forcePVmaskStringLabelW;
 	forcePVWindow->forcePVforceValueTextW = forcePVforceValueTextW;
 	forcePVWindow->forcePVresetValueTextW = forcePVresetValueTextW;
+	forcePVWindow->forcePVCalcExpressionTextW = forcePVCalcExpressionTextW;
+
+	for (i=0;i<NO_OF_CALC_PVS;i++) {
+		forcePVWindow->forcePVCalcPVTextW[i] = forcePVCalcPVTextW[i];
+	}
+
 	for (i = 0; i < ALARM_NMASK; i++){
 		forcePVWindow->forceMaskToggleButtonW[i] = forceMaskToggleButtonW[i];
 	}
@@ -511,7 +639,11 @@ static void forcePVCreateDialog(ALINK *area)
 	forcePVUpdateDialogWidgets(forcePVWindow);
 
 	/* RowColumn is full -- now manage */
-	XtManageChild(rowcol2);
+	XtManageChild(form3);
+
+	/* RowColumn is full -- now manage */
+	XtManageChild(form2);
+
 	XtManageChild(frame2);
 	XtManageChild(form);
 
@@ -574,18 +706,29 @@ static void forcePVApplyCallback(Widget widget, XtPointer calldata,
 XtPointer cbs)
 {
 	struct forcePVWindow *forcePVWindow= (struct forcePVWindow *)calldata;
-	short f1;
-	int rtn;
+	double dbl;
+	int rtn,i;
 	XmString string;
 	char *buff;
-	struct gcData *pgcData;
 	GCLINK *link;
 	int linkType;
+	FORCEPV forcePV;
+    FORCEPV_CALC calc;
+	FORCEPV* pforcePV;
+    FORCEPV_CALC* pcalc;
 
 	link =getSelectionLinkArea(forcePVWindow->area);
 	if (!link) return;
 	linkType =getSelectionLinkTypeArea(forcePVWindow->area);
-	pgcData = link->pgcData;
+
+    pforcePV=&forcePV;
+    pforcePV->pcalc=&calc;
+	pcalc=pforcePV->pcalc;
+
+	/* initialize */
+	pforcePV->name=0;
+	pcalc->expression=0;
+	for (i=0;i<NO_OF_CALC_PVS;i++) pcalc->name[i]=0;
 
 	/* ---------------------------------
 	     Force Process Variable
@@ -594,57 +737,76 @@ XtPointer cbs)
 	XtVaGetValues(forcePVWindow->forcePVmaskStringLabelW, XmNlabelString, &string, NULL);
 	XmStringGetLtoR(string,XmFONTLIST_DEFAULT_TAG,&buff);
 	XmStringFree(string);
-	alSetMask(buff,&(pgcData->forcePVMask));
+	alSetMask(buff,&(pforcePV->forceMask));
 	XtFree(buff);
 
-	/*  update link field  - forcePVValue */
+	/*  update link field  - pforcePV->forceValue */
 	buff = XmTextFieldGetString(forcePVWindow->forcePVforceValueTextW);
-	rtn = sscanf(buff,"%hd",&f1);
-	if (rtn == 1) pgcData->forcePVValue = f1;
-	else pgcData->forcePVValue = 1;
+	dbl=0;
+	rtn = sscanf(buff,"%lf",&dbl);
+	if (rtn == 1) pforcePV->forceValue = dbl;
+	else pforcePV->forceValue = 1;
 	XtFree(buff);
 
-	/*  update link field  - resetPVValue */
+	/*  update link field  - pforcePV->resetValue */
 	buff = XmTextFieldGetString(forcePVWindow->forcePVresetValueTextW);
 	if (strncmp(buff,"NE",2)==0 || strncmp(buff,"ne",2)==0) {
-		pgcData->resetPVValue = pgcData->forcePVValue;
+		pforcePV->resetValue = pforcePV->forceValue;
 	} else {
-		rtn = sscanf(buff,"%hd",&f1);
-		if (rtn == 1) pgcData->resetPVValue = f1;
-		else pgcData->resetPVValue = 0;
+		dbl=0;
+		rtn = sscanf(buff,"%lf",&dbl);
+		if (rtn == 1) pforcePV->resetValue = dbl;
+		else pforcePV->resetValue = 0;
 	}
 	XtFree(buff);
 
-	/*  update link field  - forcePVName */
+	/*  update link field  - pforcePV->name */
 	buff = XmTextFieldGetString(forcePVWindow->forcePVnameTextW);
-	if (strlen(buff) > (size_t)1 && strcmp(buff,pgcData->forcePVName) != 0) {
-		if (linkType == GROUP) alReplaceGroupForceEvent((GLINK *)link,buff);
-		else alReplaceChanForceEvent((CLINK *)link,buff);
+	if (strlen(buff)) pforcePV->name=buff;
+	else {
+		pforcePV->name=0;
+		XtFree(buff);
 	}
-	XtFree(buff);
 
-	/*  update disabled field  - forcePVDisabled */
-    rtn = XmToggleButtonGadgetGetState(forcePVWindow->forcePVDisabledToggleButton);
-	if (strlen(pgcData->forcePVName)!=0 && strcmp(pgcData->forcePVName,"-")!= 0) {
-    	if (rtn != pgcData->forcePVDisabled) {
-			if (rtn) updateDisabledForcePVCount(forcePVWindow->area,1);
-			else updateDisabledForcePVCount(forcePVWindow->area,-1);
-    		pgcData->forcePVDisabled = rtn;
+	/*  update disabled field  - pforcePV->disabled */
+    pforcePV->disabled=XmToggleButtonGadgetGetState(forcePVWindow->forcePVdisabledToggleButton);
+
+	/* CALC expression */
+	buff = XmTextFieldGetString(forcePVWindow->forcePVCalcExpressionTextW);
+	if (strlen(buff)) pcalc->expression = buff;
+	else {
+		pcalc->expression=0;
+		XtFree(buff);
+	}
+
+	for (i=0;i<NO_OF_CALC_PVS;i++) {
+		buff = XmTextFieldGetString(forcePVWindow->forcePVCalcPVTextW[i]);
+		if (strlen(buff)) pcalc->name[i]=buff;
+		else {
+			pcalc->name[i]=0;
+			XtFree(buff);
 		}
-	} else {
-	    XmToggleButtonGadgetSetState(forcePVWindow->forcePVDisabledToggleButton,pgcData->forcePVDisabled,FALSE);
 	}
 
-	/*  log on operation file */
-	if (linkType == GROUP) alLogForcePVGroup((GLINK *)link,OPERATOR);
-	else alLogForcePVChan((CLINK *)link,OPERATOR);
+	forcePVUpdateFields(link,pforcePV,linkType);
 
+	if (linkType == GROUP){
+		alLogForcePVGroup((GLINK *)link,OPERATOR);
+	}else {
+		alLogForcePVChan((CLINK *)link,OPERATOR);
+	}
 
 	/* ---------------------------------
 	     Update dialog windows
 	     --------------------------------- */
 	axUpdateDialogs(forcePVWindow->area);
 
+	/* free memory */
+	if (pforcePV->name) XtFree(pforcePV->name);
+	if (pcalc->expression) XtFree(pcalc->expression);
+	for (i=0;i<NO_OF_CALC_PVS;i++) {
+		if (pcalc->name[i]) XtFree(pcalc->name[i]);
+	}
 }
 
 /******************************************************
@@ -654,9 +816,7 @@ static void forcePVHelpCallback(Widget widget, XtPointer calldata,
 XtPointer cbs)
 {
 	char *message1 =
-	"This dialog window allows an operator to specify"
-	" or modify the forcePV\n"
-	"values for a selected group or channel.\n"
+	"Create or modify forcePV values for a selected group or channel.\n"
 	"  \n"
 	"NOTE: The force value must be set to a value"
 	" different from the reset value.\n"
@@ -699,3 +859,421 @@ XtPointer cbs)
 }
 
 
+/**************************************************************
+  Free forcePV calc memory
+*************************************************************/
+static void forcePVCalcDelete(FORCEPV_CALC** ppcalc)
+{
+	FORCEPV_CALC* pcalc=*ppcalc;
+	int i;
+
+	if (!ppcalc || !pcalc) return;
+    if (pcalc->expression) free(pcalc->expression);
+    if (pcalc->rpbuf) free(pcalc->rpbuf);
+	for (i=0;i<NO_OF_CALC_PVS;i++) {
+    	if (pcalc->puser[i]) free(pcalc->puser[i]);
+    	if (pcalc->evid[i]) alCaClearEvent(&pcalc->evid[i]);
+    	if (pcalc->chid[i]) alCaClearChannel(&pcalc->chid[i]);
+    	if (pcalc->name[i]) free(pcalc->name[i]);
+	}
+	free(pcalc);
+	ppcalc=0;
+}
+
+/**************************************************************
+  Delete forcePV
+*************************************************************/
+void alForcePVDelete(FORCEPV** ppforcePV)
+{
+	FORCEPV* pforcePV=*ppforcePV;
+
+	if (!ppforcePV || !pforcePV) return;
+    alCaClearEvent(&pforcePV->evid);
+    if (pforcePV->puser) free(pforcePV->puser);
+    alCaClearChannel(&pforcePV->chid);
+    alCaClearChannel(&pforcePV->chid);
+    if (pforcePV->name) free(pforcePV->name);
+	forcePVCalcDelete(&pforcePV->pcalc);
+	free(pforcePV);
+	pforcePV=0;
+}
+
+/**************************************************************
+  Copy forcePV - DO NOT COPY CHANNEL ACCESS FIELDS
+*************************************************************/
+FORCEPV* alForcePVCopy(FORCEPV* pforcePV)
+{
+	FORCEPV* pnew;
+	int i;
+
+	if (!pforcePV) return 0;
+	pnew=(FORCEPV*)calloc(1,sizeof(FORCEPV));
+	if (pforcePV->name){
+		pnew->name = (char *)calloc(strlen(pforcePV->name)+1,sizeof(char));
+		strcpy(pforcePV->name,pnew->name);
+	}
+	pnew->forceValue=pforcePV->forceValue;
+	pnew->resetValue=pforcePV->resetValue;
+	pnew->disabled=pforcePV->disabled;
+	pnew->forceMask=pforcePV->forceMask;
+
+	if (!pforcePV->pcalc) return pnew;
+	pnew->pcalc=(FORCEPV_CALC*)calloc(1,sizeof(FORCEPV_CALC));
+	if (pforcePV->pcalc->expression){
+		pnew->pcalc->expression=(char *)calloc(strlen(pforcePV->pcalc->expression)+1,sizeof(char));
+		strcpy(pforcePV->pcalc->expression,pnew->pcalc->expression);
+	}
+	if (pforcePV->pcalc->rpbuf){
+		pnew->pcalc->rpbuf=(char*)calloc(strlen(pforcePV->pcalc->rpbuf)+1,sizeof(char));
+		strcpy(pforcePV->pcalc->rpbuf,pnew->pcalc->rpbuf);
+	}
+	for (i=0;i<NO_OF_CALC_PVS;i++) {
+		if (pforcePV->pcalc->name[i]){
+			pnew->pcalc->name[i]=(char*)calloc(strlen(pforcePV->pcalc->name[i])+1,sizeof(char));
+			strcpy(pforcePV->pcalc->name[i],pnew->pcalc->name[i]);
+		}
+	}
+	return pnew;
+}
+
+/**************************************************************
+  alForcePVClearCA
+*************************************************************/
+void alForcePVClearCA(FORCEPV* pforcePV)
+{
+	FORCEPV_CALC* pcalc;
+	int i;
+
+	if (!pforcePV) return;
+    if (pforcePV->puser) free(pforcePV->puser);
+	pforcePV->puser=0;
+    if (pforcePV->evid) alCaClearEvent(&pforcePV->evid);
+    if (pforcePV->chid) alCaClearChannel(&pforcePV->chid);
+	if (!pforcePV->pcalc) return;
+	pcalc=pforcePV->pcalc;
+	for (i=0;i<NO_OF_CALC_PVS;i++) {
+    	if (pcalc->puser[i]) free(pcalc->puser[i]);
+		pcalc->puser[i]=0;
+    	if (pcalc->evid[i]) alCaClearEvent(&pcalc->evid[i]);
+    	if (pcalc->chid[i]) alCaClearChannel(&pcalc->chid[i]);
+	}
+}
+
+
+/**************************************************************
+  alForcePVSetNotConnected
+*************************************************************/
+void alForcePVSetNotConnected(FORCEPV* pforcePV,char* name)
+{
+    FORCEPV_CALC* pcalc;
+	int i;
+
+	if (!pforcePV) return;
+	if ( pforcePV->chid && !alCaIsConnected(pforcePV->chid) ) {
+			errMsg("Force PV %s for %s Not Connected\n",
+				pforcePV->name, name);
+		}
+    	pcalc=pforcePV->pcalc;
+		if (pforcePV->pcalc) {
+			for (i=0;i<NO_OF_CALC_PVS;i++) {
+				if ( pforcePV->pcalc->chid[i] &&
+					 	!alCaIsConnected(pforcePV->pcalc->chid[i]) ) {
+					errMsg("Force CALC PV %s for %s Not Connected\n",
+						pforcePV->pcalc->name[i], name);
+				}
+			}
+		}
+}
+
+/**************************************************************
+  forcePVUpdateFields
+*************************************************************/
+void forcePVUpdateFields(GCLINK* gclink,FORCEPV* pfPV,int context)
+{
+	FORCEPV* pforcePV;
+	int i,status=0;
+	short err=0;
+	FORCEPV_CALC* pcalc;
+	FORCEPV_CALC* pcalcNew;
+	FORCEPVCADATA* puser;
+	char buf[MAX_STRING_LENGTH];
+	double holdValue;
+
+	if (!gclink->pgcData->pforcePV)
+			gclink->pgcData->pforcePV=(FORCEPV*)calloc(1,sizeof(FORCEPV));
+	pforcePV=gclink->pgcData->pforcePV;
+
+	/* temporarily disable forcePV */
+	pforcePV->disabled=YES;
+
+	if (pforcePV->forceValue != pfPV->forceValue) pforcePV->forceValue=pfPV->forceValue;
+	if (pforcePV->resetValue != pfPV->resetValue) pforcePV->resetValue=pfPV->resetValue;
+	pforcePV->forceMask=pfPV->forceMask;
+
+	if (pfPV->name){
+		if (!pforcePV->name || strcmp(pforcePV->name,pfPV->name)){
+			if (pforcePV->name){
+				free(pforcePV->name);
+				pforcePV->name=0;
+				/* cancel channel access */
+				if (pforcePV->puser) free(pforcePV->puser);
+				pforcePV->puser=0;
+				if (pforcePV->evid) alCaClearEvent(&pforcePV->evid);
+				if (pforcePV->chid) alCaClearChannel(&pforcePV->chid);
+			}
+			pforcePV->name = (char *)calloc(strlen(pfPV->name)+1,sizeof(char));
+			strcpy(pforcePV->name,pfPV->name);
+			if (strlen(pforcePV->name) && strcmp(pforcePV->name,"CALC")) {
+				/* start channel access */
+				pforcePV->currentValue = -999;
+#if 0
+				pforcePV->disabled=pfPV->disabled;
+#endif
+				alCaConnectForcePV(pforcePV->name,&pforcePV->chid,gclink->pgcData->name);
+				puser=(FORCEPVCADATA *)calloc(1,sizeof(FORCEPVCADATA));
+				puser->index=-1;
+				puser->link=gclink;
+				puser->linktype=context;
+				if (pforcePV->puser) free(pforcePV->puser);
+				pforcePV->puser = puser;
+				alCaAddForcePVEvent (pforcePV->chid,puser,&pforcePV->evid);
+			}
+		}
+	} else {
+		if (pforcePV->name){
+			free(pforcePV->name);
+			pforcePV->name=0;
+			/* cancel channel access */
+			if (pforcePV->puser) free(pforcePV->puser);
+			pforcePV->puser=0;
+			if (pforcePV->evid) alCaClearEvent(&pforcePV->evid);
+			if (pforcePV->chid) alCaClearChannel(&pforcePV->chid);
+		}
+	}
+
+	/* update expression */
+	if (pfPV->pcalc->expression){
+		if (!pforcePV->pcalc) pforcePV->pcalc=(FORCEPV_CALC*)calloc(1,sizeof(FORCEPV_CALC));
+		if (!pforcePV->pcalc->expression || 
+				strcmp(pforcePV->pcalc->expression,pfPV->pcalc->expression)){
+			if (pforcePV->pcalc->expression){
+				free(pforcePV->pcalc->expression);
+				if (pforcePV->pcalc->rpbuf) free(pforcePV->pcalc->rpbuf);
+			}
+			pforcePV->pcalc->expression = 
+				(char *)calloc(strlen(pfPV->pcalc->expression)+1,sizeof(char));
+			strcpy(pforcePV->pcalc->expression,pfPV->pcalc->expression);
+			/* convert an algebraic expression to symbolic postfix */
+			status=postfix(pforcePV->pcalc->expression,buf,&err);
+			if(status || err) {
+				errMsg("Error converting '%s' to symbolic postfix: status=%ld err=%d\n",
+					pforcePV->pcalc->expression,status,err);
+			} else {
+				pforcePV->pcalc->rpbuf=(char*)calloc(strlen(buf)+1,sizeof(char));
+				strcpy(pforcePV->pcalc->rpbuf,buf);
+			}
+		}
+	} else {
+		if (pforcePV->pcalc){ 
+			if (pforcePV->pcalc->expression) free(pforcePV->pcalc->expression);
+			pforcePV->pcalc->expression=0;
+			if (pforcePV->pcalc->rpbuf) free(pforcePV->pcalc->rpbuf);
+		 	pforcePV->pcalc->rpbuf=0;
+		}
+	}
+
+	pcalc=pforcePV->pcalc;
+	pcalcNew=pfPV->pcalc;
+	/* update CALC pv names */
+	for (i=0;i<NO_OF_CALC_PVS;i++) {
+		if (pcalcNew->name[i]){
+			if (!pcalc) pcalc=(FORCEPV_CALC*)calloc(1,sizeof(FORCEPV_CALC));
+			if (!pcalc->name[i] ||
+					strcmp(pcalc->name[i],pcalcNew->name[i])){
+				if (pcalc->name[i]){
+					free(pcalc->name[i]);
+					pcalc->name[i]=0;
+					pcalc->value[i] = -999;
+					/* cancel channel access */
+					if (pcalc->puser[i]) free(pcalc->puser[i]);
+					pcalc->puser[i]=0;
+					if (pcalc->evid[i]) alCaClearEvent(&pcalc->evid[i]);
+					if (pcalc->chid[i]) alCaClearChannel(&pcalc->chid[i]);
+				}
+				pcalc->name[i] = 
+					(char *)calloc(strlen(pcalcNew->name[i])+1,sizeof(char));
+				strcpy(pcalc->name[i],pcalcNew->name[i]);
+				if (strlen(pcalc->name[i]) && strcmp(pcalc->name[i],"CALC")) {
+	            	if (!isalpha(*pcalcNew->name[i])) {
+						pcalc->value[i] = atof(pcalcNew->name[i]);
+					}else {
+						/* start channel access */
+						pcalc->value[i] = -999;
+						alCaConnectForcePV(pcalc->name[i],&pcalc->chid[i],
+							gclink->pgcData->name);
+						puser=(FORCEPVCADATA *)calloc(1,sizeof(FORCEPVCADATA));
+						puser->index=i;
+						puser->link=gclink;
+						puser->linktype=context;
+						if (pcalc->puser[i]) free(pcalc->puser[i]);
+						pcalc->puser[i] = puser;
+						alCaAddForcePVEvent(pcalc->chid[i],puser,&pcalc->evid[i]);
+					}
+				}
+			}
+		} else {
+			if (pcalc){ 
+				if (pcalc->name[i]==0) continue;
+				free(pcalc->name[i]);
+				pcalc->name[i]=0;
+				pcalc->value[i] = -999;
+				/* cancel channel access */
+				if (pcalc->puser[i]) free(pcalc->puser[i]);
+				pcalc->puser[i]=0;
+				if (pcalc->evid[i]) alCaClearEvent(&pcalc->evid[i]);
+				if (pcalc->chid[i]) alCaClearChannel(&pcalc->chid[i]);
+			}
+		}
+	}
+	pforcePV->pcalc=pcalc;
+	pforcePV->disabled=pfPV->disabled;
+
+	if (strcmp(pforcePV->name,"CALC")==0)
+		forcePVCalcPerform(gclink,context);
+	else {
+		holdValue=pforcePV->currentValue;
+		pforcePV->currentValue = -999;
+		forcePVNewValueEvent(gclink,context,holdValue);
+	}
+}
+
+/*******************************************************************
+    ForcePV New Value Event
+*******************************************************************/
+void forcePVNewValueEvent(GCLINK* gclink,short linktype,double value)
+{
+	struct gcData *pgcData;
+	FORCEPV* pforcePV;
+
+	pgcData=gclink->pgcData;
+	pforcePV=pgcData->pforcePV;
+	if (!pforcePV) return;
+	if (!alCaIsConnected(pforcePV->chid)) return;
+
+	if (!pforcePV->disabled) {
+		if (pforcePV->currentValue==value) return;
+		if (value==pforcePV->forceValue) {
+			if (linktype==GROUP){
+				alChangeGroupMask((GLINK*)gclink,pforcePV->forceMask);
+				alLogForcePVGroup((GLINK*)gclink,AUTOMATIC);
+			} else {
+				alChangeChanMask((CLINK*)gclink,pforcePV->forceMask);
+				alLogForcePVChan((CLINK*)gclink,AUTOMATIC);
+			}
+			alCaFlushIo();
+		}
+    	else if ( ( (pforcePV->currentValue == -999 ||
+                 	pforcePV->currentValue == pforcePV->forceValue) &&
+                	pforcePV->forceValue == pforcePV->resetValue ) ||
+              	( value == pforcePV->resetValue  &&
+                	pforcePV->forceValue != pforcePV->resetValue  ) ) {
+			if (linktype==GROUP){
+				alResetGroupMask((GLINK*)gclink);
+				alLogResetPVGroup((GLINK*)gclink,AUTOMATIC);
+			} else {
+				CLINK *clink=(CLINK*)gclink;;
+				alChangeChanMask(clink,clink->pchanData->defaultMask);
+				alLogResetPVChan(clink,AUTOMATIC);
+			}
+			alCaFlushIo();
+		}
+	}
+	pforcePV->currentValue=value;
+}
+
+
+/*******************************************************************
+    ForcePVCalc New Value Event
+*******************************************************************/
+void alForcePVCalcNewValueEvent(GCLINK* gclink,short linktype,short index,double value)
+{
+	FORCEPV* pforcePV;
+	FORCEPV_CALC* pcalc;
+
+	pforcePV=gclink->pgcData->pforcePV;
+	if (!pforcePV) return;
+	if (!pforcePV->pcalc) return;
+	pcalc=pforcePV->pcalc;
+	if (pcalc->value[index]==value) return;
+	pcalc->value[index]=value;
+
+	forcePVCalcPerform(gclink,linktype);
+}
+
+/*******************************************************************
+    ForcePVCalc Calculate expression value
+*******************************************************************/
+static void forcePVCalcPerform(GCLINK* gclink,int linktype)
+{
+	FORCEPV* pforcePV=gclink->pgcData->pforcePV;
+	FORCEPV_CALC* pcalc=gclink->pgcData->pforcePV->pcalc;
+	int i;
+	double calcValue=0;
+	int status =0;
+
+	for (i=0;i<NO_OF_CALC_PVS;i++){
+		if (pcalc->chid[i] && !alCaIsConnected(pcalc->chid[i])) return;
+		if (pcalc->value[i]==-999.) return;
+	}
+	if (!pcalc->rpbuf) return;
+	status=calcPerform(pcalc->value,&calcValue,pcalc->rpbuf);
+	if (status) errMsg("ForcePV calcPerform failed: status=%ld\n",status);
+
+	if (calcValue == pforcePV->currentValue) return;
+
+	if (!pforcePV->disabled) {
+		if ((float)calcValue == pforcePV->forceValue) {
+			if (linktype==GROUP){
+				alChangeGroupMask((GLINK*)gclink,pforcePV->forceMask);
+				alLogForcePVGroup((GLINK*)gclink,AUTOMATIC);
+			} else {
+				alChangeChanMask((CLINK*)gclink,pforcePV->forceMask);
+				alLogForcePVChan((CLINK*)gclink,AUTOMATIC);
+			}
+			alCaFlushIo();
+		} else if (((pforcePV->currentValue=-999 ||
+				pforcePV->currentValue==pforcePV->forceValue) &&
+				pforcePV->forceValue==pforcePV->resetValue) ||
+              	( calcValue == pforcePV->resetValue  &&
+                	pforcePV->forceValue!=pforcePV->resetValue) ){
+			if (linktype==GROUP){
+				alResetGroupMask((GLINK*)gclink);
+				alLogResetPVGroup((GLINK*)gclink,AUTOMATIC);
+			} else {
+				CLINK *clink=(CLINK*)gclink;;
+				alChangeChanMask(clink,clink->pchanData->defaultMask);
+				alLogResetPVChan(clink,AUTOMATIC);
+				}
+			alCaFlushIo();
+		}
+	}
+	pforcePV->currentValue=calcValue;
+}
+
+/*******************************************************************
+    ForcePV Value Event from CA
+*******************************************************************/
+void alForcePVValueEvent ( void* userdata,double value) {
+	FORCEPVCADATA* puser = (FORCEPVCADATA*)userdata;
+	GCLINK* gclink;
+	short index;
+	short linktype;
+
+	if (!puser) return;
+	gclink=(GCLINK*)puser->link;
+	index=puser->index;
+	linktype=puser->linktype;
+
+	if (puser->index==-1) forcePVNewValueEvent(gclink,linktype,value);
+	else alForcePVCalcNewValueEvent(gclink,linktype,index,value);
+}

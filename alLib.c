@@ -114,7 +114,7 @@ void alDeleteChan(CLINK *clink)
 		if(clink->parent) sllRemove(&(clink->parent->chanList),(SNODE *)clink);
 
 		if (cdata->name) free(cdata->name);
-		if (strcmp(cdata->forcePVName,"-") != 0) free(cdata->forcePVName);
+		if (cdata->pforcePV) alForcePVDelete(&cdata->pforcePV);
 		if (strcmp(cdata->sevrPVName,"-") != 0) free(cdata->sevrPVName);
 		if (cdata->command) free(cdata->command);
         if (cdata->countFilter){
@@ -174,7 +174,7 @@ void alDeleteGroup(GLINK *glink)
 		}
 		gdata = glink->pgroupData;
 		if (gdata->name) free(gdata->name);
-		if (strcmp(gdata->forcePVName,"-") != 0) free(gdata->forcePVName);
+		if (gdata->pforcePV) alForcePVDelete(&gdata->pforcePV);
 		if (strcmp(gdata->sevrPVName,"-") != 0) free(gdata->sevrPVName);
 		if (gdata->command) free(gdata->command);
      	if (gdata->noAckTimerId){
@@ -312,7 +312,6 @@ modify children:
 		gdataNew->sevrPVName = (char*)calloc(1,strlen(buff)+1);
 		strcpy(gdataNew->sevrPVName,buff);
 	}
-	gdataNew->PVValue = gdata->PVValue;
 	;
 
 
@@ -332,14 +331,7 @@ modify children:
 	}
 
 	/* copy forcePV info */
-	buff = gdata->forcePVName;
-	if(strcmp(buff,"-") != 0){
-		gdataNew->forcePVName = (char*)calloc(1,strlen(buff)+1);
-		strcpy(gdataNew->forcePVName,buff);
-	} else gdataNew->forcePVName = buff;
-	gdataNew->forcePVMask = gdata->forcePVMask;
-	gdataNew->forcePVValue = gdata->forcePVValue;
-	gdataNew->resetPVValue = gdata->resetPVValue;
+	if (gdata->pforcePV) gdataNew->pforcePV=alForcePVCopy(gdata->pforcePV);
 
 	/* copy guidance */
 	buff = glink->guidanceLocation;
@@ -447,7 +439,6 @@ modify children:
 		cdataNew->sevrPVName = (char*)calloc(1,strlen(buff)+1);
 		strcpy(cdataNew->sevrPVName,buff);
 	}
-	cdataNew->PVValue = cdata->PVValue;
 
 	cdataNew->beepSevr = cdata->beepSevr;
 
@@ -460,14 +451,7 @@ modify children:
 	}
 
 	/* copy forcePV info */
-	buff = cdata->forcePVName;
-	if(strcmp(buff,"-") != 0){
-		cdataNew->forcePVName = (char*)calloc(1,strlen(buff)+1);
-		strcpy(cdataNew->forcePVName,buff);
-	} else cdataNew->forcePVName = buff;
-	cdataNew->forcePVMask = cdata->forcePVMask;
-	cdataNew->forcePVValue = cdata->forcePVValue;
-	cdataNew->resetPVValue = cdata->resetPVValue;
+	if (cdata->pforcePV) cdataNew->pforcePV=alForcePVCopy(cdata->pforcePV);
 
 	/* copy guidance */
 	buff = clink->guidanceLocation;
@@ -494,13 +478,8 @@ GLINK *alCreateGroup()
 	gdata = link->pgroupData;
 
 	link->viewCount = 1;
-	link->parent = NULL;
 	gdata->name = (char *)calloc(1,PVNAME_SIZE+1);
 	strcpy(gdata->name,"Unnamed_Group");
-	alSetMask("-----",&(gdata->forcePVMask));
-	gdata->forcePVValue = 1;
-	gdata->resetPVValue = 0;
-	gdata->forcePVName = "-";
 	gdata->sevrPVName = "-";
 
 	return(link);
@@ -521,13 +500,10 @@ CLINK *alCreateChannel()
 	link->viewCount =1;
 	cdata->name = (char *)calloc(1,PVNAME_SIZE+1);
 	strcpy(cdata->name,"Unnamed_Channel");
+	cdata->sevrPVName = "-";
+
 	alSetMask("-----",&(cdata->curMask));
 	cdata->defaultMask = cdata->curMask;
-	cdata->forcePVMask = cdata->curMask;
-	cdata->forcePVValue = 1;
-	cdata->resetPVValue = 0;
-	cdata->forcePVName = "-";
-	cdata->sevrPVName = "-";
 
 	return(link);
 }
@@ -1451,7 +1427,6 @@ static void alSetUnackBeepSevCountGroup(GLINK *glink,int newSevr,int oldSevr,int
 	struct groupData * gdata;
 	int osev=0;
 	int nsev=0;
-	int j;
 
 	gdata = (struct groupData *)glink->pgroupData;
 	gdata->unackBeepSev[oldSevr]=gdata->unackBeepSev[oldSevr] - count;

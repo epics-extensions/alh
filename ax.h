@@ -333,6 +333,11 @@ void forceMaskUpdateDialog(ALINK *area);
 
 void forcePVShowDialog(ALINK *area,Widget menuButton);
 void forcePVUpdateDialog(ALINK *area);
+void alForcePVValueEvent(void *usr,double value);
+void alForcePVDelete(FORCEPV**);
+FORCEPV* alForcePVCopy(FORCEPV*);
+void alForcePVClearCA(FORCEPV*);
+void alForcePVSetNotConnected(FORCEPV*,char*);
 
 /********************************************************************
   alCA.c   function prototypes
@@ -347,26 +352,22 @@ void alCaStop(void);
 void alCaConnectChannel(char *name,chid *pchid,void *puser);
 void alCaConnectForcePV(char *name,chid *pchid,void *puser);
 void alCaConnectSevrPV(char *name,chid *pchid,void *puser);
+void alCaConnectHeartbeatPV(char *name,chid *pchid,void *puser);
 void alCaClearChannel(chid *pchid);
 void alCaClearEvent(evid *pevid);
 void alCaAddEvent(chid chid,evid *pevid,void *clink);
-void alCaAddForcePVEvent(chid chid,void *link,evid *pevid,int type);
+void alCaAddForcePVEvent(chid chid,void *link,evid *pevid);
 void alCaPutGblAck(chid chid,short *psevr);
 void alCaPutSevrValue(chid chid,short *psevr);
-void alCaPutGblAckT(chid chid, short *pstate);
-void alCaConnectHeartbeatPV(char *name,chid *pchid,void *puser);
 void alCaPutHeartbeatValue(chid chid,short *value);
+void alCaPutGblAckT(chid chid, short *pstate);
 
 /********************************************************************
   alCaCommon.c   function prototypes
 *********************************************************************/
-void alReplaceGroupForceEvent( GLINK *glink, char *str);
-void alReplaceChanForceEvent( CLINK *clink, char *str);
 void alCaCancel(struct mainGroup *pmainGroup);
 void registerCA(void *dummy, int fd, int opened);
 void alUpdateAreas();
-void alGroupForceEvent(GLINK *glink,short value);
-void alChannelForceEvent(CLINK *clink,short value);
 void alSetNotConnected(struct mainGroup *pmainGroup);
 void alPutGblAckT(struct mainGroup *pmainGroup);
 

@@ -62,11 +62,13 @@ struct propWindow {
 	Widget countFilterCountTextW;
 	Widget countFilterSecondsTextW;
 	Widget forcePVnameTextW;
-	Widget forcePVmaskStringLabelW;
+	Widget forcePVForceMaskStringLabelW;
 	Widget forceMaskToggleButtonW[ALARM_NMASK];
 	Widget forcePVcurrentValueTextW;
 	Widget forcePVforceValueTextW;
 	Widget forcePVresetValueTextW;
+	Widget forcePVCalcExpressionTextW;
+	Widget forcePVCalcPVTextW[NO_OF_CALC_PVS];
 	Widget aliasTextW;
 	Widget processTextW;
 	Widget statProcessTextW;
@@ -155,6 +157,7 @@ static void propUpdateDialogWidgets(struct propWindow *propWindow)
 	int linkType;
 	XmString string;
 	char buff[MAX_STRING_LENGTH];
+	char buff1[MAX_STRING_LENGTH];
 	char *str;
 	SNODE *pt;
 	int i=0;
@@ -193,17 +196,28 @@ static void propUpdateDialogWidgets(struct propWindow *propWindow)
 		XmTextFieldSetString(propWindow->severityPVnameTextW,"");
 		XmTextFieldSetString(propWindow->countFilterCountTextW,"");
 		XmTextFieldSetString(propWindow->countFilterSecondsTextW,"");
+
+
+
+		/* ForcePV data */
 		XmTextFieldSetString(propWindow->forcePVnameTextW,"");
 		string = XmStringCreateSimple("-----");
-		XtVaSetValues(propWindow->forcePVmaskStringLabelW, XmNlabelString, string, NULL);
+		XtVaSetValues(propWindow->forcePVForceMaskStringLabelW, XmNlabelString, string, NULL);
 		XmStringFree(string);
+/*
 		if (programId == ALH) {
 			string = XmStringCreateSimple("");
 			XtVaSetValues(propWindow->forcePVcurrentValueTextW, XmNlabelString, string, NULL);
 			XmStringFree(string);
 		}
+*/
 		XmTextFieldSetString(propWindow->forcePVforceValueTextW,"");
 		XmTextFieldSetString(propWindow->forcePVresetValueTextW,"");
+		XmTextFieldSetString(propWindow->forcePVCalcExpressionTextW,"");
+		for (i=0;i<NO_OF_CALC_PVS;i++){
+			XmTextFieldSetString(propWindow->forcePVCalcPVTextW[i],"");
+		}
+
 		XmTextFieldSetString(propWindow->aliasTextW,"");
 		XmTextFieldSetString(propWindow->processTextW,"");
 		XmTextFieldSetString(propWindow->sevrProcessTextW,"");
@@ -221,8 +235,8 @@ static void propUpdateDialogWidgets(struct propWindow *propWindow)
 	/* ---------------------------------
 	     Group/Channel Name 
 	     --------------------------------- */
-	if (linkType == GROUP) string = XmStringCreateSimple("Group Name");
-	else string = XmStringCreateSimple("Channel Name");
+	if (linkType == GROUP) string = XmStringCreateSimple("Group  ");
+	else string = XmStringCreateSimple("Channel");
 	XtVaSetValues(propWindow->nameLabelW, XmNlabelString, string, NULL);
 	XmStringFree(string);
 
@@ -301,9 +315,7 @@ static void propUpdateDialogWidgets(struct propWindow *propWindow)
 		XmTextFieldSetString(propWindow->countFilterSecondsTextW,"");
 		XtVaSetValues(propWindow->countFilterCountTextW,XmNbackground,textBackgroundNS,NULL);
 		XtVaSetValues(propWindow->countFilterSecondsTextW,XmNbackground,textBackgroundNS,NULL);
-		XtSetSensitive(propWindow->countFilterFrame, FALSE);
 	} else {
-		XtSetSensitive(propWindow->countFilterFrame, TRUE);
 		XtVaSetValues(propWindow->countFilterCountTextW,XmNbackground,textBackground,NULL);
 		XtVaSetValues(propWindow->countFilterSecondsTextW,XmNbackground,textBackground,NULL);
 		if(pcData->countFilter) {
@@ -320,16 +332,19 @@ static void propUpdateDialogWidgets(struct propWindow *propWindow)
 	/* ---------------------------------
 	     Force Process Variable
 	     --------------------------------- */
-	if(strcmp(pgcData->forcePVName,"-") != 0)
-		XmTextFieldSetString(propWindow->forcePVnameTextW,pgcData->forcePVName);
+	if(pgcData->pforcePV && pgcData->pforcePV->name)
+		XmTextFieldSetString(propWindow->forcePVnameTextW,pgcData->pforcePV->name);
 	else XmTextFieldSetString(propWindow->forcePVnameTextW,"");
 
-	alGetMaskString(pgcData->forcePVMask,buff);
-	string = XmStringCreateSimple(buff);
-	XtVaSetValues(propWindow->forcePVmaskStringLabelW, XmNlabelString, string, NULL);
+	if(pgcData->pforcePV){
+		XmTextFieldSetString(propWindow->forcePVnameTextW,pgcData->pforcePV->name);
+		alGetMaskString(pgcData->pforcePV->forceMask,buff);
+		string = XmStringCreateSimple(buff);
+	} else string = XmStringCreateSimple("-----");
+	XtVaSetValues(propWindow->forcePVForceMaskStringLabelW, XmNlabelString, string, NULL);
 	XmStringFree(string);
 	if (programId != ALH) {
-		mask = pgcData->forcePVMask;
+		if(pgcData->pforcePV) mask = pgcData->pforcePV->forceMask;
 		if (mask.Cancel == 1 )
 			XmToggleButtonSetState(propWindow->forceMaskToggleButtonW[0],TRUE,TRUE);
 		else XmToggleButtonSetState(propWindow->forceMaskToggleButtonW[0],FALSE,TRUE);
@@ -347,22 +362,46 @@ static void propUpdateDialogWidgets(struct propWindow *propWindow)
 		else XmToggleButtonSetState(propWindow->forceMaskToggleButtonW[4],FALSE,TRUE);
 	}
 
-	/*
-	     if (programId == ALH) {
-	          sprintf(buff,"%d",pgcData->PVValue);
-	          string = XmStringCreateSimple(buff);
-	          XtVaSetValues(propWindow->forcePVcurrentValueTextW, XmNlabelString, string, NULL);
-	          XmStringFree(string);
-	     }
-	*/
+	if(pgcData->pforcePV){
 
-	sprintf(buff,"%d",pgcData->forcePVValue);
-	XmTextFieldSetString(propWindow->forcePVforceValueTextW,buff);
+		sprintf(buff,"%g",pgcData->pforcePV->forceValue);
+		XmTextFieldSetString(propWindow->forcePVforceValueTextW,buff);
 
-	if (pgcData->resetPVValue == pgcData->forcePVValue ) sprintf(buff,"%s","NE");
-	else sprintf(buff,"%d",pgcData->resetPVValue);
-	XmTextFieldSetString(propWindow->forcePVresetValueTextW,buff);
+		sprintf(buff1,"%g",pgcData->pforcePV->resetValue);
+		if (!strcmp(buff,buff1)) sprintf(buff,"%s","NE");
+		else strcpy(buff,buff1);
+		XmTextFieldSetString(propWindow->forcePVresetValueTextW,buff);
 
+		if(pgcData->pforcePV->pcalc){
+			if (pgcData->pforcePV->pcalc->expression)
+				XmTextFieldSetString(propWindow->forcePVCalcExpressionTextW,
+					pgcData->pforcePV->pcalc->expression);
+			else XmTextFieldSetString(propWindow->forcePVCalcExpressionTextW,"");
+			for (i=0;i<NO_OF_CALC_PVS;i++){
+				if (pgcData->pforcePV->pcalc->name[i])
+					XmTextFieldSetString(propWindow->forcePVCalcPVTextW[i],
+						pgcData->pforcePV->pcalc->name[i]);
+				else XmTextFieldSetString(propWindow->forcePVCalcPVTextW[i],"");
+			}
+		} else {
+			XmTextFieldSetString(propWindow->forcePVCalcExpressionTextW,"");
+			for (i=0;i<NO_OF_CALC_PVS;i++){
+				XmTextFieldSetString(propWindow->forcePVCalcPVTextW[i],"");
+			}
+		}
+	} else {
+		/* ForcePV data */
+		XmTextFieldSetString(propWindow->forcePVnameTextW,"");
+		string = XmStringCreateSimple("-----");
+		XtVaSetValues(propWindow->forcePVForceMaskStringLabelW, XmNlabelString, string, NULL);
+		XmStringFree(string);
+		XmTextFieldSetString(propWindow->forcePVforceValueTextW,"");
+		XmTextFieldSetString(propWindow->forcePVresetValueTextW,"");
+		XmTextFieldSetString(propWindow->forcePVCalcExpressionTextW,"");
+		for (i=0;i<NO_OF_CALC_PVS;i++){
+			XmTextFieldSetString(propWindow->forcePVCalcPVTextW[i],"");
+		}
+	}
 	/* ---------------------------------
 	     Alias
 	     --------------------------------- */
@@ -438,7 +477,7 @@ static void propCreateDialog(ALINK *area)
 	Widget beepSeverityValueTextW;
 	Widget rowcol, form, maskFrameW=0;
 	Widget nameLabelW, nameTextW;
-	Widget forcePVlabel, beepSeverityLabel, severityPVlabel;
+	Widget beepSeverityLabel, severityPVlabel;
 	Widget alarmMaskToggleButtonW[ALARM_NMASK];
 	Widget forceMaskToggleButtonW[ALARM_NMASK];
 	Widget aliasLabel, aliasTextW;
@@ -446,21 +485,30 @@ static void propCreateDialog(ALINK *area)
 	Widget sevrProcessLabel, sevrProcessTextW;
 	Widget statProcessLabel, statProcessTextW;
 	Widget forcePVcurrentValueTextW=0;
-	Widget forcePVforceValueLabel,forcePVnameTextW, forcePVforceValueTextW,
-	    forcePVresetValueTextW, forcePVresetValueLabel;
-	Widget forcePVmaskStringLabelW, frame2, rowcol2, frame3,
-	    rowcol3, guidanceLabel, guidanceTextW,
+	Widget forcePVLabel; 
+	Widget forcePVnameLabel, forcePVnameTextW;
+	Widget forcePVForceMaskLabel;
+	Widget forcePVForceMaskStringLabelW;
+	Widget forcePVforceValueLabel, forcePVforceValueTextW;
+	Widget forcePVresetValueLabel, forcePVresetValueTextW;
+	Widget forcePVCalcLabel; 
+	Widget forcePVCalcExpressionLabel, forcePVCalcExpressionTextW;
+	Widget forcePVCalcPVLabel[NO_OF_CALC_PVS],
+           forcePVCalcPVTextW[NO_OF_CALC_PVS];
+	Widget frame2, form2, frame3, form3, rowcol4;
+	Widget  guidanceLabel, guidanceTextW,
 	    guidanceUrlLabel, guidanceUrlW;
 	Widget alarmMaskLabel, alarmMaskStringLabelW;
-	Widget forceMaskLabel, forcePVnameLabel;
 	Widget resetMaskLabel=0, resetMaskStringLabelW=0;
 	Widget prev;
 	int i;
-	Widget countFilterFrame, form4, countFilterLabel,
+	Widget countFilterFrame, form1, countFilterLabel,
 	    countFilterCountLabel,countFilterCountTextW,
 	    countFilterSecondsLabel, countFilterSecondsTextW;
 	Pixel textBackground;
 	XmString string;
+    char letter[]={"ABCDEF"};
+    char pvid[]="A ";
 	static ActionAreaItem prop_items_act[] = {
 		         { "Apply",   propApplyCallback,   NULL    },
 		         { "Cancel",  propCancelCallback,  NULL    },
@@ -533,13 +581,17 @@ static void propCreateDialog(ALINK *area)
 	    xmTextFieldWidgetClass, form,
 	    XmNspacing,          0,
 	    XmNmarginHeight,     0,
+/*
 	    XmNcolumns,         30,
 	    XmNrecomputeSize,   True,
+*/
 	    XmNmaxLength,       PVNAME_SIZE,
 	    XmNbackground,      textBackground,
-	    XmNtopAttachment,   XmATTACH_WIDGET,
-	    XmNtopWidget,       nameLabelW,
-	    XmNleftAttachment,  XmATTACH_FORM,
+	    XmNtopAttachment,   XmATTACH_FORM,
+	    XmNleftAttachment,  XmATTACH_WIDGET,
+	    XmNleftWidget,      nameLabelW,
+	    XmNrightAttachment,  XmATTACH_POSITION,
+	    XmNrightPosition,    50,
 	    NULL);
 
 	XtAddCallback(nameTextW, XmNactivateCallback,
@@ -548,8 +600,8 @@ static void propCreateDialog(ALINK *area)
 	/* ---------------------------------
 	     Current Alarm Mask 
 	     --------------------------------- */
-	if (programId != ALH) string = XmStringCreateSimple("Alarm Mask:  ");
-	else string = XmStringCreateSimple("Current Mask:  ");
+	if (programId != ALH) string = XmStringCreateSimple("Alarm Mask ");
+	else string = XmStringCreateSimple("Current Mask ");
 	alarmMaskLabel = XtVaCreateManagedWidget("alarmMaskLabel",
 	    xmLabelGadgetClass, form,
 	    XmNlabelString,     string,
@@ -575,13 +627,13 @@ static void propCreateDialog(ALINK *area)
 	     Reset Mask 
 	     --------------------------------- */
 	if (programId == ALH ) {
-		string = XmStringCreateSimple("Reset Mask:  ");
+		string = XmStringCreateSimple("Reset Mask ");
 		resetMaskLabel = XtVaCreateManagedWidget("resetMaskLabel",
 		    xmLabelGadgetClass, form,
 		    XmNlabelString,     string,
+	    	XmNleftAttachment,  XmATTACH_FORM,
 		    XmNtopAttachment,   XmATTACH_WIDGET,
 		    XmNtopWidget,       alarmMaskLabel,
-		    XmNleftAttachment,  XmATTACH_FORM,
 		    NULL);
 		XmStringFree(string);
 		prev = resetMaskLabel;
@@ -631,14 +683,13 @@ static void propCreateDialog(ALINK *area)
 	     --------------------------------- */
 	countFilterFrame = XtVaCreateManagedWidget("countFilterFrame",
 	    xmFrameWidgetClass, form,
-	    XmNtopAttachment,   XmATTACH_WIDGET,
-	    XmNtopWidget,       prev,
-	    XmNleftAttachment,  XmATTACH_FORM,
-	    XmNrightAttachment, XmATTACH_POSITION,
-	    XmNrightPosition,    50,
+	    XmNtopAttachment,   XmATTACH_FORM,
+	    XmNrightAttachment, XmATTACH_FORM,
+	    XmNleftAttachment,  XmATTACH_POSITION,
+	    XmNleftPosition,    50,
 	    NULL);
 
-	form4 = XtVaCreateWidget("form4",
+	form1 = XtVaCreateWidget("form1",
 	    xmFormWidgetClass, countFilterFrame,
 	    XmNspacing,          0,
 	    XmNmarginHeight,     0,
@@ -646,16 +697,16 @@ static void propCreateDialog(ALINK *area)
 
 	string = XmStringCreateSimple("Alarm Count Filter             ");
 	countFilterLabel = XtVaCreateManagedWidget("countFilterLabel",
-	    xmLabelGadgetClass, form4,
+	    xmLabelGadgetClass, form1,
 	    XmNlabelString,            string,
 	    XmNtopAttachment,          XmATTACH_FORM,
 	    XmNleftAttachment,         XmATTACH_FORM,
 	    NULL);
 	XmStringFree(string);
 
-	string = XmStringCreateSimple("Count: ");
+	string = XmStringCreateSimple("Count ");
 	countFilterCountLabel = XtVaCreateManagedWidget("countFilterCountLabel",
-	    xmLabelGadgetClass, form4,
+	    xmLabelGadgetClass, form1,
 	    XmNlabelString,            string,
 	    XmNtopAttachment,          XmATTACH_WIDGET,
 	    XmNtopWidget,              countFilterLabel,
@@ -664,7 +715,7 @@ static void propCreateDialog(ALINK *area)
 	XmStringFree(string);
 
 	countFilterCountTextW = XtVaCreateManagedWidget("countFilterCountTextW",
-	    xmTextFieldWidgetClass, form4,
+	    xmTextFieldWidgetClass, form1,
 	    XmNspacing,                0,
 	    XmNmarginHeight,           0,
 	    XmNcolumns,                3,
@@ -679,9 +730,9 @@ static void propCreateDialog(ALINK *area)
 	XtAddCallback(countFilterCountTextW, XmNactivateCallback,
 	    (XtCallbackProc)XmProcessTraversal, (XtPointer)XmTRAVERSE_NEXT_TAB_GROUP);
 
-	string = XmStringCreateSimple("Seconds: ");
+	string = XmStringCreateSimple("Seconds ");
 	countFilterSecondsLabel = XtVaCreateManagedWidget("countFilterSecondsLabel",
-	    xmLabelGadgetClass, form4,
+	    xmLabelGadgetClass, form1,
 	    XmNlabelString,            string,
 	    XmNtopAttachment,          XmATTACH_WIDGET,
 	    XmNtopWidget,              countFilterLabel,
@@ -691,7 +742,7 @@ static void propCreateDialog(ALINK *area)
 	XmStringFree(string);
 
 	countFilterSecondsTextW = XtVaCreateManagedWidget("countFilterSecondsTextW",
-	    xmTextFieldWidgetClass, form4,
+	    xmTextFieldWidgetClass, form1,
 	    XmNspacing,                0,
 	    XmNmarginHeight,           0,
 	    XmNcolumns,                3,
@@ -707,17 +758,276 @@ static void propCreateDialog(ALINK *area)
 	    (XtCallbackProc)XmProcessTraversal, (XtPointer)XmTRAVERSE_NEXT_TAB_GROUP);
 
 	/* Form is full -- now manage */
-	XtManageChild(form4);
+	XtManageChild(form1);
+
+	/* ---------------------------------
+	     Force Process Variable
+	     --------------------------------- */
+
+	frame2 = XtVaCreateManagedWidget("frame2",
+	    xmFrameWidgetClass, form,
+	    XmNtopAttachment,   XmATTACH_WIDGET,
+	    XmNtopWidget,       prev,
+	    XmNleftAttachment,  XmATTACH_FORM,
+	    XmNrightAttachment,  XmATTACH_FORM,
+	    NULL);
+
+	form2 = XtVaCreateWidget("form2",
+	    xmFormWidgetClass, frame2,
+	    XmNspacing,          0,
+	    XmNmarginHeight,     0,
+	    NULL);
+
+	string = XmStringCreateSimple("Force Process Variable");
+	forcePVLabel = XtVaCreateManagedWidget("forcePVLabel",
+	    xmLabelGadgetClass, form2,
+	    XmNlabelString,            string,
+	    XmNtopAttachment,          XmATTACH_FORM,
+	    XmNleftAttachment,         XmATTACH_FORM,
+	    NULL);
+	XmStringFree(string);
+
+	string = XmStringCreateSimple("PV Name ");
+	forcePVnameLabel = XtVaCreateManagedWidget("forcePVnameLabel",
+	    xmLabelGadgetClass, form2,
+	    XmNlabelString,            string,
+	    XmNtopAttachment,          XmATTACH_WIDGET,
+	    XmNtopWidget,              forcePVLabel,
+	    XmNleftAttachment,         XmATTACH_FORM,
+	    NULL);
+	XmStringFree(string);
+
+	forcePVnameTextW = XtVaCreateManagedWidget("forcePVnameTextW",
+	    xmTextFieldWidgetClass, form2,
+	    XmNspacing,                0,
+	    XmNmarginHeight,           0,
+	    XmNcolumns,                30,
+	    XmNmaxLength,              PVNAME_SIZE,
+	    XmNbackground,             textBackground,
+	    XmNtopAttachment,          XmATTACH_WIDGET,
+	    XmNtopWidget,              forcePVLabel,
+	    XmNleftAttachment,         XmATTACH_WIDGET,
+	    XmNleftWidget,             forcePVnameLabel,
+	    NULL);
+
+	XtAddCallback(forcePVnameTextW, XmNactivateCallback,
+	    (XtCallbackProc)XmProcessTraversal, (XtPointer)XmTRAVERSE_NEXT_TAB_GROUP);
+
+	string = XmStringCreateSimple("Force Mask ");
+	forcePVForceMaskLabel = XtVaCreateManagedWidget("forcePVForceMaskLabel",
+	    xmLabelGadgetClass, form2,
+	    XmNlabelString,            string,
+	    XmNtopAttachment,          XmATTACH_WIDGET,
+	    XmNtopWidget,              forcePVnameTextW,
+	    XmNleftAttachment,         XmATTACH_FORM,
+	    NULL);
+	XmStringFree(string);
+	prev = forcePVForceMaskLabel;
+
+	string = XmStringCreateSimple("-----");
+	forcePVForceMaskStringLabelW = XtVaCreateManagedWidget("forcePVmaskStringLabelW",
+	    xmLabelGadgetClass, form2,
+	    XmNlabelString,            string,
+	    XmNtopAttachment,          XmATTACH_WIDGET,
+	    XmNtopWidget,              forcePVnameTextW,
+	    XmNleftAttachment,         XmATTACH_WIDGET,
+	    XmNleftWidget,             forcePVForceMaskLabel,
+	    NULL);
+	XmStringFree(string);
+
+	string = XmStringCreateSimple("    Force Value ");
+	forcePVforceValueLabel = XtVaCreateManagedWidget("forcePVvalue",
+	    xmLabelGadgetClass, form2,
+	    XmNlabelString,            string,
+	    XmNtopAttachment,          XmATTACH_WIDGET,
+	    XmNtopWidget,              forcePVnameTextW,
+	    XmNleftAttachment,         XmATTACH_WIDGET,
+	    XmNleftWidget,             forcePVForceMaskStringLabelW,
+	    NULL);
+	XmStringFree(string);
+
+	forcePVforceValueTextW = XtVaCreateManagedWidget("forcePVforceValueTextW",
+	    xmTextFieldWidgetClass, form2,
+	    XmNspacing,                0,
+	    XmNmarginHeight,           0,
+	    XmNcolumns,                8,
+	    XmNbackground,             textBackground,
+	    XmNtopAttachment,          XmATTACH_WIDGET,
+	    XmNtopWidget,              forcePVnameTextW,
+	    XmNleftAttachment,         XmATTACH_WIDGET,
+	    XmNleftWidget,             forcePVforceValueLabel,
+	    NULL);
+
+	XtAddCallback(forcePVforceValueTextW, XmNactivateCallback,
+	    (XtCallbackProc)XmProcessTraversal, (XtPointer)XmTRAVERSE_NEXT_TAB_GROUP);
+
+	string = XmStringCreateSimple("     Reset Value ");
+	forcePVresetValueLabel = XtVaCreateManagedWidget("forcePVresetValueLabel",
+	    xmLabelGadgetClass, form2,
+	    XmNlabelString,            string,
+	    XmNtopAttachment,          XmATTACH_WIDGET,
+	    XmNtopWidget,              forcePVnameTextW,
+	    XmNleftAttachment,         XmATTACH_WIDGET,
+	    XmNleftWidget,             forcePVforceValueTextW,
+	    NULL);
+	XmStringFree(string);
+
+	forcePVresetValueTextW = XtVaCreateManagedWidget("forcePVresetValueTextW",
+	    xmTextFieldWidgetClass, form2,
+	    XmNspacing,                0,
+	    XmNmarginHeight,           0,
+	    XmNcolumns,                8,
+	    XmNbackground,             textBackground,
+	    XmNtopAttachment,          XmATTACH_WIDGET,
+	    XmNtopWidget,              forcePVnameTextW,
+	    XmNleftAttachment,         XmATTACH_WIDGET,
+	    XmNleftWidget,             forcePVresetValueLabel,
+	    NULL);
+
+	XtAddCallback(forcePVresetValueTextW, XmNactivateCallback,
+	    (XtCallbackProc)XmProcessTraversal, (XtPointer)XmTRAVERSE_NEXT_TAB_GROUP);
+
+	frame3 = XtVaCreateManagedWidget("frame3",
+	    xmFrameWidgetClass, form2,
+	    XmNtopAttachment,   XmATTACH_WIDGET,
+	    XmNtopWidget,       forcePVforceValueTextW,
+	    XmNleftAttachment,  XmATTACH_FORM,
+	    XmNrightAttachment,  XmATTACH_FORM,
+	    NULL);
+
+	form3 = XtVaCreateWidget("form2",
+	    xmFormWidgetClass, frame3,
+	    XmNspacing,          0,
+	    XmNmarginHeight,     0,
+	    NULL);
+
+	string = XmStringCreateSimple("Force CALC");
+	forcePVCalcLabel = XtVaCreateManagedWidget("forcePVCalcLabel",
+	    xmLabelGadgetClass, form3,
+	    XmNlabelString,            string,
+	    XmNtopAttachment,          XmATTACH_FORM,
+	    XmNleftAttachment,         XmATTACH_FORM,
+	    NULL);
+	XmStringFree(string);
+
+	string = XmStringCreateSimple("       Expression ");
+	forcePVCalcExpressionLabel = XtVaCreateManagedWidget("forcePVCalcExpression",
+	    xmLabelGadgetClass, form3,
+	    XmNlabelString,            string,
+	    XmNtopAttachment,          XmATTACH_FORM,
+	    XmNleftAttachment,         XmATTACH_WIDGET,
+	    XmNleftWidget,             forcePVCalcLabel,
+	    NULL);
+	XmStringFree(string);
+
+	forcePVCalcExpressionTextW = XtVaCreateManagedWidget("forcePVCalcExpressionTextW",
+	    xmTextFieldWidgetClass, form3,
+	    XmNspacing,                0,
+	    XmNmarginHeight,           0,
+	    XmNcolumns,                40,
+	    XmNmaxLength,              100,
+	    XmNbackground,             textBackground,
+	    XmNtopAttachment,          XmATTACH_FORM,
+	    XmNleftAttachment,         XmATTACH_WIDGET,
+	    XmNleftWidget,             forcePVCalcExpressionLabel,
+	    XmNrightAttachment,        XmATTACH_FORM,
+	    NULL);
+
+	XtAddCallback(forcePVforceValueTextW, XmNactivateCallback,
+	    (XtCallbackProc)XmProcessTraversal, (XtPointer)XmTRAVERSE_NEXT_TAB_GROUP);
+
+	prev = forcePVCalcExpressionTextW;
+
+	for (i=0;i<NO_OF_CALC_PVS/2;i++) {
+
+		pvid[0]=letter[i];
+        string = XmStringCreateSimple(pvid);
+		forcePVCalcPVLabel[i] = XtVaCreateManagedWidget("forcePVCalcPVLabel",
+		    xmLabelGadgetClass, form3,
+		    XmNlabelString,            string,
+		    XmNtopAttachment,          XmATTACH_WIDGET,
+		    XmNtopWidget,              prev,
+		    XmNleftAttachment,         XmATTACH_FORM,
+		    NULL);
+		XmStringFree(string);
+	
+		forcePVCalcPVTextW[i] = XtVaCreateManagedWidget("forcePVCalcPVTextW",
+		    xmTextFieldWidgetClass, form3,
+		    XmNspacing,                0,
+		    XmNmarginHeight,           0,
+		    XmNcolumns,                30,
+		    XmNmaxLength,              PVNAME_SIZE,
+		    XmNbackground,             textBackground,
+		    XmNtopAttachment,          XmATTACH_WIDGET,
+		    XmNtopWidget,              prev,
+		    XmNleftAttachment,         XmATTACH_WIDGET,
+		    XmNleftWidget,             forcePVCalcPVLabel[i],
+			XmNrightAttachment,        XmATTACH_POSITION,
+			XmNrightPosition,          50,
+		    NULL);
+	
+		prev = forcePVCalcPVTextW[i];
+	
+		XtAddCallback(forcePVCalcPVTextW[i], XmNactivateCallback,
+		    (XtCallbackProc)XmProcessTraversal, (XtPointer)XmTRAVERSE_NEXT_TAB_GROUP);
+	}
+
+	prev = forcePVCalcExpressionTextW;
+
+	for (i=NO_OF_CALC_PVS/2;i<NO_OF_CALC_PVS;i++) {
+
+		pvid[0]=letter[i];
+        string = XmStringCreateSimple(pvid);
+		forcePVCalcPVLabel[i] = XtVaCreateManagedWidget("forcePVCalcPVLabel",
+		    xmLabelGadgetClass, form3,
+		    XmNlabelString,            string,
+		    XmNtopAttachment,          XmATTACH_WIDGET,
+		    XmNtopWidget,              prev,
+			XmNleftAttachment,         XmATTACH_POSITION,
+			XmNleftPosition,           50,
+/*
+		    XmNleftAttachment,         XmATTACH_WIDGET,
+		    XmNleftWidget,             forcePVCalcPVTextW[i-6],
+*/
+		    NULL);
+		XmStringFree(string);
+	
+		forcePVCalcPVTextW[i] = XtVaCreateManagedWidget("forcePVCalcPVTextW",
+		    xmTextFieldWidgetClass, form3,
+		    XmNspacing,                0,
+		    XmNmarginHeight,           0,
+		    XmNcolumns,                30,
+		    XmNmaxLength,              PVNAME_SIZE,
+		    XmNbackground,             textBackground,
+		    XmNtopAttachment,          XmATTACH_WIDGET,
+		    XmNtopWidget,              prev,
+		    XmNleftAttachment,         XmATTACH_WIDGET,
+		    XmNleftWidget,             forcePVCalcPVLabel[i],
+		    XmNrightAttachment,        XmATTACH_FORM,
+		    NULL);
+	
+		prev = forcePVCalcPVTextW[i];
+	
+	
+		XtAddCallback(forcePVCalcPVTextW[i], XmNactivateCallback,
+		    (XtCallbackProc)XmProcessTraversal, (XtPointer)XmTRAVERSE_NEXT_TAB_GROUP);
+	}
+
+	/* RowColumn is full -- now manage */
+	XtManageChild(form3);
+
+	/* RowColumn is full -- now manage */
+	XtManageChild(form2);
 
 	/* ----------------
 	     Beep Severity
 	     -------------- */
-	string = XmStringCreateSimple("Beep Severity: ");
+	string = XmStringCreateSimple("Beep Severity ");
 	beepSeverityLabel = XtVaCreateManagedWidget("beepSeverityLabel",
 	    xmLabelGadgetClass, form,
 	    XmNlabelString,            string,
 	    XmNtopAttachment,          XmATTACH_WIDGET,
-	    XmNtopWidget,              countFilterFrame,
+	    XmNtopWidget,              frame2,
 	    XmNleftAttachment,         XmATTACH_FORM,
 	    NULL);
 	XmStringFree(string);
@@ -730,7 +1040,7 @@ static void propCreateDialog(ALINK *area)
 	    XmNmaxLength,              10,
 	    XmNbackground,             textBackground,
 	    XmNtopAttachment,          XmATTACH_WIDGET,
-	    XmNtopWidget,              countFilterFrame,
+	    XmNtopWidget,              frame2,
 	    XmNleftAttachment,         XmATTACH_WIDGET,
 	    XmNleftWidget,             beepSeverityLabel,
 	    NULL);
@@ -741,12 +1051,12 @@ static void propCreateDialog(ALINK *area)
 	/* ---------------------------------
 	     Severity Process Variable
 	     --------------------------------- */
-	string = XmStringCreateSimple("Severity Process Variable Name");
+	string = XmStringCreateSimple("Severity PV Name");
 	severityPVlabel = XtVaCreateManagedWidget("severityPVlabel",
 	    xmLabelGadgetClass, form,
 	    XmNlabelString,    string,
 	    XmNtopAttachment,   XmATTACH_WIDGET,
-	    XmNtopWidget,       beepSeverityLabel,
+	    XmNtopWidget,       beepSeverityValueTextW,
 	    XmNleftAttachment,  XmATTACH_FORM,
 	    NULL);
 	XmStringFree(string);
@@ -755,198 +1065,20 @@ static void propCreateDialog(ALINK *area)
 	    xmTextFieldWidgetClass, form,
 	    XmNspacing,          0,
 	    XmNmarginHeight,     0,
-	    XmNcolumns,         30,
-	    XmNmaxLength,       PVNAME_SIZE,
-	    XmNbackground,      textBackground,
-	    XmNtopAttachment,   XmATTACH_WIDGET,
-	    XmNtopWidget,       severityPVlabel,
-	    XmNleftAttachment,  XmATTACH_FORM,
+/*
+	    XmNcolumns,          30,
+	    XmNmaxLength,        PVNAME_SIZE,
+*/
+	    XmNbackground,       textBackground,
+	    XmNtopAttachment,    XmATTACH_WIDGET,
+	    XmNtopWidget,        beepSeverityValueTextW,
+	    XmNleftAttachment,   XmATTACH_WIDGET,
+	    XmNleftWidget,       severityPVlabel,
+	    XmNrightAttachment,  XmATTACH_FORM,
 	    NULL);
 
 	XtAddCallback(severityPVnameTextW, XmNactivateCallback,
 	    (XtCallbackProc)XmProcessTraversal, (XtPointer)XmTRAVERSE_NEXT_TAB_GROUP);
-
-	/* ---------------------------------
-	     Force Process Variable
-	     --------------------------------- */
-	string = XmStringCreateSimple("Force Process Variable         ");
-	forcePVlabel = XtVaCreateManagedWidget("forcePVlabel",
-	    xmLabelGadgetClass, form,
-	    XmNlabelString,     string,
-	    XmNtopAttachment,   XmATTACH_FORM,
-	    XmNleftAttachment,  XmATTACH_POSITION,
-	    XmNleftPosition,    50,
-	    NULL);
-	XmStringFree(string);
-
-	frame2 = XtVaCreateManagedWidget("frame2",
-	    xmFrameWidgetClass, form,
-	    XmNtopAttachment,   XmATTACH_WIDGET,
-	    XmNtopWidget,       forcePVlabel,
-	    XmNleftAttachment,  XmATTACH_POSITION,
-	    XmNleftPosition,    50,
-	    NULL);
-
-	rowcol2 = XtVaCreateWidget("rowcol2",
-	    xmFormWidgetClass, frame2,
-	    XmNspacing,          0,
-	    XmNmarginHeight,     0,
-	    NULL);
-
-	string = XmStringCreateSimple("Force Process Variable Name    ");
-	forcePVnameLabel = XtVaCreateManagedWidget("forcePVnameLabel",
-	    xmLabelGadgetClass, rowcol2,
-	    XmNlabelString,            string,
-	    XmNtopAttachment,          XmATTACH_FORM,
-	    XmNleftAttachment,         XmATTACH_FORM,
-	    NULL);
-	XmStringFree(string);
-
-	forcePVnameTextW = XtVaCreateManagedWidget("forcePVnameTextW",
-	    xmTextFieldWidgetClass, rowcol2,
-	    XmNspacing,                0,
-	    XmNmarginHeight,           0,
-	    XmNcolumns,                30,
-	    XmNmaxLength,              PVNAME_SIZE,
-	    XmNbackground,             textBackground,
-	    XmNtopAttachment,          XmATTACH_WIDGET,
-	    XmNtopWidget,              forcePVnameLabel,
-	    XmNleftAttachment,         XmATTACH_FORM,
-	    NULL);
-
-	XtAddCallback(forcePVnameTextW, XmNactivateCallback,
-	    (XtCallbackProc)XmProcessTraversal, (XtPointer)XmTRAVERSE_NEXT_TAB_GROUP);
-
-	string = XmStringCreateSimple("Force Mask:  ");
-	forceMaskLabel = XtVaCreateManagedWidget("forceMaskLabel",
-	    xmLabelGadgetClass, rowcol2,
-	    XmNlabelString,            string,
-	    XmNtopAttachment,          XmATTACH_WIDGET,
-	    XmNtopWidget,              forcePVnameTextW,
-	    XmNleftAttachment,         XmATTACH_FORM,
-	    NULL);
-	XmStringFree(string);
-	prev = forceMaskLabel;
-
-	string = XmStringCreateSimple("-----");
-	forcePVmaskStringLabelW = XtVaCreateManagedWidget("forcePVmaskStringLabelW",
-	    xmLabelGadgetClass, rowcol2,
-	    XmNlabelString,            string,
-	    XmNtopAttachment,          XmATTACH_WIDGET,
-	    XmNtopWidget,              forcePVnameTextW,
-	    XmNleftAttachment,         XmATTACH_WIDGET,
-	    XmNleftWidget,             forceMaskLabel,
-	    NULL);
-	XmStringFree(string);
-
-	/*
-	     if (programId == ALH) {
-	          string = XmStringCreateSimple("Current Value:  ");
-	          forcePVcurrentValueLabel = XtVaCreateManagedWidget("forcePVcurrentValueLabel",
-	               xmLabelGadgetClass, rowcol2,
-	               XmNlabelString,            string,
-	               XmNtopAttachment,          XmATTACH_WIDGET,
-	               XmNtopWidget,              forceMaskLabel,
-	               XmNleftAttachment,         XmATTACH_FORM,
-	               NULL);
-	          XmStringFree(string);
-	          prev = forcePVcurrentValueLabel;
-	     
-	          string = XmStringCreateSimple("     ");
-	          forcePVcurrentValueTextW = XtVaCreateManagedWidget("forcePVcurrentValueTextW",
-	               xmLabelGadgetClass, rowcol2,
-	               XmNlabelString,            string,
-	               XmNtopAttachment,          XmATTACH_WIDGET,
-	               XmNtopWidget,              forceMaskLabel,
-	               XmNleftAttachment,         XmATTACH_WIDGET,
-	               XmNleftWidget,             forcePVcurrentValueLabel,
-	               NULL);
-	          XmStringFree(string);
-	     }
-	*/
-
-	if (programId != ALH) {
-		frame3 = XtVaCreateManagedWidget("frame3",
-		    xmFrameWidgetClass, rowcol2,
-		    XmNtopAttachment,          XmATTACH_WIDGET,
-		    XmNtopWidget,              forcePVmaskStringLabelW,
-		    XmNleftAttachment,         XmATTACH_FORM,
-		    NULL);
-		prev = frame3;
-
-		rowcol3 = XtVaCreateWidget("rowcol2",
-		    xmRowColumnWidgetClass, frame3,
-		    XmNspacing,          0,
-		    XmNmarginHeight,     0,
-		    NULL);
-
-		for (i = 0; i < ALARM_NMASK; i++){
-			forceMaskToggleButtonW[i] = XtVaCreateManagedWidget(maskFields[i],
-			    xmToggleButtonGadgetClass, rowcol3,
-			    XmNmarginHeight,     0,
-			    XmNuserData,         (XtPointer)forcePVmaskStringLabelW,
-			    NULL);
-			XtAddCallback(forceMaskToggleButtonW[i], XmNvalueChangedCallback,
-			    (XtCallbackProc)propMaskChangeCallback, (XtPointer)i);
-		}
-
-		XtManageChild(rowcol3);
-	}
-
-	string = XmStringCreateSimple("Force Value: ");
-	forcePVforceValueLabel = XtVaCreateManagedWidget("forcePVvalue",
-	    xmLabelGadgetClass, rowcol2,
-	    XmNlabelString,            string,
-	    XmNtopAttachment,          XmATTACH_WIDGET,
-	    XmNtopWidget,              prev,
-	    XmNleftAttachment,         XmATTACH_FORM,
-	    NULL);
-	XmStringFree(string);
-
-	forcePVforceValueTextW = XtVaCreateManagedWidget("forcePVforceValueTextW",
-	    xmTextFieldWidgetClass, rowcol2,
-	    XmNspacing,                0,
-	    XmNmarginHeight,           0,
-	    XmNcolumns,                5,
-	    XmNmaxLength,              5,
-	    XmNbackground,             textBackground,
-	    XmNtopAttachment,          XmATTACH_WIDGET,
-	    XmNtopWidget,              prev,
-	    XmNleftAttachment,         XmATTACH_WIDGET,
-	    XmNleftWidget,             forcePVforceValueLabel,
-	    NULL);
-
-	XtAddCallback(forcePVforceValueTextW, XmNactivateCallback,
-	    (XtCallbackProc)XmProcessTraversal, (XtPointer)XmTRAVERSE_NEXT_TAB_GROUP);
-
-	string = XmStringCreateSimple("Reset Value: ");
-	forcePVresetValueLabel = XtVaCreateManagedWidget("forcePVresetValueLabel",
-	    xmLabelGadgetClass, rowcol2,
-	    XmNlabelString,            string,
-	    XmNtopAttachment,          XmATTACH_WIDGET,
-	    XmNtopWidget,              forcePVforceValueLabel,
-	    XmNleftAttachment,         XmATTACH_FORM,
-	    NULL);
-	XmStringFree(string);
-
-	forcePVresetValueTextW = XtVaCreateManagedWidget("forcePVresetValueTextW",
-	    xmTextFieldWidgetClass, rowcol2,
-	    XmNspacing,                0,
-	    XmNmarginHeight,           0,
-	    XmNcolumns,                5,
-	    XmNmaxLength,              5,
-	    XmNbackground,             textBackground,
-	    XmNtopAttachment,          XmATTACH_WIDGET,
-	    XmNtopWidget,              forcePVforceValueTextW,
-	    XmNleftAttachment,         XmATTACH_WIDGET,
-	    XmNleftWidget,             forcePVresetValueLabel,
-	    NULL);
-
-	XtAddCallback(forcePVresetValueTextW, XmNactivateCallback,
-	    (XtCallbackProc)XmProcessTraversal, (XtPointer)XmTRAVERSE_NEXT_TAB_GROUP);
-
-	/* RowColumn is full -- now manage */
-	XtManageChild(rowcol2);
 
 	/* ---------------------------------
 	     Alias
@@ -969,8 +1101,9 @@ static void propCreateDialog(ALINK *area)
 	    XmNmarginHeight,           0,
 	    XmNbackground,             textBackground,
 	    XmNtopAttachment,          XmATTACH_WIDGET,
-	    XmNtopWidget,              aliasLabel,
-	    XmNleftAttachment,         XmATTACH_FORM,
+	    XmNtopWidget,              severityPVnameTextW,
+	    XmNleftAttachment,         XmATTACH_WIDGET,
+	    XmNleftWidget,             aliasLabel,
 	    XmNrightAttachment,        XmATTACH_FORM,
 	    NULL);
 
@@ -985,7 +1118,7 @@ static void propCreateDialog(ALINK *area)
 	    xmLabelGadgetClass,        form,
 	    XmNlabelString,            string,
 	    XmNtopAttachment,          XmATTACH_WIDGET,
-	    XmNtopWidget,              aliasTextW,
+	    XmNtopWidget,              aliasLabel,
 	    XmNleftAttachment,         XmATTACH_FORM,
 	    NULL);
 	XmStringFree(string);
@@ -1023,7 +1156,7 @@ static void propCreateDialog(ALINK *area)
 	n++;
 	XtSetArg(args[n], XmNbackground, textBackground); 
 	n++;
-	XtSetArg(args[n], XmNrows, 4); 
+	XtSetArg(args[n], XmNrows, 2); 
 	n++;
 	sevrProcessTextW = XmCreateScrolledText(form,"sevrProcessTextW",args,n);
 
@@ -1055,7 +1188,7 @@ static void propCreateDialog(ALINK *area)
 	n++;
 	XtSetArg(args[n], XmNbackground, textBackground); 
 	n++;
-	XtSetArg(args[n], XmNrows, 4); 
+	XtSetArg(args[n], XmNrows, 2); 
 	n++;
 	statProcessTextW = XmCreateScrolledText(form,"statProcessTextW",args,n);
 
@@ -1160,10 +1293,14 @@ static void propCreateDialog(ALINK *area)
 	propWindow->countFilterCountTextW = countFilterCountTextW;
 	propWindow->countFilterSecondsTextW = countFilterSecondsTextW;
 	propWindow->forcePVnameTextW = forcePVnameTextW;
-	propWindow->forcePVmaskStringLabelW = forcePVmaskStringLabelW;
+	propWindow->forcePVForceMaskStringLabelW = forcePVForceMaskStringLabelW;
 	propWindow->forcePVcurrentValueTextW = forcePVcurrentValueTextW;
 	propWindow->forcePVforceValueTextW = forcePVforceValueTextW;
 	propWindow->forcePVresetValueTextW = forcePVresetValueTextW;
+	propWindow->forcePVCalcExpressionTextW = forcePVCalcExpressionTextW;
+	for (i=0;i<NO_OF_CALC_PVS;i++) {
+	propWindow->forcePVCalcPVTextW[i] = forcePVCalcPVTextW[i];
+	}
 	propWindow->aliasTextW = aliasTextW;
 	propWindow->processTextW = processTextW;
 	propWindow->sevrProcessTextW = sevrProcessTextW;
@@ -1236,6 +1373,7 @@ static void propApplyCallback( Widget widget,XtPointer calldata,XtPointer cbs)
 {
 	struct propWindow *propWindow=(struct propWindow *)calldata;
 	short f1, f2;
+	double dbl;
 	int i, rtn, rtn2;
 	struct anyLine *line;
 	struct chanData *cdata;
@@ -1246,6 +1384,8 @@ static void propApplyCallback( Widget widget,XtPointer calldata,XtPointer cbs)
 	int linkType;
 	MASK mask;
 	struct guideLink *guideLink;
+	FORCEPV_CALC* pcalc;
+
 	/* PROPERTY UNDO WORKS BUT NOT IMPLEMENTED YET
 	     GCLINK *undoLink=NULL;
 	     int undoLinkType;
@@ -1337,32 +1477,52 @@ static void propApplyCallback( Widget widget,XtPointer calldata,XtPointer cbs)
 	/* ---------------------------------
 	     Force Process Variable
 	     --------------------------------- */
-	/*  update link field  - forcePVName */
+	if (!pgcData->pforcePV) pgcData->pforcePV=(FORCEPV*)calloc(1,sizeof(FORCEPV));
+	/*  update link field  - pforcePV->name */
 	buff = XmTextFieldGetString(propWindow->forcePVnameTextW);
-	if (strlen(buff)) pgcData->forcePVName = buff;
-	else pgcData->forcePVName = "-";
+	if (pgcData->pforcePV->name) free(pgcData->pforcePV->name);
+	if (strlen(buff)) pgcData->pforcePV->name = buff;
+	else pgcData->pforcePV->name = 0;
 
 	/*  update link field  - forcePVMask */
-	XtVaGetValues(propWindow->forcePVmaskStringLabelW, XmNlabelString, &string, NULL);
+	XtVaGetValues(propWindow->forcePVForceMaskStringLabelW, XmNlabelString, &string, NULL);
 	XmStringGetLtoR(string,XmFONTLIST_DEFAULT_TAG,&buff);
 	XmStringFree(string);
-	alSetMask(buff,&(pgcData->forcePVMask));
+	alSetMask(buff,&(pgcData->pforcePV->forceMask));
 	XtFree(buff);
 
-	/*  update link field  - forcePVValue */
+	/*  update link field  - pforcePV->forceValue */
 	buff = XmTextFieldGetString(propWindow->forcePVforceValueTextW);
-	rtn = sscanf(buff,"%hd",&f1);
-	if (rtn == 1) pgcData->forcePVValue = f1;
-	else pgcData->forcePVValue = 1;
+	dbl=0.0;
+	rtn = sscanf(buff,"%hd",&dbl);
+	if (rtn == 1) pgcData->pforcePV->forceValue = dbl;
+	else pgcData->pforcePV->forceValue = 1;
 
-	/*  update link field  - resetPVValue */
+	/*  update link field  - pforcePV->resetValue */
 	buff = XmTextFieldGetString(propWindow->forcePVresetValueTextW);
 	if (strncmp(buff,"NE",2)==0 || strncmp(buff,"ne",2)==0){
-		pgcData->resetPVValue = pgcData->forcePVValue;
+		pgcData->pforcePV->resetValue = pgcData->pforcePV->forceValue;
 	} else {
-		rtn = sscanf(buff,"%hd",&f1);
-		if (rtn == 1) pgcData->resetPVValue = f1;
-		else pgcData->resetPVValue = 0;
+		dbl=0.0;
+		rtn = sscanf(buff,"%hd",&dbl);
+		if (rtn == 1) pgcData->pforcePV->resetValue = dbl;
+		else pgcData->pforcePV->resetValue = 0;
+	}
+
+	if (!pgcData->pforcePV->pcalc)
+		 pgcData->pforcePV->pcalc=(FORCEPV_CALC*)calloc(1,sizeof(FORCEPV_CALC));
+	pcalc=pgcData->pforcePV->pcalc;
+
+	buff = XmTextFieldGetString(propWindow->forcePVCalcExpressionTextW);
+	if (pcalc->expression) free(pcalc->expression);
+	if (strlen(buff)) pcalc->expression = buff;
+	else pcalc->expression = 0;
+
+	for (i=0;i<NO_OF_CALC_PVS;i++) {
+		buff = XmTextFieldGetString(propWindow->forcePVCalcPVTextW[i]);
+		if (pcalc->name[i]) free(pcalc->name[i]);
+		if (strlen(buff)) pcalc->name[i] = buff;
+		else pcalc->name[i] = 0;
 	}
 
 	/* ---------------------------------
@@ -1676,7 +1836,7 @@ static void propDeleteClone(GCLINK *link,int linkType)
 
 	pgcData = link->pgcData;
 	if (pgcData->name) free(pgcData->name);
-	if (strcmp(pgcData->forcePVName,"-") != 0) free(pgcData->forcePVName);
+	if (pgcData->pforcePV) alForcePVDelete(&pgcData->pforcePV);
 	if (strcmp(pgcData->sevrPVName,"-") != 0) free(pgcData->sevrPVName);
 	if (pgcData->command) free(pgcData->command);
 	if (pgcData->alias) free(pgcData->alias);

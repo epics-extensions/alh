@@ -53,26 +53,50 @@ typedef struct countFilter {
 	XtIntervalId timeoutId;
 } COUNTFILTER;
 
+typedef struct forcePVdata {
+	short index;
+	void *link;
+	short linktype;
+} FORCEPVCADATA;
+
+#ifndef NO_OF_CALC_PVS
+#define NO_OF_CALC_PVS 6
+#endif
+
+typedef struct calc {
+	char *expression;				/* calc expression */
+	char *rpbuf;					/* calc expression in reverse polish */
+	char *name[NO_OF_CALC_PVS];		/* pv name */
+	chid chid[NO_OF_CALC_PVS];		/* pv channel id */
+	evid evid[NO_OF_CALC_PVS];		/* pv event id */
+	FORCEPVCADATA* puser[NO_OF_CALC_PVS];	/* pv current value */
+	double value[NO_OF_CALC_PVS];	/* pv current value */
+} FORCEPV_CALC;
+
+typedef struct forcePV {
+    char *name;            /* pv name */
+    chid chid;             /* pv channel id */
+    evid evid;             /* pv channel event id */
+	FORCEPVCADATA* puser;  /* pv current value */
+    double currentValue;    /* pv current value */
+    double forceValue;      /* pv value for force mask */
+    double resetValue;      /* pv value for reset mask */
+    short disabled;        /* pv disabled? TRUE/FALSE */
+    MASK forceMask;        /* force mask */
+    FORCEPV_CALC* pcalc;
+} FORCEPV;
+
 /* group/channel data structure */
 struct gcData {
 	char *name;		/* group name */
-	char *forcePVName;	/* forcePV name */
 	char *sevrPVName;	/* severityPV name */
-	short PVValue;		/* forcePV value */
-
-	short forcePVValue;	/* forcePV value for force mask */
-
-	short resetPVValue;	/* forcePV value for reset mask */
-	short forcePVDisabled;	/*Is  forcePV disabled? TRUE/FALSE */
-	MASK forcePVMask;	/* force Mask */
+	FORCEPV *pforcePV;	/* forcePV info */
 	char *alias;	 	/* alias text */
 	char *command;	 	/* command text */
 	ELLLIST sevrCommandList;	/* alarm severity command list */
 	short curSevr;		/* current severity */
 	short unackSevr;	/* highest unack severity */
 	short unackBeepSevr;  	/* highest unack severity for beeping */
-	chid forcechid;			/* forcePV channel id */
-	evid forceevid;			/* forcePV channel evid */
 	chid sevrchid;			/* group sevrPV channel id */
 	short beepSevr;		/* beep severity */
 	XtIntervalId noAckTimerId;
@@ -81,23 +105,14 @@ struct gcData {
 /* group data structure */
 struct groupData {
 	char *name;		/* group name */
-	char *forcePVName;	/* forcePV name */
 	char *sevrPVName;	/* severityPV name */
-	short PVValue;		/* forcePV current value */
-
-	short forcePVValue;		/* forcePV value for force mask */
-
-	short resetPVValue;		/* forcePV value for reset mask */
-	short forcePVDisabled;	/*Is  forcePV disabled? TRUE/FALSE */
-	MASK forcePVMask;		/* force Mask */
+	FORCEPV *pforcePV;	/* forcePV info */
 	char *alias;	 	/* alias text */
 	char *command;	 		/* command text */
 	ELLLIST sevrCommandList;	/* severity command list */
 	short curSevr;			/* current highestseverity from CA */
 	short unackSevr;		/* highest unack severity */
 	short unackBeepSevr;  	/* highest unack severity for beeping */
-	chid forcechid;			/* forcePV channel id */
-	evid forceevid;			/* forcePV channel evid */
 	chid sevrchid;			/* group sevrPV channel id */
 	short beepSevr;		/* beep severity */
 	XtIntervalId noAckTimerId;
@@ -111,23 +126,14 @@ struct groupData {
 /* channel data structure */
 struct chanData {
 	char *name; 		/* channel name, or device/attribute */
-	char *forcePVName;	/* forcePV name */
 	char *sevrPVName;	/* severityPV name */
-	short PVValue;		/* forcePV current value */
-
-	short forcePVValue;		/* forcePV value for force mask */
-	short resetPVValue;		/* forcePV value for reset mask */
-	short forcePVDisabled;	/*Is  forcePV disabled? TRUE/FALSE */
-	MASK forcePVMask;		/* forcePV force mask setting */
+	FORCEPV *pforcePV;	/* forcePV info */
 	char *alias;	 	/* alias text */
 	char *command;			/* command text */
-
 	ELLLIST sevrCommandList;	/* severity command list */
 	short curSevr;			/* channel severity from CA */
 	short unackSevr;		/* highest unack severity */
 	short unackBeepSevr;  	/* highest unack severity for beeping */
-	chid forcechid;		 	/* forcePV channel id */
-	evid forceevid;			/* forcePV channel evid */
 	chid sevrchid;		 	/* sevrPV channel id */
 	short beepSevr;		/* beep severity */
 	XtIntervalId noAckTimerId;

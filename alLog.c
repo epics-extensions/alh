@@ -370,8 +370,8 @@ void alLogForcePVGroup(GLINK *glink,int ind)
 	      char cm_text[80];
 	      sprintf(cm_text, "OPER Group PV FORCE <%s> [%d] [%s]",
 		      buff1,
-		      gdata->forcePVValue,
-		      gdata->forcePVName);
+		      gdata->pforcePV->forceValue,
+		      gdata->pforcePV->name);
 	      
 	      cmlog_logmsg(cmlog,
 		      2,	           /* verbosity */
@@ -385,11 +385,11 @@ void alLogForcePVGroup(GLINK *glink,int ind)
 		      alhArea->blinkString);
 	   }
 #endif
-		sprintf(buff,"OPERATOR:Group PV FORCE---[%s] <%s> [%d] [%s]\n",
+		sprintf(buff,"OPERATOR:Group PV FORCE---[%s] <%s> [%f] [%s]\n",
 		    gdata->name,
 		    buff1,
-		    gdata->forcePVValue,
-		    gdata->forcePVName);
+		    gdata->pforcePV->forceValue,
+		    gdata->pforcePV->name);
 		filePrintf(fo,buff,NULL,0);        /* update the file */
 	}
 
@@ -397,10 +397,10 @@ void alLogForcePVGroup(GLINK *glink,int ind)
 #ifdef CMLOG
 	   if (use_CMLOG_opmod) {
 	      char cm_text[80];
-	      sprintf(cm_text, "AUTO Group PV FORCE <%s> [%d] [%s]",
+	      sprintf(cm_text, "AUTO Group PV FORCE <%s> [%f] [%s]",
 		      buff1,
-		      gdata->forcePVValue,
-		      gdata->forcePVName);
+		      gdata->pforcePV->forceValue,
+		      gdata->pforcePV->name);
 	      
 	      cmlog_logmsg(cmlog,
 		      2,	          /* verbosity */
@@ -414,11 +414,11 @@ void alLogForcePVGroup(GLINK *glink,int ind)
 		      alhArea->blinkString);
 	   }
 #endif
-		sprintf(buff,"AUTOMATIC:Group PV FORCE---[%s] <%s> [%d] [%s]\n",
+		sprintf(buff,"AUTOMATIC:Group PV FORCE---[%s] <%s> [%f] [%s]\n",
 		    gdata->name,
 		    buff1,
-		    gdata->forcePVValue,
-		    gdata->forcePVName);
+		    gdata->pforcePV->forceValue,
+		    gdata->pforcePV->name);
 		filePrintf(fo,buff,NULL,0);        /* update the file */
 	}
 }
@@ -436,8 +436,8 @@ void alLogResetPVGroup(GLINK *glink,int ind)
 	gdata = glink->pgroupData;
 	awGetMaskString(gdata->mask,buff1);
 
-	if (gdata->resetPVValue == gdata->forcePVValue ) sprintf(buff2,"%s %d","NE",gdata->forcePVValue);
-	else sprintf(buff2,"%d",gdata->resetPVValue);
+	if (gdata->pforcePV->resetValue == gdata->pforcePV->forceValue ) sprintf(buff2,"%s %d","NE",gdata->pforcePV->forceValue);
+	else sprintf(buff2,"%d",gdata->pforcePV->resetValue);
 
 	if (ind == OPERATOR) {
 #ifdef CMLOG
@@ -446,7 +446,7 @@ void alLogResetPVGroup(GLINK *glink,int ind)
 	      sprintf(cm_text, "OPER Group PV RESET <%s> [%s] [%s]",
 		      buff1,
 		      buff2,
-		      gdata->forcePVName);
+		      gdata->pforcePV->name);
 	      
 	      cmlog_logmsg(cmlog,
 		      2,	           /* verbosity */
@@ -464,7 +464,7 @@ void alLogResetPVGroup(GLINK *glink,int ind)
 		    gdata->name,
 		    buff1,
 		    buff2,
-		    gdata->forcePVName);
+		    gdata->pforcePV->name);
 		filePrintf(fo,buff,NULL,0);        /* update the file */
 	}
 
@@ -475,7 +475,7 @@ void alLogResetPVGroup(GLINK *glink,int ind)
 	      sprintf(cm_text, "AUTO Group PV RESET <%s> [%s] [%s]",
 		      buff1,
 		      buff2,
-		      gdata->forcePVName);
+		      gdata->pforcePV->name);
 	      
 	      cmlog_logmsg(cmlog,
 		      2,	          /* verbosity */
@@ -493,7 +493,7 @@ void alLogResetPVGroup(GLINK *glink,int ind)
 		    gdata->name,
 		    buff1,
 		    buff2,
-		    gdata->forcePVName);
+		    gdata->pforcePV->name);
 		filePrintf(fo,buff,NULL,0);        /* update the file */
 	}
 
@@ -516,8 +516,8 @@ void alLogForcePVChan(CLINK *clink,int ind)
 	      char cm_text[80];
 	      sprintf(cm_text, "OPER Channel PV FORCE <%s> [%d] [%s]",
 		      buff1,
-		      cdata->forcePVValue,
-		      cdata->forcePVName);
+		      cdata->pforcePV->forceValue,
+		      cdata->pforcePV->name);
 	      
 	      cmlog_logmsg(cmlog,
 		      2,	           /* verbosity */
@@ -534,8 +534,8 @@ void alLogForcePVChan(CLINK *clink,int ind)
 		sprintf(buff,"OPERATOR:Chan  PV FORCE---[%s] <%s> [%d] [%s]\n",
 		    cdata->name,
 		    buff1,
-		    cdata->forcePVValue,
-		    cdata->forcePVName);
+		    cdata->pforcePV->forceValue,
+		    cdata->pforcePV->name);
 		filePrintf(fo,buff,NULL,0);        /* update the file */
 	}
 
@@ -545,8 +545,8 @@ void alLogForcePVChan(CLINK *clink,int ind)
 	      char cm_text[80];
 	      sprintf(cm_text, "AUTO Channel PV FORCE <%s> [%d] [%s]",
 		      buff1,
-		      cdata->forcePVValue,
-		      cdata->forcePVName);
+		      cdata->pforcePV->forceValue,
+		      cdata->pforcePV->name);
 	      
 	      cmlog_logmsg(cmlog,
 		      2,	          /* verbosity */
@@ -563,8 +563,8 @@ void alLogForcePVChan(CLINK *clink,int ind)
 		sprintf(buff,"AUTOMATIC:Chan  PV FORCE---[%s] <%s> [%d] [%s]\n",
 		    cdata->name,
 		    buff1,
-		    cdata->forcePVValue,
-		    cdata->forcePVName);
+		    cdata->pforcePV->forceValue,
+		    cdata->pforcePV->name);
 		filePrintf(fo,buff,NULL,0);        /* update the file */
 	}
 
@@ -583,8 +583,8 @@ void alLogResetPVChan(CLINK *clink,int ind)
 	cdata = clink->pchanData;
 	alGetMaskString(cdata->curMask,buff1);
 
-	if (cdata->resetPVValue == cdata->forcePVValue ) sprintf(buff2,"%s %d","NE",cdata->forcePVValue);
-	else sprintf(buff2,"%d",cdata->resetPVValue);
+	if (cdata->pforcePV->resetValue == cdata->pforcePV->forceValue ) sprintf(buff2,"%s %d","NE",cdata->pforcePV->forceValue);
+	else sprintf(buff2,"%d",cdata->pforcePV->resetValue);
 
 	if (ind == OPERATOR) {
 #ifdef CMLOG
@@ -593,7 +593,7 @@ void alLogResetPVChan(CLINK *clink,int ind)
 	      sprintf(cm_text, "OPER Channel PV RESET <%s> [%s] [%s]",
 		      buff1,
 		      buff2,
-		      cdata->forcePVName);
+		      cdata->pforcePV->name);
 	      
 	      cmlog_logmsg(cmlog,
 		      2,	           /* verbosity */
@@ -611,7 +611,7 @@ void alLogResetPVChan(CLINK *clink,int ind)
 		    cdata->name,
 		    buff1,
 		    buff2,
-		    cdata->forcePVName);
+		    cdata->pforcePV->name);
 		filePrintf(fo,buff,NULL,0);        /* update the file */
 
 	}
@@ -622,7 +622,7 @@ void alLogResetPVChan(CLINK *clink,int ind)
 	      sprintf(cm_text, "AUTO Channel PV RESET <%s> [%s] [%s]",
 		      buff1,
 		      buff2,
-		      cdata->forcePVName);
+		      cdata->pforcePV->name);
 	      
 	      cmlog_logmsg(cmlog,
 		      2,	          /* verbosity */
@@ -640,7 +640,7 @@ void alLogResetPVChan(CLINK *clink,int ind)
 		    cdata->name,
 		    buff1,
 		    buff2,
-		    cdata->forcePVName);
+		    cdata->pforcePV->name);
 		filePrintf(fo,buff,NULL,0);        /* update the file */
 
 	}

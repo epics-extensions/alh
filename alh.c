@@ -45,7 +45,7 @@ XFontStruct *font_info;
   main
 ******************************************************/
 
-void main(int argc,char *argv[])
+int main(int argc,char *argv[])
 {
 	/* OS specific initialization */
 #ifdef WIN32
@@ -96,5 +96,6 @@ void main(int argc,char *argv[])
 
 	/* Start main loop */
 	XtAppMainLoop(appContext);
+	return 0;
 }
 

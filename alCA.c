@@ -32,14 +32,12 @@ extern int _global_flag;
 extern int _passive_flag;
 int toBeConnectedCount = 0;
 extern XtAppContext appContext;
-
 static XtIntervalId caTimeoutId = (XtIntervalId) 0;
 static unsigned long caDelay = 100;        /* ms */
 
 /* forward declarations */
 static void alCaNewAlarmEvent(struct event_handler_args args);
-static void alCaGroupForceEvent(struct event_handler_args args);
-static void alCaChannelForceEvent(struct event_handler_args args);
+static void alCaForcePVValueEvent(struct event_handler_args args);
 static void alCaChannelConnectionEvent(struct connection_handler_args args);
 static void alCaForcePVConnectionEvent(struct connection_handler_args args);
 static void alCaSevrPVConnectionEvent(struct connection_handler_args args);
@@ -312,24 +310,16 @@ void alCaAddEvent(chid chid, evid * pevid, void *clink)
 /*********************************************************************
  add forcePV value event handler
  *********************************************************************/
-void alCaAddForcePVEvent(chid chid, void *link, evid * pevid, int type)
+void alCaAddForcePVEvent(chid chid, void *userdata, evid * pevid)
 {
 	int status;
-	void (*pFunc) (struct event_handler_args);
 
 	if (!chid) return;
 
-	if (type == CHANNEL) pFunc = alCaChannelForceEvent;
-	else if (type == GROUP) pFunc = alCaGroupForceEvent;
-	else {
-		errMsg("alCaAddForcePVEvent: Invalid type for %s\n",ca_name(chid));
-		return;
-        }
-
-	status = ca_add_masked_array_event(DBR_SHORT, 1,
+	status = ca_add_masked_array_event(DBR_DOUBLE, 1,
 	    chid,
-	    pFunc,
-	    link,
+	    alCaForcePVValueEvent,
+	    userdata,
 	    (float) 0, (float) 0, (float) 0,
 	    pevid,
 	    DBE_VALUE);
@@ -578,25 +568,12 @@ static void alCaHeartbeatPVConnectionEvent(struct connection_handler_args args)
 /*********************************************************************
  group forcePV value event handler
  *********************************************************************/
-static void alCaGroupForceEvent(struct event_handler_args args)
+static void alCaForcePVValueEvent(struct event_handler_args args)
 {
 	if (args.status == ECA_NORMAL) {
-		alGroupForceEvent(args.usr, *(short *) args.dbr);
+		alForcePVValueEvent(args.usr, *(double *) args.dbr);
 	} else {
-		errMsg("alCaGroupForceEvent failed: Return status: %s "
-		" for PV %s\n",ca_message(args.status),ca_name(args.chid));
-	}
-}
-
-/*********************************************************************
- channel forcePV value event handler
- *********************************************************************/
-static void alCaChannelForceEvent(struct event_handler_args args)
-{
-	if (args.status == ECA_NORMAL) {
-		alChannelForceEvent(args.usr, *(short *) args.dbr);
-	} else {
-		errMsg("alCaGroupForceEvent: Return status: %s "
+		errMsg("alCaForcePVValueEvent failed: Return status: %s "
 		" for PV %s\n",ca_message(args.status),ca_name(args.chid));
 	}
 }

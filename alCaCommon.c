@@ -55,56 +55,6 @@ struct FDLIST *lastFdInList=(struct FDLIST *)0;
 #define AUTOMATIC    0
 #define UNKNOWN 0
 
-/**************************************************************
-  Replace old group force event with the new force group event
-*************************************************************/
-void            alReplaceGroupForceEvent(GLINK *glink,char *str)
-{
-	struct groupData *gdata;
-
-	gdata = glink->pgroupData;
-
-	/* remove old force event */
-	alCaClearEvent(&gdata->forceevid);
-
-	/* change forcePvName  */
-	if (strcmp(gdata->forcePVName, "-") != 0)
-		free(gdata->forcePVName);
-	gdata->forcePVName = (char *) calloc(1, strlen(str) + 1);
-	strcpy(gdata->forcePVName, str);
-
-	/* add new ca connection */
-	alCaConnectForcePV(gdata->forcePVName,&gdata->forcechid,gdata->name);
-
-	/* add new force group mask event */
-	alCaAddForcePVEvent(gdata->forcechid,glink,&gdata->forceevid,GROUP);
-}
-
-/***************************************************************
-  Replace the old force event with the new force channel event
-**************************************************************/
-void            alReplaceChanForceEvent(CLINK *clink,char *str)
-{
-	struct chanData *cdata;
-
-	cdata = clink->pchanData;
-
-	/* remove old force event */
-	alCaClearEvent(&cdata->forceevid);
-
-	/* change forcePvName  */
-	if (strcmp(cdata->forcePVName, "-") != 0)
-		free(cdata->forcePVName);
-	cdata->forcePVName = (char *) calloc(1, strlen(str) + 1);
-	strcpy(cdata->forcePVName, str);
-
-	/* add new ca connection */
-	alCaConnectForcePV(cdata->forcePVName,&cdata->forcechid,cdata->name);
-
-	/* add new force group mask event */
-	alCaAddForcePVEvent(cdata->forcechid,clink,&cdata->forceevid,CHANNEL);
-}
-
 /***************************************************************
 	get first group or channel
 ***************************************************************/
@@ -181,8 +131,7 @@ void alCaCancel(struct mainGroup *pmainGroup)
 	gclink = firstGroupChannel((SLIST *)pmainGroup,&type);
 	while (gclink) {
 		gcdata = gclink->pgcData;
-		alCaClearEvent(&gcdata->forceevid);
-		alCaClearChannel(&gcdata->forcechid);
+		alForcePVClearCA(gcdata->pforcePV);
 		alCaClearChannel(&gcdata->sevrchid);
 		if (type == CHANNEL) {
 			alCaClearEvent(&((struct chanData *)gcdata)->evid);
@@ -213,10 +162,7 @@ void alSetNotConnected(struct mainGroup *pmainGroup)
 	gclink = firstGroupChannel((SLIST *)pmainGroup,&type);
 	while (gclink) {
 		gcdata = gclink->pgcData;
-		if ( gcdata->forcechid && !alCaIsConnected(gcdata->forcechid) ) {
-			errMsg("Force PV %s for %s Not Connected\n",
-				gcdata->forcePVName, gcdata->name);
-		}
+		alForcePVSetNotConnected(gcdata->pforcePV,gcdata->name);
 		if (gcdata->sevrchid && !alCaIsConnected(gcdata->sevrchid) ) {
 			errMsg("Severity PV %s for %s Not Connected\n",
 				gcdata->sevrPVName, gcdata->name);
@@ -253,69 +199,6 @@ void alPutGblAckT(struct mainGroup *pmainGroup)
 		}
 		gclink = nextGroupChannel(gclink,&type);
 	}
-}
-
-/******************************************************************
-	Channel Force Event
-******************************************************************/
-void alChannelForceEvent(CLINK *clink,short value)
-{
-	struct chanData *cdata;
-
-	cdata = clink->pchanData;
-	if (strlen(cdata->forcePVName) <= (size_t) 1) return;
-	if (cdata->forcePVDisabled) return;
-
-	if (cdata->PVValue == value) return;
-	if (value == cdata->forcePVValue) {
-		alChangeChanMask(clink, cdata->forcePVMask);
-		alCaFlushIo();
-		alLogForcePVChan(clink, AUTOMATIC);
-	}
-	/* if 'NE' and value changes from forcePVValue to !forcePVValue */
-	/* or value equals resetPVValue */
-	else if ( ( cdata->PVValue == cdata->forcePVValue &&
-				cdata->forcePVValue == cdata->resetPVValue ) ||
-			  ( value == cdata->resetPVValue  &&
-				cdata->forcePVValue != cdata->resetPVValue  ) ) {
-		alChangeChanMask(clink, cdata->defaultMask);
-		alCaFlushIo();
-		alLogResetPVChan(clink, AUTOMATIC);
-	}
-	cdata->PVValue = value;
-	clink->pmainGroup->modified = 1;
-}
-
-
-
-
-/*******************************************************************
-    Group Force Event
-*******************************************************************/
-void     alGroupForceEvent(GLINK *glink,short value)
-{
-	struct groupData *gdata;
-
-	gdata = glink->pgroupData;
-	if (strlen(gdata->forcePVName) <= (size_t) 1) return;
-	if (gdata->forcePVDisabled) return;
-
-	if (gdata->PVValue == value) return;
-	if (value == gdata->forcePVValue) {
-		alChangeGroupMask(glink, gdata->forcePVMask);
-		alCaFlushIo();
-		alLogForcePVGroup(glink, AUTOMATIC);
-	}
-	else if ( ( gdata->PVValue == gdata->forcePVValue &&
-				gdata->forcePVValue == gdata->resetPVValue ) ||
-			  ( value == gdata->resetPVValue  &&
-				gdata->forcePVValue != gdata->resetPVValue  ) ) {
-		alResetGroupMask(glink);
-		alCaFlushIo();
-		alLogResetPVGroup(glink, AUTOMATIC);
-	}
-	gdata->PVValue = value;
-	glink->pmainGroup->modified = 1;
 }
 
 /********************************************************
