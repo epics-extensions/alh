@@ -77,6 +77,7 @@ OBJS =  acknowledge.o  \
 		testalarm.o   
 
 PROD = alh
+PROD_VERSION = $Version$
 
 include $(ADD_ON)/src/admin/RULES
 
