@@ -484,7 +484,6 @@ int programId,Widget widget)
 			createActionDialog(fileSelectionBox,XmDIALOG_WARNING, str ,
 			    (XtCallbackProc)saveConfigFile_callback,
 			    (XtPointer)filename_dup,(XtPointer)area);
-			free(filename_dup);
 			break;
 
 		case 4:
@@ -658,7 +657,6 @@ int programId,Widget widget)
 			filename_dup = malloc(strlen(filename)+1);
 			if ( filename_dup ) strcpy(filename_dup,filename);
 			saveConfigFile_callback(widget,filename_dup,(void *)NULL);
-			free(filename_dup);
 			break;
 
 		case FILE_PRINT:
@@ -697,6 +695,8 @@ XmAnyCallbackStruct *cbs)
 	XtUnmanageChild(widget);
 	/* unmanage the fileSelection dialog */
 	createFileDialog(0,0,0,0,0,0,0,0,0);
+	/* Free the filename string copy */
+	free(filename);
 }
 
 /******************************************************
