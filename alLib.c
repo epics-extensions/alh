@@ -618,6 +618,12 @@ void alNewAlarm(int stat,int sev,char *value,CLINK *clink)
 	countFilter->sev = sev;
 	strcpy(countFilter->value,value);
 
+ 	/* Process the initial connection */
+	if (cdata->curStat==NO_ALARM && cdata->curSevr==ERROR_STATE ) {
+		alNewAlarmProcess(stat,sev,value,clink,alarmTime);
+		return;
+	}
+
 	if ((cdata->curSevr==0 && sevr_prev==0) || (cdata->curSevr!=0 && sev==0)){
 		alarmTime_prev=countFilter->alarmTime;
 		if (!alarmTime_prev || ((alarmTime-alarmTime_prev)>countFilter->inputSeconds)){

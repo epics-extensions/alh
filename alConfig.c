@@ -538,6 +538,8 @@ int context,int caConnect)
 			cdata->countFilter->inputCount=1;
 			cdata->countFilter->inputSeconds=1;
 			cdata->countFilter->clink=gclink;
+			cdata->countFilter->stat=NO_ALARM;
+			cdata->countFilter->sev=ERROR_STATE;
 		}
 		if(rtn>=2) cdata->countFilter->inputCount=count;
 		if(rtn>=3) cdata->countFilter->inputSeconds=seconds;

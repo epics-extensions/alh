@@ -221,7 +221,7 @@ static void blinking(XtPointer pointer, XtIntervalId *id)
 			 psetup.highestUnackSevr > 0 ||
 			 blinkPixel != bg_pixel[0]) {
 
-			if (psetup.highestUnackSevr > psetup.highestSevr)
+			if (psetup.highestUnackSevr > 0)
 				blinkPixel = bg_pixel[psetup.highestUnackSevr];
 			else
 				blinkPixel = bg_pixel[psetup.highestSevr];
