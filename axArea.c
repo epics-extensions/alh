@@ -1,8 +1,11 @@
 /*
  $Log$
- Revision 1.4  1995/05/30 15:58:05  jba
- Added ALARMCOMMAND facility
+ Revision 1.5  1995/05/31 20:29:55  jba
+ fixed comment
 
+ * Revision 1.4  1995/05/30  15:58:05  jba
+ * Added ALARMCOMMAND facility
+ *
  * Revision 1.3  1995/02/28  16:43:36  jba
  * ansi c changes
  *
@@ -798,7 +801,7 @@ void markSelectionArea(area,line)
 
 
 /***************************************************
-  markSelectionArea
+  axMakePixmap
 ****************************************************/
 
 void axMakePixmap(w)
