@@ -584,16 +584,14 @@ static void alarmCountFilter_callback(XtPointer cd, XtIntervalId *id)
 void alSaveAlarmEvent(int stat,int sevr,int acks,int ackt,char *value,CLINK *clink)
 {
 	struct chanData *cdata = clink->pchanData;
-	ALARMEVENT ca = cdata->caAlarmEvent;
 
-	ca.stat = stat;
-	ca.sevr = sevr;
-	ca.acks = acks;
-	ca.ackt = ackt;
-	strcpy(ca.value,value);
-	ca.clink = clink;
+	cdata->caAlarmEvent.stat = stat;
+	cdata->caAlarmEvent.sevr = sevr;
+	cdata->caAlarmEvent.acks = acks;
+	cdata->caAlarmEvent.ackt = ackt;
+	strcpy(cdata->caAlarmEvent.value,value);
+	cdata->caAlarmEvent.clink = clink;
 }
-
 
 /******************************************************
   alConnectEvent
@@ -602,9 +600,10 @@ void alSaveAlarmEvent(int stat,int sevr,int acks,int ackt,char *value,CLINK *cli
 void alConnectEvent(CLINK *clink)
 {
 	struct chanData *cdata = clink->pchanData;
-	ALARMEVENT ca = cdata->caAlarmEvent;
 
-	if (ca.clink) alNewEvent(ca.stat,ca.sevr,ca.acks,ca.ackt,ca.value,ca.clink);
+	if (clink) alNewEvent(cdata->caAlarmEvent.stat,cdata->caAlarmEvent.sevr,
+                             cdata->caAlarmEvent.acks,cdata->caAlarmEvent.ackt,
+                             cdata->caAlarmEvent.value,clink);
 }
 
 
@@ -620,8 +619,6 @@ void alNewEvent(int stat,int sevr,int acks,int acktCA,char *value,CLINK *clink)
 
 	if (clink == NULL ) return;
 	cdata = clink->pchanData;
-	if (cdata == NULL ) return;
-
 	if (cdata == NULL ) return;
 
     if (acktCA == -1) ackt = cdata->curMask.AckT;
@@ -756,6 +753,14 @@ CLINK *clink,time_t timeofday)
 	if (clink == NULL ) return;
 	cdata = clink->pchanData;
 	if (cdata == NULL ) return;
+
+	/* We save the current alarm values on a disconnect event and issue
+	   a new alarm event on reconnect because ca may not issue a new Alarm
+       event after reconnect if alarm values not changed */
+	if (stat==NOT_CONNECTED && sev==ERROR_STATE) {
+		alSaveAlarmEvent(cdata->curStat, cdata->curSevr, cdata->unackSevr,
+			(cdata->curMask.AckT+1)%2, cdata->value, clink);
+	}
 
 	if (sev >= ALH_ALARM_NSEV) sev = ALH_ALARM_NSEV-1;
 	if (stat >= ALH_ALARM_NSTATUS) stat = ALH_ALARM_NSTATUS-1;
