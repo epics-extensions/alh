@@ -417,3 +417,13 @@ Mon Mar  3 09:24:38 CST 2003 ALH_1_2_11Beta5
 	Modified alarm log file output. Now calculate alarmLogFileStringLength.
 	Changed fopen of alarm log file from r+ to w+(truncate or create).
 	Modified forcePV opMod log messages text.
+
+Wed Sep  ? 12:55:31 ALH_1_2_12
+	Created tag ALH_1_2_12 for a requested distribution tar file.
+
+Wed Oct  8 16:01:03 CDT 2003 ALH_1_2_13
+	Code changed to reduce warning messages.
+	Write "N/A" to cmlog when blink string is missing.
+	Fixes made to Force Mask popup.
+	Removed old sccs id variable.
+
