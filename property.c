@@ -359,7 +359,8 @@ static void propUpdateDialogWidgets(struct propWindow *propWindow)
 	sprintf(buff,"%d",pgcData->forcePVValue);
 	XmTextFieldSetString(propWindow->forcePVforceValueTextW,buff);
 
-	sprintf(buff,"%d",pgcData->resetPVValue);
+	if (pgcData->resetPVValue == pgcData->forcePVValue ) sprintf(buff,"%s","NE");
+	else sprintf(buff,"%d",pgcData->resetPVValue);
 	XmTextFieldSetString(propWindow->forcePVresetValueTextW,buff);
 
 	/* ---------------------------------
@@ -1356,9 +1357,13 @@ static void propApplyCallback( Widget widget,XtPointer calldata,XtPointer cbs)
 
 	/*  update link field  - resetPVValue */
 	buff = XmTextFieldGetString(propWindow->forcePVresetValueTextW);
-	rtn = sscanf(buff,"%hd",&f1);
-	if (rtn == 1) pgcData->resetPVValue = f1;
-	else pgcData->resetPVValue = 0;
+	if (strncmp(buff,"NE",2)==0 || strncmp(buff,"ne",2)==0){
+		pgcData->resetPVValue = pgcData->forcePVValue;
+	} else {
+		rtn = sscanf(buff,"%hd",&f1);
+		if (rtn == 1) pgcData->resetPVValue = f1;
+		else pgcData->resetPVValue = 0;
+	}
 
 	/* ---------------------------------
 	     Alias

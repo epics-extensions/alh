@@ -446,17 +446,21 @@ void alLogResetPVGroup(GLINK *glink,int ind)
 {
 	struct groupData *gdata;
 	char buff1[6];
+	char buff2[10];
 
 	gdata = glink->pgroupData;
 	awGetMaskString(gdata->mask,buff1);
+
+	if (gdata->resetPVValue == gdata->forcePVValue ) sprintf(buff2,"%s %d","NE",gdata->forcePVValue);
+	else sprintf(buff2,"%d",gdata->resetPVValue);
 
 	if (ind == OPERATOR) {
 #ifdef CMLOG
 	   if (use_CMLOG_opmod) {
 	      char cm_text[80];
-	      sprintf(cm_text, "OPER Group PV RESET <%s> [%d] [%s]",
+	      sprintf(cm_text, "OPER Group PV RESET <%s> [%s] [%s]",
 		      buff1,
-		      gdata->resetPVValue,
+		      buff2,
 		      gdata->forcePVName);
 	      
 	      cmlog_logmsg(cmlog,
@@ -471,10 +475,10 @@ void alLogResetPVGroup(GLINK *glink,int ind)
 		      alhArea->blinkString);
 	   }
 #endif
-		sprintf(buff,"OPERATOR:Group PV RESET---[%s] <%s> [%d] [%s]\n",
+		sprintf(buff,"OPERATOR:Group PV RESET---[%s] <%s> [%s] [%s]\n",
 		    gdata->name,
 		    buff1,
-		    gdata->resetPVValue,
+		    buff2,
 		    gdata->forcePVName);
 		filePrintf(fo,buff,NULL,0);        /* update the file */
 	}
@@ -483,9 +487,9 @@ void alLogResetPVGroup(GLINK *glink,int ind)
 #ifdef CMLOG
 	   if (use_CMLOG_opmod) {
 	      char cm_text[80];
-	      sprintf(cm_text, "AUTO Group PV RESET <%s> [%d] [%s]",
+	      sprintf(cm_text, "AUTO Group PV RESET <%s> [%s] [%s]",
 		      buff1,
-		      gdata->resetPVValue,
+		      buff2,
 		      gdata->forcePVName);
 	      
 	      cmlog_logmsg(cmlog,
@@ -500,10 +504,10 @@ void alLogResetPVGroup(GLINK *glink,int ind)
 		      alhArea->blinkString);
 	   }
 #endif
-		sprintf(buff,"AUTOMATIC:Group PV RESET---[%s] <%s> [%d] [%s]\n",
+		sprintf(buff,"AUTOMATIC:Group PV RESET---[%s] <%s> [%s] [%s]\n",
 		    gdata->name,
 		    buff1,
-		    gdata->resetPVValue,
+		    buff2,
 		    gdata->forcePVName);
 		filePrintf(fo,buff,NULL,0);        /* update the file */
 	}
@@ -589,17 +593,21 @@ void alLogResetPVChan(CLINK *clink,int ind)
 {
 	struct chanData *cdata;
 	char buff1[6];
+	char buff2[10];
 
 	cdata = clink->pchanData;
 	alGetMaskString(cdata->curMask,buff1);
+
+	if (cdata->resetPVValue == cdata->forcePVValue ) sprintf(buff2,"%s %d","NE",cdata->forcePVValue);
+	else sprintf(buff2,"%d",cdata->resetPVValue);
 
 	if (ind == OPERATOR) {
 #ifdef CMLOG
 	   if (use_CMLOG_opmod) {
 	      char cm_text[80];
-	      sprintf(cm_text, "OPER Channel PV RESET <%s> [%d] [%s]",
+	      sprintf(cm_text, "OPER Channel PV RESET <%s> [%s] [%s]",
 		      buff1,
-		      cdata->resetPVValue,
+		      buff2,
 		      cdata->forcePVName);
 	      
 	      cmlog_logmsg(cmlog,
@@ -614,10 +622,10 @@ void alLogResetPVChan(CLINK *clink,int ind)
 		      alhArea->blinkString);
 	   }
 #endif
-		sprintf(buff,"OPERATOR:Chan  PV RESET---[%s] <%s> [%d] [%s]\n",
+		sprintf(buff,"OPERATOR:Chan  PV RESET---[%s] <%s> [%s] [%s]\n",
 		    cdata->name,
 		    buff1,
-		    cdata->resetPVValue,
+		    buff2,
 		    cdata->forcePVName);
 		filePrintf(fo,buff,NULL,0);        /* update the file */
 
@@ -626,9 +634,9 @@ void alLogResetPVChan(CLINK *clink,int ind)
 #ifdef CMLOG
 	   if (use_CMLOG_opmod) {
 	      char cm_text[80];
-	      sprintf(cm_text, "AUTO Channel PV RESET <%s> [%d] [%s]",
+	      sprintf(cm_text, "AUTO Channel PV RESET <%s> [%s] [%s]",
 		      buff1,
-		      cdata->resetPVValue,
+		      buff2,
 		      cdata->forcePVName);
 	      
 	      cmlog_logmsg(cmlog,
@@ -643,10 +651,10 @@ void alLogResetPVChan(CLINK *clink,int ind)
 		      alhArea->blinkString);
 	   }
 #endif
-		sprintf(buff,"AUTOMATIC:Chan  PV RESET---[%s] <%s> [%d] [%s]\n",
+		sprintf(buff,"AUTOMATIC:Chan  PV RESET---[%s] <%s> [%s] [%s]\n",
 		    cdata->name,
 		    buff1,
-		    cdata->resetPVValue,
+		    buff2,
 		    cdata->forcePVName);
 		filePrintf(fo,buff,NULL,0);        /* update the file */
 

@@ -234,7 +234,8 @@ static void forcePVUpdateDialogWidgets(struct forcePVWindow *forcePVWindow)
 	sprintf(buff,"%d",pgcData->forcePVValue);
 	XmTextFieldSetString(forcePVWindow->forcePVforceValueTextW,buff);
 
-	sprintf(buff,"%d",pgcData->resetPVValue);
+	if (pgcData->resetPVValue == pgcData->forcePVValue ) sprintf(buff,"%s","NE");
+	else sprintf(buff,"%d",pgcData->resetPVValue);
 	XmTextFieldSetString(forcePVWindow->forcePVresetValueTextW,buff);
 }
 
@@ -605,9 +606,13 @@ XtPointer cbs)
 
 	/*  update link field  - resetPVValue */
 	buff = XmTextFieldGetString(forcePVWindow->forcePVresetValueTextW);
-	rtn = sscanf(buff,"%hd",&f1);
-	if (rtn == 1) pgcData->resetPVValue = f1;
-	else pgcData->resetPVValue = 0;
+	if (strncmp(buff,"NE",2)==0 || strncmp(buff,"ne",2)==0) {
+		pgcData->resetPVValue = pgcData->forcePVValue;
+	} else {
+		rtn = sscanf(buff,"%hd",&f1);
+		if (rtn == 1) pgcData->resetPVValue = f1;
+		else pgcData->resetPVValue = 0;
+	}
 	XtFree(buff);
 
 	/*  update disabled field  - forcePVDisabled */

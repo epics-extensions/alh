@@ -408,6 +408,7 @@ int context,int caConnect)
 	char command[20];
 	char name[PVNAME_SIZE];
 	char mask[6];
+	char string[10];
 	short f1,f2;
 	char *str;
 	int i;
@@ -458,16 +459,23 @@ int context,int caConnect)
 	if (strncmp(&buf[1],"FORCEPV",7)==0) { /*FORCEPV*/
 		int rtn;
 
-		rtn = sscanf(buf,"%20s%32s%6s%hd%hd",command,name,
-		    mask,&f1,&f2);
+		rtn = sscanf(buf,"%20s%32s%6s%hd%9s",command,name,
+		    mask,&f1,&string[1]);
 		if(rtn>=3) alSetMask(mask,&(gcdata->forcePVMask));
 		if (rtn >= 4) gcdata->forcePVValue = f1;
-		if (rtn == 5) gcdata->resetPVValue = f2;
+		if (rtn == 5) {
+			if (strncmp(&string[1],"NE",2)==0 || strncmp(&string[1],"ne",2)==0) {
+				gcdata->resetPVValue = gcdata->forcePVValue;
+			} else {
+				if(sscanf(string,"%hd",f2) >= 1) gcdata->resetPVValue = f2;
+				else gcdata->resetPVValue = 0;
+			}
+		}
 		if(rtn>=2) {
 			gcdata->forcePVName = (char *)calloc(1,strlen(name)+1);
 			strcpy(gcdata->forcePVName,name);
 			if (caConnect && strlen(gcdata->forcePVName) > (size_t) 1) {
-				gcdata->PVValue = gcdata->resetPVValue;
+				gcdata->PVValue = -999;
 				alCaConnectForcePV(gcdata->forcePVName,&gcdata->forcechid,gcdata->name);
 				alCaAddForcePVEvent (gcdata->forcechid,gclink,
 				    &gcdata->forceevid,context);
@@ -679,11 +687,13 @@ static void alWriteGroupConfig(FILE * fw,SLIST *pgroup)
 			fprintf(fw,"$BEEPSEVR  %s\n",alhAlarmSeverityString[gdata->beepSevr]);
 
 		if(strcmp(gdata->forcePVName,"-") != 0)
-			fprintf(fw,"$FORCEPV  %-28s %6s %3d %3d\n",
+			fprintf(fw,"$FORCEPV  %-28s %6s %3d ",
 			    gdata->forcePVName,
 			    pvmask,
-			    gdata->forcePVValue,
-			    gdata->resetPVValue);
+			    gdata->forcePVValue);
+
+		if (gdata->resetPVValue == gdata->forcePVValue ) fprintf(fw,"%s","NE\n");
+		else fprintf(fw,"%3d\n",gdata->resetPVValue);
 
 		if(strcmp(gdata->sevrPVName,"-") != 0)
 			fprintf(fw,"$SEVRPV   %-28s\n",
@@ -736,11 +746,13 @@ static void alWriteGroupConfig(FILE * fw,SLIST *pgroup)
 				fprintf(fw,"$BEEPSEVR  %s\n",alhAlarmSeverityString[cdata->beepSevr]);
 
 			if(strcmp(cdata->forcePVName,"-") != 0)
-				fprintf(fw,"$FORCEPV  %-28s %6s %3d %3d\n",
+				fprintf(fw,"$FORCEPV  %-28s %6s %3d ",
 				    cdata->forcePVName,
 				    pvmask,
-				    cdata->forcePVValue,
-				    cdata->resetPVValue);
+				    cdata->forcePVValue);
+
+			if (cdata->resetPVValue == cdata->forcePVValue ) fprintf(fw,"%s","NE\n");
+			else fprintf(fw,"%3d\n",cdata->resetPVValue);
 
 			if(strcmp(cdata->sevrPVName,"-") != 0)
 				fprintf(fw,"$SEVRPV   %-28s\n",cdata->sevrPVName);

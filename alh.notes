@@ -371,3 +371,7 @@ Tue Jan 21 15:53:59 CST 2003
 	Add ability to set group/channel ack/noAck masks to noAck for one hour.
 	Add ability to disable a group/channel forcePV.
 
+Mon Jan 27 13:52:29 CST 2003
+	More changes for noAck for one hour timer.
+	Allow "NE" for forcePV reset value ( NE forcePV force value).
+

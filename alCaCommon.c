@@ -303,17 +303,22 @@ void alChannelForceEvent(CLINK *clink,short value)
 	if (cdata->forcePVDisabled) return;
 
 	if (cdata->PVValue == value) return;
-	cdata->PVValue = value;
 	if (value == cdata->forcePVValue) {
 		alChangeChanMask(clink, cdata->forcePVMask);
 		alCaFlushIo();
 		alLogForcePVChan(clink, AUTOMATIC);
 	}
-	if (value == cdata->resetPVValue) {
+	/* if 'NE' and value changes from forcePVValue to !forcePVValue */
+	/* or value equals resetPVValue */
+	else if ( ( cdata->PVValue == cdata->forcePVValue &&
+				cdata->forcePVValue == cdata->resetPVValue ) ||
+			  ( value == cdata->resetPVValue  &&
+				cdata->forcePVValue != cdata->resetPVValue  ) ) {
 		alChangeChanMask(clink, cdata->defaultMask);
 		alCaFlushIo();
 		alLogResetPVChan(clink, AUTOMATIC);
 	}
+	cdata->PVValue = value;
 	clink->pmainGroup->modified = 1;
 }
 
@@ -332,17 +337,20 @@ void     alGroupForceEvent(GLINK *glink,short value)
 	if (gdata->forcePVDisabled) return;
 
 	if (gdata->PVValue == value) return;
-	gdata->PVValue = value;
 	if (value == gdata->forcePVValue) {
 		alChangeGroupMask(glink, gdata->forcePVMask);
 		alCaFlushIo();
 		alLogForcePVGroup(glink, AUTOMATIC);
 	}
-	if (value == gdata->resetPVValue) {
+	else if ( ( gdata->PVValue == gdata->forcePVValue &&
+				gdata->forcePVValue == gdata->resetPVValue ) ||
+			  ( value == gdata->resetPVValue  &&
+				gdata->forcePVValue != gdata->resetPVValue  ) ) {
 		alResetGroupMask(glink);
 		alCaFlushIo();
 		alLogResetPVGroup(glink, AUTOMATIC);
 	}
+	gdata->PVValue = value;
 	glink->pmainGroup->modified = 1;
 }
 
