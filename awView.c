@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.16  1998/07/07 20:49:01  jba
+ Removed unused variable timeout.
+
  Revision 1.15  1998/06/02 19:40:48  evans
  Changed from using Fgmgr to using X to manage events and file
  descriptors.  (Fdmgr didn't work on WIN32.)  Uses XtAppMainLoop,
@@ -400,7 +403,6 @@ void nameGroupW_callback(pushButton, line, cbs)
      void *area;
      static unsigned long interval=0;
      static struct timeoutData data;
-     static struct timeval timeout;
      struct subWindow  *groupWindow;
 
 
@@ -521,7 +523,6 @@ void arrowGroupW_callback(pushButton, glink, cbs)
      void *area;
      static unsigned long interval=0;
      static struct timeoutData data;
-     static struct timeval timeout;
 
 
      if (cbs->click_count == 1){

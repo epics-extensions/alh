@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.20  1998/07/07 20:49:02  jba
+ Removed unused variable timeout.
+
  Revision 1.19  1998/06/02 19:40:45  evans
  Changed from using Fgmgr to using X to manage events and file
  descriptors.  (Fdmgr didn't work on WIN32.)  Uses XtAppMainLoop,
@@ -1024,7 +1027,6 @@ void alNewAlarm(stat,sev,value,clink)
      int sevr_prev;
      time_t alarmTime,alarmTime_prev;
      COUNTFILTER *countFilter;
-     static struct timeval timeout;
 
      if (clink == NULL ) return;
      cdata = clink->pchanData;
