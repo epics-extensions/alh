@@ -1,8 +1,11 @@
 /*
  $Log$
- Revision 1.5  1995/05/30 15:55:10  jba
- Added ALARMCOMMAND facility
+ Revision 1.6  1995/05/31 20:50:37  jba
+ Added test for change in severity before spawn of ALARMCOMMAND
 
+ * Revision 1.5  1995/05/30  15:55:10  jba
+ * Added ALARMCOMMAND facility
+ *
  * Revision 1.4  1995/03/24  16:35:46  jba
  * Bug fix and reorganized some files
  *
@@ -889,7 +892,9 @@ int direction;
         stat_prev = cdata->curStat;
         sevr_prev = cdata->curSevr;
 
+/*
 if (sev == sevr_prev) printf ("alNewAlarm:### WARNING####  sev == sevr_prev for %s",cdata->name);
+*/
 
         cdata->curStat = stat;
         cdata->curSevr = sev;
@@ -920,6 +925,7 @@ if (sev == sevr_prev) printf ("alNewAlarm:### WARNING####  sev == sevr_prev for 
  * spawn ALARMCOMMAND for the channel
  */
 
+       if ( sev != sevr_prev )
         spawnAlarmCommandList(&cdata->alarmCommandList,sev,sevr_prev);
 
 
