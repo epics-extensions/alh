@@ -6,9 +6,14 @@ TOP = ../../..
 include $(TOP)/config/CONFIG_EXTENSIONS
 
 # Debugging options
+#ifeq ($(T_A),solaris)
 #CC  = purify -first-only -chain-length=30 $($(ANSI)_$(CMPLR))
 #CXX = purify -first-only -chain-length=30 $($(CPLUSPLUS)_$(CXXCMPLR))
 #HOST_OPT=NO
+#CC  = quantify  $($(ANSI)_$(CMPLR))
+#CXX = quantify  $($(CPLUSPLUS)_$(CXXCMPLR))
+#HOST_OPT=NO
+#endif
 
 I_WANT_CDEV             = NO
 I_WANT_GREETINGS        = NO
@@ -78,6 +83,8 @@ else
   alh_SRCS         += alCA.c
 endif
 
+USR_INCLUDES += -I../os/$(T_A) -I../os/default
+
 #USR_INCLUDES += -I/usr/contrib/X11R5/include -I$(MOTIF_INC) -I$(X11_INC)
 USR_INCLUDES += -I$(MOTIF_INC) -I$(X11_INC)
 
@@ -93,7 +100,10 @@ awAlh_CFLAGS += -DALH_HELP_URL="\"http://www.aps.anl.gov/asd/controls/epics/Epic
 #HOST_OPT=NO
 #endif
 
+USER_VPATH += ../os/default
+
 alh_SRCS += acknowledge.c
+alh_SRCS += alAudio.c
 alh_SRCS += alarm.c
 alh_SRCS += alCaCommon.c
 alh_SRCS += alConfig.c
@@ -139,7 +149,8 @@ PROD_LIBS += Com
 PROD_LIBS_DEFAULT += Xmu Xm Xt X11
 PROD_LIBS_Linux +=  Xmu Xm Xt X11 Xp
 
-USR_LIBS_WIN32 += $(EXCEED_XLIBS)
+PROD_LIBS_WIN32 += $(EXCEED_XLIBS)
+SYS_PROD_LIBS_WIN32 += winmm user32
 USR_CFLAGS_WIN32 += $(EXCEED_CFLAGS)
 
 Xmu_DIR = $(X11_LIB)
