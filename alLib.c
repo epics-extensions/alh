@@ -47,6 +47,7 @@ static void alNewAlarmFilter(int stat,int sevr,int acks,int ackt,
 static void alNewAlarmProcess(int stat,int sev, int acks,int ackt,
 	char *value, CLINK *clink,time_t timeofday);
 void alSetAckTChan(CLINK *clink,int ackt);
+short alHighestBeepSeverity(int sevr[ALH_ALARM_NSEV], int beepSevr);
 
 
 /**********************************************************************
@@ -885,16 +886,29 @@ void alHighestSystemSeverity(GLINK *glink)
 {
 	psetup.highestSevr = alHighestSeverity(glink->pgroupData->curSev);
 	psetup.highestUnackSevr = alHighestSeverity(glink->pgroupData->unackSev);
-	psetup.highestUnackBeepSevr = alHighestSeverity(glink->pgroupData->unackBeepSev);
+	psetup.highestUnackBeepSevr = alHighestBeepSeverity(glink->pgroupData->unackBeepSev,glink->pgroupData->beepSevr);
 }
 
 /******************************************************************
-	highest group severity 
+	highest severity 
 *****************************************************************/
 short alHighestSeverity(int sevr[ALH_ALARM_NSEV])
 {
 	short j=0;
 	for (j=ALH_ALARM_NSEV-1;j>0;j--) {
+		if (sevr[j] > 0) return(j);
+	}
+	return(0);
+}
+
+/******************************************************************
+	highest beep severity 
+*****************************************************************/
+short alHighestBeepSeverity(int sevr[ALH_ALARM_NSEV], int beepSevr)
+{
+	short j=0;
+	if (beepSevr == 0) beepSevr=1;
+	for (j=ALH_ALARM_NSEV-1;j>=beepSevr;j--) {
 		if (sevr[j] > 0) return(j);
 	}
 	return(0);
@@ -1345,7 +1359,7 @@ static void alSetUnackBeepSevGroup(GLINK *glink,int newSevr,int oldSevr)
 	gdata = (struct groupData *)glink->pgroupData;
 	gdata->unackBeepSev[oldSevr]--;
 	gdata->unackBeepSev[newSevr]++;
-	gdata->unackBeepSevr = alHighestSeverity(gdata->unackBeepSev);
+	gdata->unackBeepSevr = alHighestBeepSeverity(gdata->unackBeepSev,gdata->beepSevr);
 	if (oldSevr >= gdata->beepSevr) osev=oldSevr; 
 	if (newSevr >= gdata->beepSevr) nsev=newSevr;
 	if (glink->parent) alSetUnackBeepSevGroup(glink->parent,nsev,osev);
@@ -1410,7 +1424,7 @@ static void alSetUnackBeepSevCountGroup(GLINK *glink,int newSevr,int oldSevr,int
 	gdata->unackBeepSev[oldSevr]=gdata->unackBeepSev[oldSevr] - count;
 	gdata->unackBeepSev[newSevr]=gdata->unackBeepSev[newSevr] + count;
 
-	gdata->unackBeepSevr = alHighestSeverity(gdata->unackBeepSev);
+	gdata->unackBeepSevr = alHighestBeepSeverity(gdata->unackBeepSev,gdata->beepSevr);
 	if (oldSevr >= gdata->beepSevr) osev=oldSevr; 
 	if (newSevr >= gdata->beepSevr) nsev=newSevr;
 	if (glink->parent) alSetUnackBeepSevCountGroup(glink->parent,nsev,osev,count);
@@ -1432,6 +1446,7 @@ void alSetBeepSevrGroup(GLINK *glink,int beepSevr)
 	oldBeepSevr = gdata->beepSevr;
 	if (oldBeepSevr == beepSevr) return;
 	gdata->beepSevr = beepSevr;
+	gdata->unackBeepSevr = alHighestBeepSeverity(gdata->unackBeepSev,gdata->beepSevr);
 	glink->modified = 1;
 	glink->pmainGroup->modified = TRUE;
 	if ( oldBeepSevr < beepSevr) { start=oldBeepSevr; end=beepSevr; }
