@@ -149,10 +149,10 @@ struct parm_data
 
 /* order of elements matters: long before short to prevent ambiguity */
 static struct parm_data ptable[] = {
-		{ "-a",		2,	PARM_ALARM_LOG_FILE },
 #ifdef CMLOG
 		{ "-aCM",	4,	PARM_ALARM_LOG_CMLOG },
 #endif
+		{ "-a",		2,	PARM_ALARM_LOG_FILE },
  		{ "-B",		2,	PARM_MESSAGE_BROADCAST }, /* Albert */
 		{ "-c",		2,	PARM_ACT },
  		{ "-caputackt",	10,	PARM_CAPUT_ACK_TRANSIENTS },
@@ -166,10 +166,10 @@ static struct parm_data ptable[] = {
 		{ "-m",		2,	PARM_ALARM_LOG_MAX },
 		{ "-noerrorpopup",	13,	PARM_NO_ERROR_POPUP },
 		{ "-O",		2,	PARM_DATABASE }, /* Albert */
-		{ "-o",		2,	PARM_OPMOD_LOG_FILE },
 #ifdef CMLOG
 		{ "-oCM",	4,	PARM_OPMOD_LOG_CMLOG },
 #endif
+		{ "-o",		2,	PARM_OPMOD_LOG_FILE },
 		{ "-P",		2,	PARM_PRINTER },
 		{ "-S",		2,	PARM_PASSIVE },
 		{ "-s",		2,	PARM_SILENT },
@@ -494,11 +494,7 @@ int programId,Widget widget)
 
 		case FILE_CONFIG:
 #ifdef CMLOG
-			if (_read_only_flag) {
-				use_CMLOG_alarm = 0;
-				use_CMLOG_opmod = 0;
-			}
-			else if (use_CMLOG_alarm || use_CMLOG_opmod) alCMLOGconnect();
+			if (use_CMLOG_alarm || use_CMLOG_opmod) alCMLOGconnect();
 #endif
 
 			setupConfig(filename,programId,area);
