@@ -6,8 +6,8 @@ TOP = ../../..
 include $(TOP)/config/CONFIG_EXTENSIONS
 
 # Debugging options
-#CC = purify -first-only -chain-length=30  $($(ANSI)_$(CMPLR))
-#CC = purify $($(ANSI)_$(CMPLR))
+#CC  = purify -first-only -chain-length=30 $($(ANSI)_$(CMPLR))
+#CXX = purify -first-only -chain-length=30 $($(CPLUSPLUS)_$(CXXCMPLR))
 #HOST_OPT=NO
 
 I_WANT_CDEV             = NO
@@ -17,7 +17,6 @@ I_WANT_CMLOG		= NO
 # These should really be done in <TOP>/config/RELEASE, but
 # defining things here overrides these values.
 #CMLOG=/opt/OPI/cmlog
-#CMLOG=/home/phoebus/JBA/jlab/CMLOG_4jun99
 ##EPICS_BASE=/home/controls/epics/baseR3.13.1
 #CDEV_DIR = /home/phoebus6/JBA/jlab/cdev1-7
 #CDEVINCLUDE = $(CDEV_DIR)/include
@@ -33,12 +32,16 @@ ifeq ($(DEBUG), YES)
 endif
 
 ifeq ($(I_WANT_CMLOG),YES)
+  CMLOG_BIN		 = $(CMLOG)/bin/$(HOST_ARCH)
   alLog_CFLAGS	+= -I$(CMLOG)/include -DCMLOG
   file_CFLAGS   += -I$(CMLOG)/include -DCMLOG
   awAlh_CFLAGS	+= -DCMLOG -DCMLOG_CONFIG="\"cmlogrc.ALH\"" \
-                   -DCMLOG_BROWSER="\"cmlog -xrm '*geometry: 1400x500' -c\""
+                   -DCMLOG_BROWSER="\"$(CMLOG_BIN)/cmlog -xrm '*geometry: 1400x500' -c\""
   alh_LIBS	+= cmlog
   cmlog_DIR	= $(CMLOG)/lib/$(HOST_ARCH)
+  # Use following line if cmlog_DIR not in LD_LIBRARY_PATH
+  USR_LDFLAGS_solaris =  -R$(cmlog_DIR)
+
   LINK.c = $(LINK.cc)
   CPLUSPLUS = CCC
 endif
