@@ -28,17 +28,9 @@ static void alHeartbeatTimerCallback(XtPointer data, XtIntervalId *id)
 {
 	struct mainGroup *pmainGroup = (struct mainGroup *)data;
 
-printf("alHeartbeatTimerCallback: pmainGroup=%d\n",pmainGroup);
 	if (!pmainGroup) return;
 	if (!pmainGroup->heartbeatPV.chid) return;
 	alCaPutHeartbeatValue(pmainGroup->heartbeatPV.chid,&(pmainGroup->heartbeatPV.caputValue));
-
-printf("alHeartbeatTimerCallback: timerId=%d caputRateInSeconds=%f value=%d name=%s chid=%d\n",
-pmainGroup->heartbeatPV.timerId,
-pmainGroup->heartbeatPV.caputRateInSeconds,
-pmainGroup->heartbeatPV.caputValue,
-pmainGroup->heartbeatPV.name,
-pmainGroup->heartbeatPV.chid);
 
 	pmainGroup->heartbeatPV.timerId = XtAppAddTimeOut(appContext,
 		(unsigned long)(1000*pmainGroup->heartbeatPV.caputRateInSeconds),
@@ -49,20 +41,12 @@ pmainGroup->heartbeatPV.chid);
 void alHeartbeatStart(void *data)
 {
 	struct mainGroup *pmainGroup = (struct mainGroup *)data;
-printf ("alHeartbeatStart: pmainGroup=%d\n",pmainGroup);
 
 	if (!pmainGroup) return;
 	if (pmainGroup->heartbeatPV.timerId) {
-printf ("alHeartbeatStart: remove timer: timerId=%d\n", pmainGroup->heartbeatPV.timerId);
 		XtRemoveTimeOut(pmainGroup->heartbeatPV.timerId);
 		pmainGroup->heartbeatPV.timerId = 0;
 	}
-printf ("alHeartbeatStart: timerId=%d caputRateInSeconds=%f value=%d name=%s chid=%d\n",
-pmainGroup->heartbeatPV.timerId,
-pmainGroup->heartbeatPV.caputRateInSeconds,
-pmainGroup->heartbeatPV.caputValue,
-pmainGroup->heartbeatPV.name,
-pmainGroup->heartbeatPV.chid);
 
 	pmainGroup->heartbeatPV.timerId = XtAppAddTimeOut(appContext,
 		(unsigned long)(1000*pmainGroup->heartbeatPV.caputRateInSeconds),
@@ -75,7 +59,6 @@ void alHeartbeatStop(void *data)
 {
 	struct mainGroup *pmainGroup = (struct mainGroup *)data;
 
-printf ("alHeartbeatStop: pmainGroup=%d\n",pmainGroup);
 	if (!pmainGroup) return;
 	if (pmainGroup->heartbeatPV.timerId) {
 		XtRemoveTimeOut(pmainGroup->heartbeatPV.timerId);
@@ -85,7 +68,6 @@ printf ("alHeartbeatStop: pmainGroup=%d\n",pmainGroup);
 
 void alHeartbeatPVRemove(struct mainGroup *pmainGroup)
 {
-printf ("alHeartbeatPVRemove: pmainGroup=%d\n",pmainGroup);
 	if (!pmainGroup) return;
 	if (pmainGroup->heartbeatPV.timerId) {
 		XtRemoveTimeOut(pmainGroup->heartbeatPV.timerId);
@@ -103,7 +85,6 @@ printf ("alHeartbeatPVRemove: pmainGroup=%d\n",pmainGroup);
 
 void alHeartbeatPVAdd(struct mainGroup *pmainGroup,char* name,float rate,short value)
 {
-printf ("alHeartbeatPVAdd: pmainGroup=%d\n",pmainGroup);
 	if (!pmainGroup) return;
 	alHeartbeatPVRemove(pmainGroup);
 	pmainGroup->heartbeatPV.name = (char *)calloc(1,strlen(name)+1);
