@@ -100,6 +100,7 @@ awAlh_CFLAGS += -DALH_HELP_URL="\"http://www.aps.anl.gov/asd/controls/epics/Epic
 #HOST_OPT=NO
 #endif
 
+USER_VPATH += ../os/$(T_A)
 USER_VPATH += ../os/default
 
 alh_SRCS += acknowledge.c
