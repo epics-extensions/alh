@@ -1,3 +1,17 @@
+/*************************************************************************\
+* Copyright (c) 2002 The University of Chicago, as Operator of Argonne
+* National Laboratory.
+* Copyright (c) 2002 Deutches Elektronen-Synchrotron in der Helmholtz-
+* Gemelnschaft (DESY).
+* Copyright (c) 2002 Berliner Speicherring-Gesellschaft fuer Synchrotron-
+* Strahlung mbH (BESSY).
+* Copyright (c) 2002 Southeastern Universities Research Association, as
+* Operator of Thomas Jefferson National Accelerator Facility.
+* Copyright (c) 2002 The Regents of the University of California, as
+* Operator of Los Alamos National Laboratory.
+* This file is distributed subject to a Software License Agreement found
+* in the file LICENSE that is included with this distribution. 
+\*************************************************************************/
 /* alh.h */
 
 /************************DESCRIPTION***********************************
@@ -37,6 +51,9 @@ static char *alhhsccsId = "@(#) $Id$";
 #include "sllLib.h"
 #include "dbDefs.h"
 
+#ifndef FLDNAME_SZ
+#define FLDNAME_SZ 4  /*Field Name Size*/
+#endif
 
 /* ------- Definitions for channels in error state ----- */
 /* ALARM_NSEV and ALARM_NSTATUS defined in epics/base alarm.h */

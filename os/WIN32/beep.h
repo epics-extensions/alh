@@ -1,3 +1,17 @@
+/*************************************************************************\
+* Copyright (c) 2002 The University of Chicago, as Operator of Argonne
+* National Laboratory.
+* Copyright (c) 2002 Deutches Elektronen-Synchrotron in der Helmholtz-
+* Gemelnschaft (DESY).
+* Copyright (c) 2002 Berliner Speicherring-Gesellschaft fuer Synchrotron-
+* Strahlung mbH (BESSY).
+* Copyright (c) 2002 Southeastern Universities Research Association, as
+* Operator of Thomas Jefferson National Accelerator Facility.
+* Copyright (c) 2002 The Regents of the University of California, as
+* Operator of Los Alamos National Laboratory.
+* This file is distributed subject to a Software License Agreement found
+* in the file LICENSE that is included with this distribution. 
+\*************************************************************************/
 int beepLength = 11598 ;
 unsigned char beep[] = { 
 0x52, 0x49, 0x46, 0x46, 0x46, 0x2d, 0x0, 0x0, 0x57, 0x41, 0x56, 0x45, 

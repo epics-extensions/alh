@@ -6,7 +6,7 @@ ALH_ICON        ICON    DISCARDABLE     "alh.ico"
 
 VS_VERSION_INFO VERSIONINFO
  FILEVERSION ALH_VERSION,ALH_REVISION,ALH_MODIFICATION,0
- PRODUCTVERSION BASE_VERSION,BASE_REVISION,BASE_MODIFICATION,BASE_UPDATE_LEVEL
+ PRODUCTVERSION EPICS_VERSION,EPICS_REVISION,EPICS_MODIFICATION,EPICS_UPDATE_LEVEL
  FILEFLAGSMASK VS_FFI_FILEFLAGSMASK
 #ifdef _DEBUG
  FILEFLAGS VS_FF_DEBUG
@@ -29,7 +29,7 @@ BEGIN
             VALUE "LegalCopyright", "Copyright (C) Univ. of California, Univ. of Chicago\0"
             VALUE "OriginalFilename", "alh.exe\0"
             VALUE "ProductName", "Experimental Physics and Industrial Control System (EPICS)\0"
-            VALUE "ProductVersion", BASE_VERSION_STRING "\0"
+            VALUE "ProductVersion", EPICS_VERSION_STRING "\0"
         END
     END
     BLOCK "VarFileInfo"
