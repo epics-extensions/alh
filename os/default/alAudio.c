@@ -28,6 +28,7 @@
 int alBeep(Display *displayBB)
 {
 	XBell(displayBB,0);
+	return 0;
 }
 
 
