@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.14  1998/09/01 20:33:22  jba
+ Made changes for WIN32 build (using Exceed5)
+
  Revision 1.13  1998/08/05 18:20:04  jba
  Added silenceOneHour button.
  Moved silenceForever button to Setup menu.
@@ -113,6 +116,11 @@ alLogSetupSaveConfigFile(filename)			Log setup save config file
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#ifdef WIN32
+#include <process.h>
+#else
+#include <unistd.h>
+#endif
 
 #include <alh.h>
 #include <alLib.h>
@@ -708,11 +716,29 @@ int pid;
 /*cmd_buf=alh_printer ip_addr port printerColorMode  len_mes sev message*/
 sprintf(cmd_buf,"alh_printer %s %d %s %d %d \"%s\"",printerHostname,
         printerPort,printerColorModel,len,sev,message);
+#ifdef WIN32
+      {
+	static int first=1;
+	static char *ComSpec;
+	int status;
 
-if ((pid=fork ()))
-  {
-  execl("/bin/sh","sh","-c",cmd_buf,0);
-  exit(0);
-  }
+      /* Get ComSpec for the command shell (should be defined) */
+        if (first) {
+            first=0;
+            ComSpec = getenv("ComSpec");
+        }
+        if (!ComSpec) {
+            errMsg("processSpawn_callback: Cannot find command processor\n");
+            return;
+        }
+        status = _spawnl(_P_DETACH, ComSpec, ComSpec, "/C", cmd_buf, NULL);
+   }
+#else
+    if ((pid=fork ()))
+    {
+      execl("/bin/sh","sh","-c",cmd_buf,0);
+      exit(0);
+     }
+#endif
   return 0;
 }
