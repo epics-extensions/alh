@@ -45,6 +45,8 @@ extern SLIST *areaList;
 extern struct setup psetup;
 extern Display *display;
 extern char *alhAlarmSeverityString[];
+extern int _main_window_flag;
+extern int (*default_display_filter)(GCLINK *);
 
 ALINK *alhArea;
 
@@ -218,10 +220,11 @@ void setupConfig(char *filename,int program,ALINK *areaOld)
 		area->changed = FALSE;
 
 		/* activate runtime window for ALH */
-		if (program == ALH ){
+		if (program == ALH){
 			area->blinkString = alAlarmGroupName((GLINK *)proot);
 			alHighestSystemSeverity((GLINK *)proot);
-			createRuntimeWindow(area);
+			if (_main_window_flag) showMainWindow(area);
+			else createRuntimeWindow(area);
 		}
 
 		/* create/display main window for ACT */
@@ -349,7 +352,7 @@ static ALINK *setupArea(ALINK *areaOld)
 		sllAdd(areaList,(SNODE *)area);
 
 		/* Set alarm  filter to default value */
-		area->viewFilter = alFilterAll;
+		area->viewFilter = default_display_filter;
 
 		area->blinkString = NULL;
 
@@ -437,8 +440,12 @@ void createMainWindowWidgets(ALINK *area)
 		    NULL);
 		WM_DELETE_WINDOW = XmInternAtom(XtDisplay(area->form_main),
 		    "WM_DELETE_WINDOW", False);
-		XmAddWMProtocolCallback(area->toplevel,WM_DELETE_WINDOW,
-		    (XtCallbackProc) unmapArea_callback, (XtPointer) area->form_main);
+		if (_main_window_flag)
+			XmAddWMProtocolCallback(area->toplevel,WM_DELETE_WINDOW,
+		    	(XtCallbackProc) exit_quit, (XtPointer) area);
+		else
+			XmAddWMProtocolCallback(area->toplevel,WM_DELETE_WINDOW,
+		    	(XtCallbackProc) unmapArea_callback, (XtPointer) area->form_main);
 	}
 
 	/* Create MenuBar */

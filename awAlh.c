@@ -113,6 +113,7 @@ extern char *rebootString;
 extern int max_not_save_time;
 extern int amIsender;
 extern int DEBUG;
+extern int _main_window_flag;
 char FS_filename[128]; /* Filename      for FSBox. Albert*/
 
 struct UserInfo {
@@ -366,7 +367,10 @@ static void alhFileCallback(Widget widget,XtPointer calldata,XtPointer cbs)
 	case MENU_FILE_CLOSE:
 
 		/* "Close" was selected. */
-		unmapArea_callback(area->toplevel,area->form_main,(XmAnyCallbackStruct *)cbs);
+		if (_main_window_flag)
+			exit_quit(area->toplevel,(XtPointer)area,(XtPointer)area);
+		else
+			unmapArea_callback(area->toplevel,area->form_main,(XmAnyCallbackStruct *)cbs);
 		break;
 
 	case MENU_FILE_QUIT:
