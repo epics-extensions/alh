@@ -35,6 +35,7 @@ void   createMainWindowWidgets( ALINK *area);
 int    isTreeWindow( ALINK *area, void * subWindow);
 void   markSelectionArea( ALINK *area, struct anyLine *line);
 void   changeBeepSeverityText( ALINK *area);
+void   changeSilenceForeverText( ALINK *area);
 void   unmapArea_callback( Widget main, Widget w, XmAnyCallbackStruct *cbs);
 void   axMakePixmap( Widget w);
 void   axUpdateDialogs(ALINK *area);
@@ -54,7 +55,7 @@ void createRuntimeWindow( ALINK *area);
 void createMainWindow_callback( Widget w, ALINK *area, XmAnyCallbackStruct *call_data);
 void silenceCurrentReset(void *area);
 void silenceCurrent_callback( Widget w, int notUsed, XmAnyCallbackStruct *call_data);
-void silenceForeverChangeState();
+void silenceForeverChangeState( ALINK *area);
 void silenceOneHour_callback( Widget w, void * area, XmAnyCallbackStruct *call_data);
 
 

@@ -363,8 +363,6 @@ void createRuntimeWindow(ALINK *area)
 	silenceCurrentReset(area);
 	silenceOneHourReset(area);
 
-	changeBeepSeverityText(area);
-
 	icon_update();
 }
 
@@ -620,12 +618,13 @@ XmAnyCallbackStruct *call_data)
 /***************************************************
  silenceForeverChangeState
 ****************************************************/
-void silenceForeverChangeState()
+void silenceForeverChangeState(ALINK *area)
 {
 	psetup.silenceForever = psetup.silenceForever?FALSE:TRUE;
 	if (psetup.silenceForever)
 		alLogOpMod("Silence Forever set to TRUE");
 		else
 		alLogOpMod("Silence Forever set to FALSE");
+	changeSilenceForeverText(area);
 }
 

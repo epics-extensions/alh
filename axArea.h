@@ -45,6 +45,8 @@ typedef struct  areaLink{
 	Widget           label_mask;
 	Widget           silenceOneHour;
 	Widget           silenceCurrent;
+	Widget           silenceForever;
+	Widget           silenceForeverLabel;
 	Widget           beepSeverity;
 	Widget           beepSeverityLabel;
 	Widget           label_filenameTitle;

@@ -34,6 +34,8 @@ static char *sccsId = "@(#) $Id$";
 #include "sllLib.h"
 #include "ax.h"
 
+char *silenceString[] = {"Off","On"};
+
 /* global variables */
 extern int toBeConnectedCount;
 extern int DEBUG;
@@ -575,6 +577,32 @@ void createMainWindowWidgets(ALINK *area)
 	    XmNuserData,               (XtPointer)area,
 	    NULL);
 
+	/* Create SilenceForever string for the messageArea */
+	str = XmStringCreateSimple(silenceString[psetup.silenceForever]);
+	area->silenceForever = XtVaCreateManagedWidget("silenceForever",
+	    xmLabelGadgetClass,        area->messageArea,
+	    XmNlabelString,            str,
+	    XmNshadowThickness,        2,
+	    XmNalignment,              XmALIGNMENT_BEGINNING,
+	    XmNtopAttachment,          XmATTACH_WIDGET,
+	    XmNtopWidget,              area->silenceCurrent,
+	    XmNrightAttachment,        XmATTACH_FORM,
+	    NULL);
+	XmStringFree(str);
+
+	/* Create SilenceForeverLabel string for the messageArea */
+	str = XmStringCreateSimple("Silence Forever: ");
+	area->silenceForeverLabel = XtVaCreateManagedWidget("silenceForeverLabel",
+	    xmLabelGadgetClass,        area->messageArea,
+	    XmNshadowThickness,        2,
+	    XmNlabelString,            str,
+	    XmNtopAttachment,          XmATTACH_WIDGET,
+	    XmNtopWidget,              area->silenceCurrent,
+	    XmNrightAttachment,        XmATTACH_WIDGET,
+	    XmNrightWidget,            area->silenceForever,
+	    NULL);
+	XmStringFree(str);
+
 	/* Create BeepSeverity string for the messageArea */
 	str = XmStringCreateSimple(alarmSeverityString[psetup.beepSevr]);
 	area->beepSeverity = XtVaCreateManagedWidget("beepSeverity",
@@ -583,7 +611,7 @@ void createMainWindowWidgets(ALINK *area)
 	    XmNshadowThickness,        2,
 	    XmNalignment,              XmALIGNMENT_BEGINNING,
 	    XmNtopAttachment,          XmATTACH_WIDGET,
-	    XmNtopWidget,              area->silenceCurrent,
+	    XmNtopWidget,              area->silenceForever,
 	    XmNrightAttachment,        XmATTACH_FORM,
 	    NULL);
 	XmStringFree(str);
@@ -595,7 +623,7 @@ void createMainWindowWidgets(ALINK *area)
 	    XmNshadowThickness,        2,
 	    XmNlabelString,            str,
 	    XmNtopAttachment,          XmATTACH_WIDGET,
-	    XmNtopWidget,              area->silenceCurrent,
+	    XmNtopWidget,              area->silenceForever,
 	    XmNrightAttachment,        XmATTACH_WIDGET,
 	    XmNrightWidget,            area->beepSeverity,
 	    NULL);
@@ -753,6 +781,22 @@ void changeBeepSeverityText(ALINK *area)
 	}
 }
 
+/***************************************************
+ changeSilenceForeverText
+****************************************************/
+void changeSilenceForeverText(ALINK *area)
+{
+	XmString    str;
+
+	if (area->silenceForever) {
+		str = XmStringCreateSimple(silenceString[psetup.silenceForever]);
+		XtVaSetValues(area->silenceForever,
+		    XmNlabelString,            str,
+		    NULL);
+		XmStringFree(str);
+	}
+}
+
 /******************************************************
   axUpdateDialogs
 ******************************************************/
@@ -760,6 +804,9 @@ void axUpdateDialogs(ALINK *area)
 {
 	/* update beepSeverity string on main window */
 	changeBeepSeverityText(area);
+
+	/* update silenceForever string on main window */
+	changeSilenceForeverText(area);
 
 	/* update property sheet window if it is displayed */
 	propUpdateDialog(area);

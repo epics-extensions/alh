@@ -874,7 +874,7 @@ static void alhSetupCallback( Widget widget, XtPointer calldata, XtPointer cbs)
 
 	case MENU_SETUP_SILENCE_FOREVER:
 
-		silenceForeverChangeState();
+		silenceForeverChangeState(area);
 		break;
 
 	case MENU_SETUP_ALARMLOG:

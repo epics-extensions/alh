@@ -192,7 +192,7 @@ void alLogAckGroup(struct groupLine *gline)
 /***********************************************************************
  * log change channel Masks on operation file
  ***********************************************************************/
-void alLogChanChangeMasks(CLINK *clink,int maskid,int maskno)
+void alLogChanChangeMasks(CLINK *clink,int maskno,int maskid)
 {
 	char buff1[6];
 	alGetMaskString(clink->pchanData->curMask,buff1);

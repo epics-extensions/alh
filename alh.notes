@@ -212,4 +212,9 @@ Thu Mar 11 10:12:06 CST 1999
 							   (NOT IMPLEMENTED YET ;)  )	
 	                               	
 Mon Mar 15 08:57:01 CST 1999
-	ANSI c changes to eliminate warning messaged on Linux build.
+	ANSI c changes to eliminate warning messages on Linux build.
+
+Tue May 18 10:24:41 CDT 1999
+	Bug fix for reversed parameters in alLogChanChangeMasks.
+	Added Silence Forever status to message area.
+
