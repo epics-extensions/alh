@@ -379,20 +379,16 @@ static void beepSevrApplyCallback(Widget widget,XtPointer calldata,XtPointer cbs
 	GCLINK *link;
 	int linkType;
 
-printf("beepSevrApplyCallback entered\n");
 	link =getSelectionLinkArea(beepSevrWindow->area);
 	if (!link) return;
 	pgcData = link->pgcData;
 	linkType =getSelectionLinkTypeArea(beepSevrWindow->area);
 
-printf("beepSevrApplyCallback: beepSevr=%d\n",beepSevrWindow->beepSevr);
 	if (linkType == CHANNEL) {
 		cdata = (struct chanData *)link->pgcData;
-printf("beepSevrApplyCallback: calling alSetBeepSevrChan for %s\n",pgcData->name);
 		alSetBeepSevrChan((CLINK *)link,beepSevrWindow->beepSevr);
 	}
 	if (linkType == GROUP) {
-printf("beepSevrApplyCallback: calling alSetBeepSevrGroup for %s\n",pgcData->name);
 		alSetBeepSevrGroup((GLINK *)link,beepSevrWindow->beepSevr);
 	}
 	/*alLogSetBeepSevr(pgcData->name,(char *)alarmSeverityString[pgcData->beepSevr]);*/
