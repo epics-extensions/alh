@@ -1,8 +1,13 @@
 /*
  $Log$
- Revision 1.2  1994/06/22 21:17:10  jba
- Added cvs Log keyword
+ Revision 1.3  1995/05/30 16:01:52  jba
+ Changed blinking to static.
+ Print blinkCOUNT only if DEBUG is 1.
+ Add unused parm to blinking for fdmgr_add_timeout prototype.
 
+ * Revision 1.2  1994/06/22  21:17:10  jba
+ * Added cvs Log keyword
+ *
  */
 
 static char *sccsId = "@(#)axRunW.c	1.8\t9/14/93";
@@ -163,6 +168,7 @@ static void toggled( Widget widget, int item, XmToggleButtonCallbackStruct *cbs)
 static void okCallback( Widget widget, void * area, XmAnyCallbackStruct *cbs);
 static void axExit_callback( Widget w, ALINK *area, XmAnyCallbackStruct *call_data);
 static void axExitArea_callback( Widget w, ALINK *area, XmAnyCallbackStruct *call_data);
+static void blinking(void *unused);
 
 #else
 static void alChangeOpenCloseButtonToRemap();
@@ -173,6 +179,7 @@ static void toggled();
 static void okCallback();
 static void axExit_callback();
 static void axExitArea_callback();
+static void blinking();
 
 #endif /*__STDC__*/
 
@@ -553,7 +560,8 @@ void createMainWindow_callback(w,area,call_data)
   blinking
 ******************************************************/
 
-void blinking()
+static void blinking(unused)
+     void *unused;
 {
      Display *displayBB;
      static Boolean blinking2State = FALSE;
@@ -601,8 +609,10 @@ void blinking()
 
      XFlush(displayBB);
 
-     blinkCOUNT++;
-     if ((blinkCOUNT % 1000) == 0 ) printf("blink times = %d \n",blinkCOUNT);
+     if ( DEBUG == 1 ){
+          blinkCOUNT++;
+          if ((blinkCOUNT % 1000) == 0 ) printf("blink times = %d \n",blinkCOUNT);
+     }
 
 }
 
