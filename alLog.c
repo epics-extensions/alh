@@ -875,7 +875,7 @@ int filePrintf(FILE *fPointer,char *buf,time_t *ptime,int typeOfRecord)
 
   ret=fprintf(fPointer,"%s",bufSave);
 
-  if (ret<0)  {
+  if (ret<0 && !_read_only_flag)  {
     fprintf(stderr,"Can't write %s to file=%s!!!\n",
 	    bufSave,(fPointer==fl)?"LOGfile":"OpModFile" ); 
   }
