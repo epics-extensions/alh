@@ -665,6 +665,15 @@ void alLogExit()
 }
 
 /***********************************************************************
+ * log change beep severity 
+ ***********************************************************************/
+void alLogSetBeepSevr (char *name,const char *value)
+{
+	sprintf(buff,"Set Beep Severity --- %-28s  %s\n",name,value);
+	filePrintf(fo,buff,NULL,0);  /* update the file */	
+}
+
+/***********************************************************************
  * log change group mask selection 
  ***********************************************************************/
 void alLogChangeGroupMasks(GLINK *glink,int maskno,int maskid)
