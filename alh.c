@@ -21,9 +21,8 @@ static char *sccsId = "@@(#) $Id$";
 
 /* global variables */
 int DEBUG = 0;
-int ALARM_COUNTER = 0;
 SLIST *areaList;
-char alhVersionString[60];
+char alhVersionString[100];
 extern XtAppContext appContext;
 extern Display *display;
 XFontStruct *font_info;

@@ -58,7 +58,7 @@ static char *sccsId = "@@(#) $Id$";
 
 /* external variables */
 extern ALINK *alhArea;
-extern char alhVersionString[60];
+extern char alhVersionString[100];
 
 /* prototypes for static routines */
 static void actFileCallback(Widget widget, XtPointer calldata, XtPointer cbs);

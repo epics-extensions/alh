@@ -91,7 +91,7 @@ extern Widget blinkToplevel;     /* for locking status marking                */
 char masterStr[64],slaveStr[64]; /* titles of Master/Slave +- printer/database*/
 XtIntervalId lockTimeoutId=NULL;   
 extern XFontStruct *font_info;
-extern char alhVersionString[60];
+extern char alhVersionString[100];
  
 #ifdef CMLOG
 				/* CMLOG flags & variables */

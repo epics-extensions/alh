@@ -24,7 +24,6 @@ extern int _passive_flag;
 extern int _global_flag;
 extern int _DB_call_flag;
 extern int DEBUG;
-extern int ALARM_COUNTER;
 extern struct setup psetup;
 
 /* forward declarations */
@@ -741,8 +740,6 @@ CLINK *clink,time_t timeofday)
 				cdata->unackSevr,cdata->curMask.AckT);
 		}
 	}
-
-	if (DEBUG >=3) ALARM_COUNTER++;
 
 	/* 
 	 * disabled alarm special handling 

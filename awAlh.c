@@ -100,7 +100,7 @@ void awUpdateRowWidgets(line)                 Update line widgets
 #define MENU_HELP_ABOUT	10906
 
 /* external variables */
-extern char alhVersionString[60];
+extern char alhVersionString[100];
 extern char *bg_char[];
 extern Pixel bg_pixel[];
 extern Pixel channel_bg_pixel;

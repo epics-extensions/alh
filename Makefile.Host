@@ -6,7 +6,7 @@ TOP = ../../..
 include $(TOP)/config/CONFIG_EXTENSIONS
 
 # Debugging options
-#ifeq ($(T_A),solaris)
+#ifeq ($(HOST_ARCH),solaris)
 #CC  = purify -first-only -chain-length=30 $($(ANSI)_$(CMPLR))
 #CXX = purify -first-only -chain-length=30 $($(CPLUSPLUS)_$(CXXCMPLR))
 #HOST_OPT=NO
@@ -83,7 +83,7 @@ else
   alh_SRCS         += alCA.c
 endif
 
-USR_INCLUDES += -I../os/$(T_A) -I../os/default
+USR_INCLUDES += -I../os/$(OS_CLASS) -I../os/default
 
 #USR_INCLUDES += -I/usr/contrib/X11R5/include -I$(MOTIF_INC) -I$(X11_INC)
 USR_INCLUDES += -I$(MOTIF_INC) -I$(X11_INC)
@@ -91,16 +91,7 @@ USR_INCLUDES += -I$(MOTIF_INC) -I$(X11_INC)
 # baseR3.13.0.beta12 and later
 awAlh_CFLAGS += -DALH_HELP_URL="\"http://www.aps.anl.gov/asd/controls/epics/EpicsDocumentation/ExtensionsManuals/AlarmHandler/ALHUserGuide/ALHUserGuide.html\""
 
-# Debugging options
-#PURIFY=YES
-
-#ifneq ($(HOST_ARCH),WIN32)
-#CC = purify -first-only -chain-length=25  $($(ANSI)_$(CMPLR))
-#CXX = purify -first-only -chain-length=25  $($(CPLUSPLUS)_$(CXXCMPLR))
-#HOST_OPT=NO
-#endif
-
-USER_VPATH += ../os/$(T_A)
+USER_VPATH += ../os/$(OS_CLASS)
 USER_VPATH += ../os/default
 
 alh_SRCS += acknowledge.c
