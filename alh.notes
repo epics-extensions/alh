@@ -394,11 +394,11 @@ Tue Feb 11 15:28:34 CST 2003  ALH_1_2_11Beta1
 	automatic acknowlegment is sent to the channel and the auto acknowledge-
 	ment is logged in the opMod file.
 
-Fri Feb 14 16:24:03 CST 2003
+Fri Feb 14 16:24:03 CST 2003  ALH_1_2_11Beta2
 	Added H indicator in mask for noAck 1hr timer 
 	Added a config file heartbeatPV.
 
-Thu Feb 27 10:59:56 CST 2003
+Thu Feb 27 10:59:56 CST 200   ALH_1_2_11Beta3
 	ForcePV variables removed grom gcData and forcePV structure created.
 	Added NE as a valid value for forcePV resetValue.
 	Added CALC facility to forcePV. This allows algebraic, relational, and 
@@ -406,7 +406,14 @@ Thu Feb 27 10:59:56 CST 2003
 	compared to the forcePV forceValue and resetValue to determine whether
 	to set group/channel masks to the forceMask or resetMask.
 
-Fri Feb 28 16:38:19 CST 2003
+Fri Feb 28 16:38:19 CST 2003 ALH_1_2_11Beta4
 	Changed opMod file output. Now contains top group name followed by
 	group or channel name each followed by a colon or just a colon if
 	the name is not available.
+
+Mon Mar  3 09:24:38 CST 2003 ALH_1_2_11Beta5
+	Moved channel beepSevr modified indicators to preceed possible return.	
+	Added code for display of highest existing beepSevr in sub groups and channels. 
+	Modified alarm log file output. Now calculate alarmLogFileStringLength.
+	Changed fopen of alarm log file from r+ to w+(truncate or create).
+	Modified forcePV opMod log messages text.
