@@ -249,23 +249,26 @@ void alCaConnectHeartbeatPV(char *name, chid * pchid, void *puser)
 			"Return status: %s\n",ca_name(*pchid),ca_message(status));
 	}
 }
-/*
+
+
+/*********************************************************************
 This is similar to previous function alCaConnectSevrPV
- */
+ *********************************************************************/
 void alCaConnectAckPV(char *name, chid * pchid, void *puser) 
 {
 	int status;
 	if (strlen(name) <= (size_t) 1) return;
 
+
 	toBeConnectedCount++;
 	status = ca_search_and_connect(name, pchid, alCaAckPVConnectionEvent, puser);
 	if (status != ECA_NORMAL){
-		errMsg("ca_search_and_connect failed for Severity PV %s "
+		errMsg("ca_search_and_connect failed for Acknowledge PV %s "
 			"Return status: %s\n",ca_name(*pchid),ca_message(status));
 	}
-	status = ca_replace_access_rights_event(*pchid, alCaSevrPVAccessRightsEvent);
+	status = ca_replace_access_rights_event(*pchid, alCaAckPVAccessRightsEvent);
 	if (status != ECA_NORMAL){
-		errMsg("ca_replace_access_rights_event failed for Severity PV %s "
+		errMsg("ca_replace_access_rights_event failed for Acknowledge PV %s "
 			"Return status: %s\n",ca_name(*pchid),ca_message(status));
 	}
 }
@@ -410,9 +413,12 @@ void alCaPutSevrValue(chid chid, short *psevr)
 			"Return status: %s\n",ca_name(chid),ca_message(status));
 	}
 }
-/*
+
+
+
+/*********************************************************************
   This function is the same as prev. but for ackPV record. 
- */
+ *********************************************************************/
 void alCaPutAckValue(chid chid, short *psevr)
 {
 	int status;
@@ -427,7 +433,7 @@ void alCaPutAckValue(chid chid, short *psevr)
 	status = ca_put(DBR_ENUM, chid, psevr);
 
 	if (status != ECA_NORMAL) {
-		errMsg("alCaPutAckValue: ca_put failed for Severity PV %s "
+		errMsg("alCaPutAckValue: ca_put failed for Acknowledge PV %s "
 			"Return status: %s\n",ca_name(chid),ca_message(status));
 	}
 }
@@ -498,9 +504,11 @@ static void alCaChannelAccessRightsEvent(struct access_rights_handler_args args)
 	if (ca_field_type(args.chid) == TYPENOTCONN) return;
 	if (!ca_read_access(args.chid)) {
 		alNewEvent(NO_READ_ACCESS, ERROR_STATE, 0, -1, "0", ca_puser(args.chid));
+		errMsg("No read access for channel %s\n",ca_name(args.chid));
 	}
 	if (!ca_write_access(args.chid) && _global_flag && !_passive_flag) {
 		alNewEvent(NO_WRITE_ACCESS, ERROR_STATE, 0, -1, "0", ca_puser(args.chid));
+		errMsg("No write access for channel %s\n",ca_name(args.chid));
 	}
 }
 
@@ -527,14 +535,16 @@ static void alCaSevrPVAccessRightsEvent(struct access_rights_handler_args args)
 		errMsg("No write access for Severity PV %s\n",ca_name(args.chid));
 	}
 }
-/*
-   this is the same as previous function but for .DESC-field.
- */
+
+
+/*********************************************************************
+ this is  same as previous function but for .DESC-field.
+ *********************************************************************/
 static void alCaAckPVAccessRightsEvent(struct access_rights_handler_args args) 
 {
 	if (ca_field_type(args.chid) == TYPENOTCONN) return;
 	if (!ca_write_access(args.chid) && _global_flag && !_passive_flag) {
-		errMsg("No write access for Ack PV %s\n",ca_name(args.chid));
+		errMsg("No write access for Acknowledge PV %s\n",ca_name(args.chid));
 	}
 }
 
@@ -547,6 +557,9 @@ static void alCaHeartbeatPVAccessRightsEvent(struct access_rights_handler_args a
 	if (ca_field_type(args.chid) == TYPENOTCONN) return;
 	if (!ca_write_access(args.chid) && _global_flag && !_passive_flag) {
 		errMsg("No write access for Heartbeat PV %s\n",ca_name(args.chid));
+		alHeartbeatStop(ca_puser(args.chid));
+	} else {
+		alHeartbeatStart(ca_puser(args.chid));
 	}
 }
 
@@ -559,10 +572,17 @@ static void alCaChannelConnectionEvent(struct connection_handler_args args)
 	if (args.op == CA_OP_CONN_UP) {
 		toBeConnectedCount--;
 		alConnectEvent(ca_puser(args.chid));
+        if (!ca_read_access(args.chid)) {
+            alNewEvent(NO_READ_ACCESS, ERROR_STATE, 0, -1, "0", ca_puser(args.chid));
+			errMsg("No read access for channel %s\n",ca_name(args.chid));
+        } else if (!ca_write_access(args.chid) && _global_flag && !_passive_flag) {
+            alNewEvent(NO_WRITE_ACCESS, ERROR_STATE, 0, -1, "0", ca_puser(args.chid));
+			errMsg("No write access for channel %s\n",ca_name(args.chid));
+        } 
 	} else if (args.op == CA_OP_CONN_DOWN) {
 		alNewEvent(NOT_CONNECTED, ERROR_STATE, 0, -1, "0", ca_puser(args.chid));
 	} else {
-		errMsg("Unknown Connnection Event for PV %s\n",ca_name(args.chid));
+		errMsg("Unknown connection event for channel %s\n",ca_name(args.chid));
 	}
 }
 
@@ -574,11 +594,14 @@ static void alCaForcePVConnectionEvent(struct connection_handler_args args)
 {
 	if (args.op == CA_OP_CONN_UP) {
 		toBeConnectedCount--;
+		if (!ca_read_access(args.chid)) {
+			errMsg("No read access for Force PV %s\n",ca_name(args.chid));
+		}
 	} else if (args.op == CA_OP_CONN_DOWN) {
 		errMsg("Not Connected: Force PV %s for %s\n",
 			ca_name(args.chid),(char *)ca_puser(args.chid));
 	} else {
-		errMsg("Unknown Connection Event Force PV %s for %s\n",
+		errMsg("Unknown connection event Force PV %s for %s\n",
 			ca_name(args.chid),(char *)ca_puser(args.chid));
 	}
 }
@@ -591,11 +614,14 @@ static void alCaSevrPVConnectionEvent(struct connection_handler_args args)
 {
 	if (args.op == CA_OP_CONN_UP) {
 		toBeConnectedCount--;
+		if (!ca_write_access(args.chid) && _global_flag && !_passive_flag) {
+			errMsg("No write access for Severity PV %s\n",ca_name(args.chid));
+		}
 	} else if (args.op == CA_OP_CONN_DOWN) {
 		errMsg("Not Connected: Severity PV %s for %s\n",
 			ca_name(args.chid),(char *)ca_puser(args.chid));
 	} else {
-		errMsg("Unknown Connection Event Severity PV %s for %s\n",
+		errMsg("Unknown connection event Severity PV %s for %s\n",
 			ca_name(args.chid),(char *)ca_puser(args.chid));
 	}
 }
@@ -607,11 +633,14 @@ static void alCaAckPVConnectionEvent(struct connection_handler_args args)
 {
 	if (args.op == CA_OP_CONN_UP) {
 		toBeConnectedCount--;
+		if (!ca_write_access(args.chid) && _global_flag && !_passive_flag) {
+			errMsg("No write access for Acknowledge PV %s\n",ca_name(args.chid));
+		}
 	} else if (args.op == CA_OP_CONN_DOWN) {
-		errMsg("Not Connected: Severity PV %s for %s\n",
+		errMsg("Not Connected: Acknowledge PV %s for %s\n",
 			ca_name(args.chid),(char *)ca_puser(args.chid));
 	} else {
-		errMsg("Unknown Connection Event Severity PV %s for %s\n",
+		errMsg("Unknown connection event Acknowledge PV %s for %s\n",
 			ca_name(args.chid),(char *)ca_puser(args.chid));
 	}
 }
@@ -624,12 +653,17 @@ static void alCaHeartbeatPVConnectionEvent(struct connection_handler_args args)
 {
 	if (args.op == CA_OP_CONN_UP) {
 		toBeConnectedCount--;
-		alHeartbeatStart(ca_puser(args.chid));
+		if (!ca_write_access(args.chid) && _global_flag && !_passive_flag) {
+			errMsg("No write access for Heartbeat PV %s\n",ca_name(args.chid));
+			alHeartbeatStop(ca_puser(args.chid));
+		} else {
+			alHeartbeatStart(ca_puser(args.chid));
+		}
 	} else if (args.op == CA_OP_CONN_DOWN) {
 		errMsg("Not Connected: Heartbeat PV %s\n",ca_name(args.chid));
 		alHeartbeatStop(ca_puser(args.chid));
 	} else {
-		errMsg("Unknown Connection Event Heartbeat PV %s\n",ca_name(args.chid));
+		errMsg("Unknown connection event Heartbeat PV %s\n",ca_name(args.chid));
 	}
 }
 
