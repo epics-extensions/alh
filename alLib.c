@@ -566,12 +566,15 @@ void alNewEvent(int stat,int sevr,int acks,int ackt,char *value,CLINK *clink)
 	time_t alarmTime;
 	unsigned newAckt;
 
+	if (clink == NULL ) return;
 	cdata = clink->pchanData;
+	if (cdata == NULL ) return;
 
 	if (_global_flag) {
 		/* NOTE: ackt and curMask.AckT have opposite meaning */
 		newAckt = (ackt+1)%2; 
-		if (cdata->unackSevr != acks && cdata->curMask.Disable == 0) {
+		if (cdata->unackSevr != acks && cdata->curMask.Disable == 0 &&
+			cdata->curMask.Ack != 1 ) {
 			alSetUnackSevChan(clink,acks);
 		}
 		if (cdata->curMask.AckT != newAckt) {
@@ -617,6 +620,11 @@ void alNewAlarm(int stat,int sev,char *value,CLINK *clink)
 	countFilter->stat = stat;
 	countFilter->sev = sev;
 	strcpy(countFilter->value,value);
+
+	if (sevr_prev==sev){ /* only stat has changed */
+		alNewAlarmProcess(stat,sev,value,clink,alarmTime);
+		return;
+	}
 
  	/* Process the initial connection */
 	if (cdata->curStat==NO_ALARM && cdata->curSevr==ERROR_STATE ) {

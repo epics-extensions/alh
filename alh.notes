@@ -288,3 +288,6 @@ Tue Nov  2 14:10:45 CST 1999
 	Don't do caput for acknowledgment if channel is not connected.
 	Wait for a 1 second period with no connections before writing
 	config file ackt settings.
+
+Fri Nov 12 16:27:37 CST 1999
+	Don't set unack global sevr from alarm events if curMask.Ack==true
