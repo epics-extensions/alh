@@ -268,8 +268,8 @@ void alPutGblAckT(SLIST *proot)
 		if (type == CHANNEL) {
 			cdata = ((CLINK *)gclink)->pchanData;
 			if ( alCaIsConnected(cdata->chid)) {
-				/*NOTE: ackt and curMask.AckT have opposite meaning */
-				short ackt = (cdata->curMask.AckT+1)%2;
+			/*NOTE: ackt and defaultMask.AckT have opposite meaning */
+				short ackt = (cdata->defaultMask.AckT+1)%2;
 				alCaPutGblAckT(cdata->chid,&ackt);
 			}
 		}

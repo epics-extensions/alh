@@ -278,6 +278,7 @@ Wed Oct  6 16:13:50 CDT 1999
 Thu Oct 14 10:11:23 CDT 1999
 	Fixed alarm channel count for include files.
 	Fix for ca put of ACKT values when config file is read.
+	Fix for alarm sevr of initially canceled and disabled channels.
 	
 
 

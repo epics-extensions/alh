@@ -356,21 +356,25 @@ int caConnect,struct mainGroup *pmainGroup)
 	*pglink = clink->parent;
 	*pclink = clink;
 
-	cdata->curSevr=ERROR_STATE;
+	if (mask) {
+		alSetMask(mask,&(cdata->defaultMask));
+		alSetCurChanMask(clink,cdata->defaultMask);
+	}
+
+	if (cdata->curMask.Cancel==1 || cdata->curMask.Disable==1) {
+		cdata->curSevr=NO_ALARM;
+	} else {
+		cdata->curSevr=ERROR_STATE;
+	}
 	cdata->curStat=NO_ALARM;
 	while(parent_link!=NULL) {
-		parent_link->pgroupData->curSev[ERROR_STATE] ++;
+		parent_link->pgroupData->curSev[cdata->curSevr] ++;
 		parent_link->pgroupData->unackSev[NO_ALARM] ++;
 		parent_link = parent_link->parent;
 	}
 
 	if (caConnect && strlen(cdata->name) > (size_t) 1) {
 		alCaConnectChannel(cdata->name,&cdata->chid,clink);
-	}
-
-	if (mask) {
-		alSetMask(mask,&(cdata->defaultMask));
-		alSetCurChanMask(clink,cdata->defaultMask);
 	}
 
 	if (caConnect && cdata->curMask.Cancel == 0) {
