@@ -228,7 +228,6 @@ struct mainGroup *pmainGroup)
 static void GetIncludeLine(char *buf,GLINK **pglink,int caConnect,
 struct mainGroup *pmainGroup)
 {
-	GLINK *glink;
 	GLINK *glinkHold;
 	char command[20];
 	int  rtn;
@@ -264,7 +263,7 @@ struct mainGroup *pmainGroup)
 			print_error(buf,"Missing parent");
 			return;
 		}
-		glink->parent = NULL;
+		parent_link = NULL;
 	}
 
 	/* must find parent */
