@@ -1,4 +1,4 @@
-#
+
 # $Id$
 #
 
@@ -8,12 +8,15 @@ include $(TOP)/config/CONFIG_EXTENSIONS
 I_WANT_CDEV             = NO
 I_WANT_GREETINGS        = NO
 I_WANT_CMLOG		= NO
-#I_WANT_CMLOG		= YES
 
 # These should really be done in <TOP>/config/RELEASE, but
 # defining things here overrides these values.
 #CMLOG=/opt/OPI/cmlog
+#CMLOG=/home/phoebus/JBA/jlab/CMLOG_4jun99
 ##EPICS_BASE=/home/controls/epics/baseR3.13.1
+#CDEV_DIR = /home/phoebus6/JBA/jlab/cdev1-7
+#CDEVINCLUDE = $(CDEV_DIR)/include
+#CDEVLIB = $(CDEV_DIR)/lib/$(HOST_ARCH)
 
 ifeq ($(I_WANT_GREETINGS),YES)
 alh_CFLAGS += -DIWantGreetings
@@ -42,14 +45,17 @@ ifeq ($(I_WANT_CDEV),YES)
   CDEV_LIB      = $(CDEVLIB)
   CDEV_INC      = $(CDEVINCLUDE)
 
-  USR_CCFLAGS      += -g
-  USR_CCFLAGS      += -D__STDC__
-  USR_CCFLAGS      += -I$(CDEV_INC)
+  #USR_CXXFLAGS      += -g
+  #USR_CXXFLAGS      += -D__STDC__
+  #USR_LDFLAGS      += -Wl,-E
 
-  USR_LDFLAGS      += -Wl,-E
+  USR_CXXFLAGS      += -features=no%conststrings
+  USR_CXXFLAGS      += -I$(CDEV_INC)
 
-  PROD_LIBS_DEFAULT += -lcdev
+  PROD_LIBS_DEFAULT += caService cdev
+  PROD_LIBS_DEFAULT += caService cdev ca Com
   cdev_DIR = $(CDEV_LIB)
+  caService_DIR = $(CDEV_LIB)
 
 ifeq ($(ANSI), GCC)
   PROD_LIBS += EpicsCa ca
@@ -64,12 +70,15 @@ else
   alh_SRCS         += alCA.c
 endif
 
-INCLUDES += -I/usr/contrib/X11R5/include -I$(MOTIF_INC) -I$(X11_INC)
+#USR_INCLUDES += -I/usr/contrib/X11R5/include -I$(MOTIF_INC) -I$(X11_INC)
+USR_INCLUDES += -I$(MOTIF_INC) -I$(X11_INC)
 
 # baseR3.13.0.beta12 and later
 awAlh_CFLAGS += -DALH_HELP_URL="\"http://www.aps.anl.gov/asd/controls/epics/EpicsDocumentation/ExtensionsManuals/AlarmHandler/ALHUserGuide/ALHUserGuide.html\""
 
 # Debugging options
+#PURIFY=YES
+
 #ifneq ($(HOST_ARCH),WIN32)
 #CC = purify -first-only -chain-length=25  $($(ANSI)_$(CMPLR))
 #CXX = purify -first-only -chain-length=25  $($(CPLUSPLUS)_$(CXXCMPLR))
@@ -128,24 +137,27 @@ X11_DIR = $(X11_LIB)
 Xp_DIR = $(MOTIF_LIB)
 
 ifeq ($(EXCEED),Exceed5)
+# We cannot distribute Exceed Xm dynamic library.
   PROD_LIBS_WIN32 = XmStatic Xt XlibGUI Xlib Xmu
 endif
+# We cannot distribute Exceed HCLXm dynamic library.
 ifeq ($(EXCEED),Exceed6)
   PROD_LIBS_WIN32 = XmStatic HCLXt XlibGUI Xlib HCLXmu
 endif
+# We cannot distribute Exceed HCLXm dynamic library.
 ifeq ($(EXCEED),Exceed6.1)
-  PROD_LIBS_WIN32 = HCLXm HCLXt XlibGUI Xlib
-  #PROD_LIBS_WIN32 = XmStatic XMSTATXT XlibGUI Xlib
-  #USR_CFLAGS_WIN32 += -DXMSTATIC
+  #PROD_LIBS_WIN32 = HCLXm HCLXt XlibGUI Xlib
+  PROD_LIBS_WIN32 = XmStatic XMSTATXT XlibGUI Xlib
+  USR_CFLAGS_WIN32 += -DXMSTATIC
 endif
 
-#XmStatic_DIR = $(MOTIF_LIB)
+XmStatic_DIR = $(MOTIF_LIB)
 HCLXm_DIR = $(MOTIF_LIB)
 HCLXt_DIR = $(X11_LIB)
 XlibGUI_DIR = $(X11_LIB)
 Xlib_DIR = $(X11_LIB)
-#HCLXmu_DIR = $(X11_LIB)
-#XMSTATXT_DIR = $(X11_LIB)
+HCLXmu_DIR = $(X11_LIB)
+XMSTATXT_DIR = $(X11_LIB)
 
 RCS_WIN32 += alh.rc
 
