@@ -367,8 +367,20 @@ static void alCaNewAlarmEvent(struct event_handler_args args)
 
 	stat = ((struct dbr_stsack_string *) args.dbr)->status;
 	sevr = ((struct dbr_stsack_string *) args.dbr)->severity;
-	ackt = ((struct dbr_stsack_string *) args.dbr)->ackt;
 	acks = ((struct dbr_stsack_string *) args.dbr)->acks;
+	ackt = ((struct dbr_stsack_string *) args.dbr)->ackt;
+
+	if (stat >= ALARM_NSTATUS) stat = ALARM_NSTATUS-1;
+	if (stat < 0) sevr = 0;
+
+	if (sevr >= ALARM_NSEV) sevr = ALARM_NSEV-1;
+	if (sevr < 0) sevr = 0;
+
+	if (acks >= ALARM_NSEV) acks = ALARM_NSEV-1;
+	if (acks < 0) acks = 0;
+
+	if (ackt != TRUE && ackt != FALSE) ackt = TRUE;
+
 	strcpy(value, ((struct dbr_stsack_string *) args.dbr)->value);
 
 	switch (args.status) {
