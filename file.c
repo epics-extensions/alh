@@ -652,40 +652,24 @@ int programId,Widget widget)
 			break;
 
 		case FILE_ALARMLOG:
-			if (fo) alLogOpModMessage(0,0,
-				"Setup Alarm Log File : %s",filename);
+			if (fo) alLogOpModMessage(0,0,"Setup Alarm Log File : %s",filename);
 			strcpy(psetup.logFile,filename);
 			if (fl) fclose(fl); /* RO-flag. Albert */
 			if(_read_only_flag)  fl = fopen(psetup.logFile,"r");
 			else if((_time_flag)||(_lock_flag))  fl = fopen(psetup.logFile,"a");
-			else fl = fopen(psetup.logFile,"r+");
-                        if (!fl) perror("CAN'T OPEN LOG FILE"); /* Albert */
-  			/*---------------- 
-			                    if (alarmLogFileMaxRecords && alarmLogFileEndStringLength) {
-			                        fseek(fl,0,SEEK_SET);
-			                        while (fgets(str,sizeof(str),fl)) {
-			                            if(strncmp(alarmLogFileEndString,str,
-			                                     alarmLogFileEndStringLength)==0){
-			                                fseek(fl,-strlen(str),SEEK_CUR);
-			                                break;
-			                            }
-			                        }
-			                        alarmLogFileOffsetBytes = ftell(fl);
-			                    } else {
-			                         fseek(fl,0,SEEK_END);
-			                    }
-			----------------*/
+			else fl = fopen(psetup.logFile,"w+");
+			if (!fl) perror("CAN'T OPEN LOG FILE"); /* Albert */
+			if (alarmLogFileMaxRecords) alarmLogFileOffsetBytes = 0;
 			break;
 
 		case FILE_OPMOD:
-			if (fo) alLogOpModMessage(0,0,
-				"Setup OpMod File : %s",filename);
+			if (fo) alLogOpModMessage(0,0,"Setup OpMod File : %s",filename);
 			strcpy(psetup.opModFile,filename);
 			if (fo) fclose(fo);
 			if(!_read_only_flag) fo=fopen(psetup.opModFile,"a");
 			/* RO-option. Albert */
 			else fo=fopen(psetup.opModFile,"r");
-                        if (!fo) perror("CAN'T OPEN OP FILE"); /* Albert */
+			if (!fo) perror("CAN'T OPEN OP FILE"); /* Albert */
 			break;
 
 		case FILE_SAVEAS:
