@@ -226,3 +226,6 @@ Wed Jun  2 13:16:33 CDT 1999
 	which sometimes caused a core dump.
 	Removed alAllocGroup/alAllocChan (alCreateGroup/alCreateChannel used).
 	Current Alarm History data no longer global, now part of area structure.
+
+Mon Jun  7 09:20:02 CDT 1999
+	Modified definition of netscape path.
