@@ -346,12 +346,6 @@ int caConnect,struct mainGroup *pmainGroup)
 	cdata = clink->pchanData;
 	strncpy(cdata->name,name,PVNAME_SIZE);
 
-
-	if (mask[0]) {
-		alSetMask(mask,&(cdata->defaultMask));
-		alChangeChanMask(clink,cdata->defaultMask);
-	}
-
 	/* must find parent */
 	parent_link = *pglink;
 	while(parent_link!=NULL && strcmp(parent_link->pgroupData->name,parent)!=0)
@@ -373,6 +367,12 @@ int caConnect,struct mainGroup *pmainGroup)
 		parent_link->pgroupData->curSev[ERROR_STATE] ++;
 		parent_link->pgroupData->unackSev[NO_ALARM] ++;
 		parent_link = parent_link->parent;
+	}
+
+	/* Set channel mask */
+	if (mask[0]) {
+		alSetMask(mask,&(cdata->defaultMask));
+		alChangeChanMask(clink,cdata->defaultMask);
 	}
 
 	if (caConnect && strlen(cdata->name) > (size_t) 1) {
