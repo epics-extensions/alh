@@ -1,58 +1,4 @@
-/*
- $Log$
- Revision 1.5  1998/05/12 18:22:42  evans
- Initial changes for WIN32.
-
- Revision 1.4  1997/09/12 19:30:14  jba
- Added test for treeSym.
-
- Revision 1.3  1995/10/20 16:50:02  jba
- Modified Action menus and Action windows
- Renamed ALARMCOMMAND to SEVRCOMMAND
- Added STATCOMMAND facility
- Added ALIAS facility
- Added ALARMCOUNTFILTER facility
- Make a few bug fixes.
-
- * Revision 1.2  1994/06/22  21:16:43  jba
- * Added cvs Log keyword
- *
- */
-
-static char *sccsId = "@(#)alView.c	1.6\t9/20/93";
-
-/*  alView.c
- *      Author: Janet Anderson
- *      Date:   12-20-90
- *
- *      Experimental Physics and Industrial Control System (EPICS)
- *
- *      Copyright 1991, the Regents of the University of California,
- *      and the University of Chicago Board of Governors.
- *
- *      This software was produced under  U.S. Government contracts:
- *      (W-7405-ENG-36) at the Los Alamos National Laboratory,
- *      and (W-31-109-ENG-38) at Argonne National Laboratory.
- *
- *      Initial development by:
- *              The Controls and Automation Group (AT-8)
- *              Ground Test Accelerator
- *              Accelerator Technology Division
- *              Los Alamos National Laboratory
- *
- *      Co-developed with
- *              The Controls and Computing Group
- *              Accelerator Systems Division
- *              Advanced Photon Source
- *              Argonne National Laboratory
- *
- * Modification Log:
- * -----------------
- * .02  02-16-93        jba     View routines for new user interface
- * .nn  mm-dd-yy        iii     Comment
- *      ...
- */
-/* alView.c */
+/* $Id$ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -62,88 +8,14 @@ static char *sccsId = "@(#)alView.c	1.6\t9/20/93";
 #include "alLib.h"
 #include "ax.h"
 
-
-
-/*
-**************************************************************
-	routines defined in alView.c
-*************************************************************
-*
-*-----------------------------------------------------------------
-*    routines related to the current configuration view
-*-----------------------------------------------------------------
-* 
-int alViewAdjustGroupW(glink,viewFilter) Returns groupWindow viewCount
-     GLINK *glink;                    for new glink
-     int (viewFilter)();
-* 
-int alViewAdjustTreeW(glink, command, viewFilter) Uses command to adjust treeW view 
-     GLINK *glink;                    at glink and return new viewCount
-     int command;
-     int (viewFilter)();
-*
-GCLINK *alViewNextTreeW(glink,plinkType)   Return next treeWindow item open 
-     GLINK  *glink;                   for view
-     int *plinkType;
-*
-GCLINK *
-alViewNextGroupW(link,plinkType)       Returns next groupWindow item 
-     GCLINK  *link;
-     int *plinkType;
-     int (viewFilter)();
-*
-GCLINK *
-alViewNthTreeW(glinkStart,plinkType,n)     Returns Nth treeWindow item open
-     GLINK        *glinkStart;        for view
-     int          *plinkType;
-     int           n;
-*
-GCLINK *
-alViewNthGroupW(link,plinkType,n)      Returns Nth groupWindow item
-     GLINK      *link;                
-     int         *plinkType;
-     int          n;
-*
-int alViewMaxSevrNTreeW(glinkStart,n)      treeWindow - Get max sevr in range
-     GLINK       *glinkStart;         from glinkstart to Nth item following
-     int          n;                  glinkstart
-*
-int alViewMaxSevrNGroupW(linkStart,n)  groupWindow - Get max sevr in range
-     GCLINK       *linkStart;         from glinkstart to Nth item following
-     int          n;                  glinkstart
-*
- -------------
- |  PRIVATE  |
- -------------
-*
-static void treeView(glink, command, treeSym, viewFilter)
-     GLINK *glink;
-     int command;
-     char *treeSym
-     int (viewFilter)();
-
-*/
-
-
-
-#ifdef __STDC__
-
+/* forward declarations */
 static void treeView( GLINK *glink, int command, char *treeSym, int (*viewFilter)());
-
-#else
-
-static void treeView();
-
-#endif /*__STDC__*/
 
 
 /***************************************************
-  alViewAdjustGroupW
+  Returns groupWindow viewCount for new glink
 ****************************************************/
-
-int alViewAdjustGroupW(glink, viewFilter)
-     GLINK *glink;
-     int (*viewFilter)();
+int alViewAdjustGroupW(GLINK *glink,int (*viewFilter)())
 {
      SNODE *pt;
      int count=0;
@@ -166,13 +38,9 @@ int alViewAdjustGroupW(glink, viewFilter)
 }
 
 /***************************************************
-  alViewAdjustTreeW
+  Uses command to adjust treeW view at glink and return new viewCount
 ****************************************************/
-
-int alViewAdjustTreeW(glink, command, viewFilter)
-     GLINK *glink;
-     int command;
-     int (*viewFilter)();
+int alViewAdjustTreeW(GLINK *glink,int command,int (*viewFilter)())
 {
      GLINK             *glinkTemp;
      int                holdViewCount, diffCount, count;
@@ -201,12 +69,7 @@ int alViewAdjustTreeW(glink, command, viewFilter)
 /***************************************************
   treeView
 ****************************************************/
-
-static void treeView(glink, command, treeSym, viewFilter)
-     GLINK *glink;
-     int command;
-     char  *treeSym;
-     int (*viewFilter)();
+static void treeView(GLINK *glink,int command,char *treeSym,int (*viewFilter)())
 {
      SNODE	*pt;
      int	 subcommand;
@@ -286,12 +149,9 @@ static void treeView(glink, command, treeSym, viewFilter)
 }
 
 /***************************************************
-  alViewNextTreeW
+  Return next treeWindow item open for view
 ****************************************************/
-
-GCLINK *alViewNextTreeW(glink,plinkType)
-     GLINK  *glink;
-     int *plinkType;
+GCLINK *alViewNextTreeW(GLINK *glink,int *plinkType)
 {
      GLINK  *glinkTemp;
      SNODE *pt;
@@ -332,12 +192,9 @@ GCLINK *alViewNextTreeW(glink,plinkType)
 }
 
 /***************************************************
-  alViewNextGroupW
+  Return next groupWindow item open for view
 ****************************************************/
-
-GCLINK *alViewNextGroupW(link,plinkType)
-     GCLINK  *link;
-     int *plinkType;
+GCLINK *alViewNextGroupW(GCLINK *link,int *plinkType)
 {
      SNODE *pt;
      GLINK  *parent;
@@ -360,12 +217,9 @@ GCLINK *alViewNextGroupW(link,plinkType)
 }
 
 /***************************************************
-  alViewNthTreeW
+  Return nth treeWindow item open for view
 ****************************************************/
-GCLINK *alViewNthTreeW(glinkStart,plinkType,n)
-     GLINK        *glinkStart;
-     int          *plinkType;
-     int           n;
+GCLINK *alViewNthTreeW(GLINK *glinkStart,int *plinkType,int n)
 {
      GLINK        *glink;
      int           count;
@@ -399,13 +253,11 @@ GCLINK *alViewNthTreeW(glinkStart,plinkType,n)
      if (count != n) return(NULL);
      return((GCLINK *)glink);
 }
+
 /***************************************************
-  alViewNthGroupW
+  Return nth groupWindow item open for view
 ****************************************************/
-GCLINK *alViewNthGroupW(link,plinkType,n)
-     GLINK      *link;
-     int         *plinkType;
-     int          n;
+GCLINK *alViewNthGroupW(GLINK *link,int *plinkType,int n)
 {
 
      SNODE       *pt;
@@ -435,12 +287,12 @@ GCLINK *alViewNthGroupW(link,plinkType,n)
      }
      return((GCLINK *)pt);
 }
+
 /***************************************************
-  alViewMaxSevrNGroupW
+ Get groupWindow max sevr in range from glinkstart
+ to Nth item following linkstart
 ****************************************************/
-int alViewMaxSevrNGroupW(linkStart,n)
-     GCLINK       *linkStart;
-     int          n;
+int alViewMaxSevrNGroupW(GCLINK *linkStart,int n)
 {
      GLINK       *glink;
      GLINK       *parent;
@@ -498,12 +350,12 @@ int alViewMaxSevrNGroupW(linkStart,n)
      }
      return(sevr);
 }
+
 /***************************************************
-  alViewMaxSevrNTreeW
+ Get treeWindow max sevr in range from glinkstart
+ to nth item following glinkstart
 ****************************************************/
-int alViewMaxSevrNTreeW(glinkStart,n)
-     GLINK       *glinkStart;
-     int          n;
+int alViewMaxSevrNTreeW(GLINK *glinkStart,int n)
 {
      GLINK       *glink;
      CLINK       *clink=0;
@@ -546,3 +398,4 @@ int alViewMaxSevrNTreeW(glinkStart,n)
      }
      return(sevr);
 }
+

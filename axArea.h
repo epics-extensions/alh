@@ -1,72 +1,7 @@
-/*
- $Log$
- Revision 1.7  1998/08/05 18:20:09  jba
- Added silenceOneHour button.
- Moved silenceForever button to Setup menu.
- Added logging for operator silence changes.
-
- Revision 1.6  1998/05/13 19:29:49  evans
- More WIN32 changes.
-
- Revision 1.5  1998/05/12 18:22:46  evans
- Initial changes for WIN32.
-
- Revision 1.4  1995/11/13 22:31:26  jba
- Added beepseverity command, ansi changes and other changes.
-
- * Revision 1.3  1995/10/20  16:50:25  jba
- * Modified Action menus and Action windows
- * Renamed ALARMCOMMAND to SEVRCOMMAND
- * Added STATCOMMAND facility
- * Added ALIAS facility
- * Added ALARMCOUNTFILTER facility
- * Make a few bug fixes.
- *
- * Revision 1.2  1994/06/22  21:17:07  jba
- * Added cvs Log keyword
- *
- */
-
-/* axArea.h */
-
-/* share/src/act	@(#)axArea.h	1.6	G% */
-/* axArea.h - Alarm Handler */
-/*
- *      Author:		Janet Anderson
- *      Date:		02-16-93
- *
- *	Experimental Physics and Industrial Control System (EPICS)
- *
- *	Copyright 1991, the Regents of the University of California,
- *	and the University of Chicago Board of Governors.
- *
- *	This software was produced under  U.S. Government contracts:
- *	(W-7405-ENG-36) at the Los Alamos National Laboratory,
- *	and (W-31-109-ENG-38) at Argonne National Laboratory.
- *
- *	Initial development by:
- *		The Controls and Automation Group (AT-8)
- *		Ground Test Accelerator
- *		Accelerator Technology Division
- *		Los Alamos National Laboratory
- *
- *	Co-developed with
- *		The Controls and Computing Group
- *		Accelerator Systems Division
- *		Advanced Photon Source
- *		Argonne National Laboratory
- *
- *
- * Modification Log:
- * -----------------
- * .01	12-10-93		jba	endif comment changed to proper c comment
- * .01	mm-dd-yy		nnn	Description
- */
+/* Id$ */
 
 #ifndef INCaxAreah
 #define INCaxAreah
-
-static char *axAreahSccsId ="@(#)axArea.h	1.4\t9/9/93"; 
 
 #include <Xm/Xm.h>
 
@@ -144,20 +79,3 @@ typedef struct _menu_item {
 
 #endif /* INCaxAreah */
 
-/********************************************************************
-  BRIEF DESCRIPTIONS OF FUNCTIONS DEFINED IN axArea.c 
-
-  Routines related to setting up an area config and area Main Window
-
-*********************************************************************
-
-buildPulldownMenu()              Main Window Menu creation
-setupConfig()                    Setup area for new config.file
-createMainWindowWidgets()        Create area Main Window widgets
-markActiveWidget()               Mark active widget border
-setupArea()                      Initialize an area 
-isTreeWindow()                   Returns TRUE if area treeWindow 
-scale_callback()                 Scale moved callback
-markSelectionArea()              Set area selection values
-
-*********************************************************************/

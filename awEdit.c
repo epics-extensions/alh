@@ -1,97 +1,23 @@
-/*
- $Log$
- Revision 1.7  1998/05/12 18:22:44  evans
- Initial changes for WIN32.
+/* $Id$ */
 
- Revision 1.6  1997/09/12 19:36:41  jba
- Changes to get cut/paste working.
- Bug fixes for tree and group window views.
-
- Revision 1.5  1997/09/09 22:23:43  jba
- Added initialization of undo data.
-
- Revision 1.4  1995/10/20 16:50:15  jba
- Modified Action menus and Action windows
- Renamed ALARMCOMMAND to SEVRCOMMAND
- Added STATCOMMAND facility
- Added ALIAS facility
- Added ALARMCOUNTFILTER facility
- Make a few bug fixes.
-
- * Revision 1.3  1995/05/31  20:34:08  jba
- * Added name selection and arrow functions to Group window
- *
- * Revision 1.2  1994/06/22  21:16:56  jba
- * Added cvs Log keyword
- *
- */
-
-static char *sccsId = "@(#)awEdit.c	1.1\t10/22/93";
-
-/* awEdit.c */
-/*
- *      Author:		Janet Anderson
- *      Date:		09-28-92
- *
- *	Experimental Physics and Industrial Control System (EPICS)
- *
- *	Copyright 1991, the Regents of the University of California,
- *	and the University of Chicago Board of Governors.
- *
- *	This software was produced under  U.S. Government contralhs:
- *	(W-7405-ENG-36) at the Los Alamos National Laboratory,
- *	and (W-31-109-ENG-38) at Argonne National Laboratory.
- *
- *	Initial development by:
- *		The Controls and Automation Group (AT-8)
- *		Ground Test Accelerator
- *		Accelerator Technology Division
- *		Los Alamos National Laboratory
- *
- *	Co-developed with
- *		The Controls and Computing Group
- *		Accelerator Systems Division
- *		Advanced Photon Source
- *		Argonne National Laboratory
- *
- *
- * Modification Log:
- * -----------------
- * .01	mm-dd-yy		nnn	Description
- */
-
-/*
-******************************************************************
-	routines defined in awEdit.c
-******************************************************************
-         Routines for ACT specific menu, line, and callbacks
-******************************************************************
--------------
-|   PUBLIC  |
--------------
-*
-
-*************************************************************************
-*/
-
-/*
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include <alarm.h>
-
-#include <alh.h>
-#include <line.h>
-#include <axSubW.h>
-#include <alLib.h>
-
 #include <Xm/Xm.h>
-*/
 
-#include <axArea.h>
-#include <sllLib.h>
-#include <ax.h>
+#include "alarm.h"
+
+#include "alh.h"
+#include "line.h"
+#include "axSubW.h"
+#include "alLib.h"
+#include "axArea.h"
+#include "sllLib.h"
+#include "ax.h"
+
+#define KEEP 0
+#define ALH_DELETE 1
 
 static struct undoInfo {
      GCLINK *link;
@@ -106,21 +32,13 @@ struct clipInfo {
      int linkType;
 } clipData = { 0, 0 };
 
-#define KEEP 0
-#define ALH_DELETE 1
 
 
-
 /******************************************************
   editUndoSet
 ******************************************************/
-
-void editUndoSet(link, linkType, configLink, command, delete)
-     GCLINK *link;
-     int linkType;
-     GCLINK *configLink;
-     int command;
-     int delete;
+void editUndoSet(GCLINK *link,int linkType,GCLINK *configLink,
+     int command,int delete)
 {
      /* delete unused configLink group or channel */
 /*
@@ -140,11 +58,7 @@ void editUndoSet(link, linkType, configLink, command, delete)
 /******************************************************
   editUndoGet
 ******************************************************/
-
-void editUndoGet(plink, plinkType, pconfigLink)
-     GCLINK **plink;
-     int *plinkType;
-     GCLINK **pconfigLink;
+void editUndoGet(GCLINK **plink,int *plinkType,GCLINK **pconfigLink)
 {
      static int undoInit=1;
 
@@ -162,7 +76,6 @@ void editUndoGet(plink, plinkType, pconfigLink)
 /******************************************************
   editUndoGetCommand
 ******************************************************/
-
 int editUndoGetCommand()
 {
      return undoData.command;
@@ -171,10 +84,7 @@ int editUndoGetCommand()
 /******************************************************
   editClipboardGet
 ******************************************************/
-
-void editClipboardGet(plink, plinkType)
-     GCLINK **plink;
-     int *plinkType;
+void editClipboardGet(GCLINK **plink,int *plinkType)
 {
      if (clipData.linkType == GROUP){
          *plink = (GCLINK *)alCopyGroup((GLINK *)clipData.link);
@@ -187,10 +97,7 @@ void editClipboardGet(plink, plinkType)
 /******************************************************
   editClipboardSet
 ******************************************************/
-
-void editClipboardSet(link, linkType)
-     GCLINK *link;
-     int linkType;
+void editClipboardSet(GCLINK *link,int linkType)
 {
      if (clipData.linkType == GROUP)
           alDeleteGroup((GLINK *)clipData.link);
@@ -208,11 +115,7 @@ void editClipboardSet(link, linkType)
 /******************************************************
   editCutLink
 ******************************************************/
-
-void editCutLink( area, link, linkType)
-     ALINK *area;
-     GCLINK *link;
-     int linkType;
+void editCutLink(ALINK *area,GCLINK *link,int linkType)
 {
      struct subWindow  *groupWindow,*treeWindow;
      GLINK *parent;
@@ -438,9 +341,7 @@ void editCutLink( area, link, linkType)
 /******************************************************
   editInsertFile
 ******************************************************/
-void editInsertFile(filename,area)
-     char *filename;
-     ALINK *area;
+void editInsertFile(char *filename,ALINK *area)
 {
      GCLINK *newLink;
      GLINK *linkHold;
@@ -463,10 +364,7 @@ void editInsertFile(filename,area)
 /******************************************************
   editPasteLink
 ******************************************************/
-void editPasteLink(area, newLink, linkType)
-     ALINK *area;
-     GCLINK *newLink;
-     int linkType;
+void editPasteLink(ALINK *area,GCLINK *newLink,int linkType)
 {
      struct subWindow  *treeWindow;
      GCLINK *parentLink;
@@ -480,16 +378,19 @@ void editPasteLink(area, newLink, linkType)
 
      treeWindow = area->treeWindow;
 
-     editUndoSet( NULL, linkType, (GCLINK *)newLink, MENU_EDIT_UNDO_CUT_NOSELECT, ALH_DELETE);
+     editUndoSet( NULL, linkType, (GCLINK *)newLink,
+                  MENU_EDIT_UNDO_CUT_NOSELECT, ALH_DELETE);
 
      if (linkType == GROUP){
           
           /* add/insert group link */
           parentLink = treeWindow->selectionLink;
-          if ( selectLink == parentLink || selectLink == NULL || selectType == CHANNEL ){
+          if ( selectLink == parentLink || selectLink == NULL ||
+               selectType == CHANNEL ){
                alPrecedeGroup((GLINK *)parentLink, NULL, (GLINK *)newLink);
           } else {
-               alPrecedeGroup((GLINK *)parentLink, (GLINK *)selectLink, (GLINK *)newLink);
+               alPrecedeGroup((GLINK *)parentLink,(GLINK *)selectLink,
+                              (GLINK *)newLink);
           }
 
           awViewNewGroup(area, (GCLINK *)newLink);
@@ -498,10 +399,12 @@ void editPasteLink(area, newLink, linkType)
 
           /* add/insert channel link */
           parentLink = treeWindow->selectionLink;
-          if ( selectLink == parentLink || selectLink == NULL  || selectType == GROUP){
+          if ( selectLink == parentLink || selectLink == NULL  ||
+               selectType == GROUP){
                alPrecedeChan((GLINK *)parentLink, NULL, (CLINK *)newLink);
           } else {
-               alPrecedeChan((GLINK *)parentLink, (CLINK *)selectLink, (CLINK *)newLink);
+               alPrecedeChan((GLINK *)parentLink,(CLINK *)selectLink,
+                             (CLINK *)newLink);
           }
 
           awViewNewChan(area, (GCLINK *)newLink);
@@ -515,3 +418,4 @@ void editPasteLink(area, newLink, linkType)
           awRowWidgets(newLink->parent->lineGroupW,area);
 
 }
+

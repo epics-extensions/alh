@@ -1,82 +1,4 @@
-/*
- $Log$
- Revision 1.8  1998/07/07 20:51:01  jba
- Added alh versioning.
-
- Revision 1.7  1998/05/12 18:22:43  evans
- Initial changes for WIN32.
-
- Revision 1.6  1997/09/12 19:31:19  jba
- Change to get cut/paste clipboard working.
-
- Revision 1.5  1997/09/09 22:21:19  jba
- Changed Help menu and fixed Properties Window.
-
- Revision 1.4  1997/09/03 18:25:33  jba
- Removed calls to propShowDialog from menu insert channel/group.
-
- Revision 1.3  1995/10/20 16:50:09  jba
- Modified Action menus and Action windows
- Renamed ALARMCOMMAND to SEVRCOMMAND
- Added STATCOMMAND facility
- Added ALIAS facility
- Added ALARMCOUNTFILTER facility
- Make a few bug fixes.
-
- * Revision 1.2  1994/06/22  21:16:50  jba
- * Added cvs Log keyword
- *
- */
-
-static char *sccsId = "@(#)awAct.c	1.16\t12/15/93";
-
-/* awAct.c */
-/*
- *      Author:		Janet Anderson
- *      Date:		09-28-92
- *
- *	Experimental Physics and Industrial Control System (EPICS)
- *
- *	Copyright 1991, the Regents of the University of California,
- *	and the University of Chicago Board of Governors.
- *
- *	This software was produced under  U.S. Government contralhs:
- *	(W-7405-ENG-36) at the Los Alamos National Laboratory,
- *	and (W-31-109-ENG-38) at Argonne National Laboratory.
- *
- *	Initial development by:
- *		The Controls and Automation Group (AT-8)
- *		Ground Test Accelerator
- *		Accelerator Technology Division
- *		Los Alamos National Laboratory
- *
- *	Co-developed with
- *		The Controls and Computing Group
- *		Accelerator Systems Division
- *		Advanced Photon Source
- *		Argonne National Laboratory
- *
- *
- * Modification Log:
- * -----------------
- * .01	mm-dd-yy		nnn	Description
- * .02  12-10-93        jba changes for new command line dir and file options 
- */
-
-/*
-******************************************************************
-	routines defined in awAct.c
-******************************************************************
-         Routines for ACT specific menu, line, and callbacks
-******************************************************************
--------------
-|   PUBLIC  |
--------------
-*
-
-*************************************************************************
-*/
-
+/* $Id$ */
 
 #include <stdio.h>
 
@@ -91,12 +13,14 @@ static char *sccsId = "@(#)awAct.c	1.16\t12/15/93";
 #include "epicsVersion.h"
 #include "version.h"
 
+#define KEEP 0
+#define ALH_DELETE 1
+
 /* external variables */
 extern ALINK *alhArea;
 extern char alhVersionString[60];
 
 /* prototypes for static routines */
-#ifdef __STDC__
 static void actFileCallback(Widget widget, XtPointer calldata, XtPointer cbs);
 static void actEditCallback(Widget widget, XtPointer calldata, XtPointer cbs);
 static void actInsertCallback(Widget widget, XtPointer calldata, XtPointer cbs);
@@ -104,29 +28,12 @@ static void actViewCallback(Widget widget, XtPointer calldata, XtPointer cbs);
 static void actHelpCallback(Widget widget, XtPointer calldata, XtPointer cbs);
 static int checkActiveSelection(ALINK *area);
 static int checkActiveSelectionMainGroup(ALINK *area);
-#else
-static void actFileCallback();
-static void actEditCallback();
-static void actInsertCallback();
-static void actViewCallback();
-static void actHelpCallback();
-static int checkActiveSelection();
-static int checkActiveSelectionMainGroup();
-#endif /*__STDC__*/
-
-#define KEEP 0
-#define ALH_DELETE 1
 
 
-
 /******************************************************
-  actCreateMenu
+ Create ACT MenuBar
 ******************************************************/
-
-/* Create ACT MenuBar */
-Widget actCreateMenu(parent, user_data)
-     Widget     parent;
-     XtPointer  user_data;
+Widget actCreateMenu(Widget parent,XtPointer user_data)
 {
      Widget     widget;
      static MenuItem file_menu[] = {
@@ -234,22 +141,6 @@ Widget actCreateMenu(parent, user_data)
          {NULL},
      };
      
-/*
-     static MenuItem bar_menu[] = {
-           { "File",   &xmCascadeButtonGadgetClass, 'F', NULL, NULL,
-               0, 0, file_menu },
-           { "Edit",   &xmCascadeButtonGadgetClass, 'E', NULL, NULL,
-               0, 0, edit_menu },
-           { "Insert", &xmCascadeButtonGadgetClass, 'I', NULL, NULL,
-               0, 0, insert_menu },
-           { "View",   &xmCascadeButtonGadgetClass, 'V', NULL, NULL,
-               0, 0, view_menu },
-           { "Help",   &xmCascadeButtonGadgetClass, 'H', NULL, NULL,
-               0, 0, help_menu },
-         {NULL},
-     };
-*/
-
      Widget menubar;
 
      menubar = XmCreateMenuBar(parent, "menubar", NULL, 0);
@@ -277,7 +168,6 @@ Widget actCreateMenu(parent, user_data)
 /******************************************************
   actFileCallback
 ******************************************************/
-
 static void actFileCallback(Widget widget, XtPointer calldata, XtPointer cbs)
 {
      ALINK  *area;
@@ -384,7 +274,6 @@ static void actFileCallback(Widget widget, XtPointer calldata, XtPointer cbs)
 /******************************************************
   actEditCallback
 ******************************************************/
-
 static void actEditCallback(Widget widget, XtPointer calldata, XtPointer cbs)
 {
      int item=(int)calldata;
@@ -608,7 +497,6 @@ static void actEditCallback(Widget widget, XtPointer calldata, XtPointer cbs)
 /******************************************************
   actInsertCallback
 ******************************************************/
-
 static void actInsertCallback(Widget widget, XtPointer calldata, XtPointer cbs)
 {
      int item=(int)calldata;
@@ -651,18 +539,19 @@ static void actInsertCallback(Widget widget, XtPointer calldata, XtPointer cbs)
 
              area->managed = FALSE;
              createFileDialog(area->form_main,(void *)fileSetupCallback,
-                  (XtPointer)FILE_CONFIG_INSERT,(void *)XtUnmanageChild,(XtPointer)0,
-                  (XtPointer)area, "Config File",CONFIG_PATTERN,psetup.configDir);
+                  (XtPointer)FILE_CONFIG_INSERT,(void *)XtUnmanageChild,
+                  (XtPointer)0,(XtPointer)area, "Config File",CONFIG_PATTERN,
+                  psetup.configDir);
              break;
 
         default:
 
-             createDialog(area->form_main,XmDIALOG_INFORMATION,"Selection not implemented yet."," ");
+             createDialog(area->form_main,XmDIALOG_INFORMATION,
+                 "Selection not implemented yet."," ");
              break;
      }
 
 }
-
 
 /******************************************************
   actViewCallback
@@ -684,7 +573,8 @@ static void actViewCallback(Widget widget, XtPointer calldata, XtPointer cbs)
              /* Expand 1 level */
              link = treeWindow->selectionLink;
              if (link) displayNewViewTree(area,link,EXPANDCOLLAPSE1);
-             else createDialog(area->form_main,XmDIALOG_WARNING,"Please select an alarm group first."," ");
+             else createDialog(area->form_main,XmDIALOG_WARNING,
+                  "Please select an alarm group first."," ");
              break;
 
         case MENU_VIEW_EXPANDBRANCH:
@@ -692,7 +582,8 @@ static void actViewCallback(Widget widget, XtPointer calldata, XtPointer cbs)
              /* Expand Branch */
              link = treeWindow->selectionLink;
              if (link )displayNewViewTree(area,link,EXPAND);
-             else createDialog(area->form_main,XmDIALOG_WARNING,"Please select an alarm group first."," ");
+             else createDialog(area->form_main,XmDIALOG_WARNING,
+                "Please select an alarm group first."," ");
              break;
 
         case MENU_VIEW_EXPANDALL:
@@ -706,7 +597,8 @@ static void actViewCallback(Widget widget, XtPointer calldata, XtPointer cbs)
              /* Collapse branch */
              link = treeWindow->selectionLink;
              if (link )displayNewViewTree(area,link,COLLAPSE);
-             else createDialog(area->form_main,XmDIALOG_WARNING,"Please select an alarm group first."," ");
+             else createDialog(area->form_main,XmDIALOG_WARNING,
+                 "Please select an alarm group first."," ");
              break;
 
         case MENU_VIEW_PROPERTIES:
@@ -716,16 +608,16 @@ static void actViewCallback(Widget widget, XtPointer calldata, XtPointer cbs)
 
         default:
 
-             createDialog(area->form_main,XmDIALOG_INFORMATION,"Selection not implemented yet."," ");
+             createDialog(area->form_main,XmDIALOG_INFORMATION,
+              "Selection not implemented yet."," ");
              break;
      }
 }
+
 
 /******************************************************
   actHelpCallback
 ******************************************************/
-
-
 static void actHelpCallback(Widget widget, XtPointer calldata, XtPointer cbs)
 {
      int item=(int)calldata;
@@ -737,7 +629,8 @@ static void actHelpCallback(Widget widget, XtPointer calldata, XtPointer cbs)
 
         case MENU_HELP_ABOUT:
              createDialog(area->form_main,XmDIALOG_INFORMATION,
-                  "\nAlarm Configuration Tool\n\n" ALH_CREDITS_STRING ,alhVersionString);
+                  "\nAlarm Configuration Tool\n\n" ALH_CREDITS_STRING,
+                  alhVersionString);
 
              break;
 
@@ -752,7 +645,6 @@ static void actHelpCallback(Widget widget, XtPointer calldata, XtPointer cbs)
 /******************************************************
   checkActiveSelection
 ******************************************************/
-
 static int checkActiveSelection(area)
      ALINK *area;
 {
@@ -768,7 +660,6 @@ static int checkActiveSelection(area)
 /******************************************************
   checkActiveSelectionMainGroup
 ******************************************************/
-
 static int checkActiveSelectionMainGroup(area)
      ALINK *area;
 {
