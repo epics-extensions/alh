@@ -6,17 +6,10 @@ TOP = ../../..
 include $(TOP)/config/CONFIG_EXTENSIONS
 
 USR_CFLAGS += -DACCESS_SECURITY -I$(MOTIF_INC) -I$(X11_INC)
-USR_CFLAGS += -DALH_HELP_URL="\"http://www.aps.anl.gov/asd/controls/epics/EpicsDocumentation/ExtensionsManuals/AlarmHandler/alh.html\""
+awAlh_CFLAGS += -DALH_HELP_URL="\"http://www.aps.anl.gov/asd/controls/epics/EpicsDocumentation/ExtensionsManuals/AlarmHandler/alh.html\""
 
-# Use following 3 lines if USR_CFLAGS contains -DIWantGreeting
-PROD_LIBS += Unix
-USR_CFLAGS += -DIWantGreetings
-Unix_DIR = $(INSTALL_LIB)
-
-# Test
-#alh_CFLAGS= -Dalh_CFLAGS
-#alh_INCLUDES= -Dalh_INCLUDES
-#alh_LDFLAGS= -Dalh_LDFLAGS
+# Use following line for Greeting popup
+#alh_CFLAGS += -DIWantGreetings
 
 # Debugging options
 #CC = purify -first-only -chain-length=25  $($(ANSI)_$(CMPLR))
