@@ -984,6 +984,7 @@ char value[MAX_STRING_SIZE];
         cdata = clink->pchanData;
 
 		if (args.status != ECA_NORMAL) {
+#ifdef ACCESS_SECURITY
 			if (args.status == ECA_NORDACCESS) 
         		alNewAlarm(READ_ACCESS_ALARM,INVALID_ALARM,
 					((struct dbr_sts_string *)args.dbr)->value,
@@ -998,6 +999,12 @@ char value[MAX_STRING_SIZE];
 					((struct dbr_sts_string *)args.dbr)->value,
 					args.usr);
 			}
+#else
+	      	al_ca_error_code("NewAlarmEvent","args.status",args.status,cdata->name);
+				alNewAlarm(COMM_ALARM,INVALID_ALARM,
+				((struct dbr_sts_string *)args.dbr)->value,
+				args.usr);
+#endif /*ACCESS_SECURITY*/
         } else {
 
         	alNewAlarm(
@@ -1026,8 +1033,10 @@ short *p;
 	gdata = glink->pgroupData;
 	if (strlen(gdata->forcePVName) > 1) {
 
+#ifdef ACCESS_SECURITY
     if (args.status != ECA_NORMAL) 
         al_ca_error_code("GroupForceEvent","args.status",args.status,gdata->forcePVName);
+#endif /*ACCESS_SECURITY*/
 	
 	p = (short *)args.dbr;
 
@@ -1088,10 +1097,12 @@ short *p;
 	cdata = clink->pchanData;
 	if (strlen(cdata->forcePVName) > 1) {
 
+#ifdef ACCESS_SECURITY
     if (args.status != ECA_NORMAL) {
         al_ca_error_code("ChannelForceEvent","args.status",args.status,cdata->forcePVName);
         return;
     }
+#endif /*ACCESS_SECURITY*/
 	
 	p = (short *)args.dbr;
 
