@@ -169,19 +169,13 @@ struct mainGroup *pmainGroup)
 		return;
 	}
 
-	glink = alAllocGroup();
+	glink = alCreateGroup();
 	glink->pmainGroup = pmainGroup;
 	gdata = glink->pgroupData;
+	if (gdata->name) free(gdata->name);
 	gdata->name = (char *)calloc(1,strlen(name)+1);
 	strcpy(gdata->name,name);
 	if (_DB_call_flag) if(strlen(applicationName)==0) strncpy(applicationName,name,64);
-
-	alSetMask("-----",&(gdata->forcePVMask));
-	gdata->forcePVValue = 1;
-	gdata->resetPVValue = 0;
-	gdata->forcePVName = "-";
-	gdata->sevrPVName = "-";
-
 
 	/*parent is NULL , i. e. main group*/
 	if(strcmp("NULL",parent)==0)  	{
@@ -342,19 +336,10 @@ int caConnect,struct mainGroup *pmainGroup)
 		mask = token[3];
 	}
 
-	clink = alAllocChan();
+	clink = alCreateChannel();
 	clink->pmainGroup = pmainGroup;
 	cdata = clink->pchanData;
-	cdata->name = (char *)calloc(1,strlen(name)+1);
-	strcpy(cdata->name,name);
-
-	alSetMask("-----",&(cdata->curMask));
-	cdata->defaultMask = cdata->curMask;
-	cdata->forcePVMask = cdata->curMask;
-	cdata->forcePVValue = 1;
-	cdata->resetPVValue = 0;
-	cdata->forcePVName = "-";
-	cdata->sevrPVName = "-";
+	strncpy(cdata->name,name,PVNAME_SIZE);
 
 	if (mask[0]) {
 		alSetMask(mask,&(cdata->defaultMask));

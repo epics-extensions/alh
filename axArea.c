@@ -147,6 +147,7 @@ void setupConfig(char *filename,int program,ALINK *areaOld)
 	XmString    str;
 	SNODE *proot;
 	static int firstTime = TRUE;
+	int beepSevrOld;
 
 	/* initialize channel access */
 	if (program == ALH) {
@@ -154,29 +155,19 @@ void setupConfig(char *filename,int program,ALINK *areaOld)
 			firstTime = FALSE;
 			alCaInit();
 		}
-		/*
-		          else  if (programId == ALH ) {
-		               alCaStop();
-		               alCaInit();
-		          }
-		*/
 	}
-
-	/* Log new configfile filename */
-	alLogSetupConfigFile(filename);
-
-	/* Reset data for Current alarm window */
-	resetCurrentAlarmWindow();
 
 	/* create main group */
 	pmainGroup = alAllocMainGroup();
 	if (!pmainGroup ) {
 		if (areaOld)
-			createDialog(areaOld->form_main,XmDIALOG_ERROR,"mainGroup allocation error: ",filename);
+			createDialog(areaOld->form_main,XmDIALOG_ERROR,
+				"mainGroup allocation error: ",filename);
 		return;
 	}
 
 	/* reinitialize beep severity */
+	beepSevrOld = psetup.beepSevr;
 	psetup.beepSevr = 1;
 
 	/* Read the config file  or create a minimal config file  */
@@ -194,22 +185,26 @@ void setupConfig(char *filename,int program,ALINK *areaOld)
 		}
 		else alGetConfig(pmainGroup,filename,CA_CONNECT_NO);
 
-
-		strcpy(psetup.configFile,filename);
 	} else{
 		if (program == ACT) alCreateConfig(pmainGroup);
 		else {
+			free(pmainGroup);
 			pmainGroup->p1stgroup = alCopyGroup(areaOld->pmainGroup->p1stgroup);
 			alSetPmainGroup(pmainGroup->p1stgroup, pmainGroup);
-			alCaStart((SLIST *)pmainGroup);
+			return;
 		}
 	}
 	if ( sllFirst(pmainGroup)) {
 
+		/* Log new configfile filename */
+		alLogSetupConfigFile(filename);
+
+		if (filename[0] != '\0') strcpy(psetup.configFile,filename);
+
 		proot = sllFirst(pmainGroup);
 
 		/*  initialize unused area  */
-		area = setupArea(0);
+		area = setupArea(areaOld);
 
 		/* initialize subWindow create/modify line routines  */
 		setLineRoutine(area,area->treeWindow,program);
@@ -245,7 +240,6 @@ void setupConfig(char *filename,int program,ALINK *areaOld)
 			XmStringFree(str);
 		}
 
-
 		/* update dialog windows */
 		axUpdateDialogs(area);
 
@@ -254,24 +248,23 @@ void setupConfig(char *filename,int program,ALINK *areaOld)
 
 	} else {
 
-		if (areaOld) {
-			if (programId == ALH ) {
-				alCaStart((SLIST *)areaOld->pmainGroup);
-			}
+		psetup.beepSevr = beepSevrOld;
 
+		if (areaOld) {
 			areaOld->managed = TRUE;
 
 			if (areaOld->form_main )
-				createDialog(areaOld->form_main,XmDIALOG_WARNING,"Configuration file error: ",filename);
+				createDialog(areaOld->form_main,XmDIALOG_WARNING,
+					"Configuration file error: ",filename);
 			else if (areaOld->runtimeForm)
-				createDialog(areaOld->runtimeForm,XmDIALOG_WARNING,"Configuration file error: ",filename);
+				createDialog(areaOld->runtimeForm,XmDIALOG_WARNING,
+					"Configuration file error: ",filename);
 		} else {
 			area = NULL;
-			printf ("ALH Error: Invalid config file: %s\n",psetup.configFile);
+			printf ("ALH Error: Invalid config file: %s\n",filename);
 			exit_quit(NULL, area, NULL);
 		}
 	}
-
 	return;
 }
 
@@ -335,18 +328,18 @@ static ALINK *setupArea(ALINK *areaOld)
 		markSelectedWidget(area->groupWindow,NULL);
 		markActiveWidget(area,0);
 
-
-		/* cancel channel access */
-		alCaCancel((SLIST *)area->pmainGroup);
-
 		/* Delete the current config */
 		if (area->pmainGroup){
 
+			/* cancel channel access */
+			alCaCancel((SLIST *)area->pmainGroup);
+
 			proot = sllFirst(area->pmainGroup);
 			if (proot) alDeleteGroup((GLINK *)proot);
-		}
 
-		area->pmainGroup = NULL;
+			free((SLIST *)area->pmainGroup);
+			area->pmainGroup = NULL;
+		}
 
 		/* or create a new work area */
 	} else {
@@ -361,9 +354,10 @@ static ALINK *setupArea(ALINK *areaOld)
 		area->runtimeToplevel = NULL;
 		area->treeWindow = createSubWindow(area);
 		area->groupWindow = createSubWindow(area);
-
-
 	}
+
+	/* Reset data for Current alarm window */
+	resetCurrentAlarmWindow(area);
 
 	/* Make NULL the selected group for Area */
 	area->selectionLink = NULL;

@@ -1628,8 +1628,9 @@ static GCLINK *propCreateClone(GCLINK *link,int linkType)
 	GLINK *newGroup;
 	struct groupData *pgroupData;
 
+        /* pointer contents not copied */
 	if (linkType == GROUP) {
-		newGroup = alAllocGroup();
+		newGroup = alCreateGroup();
 		pgroupData = newGroup->pgroupData;
 		*newGroup = *(GLINK *)link;
 		*pgroupData = *(struct groupData *)link->pgcData;
@@ -1638,7 +1639,7 @@ static GCLINK *propCreateClone(GCLINK *link,int linkType)
 	}
 
 	if (linkType == CHANNEL) {
-		newChan = alAllocChan();
+		newChan = alCreateChannel();
 		pchanData = newChan->pchanData;
 		*newChan = *(CLINK *)link;
 		*pchanData = *(struct chanData *)link->pgcData;

@@ -41,30 +41,6 @@ struct mainGroup *alAllocMainGroup()
 	return(pmainGroup);
 }
 
-/*************************************************************************
-	 allocate space for grouplink 
-*************************************************************************/
-GLINK *alAllocGroup()
-{
-	GLINK *glink;
-
-	glink = (GLINK *)calloc(1,sizeof(GLINK));
-	glink->pgroupData = (struct groupData *)calloc(1,sizeof(struct groupData));
-	return(glink);
-}
-
-/************************************************************************
-	 allocate space for channel link 
-************************************************************************/
-CLINK *alAllocChan()
-{
-	CLINK *clink;
-
-	clink = (CLINK *)calloc(1,sizeof(CLINK));
-	clink->pchanData = (struct chanData *)calloc(1,sizeof(struct chanData));
-	return(clink);
-}
-
 /**********************************************************************
 	 append glink at the end of subgrouplist 
 ***********************************************************************/
@@ -267,7 +243,7 @@ modify children:
 
 	if (!glink) return 0;
 
-	glinkNew = alAllocGroup();
+	glinkNew = alCreateGroup();
 	gdataNew = glinkNew->pgroupData;
 	gdata = glink->pgroupData;
 
@@ -303,6 +279,7 @@ modify children:
 
 
 	/* copy name */
+	if (gdataNew->name) free(gdataNew->name);
 	buff = gdata->name;
 	if (buff){
 		gdataNew->name = (char*)calloc(1,strlen(buff)+1);
@@ -382,8 +359,7 @@ modify children:
 
 	if (!clink) return 0;
 
-	clinkNew = alAllocChan();
-	clinkNew->pchanData = (struct chanData *)calloc(1,sizeof(struct chanData));
+	clinkNew = alCreateChannel();
 	cdataNew = clinkNew->pchanData;
 	cdata = clink->pchanData;
 
@@ -430,6 +406,7 @@ modify children:
 
 
 	/* copy name */
+	if (cdataNew->name) free(cdataNew->name);
 	buff = cdata->name;
 	if (buff){
 		cdataNew->name = (char*)calloc(1,strlen(buff)+1);
@@ -466,7 +443,8 @@ GLINK *alCreateGroup()
 	GLINK *link;
 	struct groupData *gdata;
 
-	link = alAllocGroup();
+	link = (GLINK *)calloc(1,sizeof(GLINK));
+	link->pgroupData = (struct groupData *)calloc(1,sizeof(struct groupData));
 	gdata = link->pgroupData;
 
 	link->viewCount = 1;
@@ -490,7 +468,8 @@ CLINK *alCreateChannel()
 	CLINK *link;
 	struct chanData *cdata;
 
-	link = alAllocChan();
+	link = (CLINK *)calloc(1,sizeof(CLINK));
+	link->pchanData = (struct chanData *)calloc(1,sizeof(struct chanData));
 	cdata = link->pchanData;
 
 	link->viewCount =1;
@@ -711,7 +690,8 @@ CLINK *clink,time_t timeofday)
 	/*
 	 * update current alarm history strings
 	 */
-	updateCurrentAlarmString(&timeofday,cdata->name,cdata->value, stat,sev);
+	updateCurrentAlarmString(clink->pmainGroup->area,
+		&timeofday,cdata->name,cdata->value, stat,sev);
 
 	/*
 	 *  set modification indicator for channel

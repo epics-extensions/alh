@@ -165,8 +165,6 @@ int alFilterUnackAlarmsOnly( GCLINK  *gclink);
 *********************************************************************/
 
 struct mainGroup *alAllocMainGroup(void);
-GLINK *alAllocGroup(void);
-CLINK *alAllocChan(void);
 void alAddGroup( GLINK *parent, GLINK *glink);
 void alAddChan( GLINK *parent, CLINK *clink);
 void alPrecedeGroup( GLINK *parent, GLINK *sibling, GLINK *glink);
@@ -280,10 +278,10 @@ void initializeLines( SNODE *lines);
 *********************************************************************/
 
 void currentAlarmHistoryWindow( ALINK *area, Widget menuButton);
-void updateCurrentAlarmString( time_t *ptimeofday, char *name,
-char value[], int stat,int sev);
+void updateCurrentAlarmString( ALINK *area, time_t *ptimeofday,
+char *name, char value[], int stat,int sev);
 void updateCurrentAlarmWindow( ALINK *area);
-void resetCurrentAlarmWindow();
+void resetCurrentAlarmWindow(ALINK *area);
 
 /********************************************************************
   showmask.c   function prototypes

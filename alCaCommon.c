@@ -385,7 +385,7 @@ void alUpdateAreas()
 					invokeSubWindowUpdate(area->treeWindow);
 					invokeSubWindowUpdate(area->groupWindow);
 				}
-				updateCurrentAlarmWindow(area);
+				if  (area->managed) updateCurrentAlarmWindow(area);
 				area->pmainGroup->modified = 0;
 			}
 		}

@@ -25,23 +25,12 @@ static char *sccsId = "@(#) $Id$";
 #include "cadef.h"
 #include "ax.h"
 
-struct currentData {
-	time_t timeofday;
-	char *name;
-	int   sevr;
-	int   stat;
-	char  value[MAX_STRING_SIZE];
-};
-
 /* global variables */
 extern char * alarmSeverityString[];
 extern char * alarmStatusString[];
 
-struct currentData currentAlarm[10];
-int currentAlarmIndex;
-
 /* forward declarations */
-void closeCurrent_callback( Widget w, Widget currentForm, caddr_t call_data);
+void closeCurrentCallback( Widget w, Widget currentForm, caddr_t call_data);
 
 
 /**************************************************************************
@@ -49,13 +38,13 @@ void closeCurrent_callback( Widget w, Widget currentForm, caddr_t call_data);
 **************************************************************************/
 void currentAlarmHistoryWindow(ALINK *area,Widget menuButton)
 {
-	static Widget popup_shell,title,button;
+	Widget popup_shell,title,button;
 	Widget previous;
-	Atom         WM_DELETE_WINDOW;
-	int i;
+	Atom   WM_DELETE_WINDOW;
+	int    i;
 	char   *app_name;
 
-	if (!popup_shell) {
+	if (!area->currentAlarmForm) {
 		app_name = (char*) calloc(1,strlen(programName)+6);
 		strcpy(app_name, programName);
 		strcat(app_name, "-hist");
@@ -67,15 +56,6 @@ void currentAlarmHistoryWindow(ALINK *area,Widget menuButton)
 
 		XtVaSetValues(popup_shell,
 		    XmNtitle, "Alarm Handler: Current Alarm History", NULL);
-
-		/*  create current alarm view window */
-		/*
-		          popup_shell = XtVaCreatePopupShell(
-		               "Alarm Handler: Current Alarm History",
-		               xmDialogShellWidgetClass,   area->runtimeForm,
-		               XmNautoUnmanage,            FALSE,
-		               NULL);
-		*/
 
 		/*  create current alarm form window */
 		area->currentAlarmForm = XtVaCreateManagedWidget("CurrentAlarm",
@@ -92,7 +72,7 @@ void currentAlarmHistoryWindow(ALINK *area,Widget menuButton)
 		WM_DELETE_WINDOW = XmInternAtom(XtDisplay(popup_shell),
 		    "WM_DELETE_WINDOW", False);
 		XmAddWMProtocolCallback(popup_shell,WM_DELETE_WINDOW,
-		    (XtCallbackProc)closeCurrent_callback,
+		    (XtCallbackProc)closeCurrentCallback,
 		    (XtPointer)area->currentAlarmForm);
 
 		/* add close button */
@@ -105,13 +85,15 @@ void currentAlarmHistoryWindow(ALINK *area,Widget menuButton)
 		    XmNuserData,               menuButton,
 		    NULL);
 		XtAddCallback(button, XmNactivateCallback,
-		    (XtCallbackProc)closeCurrent_callback, area->currentAlarmForm);
+		    (XtCallbackProc)closeCurrentCallback,
+		    area->currentAlarmForm);
 
 		previous = button;
 
 		/* add title line */
 		title = XtVaCreateManagedWidget(
-		    "    TIME_STAMP        PROCESS_VARIABLE_NAME        STATUS     SEVERITY   VALUE       ",
+		    "    TIME_STAMP        PROCESS_VARIABLE_NAME        "
+		    "STATUS     SEVERITY   VALUE       ",
 		    xmLabelGadgetClass,        area->currentAlarmForm,
 		    XmNtopAttachment,          XmATTACH_FORM,
 		    XmNtopOffset,              10,
@@ -134,7 +116,7 @@ void currentAlarmHistoryWindow(ALINK *area,Widget menuButton)
 			previous = area->currentAlarm[i];
 		}
 
-		/* create a blank line, because Form marginHeight wont work  */
+		/* create a blank line */
 		(void)XtVaCreateManagedWidget( " ",
 		    xmLabelGadgetClass,        area->currentAlarmForm,
 		    XmNalignment,              XmALIGNMENT_BEGINNING,
@@ -168,7 +150,7 @@ void currentAlarmHistoryWindow(ALINK *area,Widget menuButton)
 /**************************************************************************
 	close Current Alarm History window 
 **************************************************************************/
-void closeCurrent_callback(Widget w,Widget currentForm,caddr_t call_data)
+void closeCurrentCallback(Widget w,Widget currentForm,caddr_t call_data)
 {
 	Widget menuButton;
 
@@ -183,19 +165,22 @@ void closeCurrent_callback(Widget w,Widget currentForm,caddr_t call_data)
 /******************************************************************
       updateCurrent Alarm History strings
 *****************************************************************/
-void updateCurrentAlarmString(time_t *ptimeofday,char *name,char value[],
-int stat,int sev)
+void updateCurrentAlarmString(ALINK *area, time_t *ptimeofday,char *name,
+char value[],int stat,int sevr)
 {
 	int n;
 
-	n = currentAlarmIndex;
-	currentAlarm[n].timeofday=*ptimeofday;
-	currentAlarm[n].name=name;
-	currentAlarm[n].stat=stat;
-	currentAlarm[n].sevr=sev;
-	strncpy(currentAlarm[n].value,value,MAX_STRING_SIZE);
+	if (!area) return;
+	n = area->currentAlarmIndex;
+	sprintf(area->currentAlarmString[n],
+		"  %-24s :  %-28s %-10s %-10s %s",
+		ctime(ptimeofday),
+		name,
+		alarmStatusString[stat],
+		alarmSeverityString[sevr],
+		value);
 	n = (n+1)%10;
-	currentAlarmIndex = n;
+	area->currentAlarmIndex = n;
 }
 
 /******************************************************************
@@ -203,30 +188,14 @@ int stat,int sev)
 *****************************************************************/
 void updateCurrentAlarmWindow(ALINK *area)
 {
-	int i,j=0;
+	int i,j;
 	XmString xstr;
-	char *str;
-	char buff[100];
 
 	if ( area->currentAlarmForm && XtIsManaged(area->currentAlarmForm) ) {
 
-		j = currentAlarmIndex;
+		j = area->currentAlarmIndex;
 		for (i=0;i<10;i++){
-			if (currentAlarm[j].name){
-				str = ctime(&(currentAlarm[j].timeofday));
-				*(str + strlen(str)-1) = '\0';
-
-				sprintf(buff,
-				    "  %-24s :  %-28s %-10s %-10s %s",
-				    str,
-				    currentAlarm[j].name,
-				    alarmStatusString[currentAlarm[j].stat],
-				    alarmSeverityString[currentAlarm[j].sevr],
-				    currentAlarm[j].value);
-			} else {
-				strcpy(buff,"  ");
-			}
-			xstr = XmStringCreateSimple(buff);
+			xstr = XmStringCreateSimple(area->currentAlarmString[j]);
 			XtVaSetValues(area->currentAlarm[i],
 			    XmNlabelString, xstr,
 			    NULL);
@@ -239,12 +208,14 @@ void updateCurrentAlarmWindow(ALINK *area)
 /******************************************************************
       reset Current Alarm History Window
 *****************************************************************/
-void resetCurrentAlarmWindow()
+void resetCurrentAlarmWindow(ALINK *area)
 {
-	int i,j=0;
+	int i;
 
 	for (i=0;i<10;i++){
-		currentAlarm[j].name = NULL;
+		strcpy(area->currentAlarmString[i],"   ");
 	}
+	area->currentAlarmIndex = 0;
+	updateCurrentAlarmWindow(area);
 }
 

@@ -220,3 +220,9 @@ Tue May 18 10:24:41 CDT 1999
 
 Fri May 28 15:08:18 CDT 1999
 	Bug fix for forcePV. Removed alInitialize.c.
+
+Wed Jun  2 13:16:33 CDT 1999
+	Bug fix for area reinitialization after a new config file opened
+	which sometimes caused a core dump.
+	Removed alAllocGroup/alAllocChan (alCreateGroup/alCreateChannel used).
+	Current Alarm History data no longer global, now part of area structure.

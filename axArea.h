@@ -33,8 +33,6 @@ typedef struct  areaLink{
 	/* main window widgets */
 	Widget           toplevel;
 	Widget           icon;
-	Widget           currentAlarmForm;
-	Widget           currentAlarm[10];
 	Widget           form_main;
 	Widget           menubar;
 	Widget           messageArea;
@@ -75,7 +73,11 @@ typedef struct  areaLink{
 	void             *selectionLink;
 	int              selectionType;
 	Widget           selectionWidget;
-
+	/* ----- Current alarm window info ----- */
+	int              currentAlarmIndex;
+	Widget           currentAlarmForm;
+	Widget           currentAlarm[10];
+	char             currentAlarmString[10][128];
 } ALINK;
 
 typedef struct _menu_item {
