@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.9  1996/09/20 15:06:19  jba
+ BEEPSEVERITY bug fix.
+
  Revision 1.8  1996/08/19 13:53:38  jba
  Minor usage and mask printed output changes.
 
@@ -529,8 +532,6 @@ void createRuntimeWindow(area)
           XmToggleButtonGadgetSetState(area->silenceCurrent,FALSE,FALSE);
       }
 
-     /* reinitialize beep severity */
-     psetup.beepSevr = 1;
      changeBeepSeverityText(area);
 
      icon_update();

@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.10  1996/09/20 15:06:18  jba
+ BEEPSEVERITY bug fix.
+
  Revision 1.9  1996/08/19 13:53:37  jba
  Minor usage and mask printed output changes.
 
@@ -313,6 +316,9 @@ void setupConfig(filename, program, areaOld)
               createDialog(areaOld->form_main,XmDIALOG_ERROR,"mainGroup allocation error: ",filename);
          return;
      }
+
+     /* reinitialize beep severity */
+     psetup.beepSevr = 1;
 
      /* Read the config file  or create a minimal config file  */
      if (filename[0] != '\0'){
