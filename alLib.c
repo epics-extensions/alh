@@ -687,8 +687,11 @@ CLINK *clink,time_t timeofday)
  	 * log the channel alarm at the alarm logfile
  	 */
  	if (mask.Log == 0) {
-		alLogAlarm(&timeofday,cdata,stat,sev,
-			cdata->unackSevr,cdata->curMask.AckT);
+ 	 	/* Don't log the initial connection */
+ 		if ( !(stat_prev==NO_ALARM && sevr_prev==ERROR_STATE )) {
+			alLogAlarm(&timeofday,cdata,stat,sev,
+				cdata->unackSevr,cdata->curMask.AckT);
+		}
 	}
 
 	if (DEBUG >=3) ALARM_COUNTER++;
