@@ -154,6 +154,7 @@ void setupConfig(char *filename,int program,ALINK *areaOld)
 	SNODE *proot;
 	static int firstTime = TRUE;
 	int beepSevrOld;
+	int holdToBeConnectedCount;
 
 	/* initialize channel access */
 	if (program == ALH) {
@@ -185,7 +186,12 @@ void setupConfig(char *filename,int program,ALINK *areaOld)
 
 			/* now lets give the connection layer a little time
 			                * to establish communications */
-			alCaPend(2.0);
+			holdToBeConnectedCount = toBeConnectedCount;
+			while (TRUE) {
+				alCaPend(1.0);
+				if (toBeConnectedCount == holdToBeConnectedCount) break;
+				holdToBeConnectedCount = toBeConnectedCount;
+			}
 
 			alSetNotConnected((SLIST *)pmainGroup);
 			alPutGblAckT((SLIST *)pmainGroup);
