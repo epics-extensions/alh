@@ -1353,6 +1353,8 @@ void awUpdateRowWidgets(struct anyLine *line)
 #ifdef CMLOG
 static void awCMLOGstartBrowser (void)
 {
+   char command[256];
+   
    switch (fork()) {
 				/* Error */
    case -1:
@@ -1360,8 +1362,13 @@ static void awCMLOGstartBrowser (void)
       return;
 				/* Child */
    case 0:
-      execlp(CMLOG_BROWSER, CMLOG_BROWSER, 0);
-      perror("Cannot start CMLOG browser - check PATH");
+      if (psetup.configDir)
+	 sprintf(command, CMLOG_BROWSER" -f %s/"CMLOG_CONFIG" &", psetup.configDir);
+      else
+	 sprintf(command, CMLOG_BROWSER" -f "CMLOG_CONFIG" &");
+
+      system(command);
+      exit(0);
       break;
 				/* Parent */
    default:
