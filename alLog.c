@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.12  1998/07/23 18:22:34  jba
+ Log the connection and access rights changes to alarm log file
+
  Revision 1.11  1998/07/23 18:17:00  jba
  ANSI c changes.
 
@@ -239,11 +242,9 @@ struct chanData *cdata;
 
 	
 /***********************************************************************
- * log the connection change on operation file
+ * log the connection and access changes to alarm log file
  ***********************************************************************/
-void alLogConnection(pvname,ind)
-char *pvname;
-char *ind;
+void alLogConnection(const char *pvname,const char *ind)
 {
 	timeofday = time(0L);
 	str = ctime(&timeofday);
@@ -252,8 +253,8 @@ char *ind;
 	sprintf(buff,"%-26s %-31s: [%s]\n", str,ind,pvname);
 
 	/* update file and Alarm Log text window */
-	fprintf(fo,"%s",buff);
-	fflush(fo);
+	fprintf(fl,"%s",buff);
+	fflush(fl);
 	updateLog(OPMOD_FILE,buff); 
 
 }
