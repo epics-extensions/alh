@@ -157,7 +157,7 @@ int sev,int unackSevr,int ackT)
 
 #ifdef CMLOG
    char cm_text[80];
-   if (use_CMLOG_alarm && masterFlag && alhArea && alhArea->blinkString) {
+   if (use_CMLOG_alarm && masterFlag) {
 	    if (_global_flag) {
 		    sprintf(cm_text, "(%s / %s)",
 		    alhAlarmSeverityString[unackSevr],
@@ -211,7 +211,7 @@ int sev,int unackSevr,int ackT)
 void alLogConnection(const char *pvname,const char *ind)
 {
 #ifdef CMLOG
-   if (use_CMLOG_alarm && masterFlag && alhArea && alhArea->blinkString) {
+   if (use_CMLOG_alarm && masterFlag) {
 	cmlog_logmsg(cmlog,
 	    0,			/* verbosity */
 	    0,			/* dummy severity */
@@ -465,7 +465,7 @@ void alLogResetPVGroup(GLINK *glink,int ind)
 		      gdata->name,
 		      (gdata->alias ? gdata->alias : "N/A"),
 		      cm_text,
-		      (alhArea && alhArea->blinkString)?alhArea->blinkString:"unknown");
+		      alhArea->blinkString);
 	   }
 #endif
 		sprintf(buff,"OPERATOR:Group PV RESET---[%s] <%s> [%d] [%s]\n",
@@ -495,7 +495,7 @@ void alLogResetPVGroup(GLINK *glink,int ind)
 		      gdata->name,
 		      (gdata->alias ? gdata->alias : "N/A"),
 		      cm_text,
-		      (alhArea && alhArea->blinkString)?alhArea->blinkString:"unknown");
+		      alhArea->blinkString);
 	   }
 #endif
 		sprintf(buff,"AUTOMATIC:Group PV RESET---[%s] <%s> [%d] [%s]\n",
