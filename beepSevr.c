@@ -316,8 +316,7 @@ ALINK    *area;
 static void beepSevrHelpCallback(Widget widget,XtPointer calldata,XtPointer cbs)
 {
 	char *message1 = 
-	"This dialog window allows an operator to set the beep severity level\n"
-	"for a group or channel.\n"
+	"Set the beep severity level for a group or channel.\n"
 	"\n"
     "Beep severity is the minimum severity level required for beeping.\n"
     "Beeping for this group or channel will not occur when the highest\n"

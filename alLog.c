@@ -41,18 +41,42 @@ static char *sccsId = "@@(#) $Id$";
 #include "ax.h"
 #include "truncateFile.h"
 
-static char *masksdata[] = {
-	        "Summary ...",
-	        "Force Process Variable ...",
-	        "Force Mask ...",
+extern int DEBUG;
+extern int _DB_call_flag;
+extern int _global_flag;
+extern int _lock_flag;
+extern int _message_broadcast_flag;
+extern int _printer_flag;           /* Printer flag. Albert */
+extern int _read_only_flag;         /* RO flag. Albert */
+extern int _time_flag;              /* Dated flag. Albert */
+extern char * alhAlarmSeverityString[];
+extern char * alhAlarmStatusString[];
+extern int DBMsgQId;
+extern int masterFlag;
+extern int notsave;
+extern int printerMsgQId;
+extern int tm_day_old;              /* Midnight switch. Albert */
+
+extern struct UserInfo userID; /* info about current operator */
+extern  char applicationName[64];  /* Albert1 applicationName = mainGroupName will be send to DB */
+extern  char deviceName[64];       /* Albert1 reserved;  will be send to DB */
+
+#ifdef CMLOG
+				/* CMLOG flags & variables */
+extern int use_CMLOG_alarm;
+extern int use_CMLOG_opmod;
+cmlog_client_t cmlog;
+extern ALINK *alhArea;
+#endif
+
+static const char *masksdata[] = {
 	        "Add / Cancel",
 	        "Enable / Disable",
 	        "Ack / NoAck",
 	        "Ack / NoAck Transient",
 	        "Log / NoLog "
 };
-
-char *ackTransientsString[] = {"ackT","noackT"};
+static const char *mask_str[3] = {"OFF", "ON", "RESET"};
 
 struct setup psetup = {         /* initial files & beeping setup */
 	    "",    /* config file name */
@@ -68,50 +92,17 @@ struct setup psetup = {         /* initial files & beeping setup */
 	    0,     /* config files directory */
 	    0};    /* log files directory */
 
-extern int DEBUG;
 int alarmLogFileMaxRecords = 2000;   /* alarm log file maximum # records */
 int alarmLogFileOffsetBytes = 0;  /* alarm log file current offset in bytes */
-char alarmLogFileEndString[] = "           ";  /* alarm log file end of data string */
+const char alarmLogFileEndString[] = "           ";  /* alarm log file end of data string */
 int alarmLogFileStringLength = 158;  /* alarm log file record length*/
 
 FILE *fo=0;       /* write opmod file pointer */
 FILE *fl=0;       /* write alarm log file pointer */
 
 char buff[260];
-extern char * alhAlarmSeverityString[];
-extern char * alhAlarmStatusString[];
-
-extern int _global_flag;
-extern int _read_only_flag;         /* RO flag. Albert */
-extern int tm_day_old;              /* Midnight switch. Albert */
-extern int _printer_flag;           /* Printer flag. Albert */
-extern int masterFlag;
-extern int printerMsgQId;
-extern int _lock_flag;
-
-#ifndef WIN32
-int write2MQ(int, char *);
-int write2msgQ(int, char *);
-#endif
-int filePrintf(FILE *fPointer,char *buf,time_t *ptime,int typeOfRecord);
-
-char *digit2month[12]={"Jan","Feb","Mar","Apr","May","Jun","Jul","Aug",
+const char *digit2month[12]={"Jan","Feb","Mar","Apr","May","Jun","Jul","Aug",
 		       "Sep","Oct","Nov","Dec"};
-
-extern int _time_flag;              /* Dated flag. Albert */
-
-extern int _DB_call_flag;
-extern int DBMsgQId;
-extern int _message_broadcast_flag;
-extern int notsave;
-
-#ifdef CMLOG
-				/* CMLOG flags & variables */
-extern int use_CMLOG_alarm;
-extern int use_CMLOG_opmod;
-cmlog_client_t cmlog;
-extern ALINK *alhArea;
-#endif
 
 struct UserInfo {
 char *loginid;
@@ -119,11 +110,6 @@ char *real_world_name;
 char *myhostname;
 char *displayName;
 };
-
-extern struct UserInfo userID; /* info about current operator */
-
-extern  char applicationName[64];  /* Albert1 applicationName = mainGroupName will be send to DB */
-extern  char deviceName[64];       /* Albert1 reserved;  will be send to DB */
 
 
 #define REGULAR_RECORD      1  /* usual alLog mess. */ 
@@ -136,9 +122,14 @@ extern  char deviceName[64];       /* Albert1 reserved;  will be send to DB */
 #define CHANGE_MASK_GROUP   8  /*  op_mod action which will be saving in DB */
 #define FORCE_MASK          9  /*  op_mod action which will be saving in DB */
 #define FORCE_MASK_GROUP   10  /*  op_mod action which will be saving in DB */
-
 #define ALARM_LOG_DB 1 /* We are write to ALARM_LOG database */
 #define OP_MOD_DB    2 /* We are write to OP_MOD    database */
+
+int filePrintf(FILE *fPointer,char *buf,time_t *ptime,int typeOfRecord);
+#ifndef WIN32
+int write2MQ(int, char *);
+int write2msgQ(int, char *);
+#endif
 
 
 #ifdef CMLOG
@@ -165,6 +156,7 @@ void alCMLOGdisconnect(void)
 void alLogAlarm(time_t *ptimeofdayAlarm,struct chanData *cdata,int stat,
 int sev,int unackSevr,int ackT)
 {
+	const char *ackTransientsString[] = {"ackT","noackT"};
 
 #ifdef CMLOG
    char cm_text[80];
@@ -331,15 +323,15 @@ void alLogAckGroup(struct anyLine *line)
 void alLogChangeChanMasks(CLINK *clink,int maskno,int maskid)
 {
 	char buff1[6];
+
 	alGetMaskString(clink->pchanData->curMask,buff1);
 
 #ifdef CMLOG
    if (use_CMLOG_opmod) {
-	char *cm_mask[3] = {"OFF", "ON", "RESET"};
 	char cm_text[80];
 	sprintf(cm_text, "Channel Mask [%s] %s <%s>",
-	    masksdata[3+maskid],
-	    cm_mask[maskno],
+	    masksdata[maskid],
+	    mask_str[maskno],
 	    buff1);
 
 	cmlog_logmsg(cmlog,
@@ -355,16 +347,9 @@ void alLogChangeChanMasks(CLINK *clink,int maskno,int maskid)
    }
 #endif
 
-	if (maskno == 0)
-		sprintf(buff,"Chan  Mask ID ---[%-21s] OFF   [%s] <%s>\n",
-		    masksdata[3+maskid],clink->pchanData->name,buff1);
+	sprintf(buff,"Channel Mask [%s] %s [%s] <%s>\n",
+	    masksdata[maskid],mask_str[maskno],clink->pchanData->name,buff1);
 
-	if (maskno == 1)
-		sprintf(buff,"Chan  Mask ID ---[%-21s] ON    [%s] <%s>\n",
-		    masksdata[3+maskid],clink->pchanData->name,buff1);
-	if (maskno == 2)
-		sprintf(buff,"Chan  Mask ID ---[%-21s] RESET [%s] <%s>\n",
-		    masksdata[3+maskid],clink->pchanData->name,buff1);
 	filePrintf(fo,buff,NULL,CHANGE_MASK);        /* update the file */
 }
 
@@ -687,14 +672,14 @@ void alLogSetBeepSevr (char *name,const char *value)
 void alLogChangeGroupMasks(GLINK *glink,int maskno,int maskid)
 {
 	char buff1[6];
-	char *mask_str[3] = {"OFF", "ON", "RESET"};
+
 	awGetMaskString(glink->pgroupData->mask,buff1);
 
 #ifdef CMLOG
    if (use_CMLOG_opmod) {
 	char cm_text[80];
 	sprintf(cm_text, "Group Mask [%s] %s <%s>",
-	    masksdata[3+maskid],
+	    masksdata[maskid],
 	    mask_str[maskno],
 	    buff1);
 
@@ -711,8 +696,8 @@ void alLogChangeGroupMasks(GLINK *glink,int maskno,int maskid)
    }
 #endif
 
-	sprintf(buff,"Group Mask ID ---[%-21s] %-5s [%s] <%s>\n",
-	    masksdata[3+maskid], mask_str[maskno],
+	sprintf(buff,"Group Mask [%s] %s [%s] <%s>\n",
+	    masksdata[maskid], mask_str[maskno],
 	    glink->pgroupData->name,
 	    buff1);
 	filePrintf(fo,buff,NULL,0);        /* update the file */
@@ -793,6 +778,7 @@ void alLog2DBAckChan (char *name)
 	sprintf(buff,"Ack Channel--- %-28s\n",name);
 	filePrintf(fo,buff,NULL,ACK_GROUP);  /* update the file */	
 }
+
 /***********************************************************************
  * log changeMask in special format on operation file and DB (need for forse
 save all recordName if someone acknowledges group)

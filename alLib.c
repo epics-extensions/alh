@@ -757,9 +757,12 @@ CLINK *clink,time_t timeofday)
 	psetup.newUnackBeepSevr=0;
 
 	if (_global_flag) {
-		if (cdata->unackSevr != acks && cdata->curMask.Disable == 0 &&
-			cdata->curMask.Ack != 1 ) {
-			alSetUnackSevChan(clink,acks);
+		if (cdata->unackSevr != acks )  {
+			if ( cdata->curMask.Disable == 0 && cdata->curMask.Ack == 0 ) {
+				alSetUnackSevChan(clink,acks);
+			} else {
+				cdata->unackSevr = acks;
+			}
 		}
 		if (cdata->curMask.AckT != ackt) {
 			alSetAckTChan(clink,ackt);
@@ -789,8 +792,7 @@ CLINK *clink,time_t timeofday)
  	if (mask.Log == 0) {
  	 	/* Don't log the initial connection */
  		if ( !(stat_prev==NO_ALARM && sevr_prev==ERROR_STATE )) {
-			alLogAlarm(&timeofday,cdata,stat,sev,
-				cdata->unackSevr,cdata->curMask.AckT);
+			alLogAlarm(&timeofday,cdata,stat,sev,acks,ackt);
 		}
 	}
 
@@ -882,10 +884,9 @@ CLINK *clink,time_t timeofday)
 	/*
 	 * reset silenceCurrent state to FALSE
  	 */
-	if (psetup.silenceCurrent && psetup.newUnackBeepSevr >= psetup.beepSevr ) 
-		silenceCurrentReset(glink->pmainGroup->area);
+	if (psetup.silenceCurrent && (psetup.newUnackBeepSevr>=psetup.beepSevr) ) 
+		silenceCurrentReset(clink->pmainGroup->area);
 
-	cdata->unackStat = stat;
 }
 
 /******************************************************************
@@ -991,6 +992,7 @@ void alForceGroupMask(GLINK *glink,int index,int op)
 	GLINK *group;
 	CLINK *clink;
 	SNODE *pt;
+
 	/*
 	 * for all channels in this group
 	 */
@@ -1061,7 +1063,8 @@ void alChangeChanMask(CLINK *clink,MASK mask)
 	struct groupData *gdata;
 	GLINK *parent;
 	int change=0,saveSevr;
-	int sevrHold;
+	int sevrHold, unackSevrHold;
+	char buff[80];
 
 	cdata = clink->pchanData;
 
@@ -1147,7 +1150,9 @@ void alChangeChanMask(CLINK *clink,MASK mask)
 		change = 1;
 		if (mask.Disable == 1 && mask.Cancel == 0) {
 			if (cdata->unackSevr > 0)  {
+				unackSevrHold = cdata->unackSevr;
 				alSetUnackSevChan(clink,NO_ALARM);
+				if (_global_flag) cdata->unackSevr = unackSevrHold;
 			}
 
 			if (cdata->curSevr > 0) {
@@ -1168,19 +1173,25 @@ void alChangeChanMask(CLINK *clink,MASK mask)
 					parent = parent->parent;
 				}
 			}
-
 		}
-
 
 		if (mask.Disable == 0 && mask.Cancel == 0) {
 			if (cdata->curSevr > 0) {
-				saveSevr = cdata->curSevr;
+				sevrHold = cdata->curSevr;
+				unackSevrHold = cdata->unackSevr;
 				cdata->curSevr = NO_ALARM;
-				alNewAlarmProcess(cdata->curStat,saveSevr,cdata->unackSevr,
+				cdata->unackSevr = NO_ALARM;
+				alNewAlarmProcess(cdata->curStat,sevrHold,unackSevrHold,
 					cdata->curMask.AckT,cdata->value,clink,time(0L));
+			} else {
+				if (cdata->unackSevr > 0 && _global_flag )  {
+					ackChan(clink);
+			  		sprintf(buff,"Auto ack of transient alarms on enable: %s\n", cdata->name);
+					alLogOpMod(buff);
+					cdata->unackSevr = NO_ALARM;
+				}
 			}
 		}
-
 	}
 
 	if (mask.Ack != cdata->curMask.Ack) {
@@ -1191,7 +1202,9 @@ void alChangeChanMask(CLINK *clink,MASK mask)
 		change = 1;
 		if (mask.Ack == 1 ) {
 			if (cdata->unackSevr > 0 ) {
+				unackSevrHold = cdata->unackSevr;
 				alSetUnackSevChan(clink,NO_ALARM);
+				if (_global_flag) cdata->unackSevr = unackSevrHold;
 			}
 		}
 
@@ -1200,23 +1213,30 @@ void alChangeChanMask(CLINK *clink,MASK mask)
 				/*
 				 * update unackSev[] of all parent groups
 				 */
-				parent = clink->parent;
-				while(parent) {
-					gdata = (struct groupData *)(parent->pgroupData);
-					gdata->curSev[cdata->curSevr]--;
-					gdata->curSev[0]++;
-					parent = parent->parent;
+				if (_global_flag){
+					unackSevrHold = cdata->unackSevr;
+					cdata->unackSevr = NO_ALARM;
+					alSetUnackSevChan(clink,unackSevrHold);
+				} else {
+					alSetUnackSevChan(clink,cdata->curSevr);
 				}
-				saveSevr = cdata->curSevr;
-				cdata->curSevr = 0;
-				alNewAlarmProcess(cdata->curStat,saveSevr,cdata->unackSevr,
-					cdata->curMask.AckT,cdata->value,clink,time(0L));
+			    /*
+     			* reset silenceCurrent state to FALSE
+     			*/
+    			if (psetup.silenceCurrent && 
+					(psetup.newUnackBeepSevr>=psetup.beepSevr) )
+        			silenceCurrentReset(clink->pmainGroup->area);
+			} else {
+				if (cdata->unackSevr > 0 && _global_flag )  {
+					ackChan(clink);
+			  		sprintf(buff,"Auto ack of transient alarms on Ack: %s\n", cdata->name);
+					alLogOpMod(buff);
+					cdata->unackSevr = NO_ALARM;
+				}
 			}
-
-
 		}
-
 	}
+
 	if (mask.AckT != cdata->curMask.AckT) {
 		alUpdateGroupMask(clink,ALARMACKT,mask.AckT);
 		cdata->curMask.AckT = mask.AckT;
@@ -1485,7 +1505,10 @@ void alSetAckTChan(CLINK *clink,int newAckT)
 	if (oldAckT == newAckT) return;
 
 	if (newAckT == FALSE && (cdata->unackSevr > cdata->curSevr)) {
-	    alSetUnackSevChan(clink,cdata->curSevr);
+		if (!_global_flag ||
+			( cdata->curMask.Disable == 0 && cdata->curMask.Ack == 0 ) ) {
+		    alSetUnackSevChan(clink,cdata->curSevr);
+		}
 	}
 
 	alUpdateGroupMask(clink,ALARMACKT,newAckT);
@@ -1528,3 +1551,48 @@ void alSetCurChanMask(CLINK *clink,MASK mask)
 		cdata->curMask.Log = mask.Log;
 	}
 }
+
+/************************************************************************* 
+ *Remove the noAck timer for a  channel 
+ **********************************************************************/
+void alRemoveNoAck1HrTimerChan(CLINK *clink)
+{
+	if (clink->pchanData->noAckTimerId){
+		XtRemoveTimeOut(clink->pchanData->noAckTimerId);
+		clink->pchanData->noAckTimerId = 0;
+	}
+}
+
+/************************************************************************* 
+ *Remove the noAck timer for group and group's channels and subgroups 
+ **********************************************************************/
+void alRemoveNoAck1HrTimerGroup(GLINK *glink)
+{
+	GLINK *group;
+	CLINK *clink;
+	SNODE *pt;
+
+	if (glink->pgroupData->noAckTimerId){
+		XtRemoveTimeOut(glink->pgroupData->noAckTimerId);
+		glink->pgroupData->noAckTimerId = 0;
+	}
+	/*
+	 * for all channels in this group
+	 */
+	pt = sllFirst(&(glink->chanList));
+	while (pt) {
+		clink = (CLINK *)pt;
+		alRemoveNoAck1HrTimerChan(clink);
+		pt = sllNext(pt);
+	}
+	/*
+	 * for all subgroups
+	 */
+	pt = sllFirst(&(glink->subGroupList));
+	while (pt) {
+		group = (GLINK *)pt;
+		alRemoveNoAck1HrTimerGroup(group);
+		pt = sllNext(pt);
+	}
+}
+

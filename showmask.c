@@ -552,6 +552,7 @@ static void forceMaskApplyCallback(Widget widget,XtPointer calldata,XtPointer cb
 	alSetMask(buff,&mask);
 	XtFree(buff);
 	if (linkType == CHANNEL) {
+		alRemoveNoAck1HrTimerChan((CLINK *)link);
 		alChangeChanMask((CLINK *)link,mask);
 		alCaFlushIo();
 		alLogForcePVChan((CLINK *)link,OPERATOR);
@@ -559,6 +560,7 @@ static void forceMaskApplyCallback(Widget widget,XtPointer calldata,XtPointer cb
 		if (programId != ALH) cdata->defaultMask = cdata->curMask;
 	}
 	if (linkType == GROUP) {
+		alRemoveNoAck1HrTimerGroup((GLINK *)link);
 		alChangeGroupMask((GLINK *)link,mask);
 		alCaFlushIo();
 		alLogForcePVGroup((GLINK *)link,OPERATOR);
@@ -591,6 +593,7 @@ static void forceMaskResetCallback(Widget widget,XtPointer calldata,XtPointer cb
 
 	if (linkType == CHANNEL) {
 		cdata = (struct chanData *)link->pgcData;
+		alRemoveNoAck1HrTimerChan((CLINK *)link);
 		alChangeChanMask((CLINK *)link,cdata->defaultMask);
 		alCaFlushIo();
 		alLogResetPVChan((CLINK *)link,OPERATOR);
@@ -598,6 +601,7 @@ static void forceMaskResetCallback(Widget widget,XtPointer calldata,XtPointer cb
 		if (programId != ALH) cdata->defaultMask = cdata->curMask;
 	}
 	if (linkType == GROUP) {
+		alRemoveNoAck1HrTimerChan((GLINK *)link);
 		alResetGroupMask((GLINK *)link);
 		alCaFlushIo();
 		alLogResetPVGroup((GLINK *)link,OPERATOR);

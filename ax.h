@@ -216,8 +216,10 @@ char *alAlarmGroupName( GLINK *link);
 int alProcessExists( GCLINK *link);
 void alSetUnackSevChan(CLINK *clink,int newSevr);
 void alSetCurChanMask(CLINK *clink,MASK mask);
-extern void alSetBeepSevrChan(CLINK *link,int sevr);
-extern void alSetBeepSevrGroup(GLINK *link,int sevr);
+void alSetBeepSevrChan(CLINK *link,int sevr);
+void alSetBeepSevrGroup(GLINK *link,int sevr);
+void alRemoveNoAck1HrTimerGroup(GLINK *glink);
+void alRemoveNoAck1HrTimerChan(CLINK *clink);
 
 
 /********************************************************************

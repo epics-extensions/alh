@@ -137,7 +137,6 @@ struct chanData {
 	MASK defaultMask;		/* default mask setting */
 	char value[MAX_STRING_SIZE];	/* channel value from CA */
 	short curStat;			/* channel status from CA */
-	short unackStat;		/* unack status */
 	chid chid;			/* chid from CA search */
 	evid evid;			/* evid from CA add event */
 };

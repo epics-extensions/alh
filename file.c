@@ -90,7 +90,7 @@ void broadcastMessTesting();
 XtIntervalId broadcastMessTimeoutId=NULL;
 int amIsender=0;
 int notsave=0;     
-char *rebootString="MIN  ALH  WILL  NOT  SAVE ALARM LOG!!!!";
+const char *rebootString="MIN  ALH  WILL  NOT  SAVE ALARM LOG!!!!";
 int max_not_save_time=10;
 void broadcastMess_exit_quit(int);
 unsigned long broadcastMessDelay=2000; /*(msec) periodic mess testing. Albert */   

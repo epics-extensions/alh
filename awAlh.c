@@ -200,7 +200,7 @@ Widget alhCreateMenu(Widget parent,XtPointer user_data)
 		             alhActionCallback, (XtPointer)MENU_ACTION_FORCE_MASK, (MenuItem *)NULL, 0 },
 		         { "Modify Mask Settings ...",  ToggleButtonGadgetClass, 'S', "Ctrl<Key>S", "Ctrl+S",
 		             alhActionCallback, (XtPointer)MENU_ACTION_MODIFY_MASK, (MenuItem *)NULL, 0 },
-		         { "Beep Severity ...",  ToggleButtonGadgetClass, 'B', "Ctrl<Key>B", "Ctrl+B",
+		         { "ALH Beep Severity ...",  ToggleButtonGadgetClass, 'B', "Ctrl<Key>B", "Ctrl+B",
 		             alhActionCallback, (XtPointer)MENU_ACTION_BEEPSEVR, (MenuItem *)NULL, 0 },
 		         { "NoAck for One Hour ...",  ToggleButtonGadgetClass, 'N', "Ctrl<Key>N", "Ctrl+N",
 		             alhActionCallback, (XtPointer)MENU_ACTION_NOACKTIMER, (MenuItem *)NULL, 0 },
@@ -220,7 +220,7 @@ static MenuItem action_menuNew[] = {
 		             alhActionCallback, (XtPointer)MENU_ACTION_FORCE_MASK, (MenuItem *)NULL, 0 },
 		         { "Modify Mask Settings ...",  ToggleButtonGadgetClass, 'S', "Ctrl<Key>S", "Ctrl+S",
 		             alhActionCallback, (XtPointer)MENU_ACTION_MODIFY_MASK, (MenuItem *)NULL, 0 },
-		         { "Beep Severity ...",  ToggleButtonGadgetClass, 'B', "Ctrl<Key>B", "Ctrl+B",
+		         { "ALH Beep Severity ...",  ToggleButtonGadgetClass, 'B', "Ctrl<Key>B", "Ctrl+B",
 		             alhActionCallback, (XtPointer)MENU_ACTION_BEEPSEVR, (MenuItem *)NULL, 0 },
 		         { "NoAck for One Hour ...",  ToggleButtonGadgetClass, 'N', "Ctrl<Key>N", "Ctrl+N",
 		             alhActionCallback, (XtPointer)MENU_ACTION_NOACKTIMER, (MenuItem *)NULL, 0 },
@@ -289,7 +289,7 @@ static MenuItem action_menuNew[] = {
 	static MenuItem setup_menu[] = {
 		         { "Display Filter...",        PushButtonGadgetClass, 'F', NULL, NULL,
 		                                      0, 0,    (MenuItem *)setup_filter_menu, 0 },
-		         { "Global Beep Severity...",       PushButtonGadgetClass, 'B', NULL, NULL,
+		         { "ALH Beep Severity...",       PushButtonGadgetClass, 'B', NULL, NULL,
 		                                      0, 0,    (MenuItem *)setup_beep_menu, 0 },
 #ifdef AUDIO_BEEP
 		         { "Audio Setup...",       ToggleButtonGadgetClass, 'D', NULL, NULL,

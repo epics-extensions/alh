@@ -49,8 +49,8 @@ static char *sccsId = "@(#) $Id$";
 #include "ax.h"
 
 char *silenceString[] = {"Off","On"};
-char *executionModeString[] = {"Local","Global"};
-char *executionStateString[] = {"Active","Passive"};
+const char *executionModeString[] = {"Local","Global"};
+const char *executionStateString[] = {"Active","Passive"};
 char *disabledForcePVCountString[] = {" ","Disabled forcePVs:"};
 
 /* global variables */

@@ -34,7 +34,7 @@ extern int _DB_call_flag;
 /*************************************************************    
  * channel acknowledgement
  ***************************************************************/
-static void ackChan(CLINK *clink)
+void ackChan(CLINK *clink)
 {
 	struct chanData *cdata;
 

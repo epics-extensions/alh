@@ -79,9 +79,15 @@ void awUpdateChanLine(struct anyLine *chanLine)
 	chanLine->unackSevr = cdata->unackSevr;
 	chanLine->curSevr = cdata->curSevr;
 	chanLine->curStat = cdata->curStat;
-	if (cdata->curMask.Disable == MASK_ON || cdata->curMask.Cancel == MASK_ON)
+	if (cdata->curMask.Disable == MASK_ON || cdata->curMask.Cancel == MASK_ON) {
 		chanLine->curSevr = 0;
+		chanLine->unackSevr = 0;
+	}
+	if (cdata->curMask.Ack == MASK_ON) {
+		chanLine->unackSevr = 0;
+	}
 	alGetMaskString(cdata->curMask,buff);
+	if (cdata->noAckTimerId ) buff[2]='H';
 	sprintf(chanLine->mask,"<%s>",buff);
 
 	strcpy(chanLine->message," ");
@@ -113,6 +119,7 @@ void awUpdateGroupLine(struct anyLine *groupLine)
 	if (!glink) return;
 	gdata = glink->pgroupData;
 	awGetMaskString(gdata->mask,buff);
+	if (gdata->noAckTimerId ) buff[2]='H';
 	sprintf(groupLine->mask,"<%s>",buff);
 	for (i=0;i<ALH_ALARM_NSEV;i++){
 		groupLine->curSev[i] = gdata->curSev[i];

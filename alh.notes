@@ -375,3 +375,22 @@ Mon Jan 27 13:52:29 CST 2003
 	More changes for noAck for one hour timer.
 	Allow "NE" for forcePV reset value ( NE forcePV force value).
 
+Tue Feb 11 15:28:34 CST 2003  ALH_1_2_11Beta1
+	More changes for noAck for one hour timer. New Action menu item
+	"NoAck for One Hour". Channel have Ack mask set to reset value
+	after one hour. Ability to permanently noAck/Ack a group or
+	channel. Groups or channels with 1 hour timer will display an
+	'H' in Ack mask field. A new no-Ack timer will cancel existing
+	timers in subgroups and channels.  When timer expires it will
+	not reset any subgroups or channels that have an existing (i.e.
+	more recent) timer.
+
+	The text "ALH" has been added to the old Setup Beep Severity
+	menu item and to the Beep Severity line in the main window message
+	area to show that it is not a group or channel beep severity.
+
+	Now when a channel is enabled after being disabled and it is not
+	in an alarm state but does have unacknowledged transient alarms, an
+	automatic acknowlegment is sent to the channel and the auto acknowledge-
+	ment is logged in the opMod file.
+

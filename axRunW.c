@@ -51,7 +51,7 @@ extern char *programName;
 extern Pixmap ALH_pixmap;
 Pixel bg_pixel[ALH_ALARM_NSEV];
 Pixel channel_bg_pixel;
-char *bg_char[] = {" ", "Y", "R", "V", "E"," " };
+const char *bg_char[] = {" ", "Y", "R", "V", "E"," " };
 
 /* forward declarations */
 static void axExit_callback(Widget w,ALINK *area,XmAnyCallbackStruct *call_data);
@@ -66,7 +66,7 @@ static void silenceOneHourReset(void *area);
 ******************************************************/
 void createRuntimeWindow(ALINK *area)
 {
-	char   *alhTitle={"Alarm Handler"};
+	const char   *alhTitle={"Alarm Handler"};
 	XmString str;
 
 	if (!area->runtimeToplevel){
