@@ -2,13 +2,8 @@
 # $Id$
 #
 # $Log$
-# Revision 1.7  1995/10/20 16:49:45  jba
-# Modified Action menus and Action windows
-# Renamed ALARMCOMMAND to SEVRCOMMAND
-# Added STATCOMMAND facility
-# Added ALIAS facility
-# Added ALARMCOUNTFILTER facility
-# Make a few bug fixes.
+# Revision 1.8  1995/10/20 18:15:24  jba
+# Fixed.
 #
 # Revision 1.6  1995/02/28  16:43:23  jba
 # ansi c changes
@@ -33,15 +28,7 @@ include $(EPICS)/config/CONFIG_EXTENSIONS
 
 DEPLIBS = $(EPICS_BASE_LIB)/libca.a $(EPICS_BASE_LIB)/libCom.a
 
-#X11_LIB=/usr/local/XR5/lib
-#SPECIAL_LANG=.
-#ANSI=GCC
-#CMPLR = STRICT
-
-#UNIX_OPT=NO
-USR_CFLAGS = -DACCESS_SECURITY -g
-#USR_CFLAGS = -DACCESS_SECURITY
-
+USR_CFLAGS = -DACCESS_SECURITY
 USR_INCLUDES = -I$(MOTIF_INC) -I$(X11_INC)
 USR_LDFLAGS = -L$(MOTIF_LIB) -L$(X11_LIB)
 USR_LDLIBS = -lca -lCom -lXm -lXt -lXext -lX11 
@@ -117,7 +104,7 @@ OBJS =  acknowledge.o  \
 		sllLib.o \
 		testalarm.o   
 
-TARGETS = alh
+PROD = alh
 
 include $(EPICS)/config/RULES.Unix
 
