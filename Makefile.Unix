@@ -2,6 +2,9 @@
 # $Id$
 #
 # $Log$
+# Revision 1.10  1997/09/12 19:27:24  jba
+# Removed dependancy on libUnix (product description shell)
+#
 # Revision 1.9  1996/11/19 19:40:21  jba
 # Fixed motif delete window actions, and fixed size of force PV window.
 #
@@ -36,14 +39,10 @@ USR_INCLUDES = -I$(MOTIF_INC) -I$(X11_INC)
 USR_LDFLAGS = -L$(MOTIF_LIB) -L$(X11_LIB)
 USR_LDLIBS = -lca -lCom -lXm -lXt -lXext -lX11 
 
-#CC = purify $(C_$(CMPLR))
+#CMPLR = STRICT
+#CC = purify -first_only -chain-length=20 $(C_$(CMPLR))
 #UNIX_OPT=NO
 #USR_CFLAGS += -g
-
-# use following 3 lines if USR_CFLAGS contains -DIWantGreeting
-#DEPLIBS = $(EPICS_BASE_LIB)/libca.a $(EPICS_BASE_LIB)/libCom.a $(EPICS_EXTENSIONS_LIB)/libUnix.a
-#USR_LDFLAGS = -L$(EPICS_EXTENSIONS_LIB) -L$(MOTIF_LIB) -L$(X11_LIB)
-#USR_LDLIBS = -lca -lCom -lUnix -lXm -lXt -lXext -lX11
 
 SRCS.c =  ../acknowledge.c  \
 		../alCA.c \
