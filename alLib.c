@@ -121,8 +121,14 @@ void alDeleteChan(CLINK *clink)
             if (cdata->countFilter->alarmTimeHistory){
                 free(cdata->countFilter->alarmTimeHistory);
             }
+     		if (cdata->countFilter->timeoutId){
+				XtRemoveTimeOut(cdata->countFilter->timeoutId);
+			}
             free(cdata->countFilter);
         }
+     	if (cdata->noAckTimerId){
+			XtRemoveTimeOut(cdata->noAckTimerId);
+		}
 		if (cdata->alias) free(cdata->alias);
 
 		removeSevrCommandList(&cdata->sevrCommandList);
@@ -171,6 +177,9 @@ void alDeleteGroup(GLINK *glink)
 		if (strcmp(gdata->forcePVName,"-") != 0) free(gdata->forcePVName);
 		if (strcmp(gdata->sevrPVName,"-") != 0) free(gdata->sevrPVName);
 		if (gdata->command) free(gdata->command);
+     	if (gdata->noAckTimerId){
+			XtRemoveTimeOut(gdata->noAckTimerId);
+		}
 		if (gdata->alias) free(gdata->alias);
 		if (gdata->treeSym) free(gdata->treeSym);
 
