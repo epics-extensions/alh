@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.8  1998/07/23 16:27:50  jba
+ Changed XmStringCreateSimple to XmStringCreateLtoR.
+
  Revision 1.7  1998/06/03 12:57:14  evans
  Added destroy callback (killWidget) for errMsg.
 
@@ -181,10 +184,10 @@ Widget createFileDialog(parent,okCallback,okParm,cancelCallback,cancelParm,userP
                               (XtCallbackProc)oldCancel ,(XtPointer)oldCancelParm);
      }
 
-     Xtitle = XmStringCreateSimple(title);
-     Xpattern = XmStringCreateSimple(pattern);
+     Xtitle=XmStringCreateLtoR(title,XmSTRING_DEFAULT_CHARSET);
+     Xpattern=XmStringCreateLtoR(pattern,XmSTRING_DEFAULT_CHARSET);
      if ( !directory  && Xcurrentdir ) Xdirectory = Xcurrentdir;
-     else Xdirectory = XmStringCreateSimple(directory);
+     else Xdirectory = XmStringCreateLtoR(directory,XmSTRING_DEFAULT_CHARSET);
 
      XtVaSetValues(fileselectdialog,
           XmNuserData,      userParm,
@@ -246,25 +249,25 @@ void createDialog(parent,dialogType,message1,message2)
 
      switch(dialogType) {
           case XmDIALOG_WARNING:
-               str = XmStringCreateSimple("WarningDialog");
+               str=XmStringCreateLtoR("WarningDialog",XmSTRING_DEFAULT_CHARSET);
                break;
           case XmDIALOG_ERROR:
-               str = XmStringCreateSimple("ErrorDialog");
+               str=XmStringCreateLtoR("ErrorDialog",XmSTRING_DEFAULT_CHARSET);
                break;
           case XmDIALOG_INFORMATION:
-               str = XmStringCreateSimple("InformationDialog");
+               str=XmStringCreateLtoR("InformationDialog",XmSTRING_DEFAULT_CHARSET);
                break;
           case XmDIALOG_MESSAGE:
-               str = XmStringCreateSimple("MessageDialog");
+               str=XmStringCreateLtoR("MessageDialog",XmSTRING_DEFAULT_CHARSET);
                break;
           case XmDIALOG_QUESTION:
-               str = XmStringCreateSimple("QuestionDialog");
+               str=XmStringCreateLtoR("QuestionDialog",XmSTRING_DEFAULT_CHARSET);
                break;
           case XmDIALOG_WORKING:
-               str = XmStringCreateSimple("WorkingDialog");
+               str=XmStringCreateLtoR("WorkDialog",XmSTRING_DEFAULT_CHARSET);
                break;
           default:
-               str = XmStringCreateSimple("Dialog");
+               str=XmStringCreateLtoR("Dialog",XmSTRING_DEFAULT_CHARSET);
                break;
      }
      
@@ -350,7 +353,7 @@ void createActionDialog(parent,dialogType,message1,okCallback,okParm,userParm)
                break;
      }
      
-     str2 = XmStringCreateSimple(message1);
+     str2=XmStringCreateLtoR(message1,XmSTRING_DEFAULT_CHARSET);
      XtVaSetValues(dialog,
           XmNuserData,      userParm,
           XmNdialogType,  dialogType,
