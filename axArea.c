@@ -388,7 +388,6 @@ void createMainWindowWidgets(ALINK *area)
 	char actTitle[] = "Alarm Configuration Tool";
 	char alhTitle[] = "Alarm Handler";
 	XmString    str;
-	Widget dialog;
 	char   *app_name;
 	char   *title_str;
 	int len = 0;

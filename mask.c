@@ -163,11 +163,11 @@ static void maskCreateDialog(ALINK *area)
 		         { "Help",    maskHelpCallback,    NULL    },
 		     	};
 	static maskItem maskItem[] = {
-		         { "Add/Cancel Alarms",         {"Add",    0,"Cancel",  1,"Reset", 2}},
-		         { "Enable/Disable Alarms",     {"Enable",10,"Disable",11,"Reset",12}},
-		         { "Ack/NoAck Alarms",          {"Ack",   20,"NoAck",  21,"Reset",22}},
-		         { "Ack/NoAck Transient Alarms",{"Ack",   30 ,"NoAck", 31,"Reset",32}},
-		         { "Log/NoLog Alarms",          {"Log",   40 ,"NoLog", 41,"Reset",42}},
+		         { "Add/Cancel Alarms",         {{"Add",    0},{"Cancel",  1},{"Reset", 2}}},
+		         { "Enable/Disable Alarms",     {{"Enable",10},{"Disable",11},{"Reset",12}}},
+		         { "Ack/NoAck Alarms",          {{"Ack",   20},{"NoAck",  21},{"Reset",22}}},
+		         { "Ack/NoAck Transient Alarms",{{"Ack",   30},{"NoAck",  31},{"Reset",32}}},
+		         { "Log/NoLog Alarms",          {{"Log",   40},{"NoLog",  41},{"Reset",42}}},
 		     	};
 	int num_buttons = 3;
 	int num_rows = 5;
@@ -290,8 +290,6 @@ static void maskCreateDialog(ALINK *area)
 ******************************************************/
 static void maskHelpCallback(Widget widget,XtPointer calldata,XtPointer cbs)
 {
-	struct maskWindow *maskWindow=(struct maskWindow *)calldata;
-
 	char *message1 = 
 	"This dialog window allows an operator"
 	" to change individual mask field\n"

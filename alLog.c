@@ -93,6 +93,7 @@ extern int printerMsgQId;
 extern int _lock_flag;
 
 int write2MQ(int, char *);
+int write2msgQ(int mq, char *mes);
 
 char *digit2month[12]={"Jan","Feb","Mar","Apr","May","Jun","Jul","Aug",
 		       "Sep","Oct","Nov","Dec"};

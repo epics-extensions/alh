@@ -552,7 +552,6 @@ void updateAlarmLog(int fileIndex,char *string)
 {
 	char   str[MAX_STRING_LENGTH];
 	int stringLength = strlen(string);
-	int oldUsedLength = viewFileUsedLength[fileIndex];
 	int startPosition,endPosition;
 	int pos=0;/* Albert1 */
 
@@ -613,7 +612,7 @@ else return;      /* Albert1 */
 **************************************************************************/
 void browser_fileViewWindow(Widget w,int option,Widget menuButton)
 {
-	static Widget config_shell=NULL,alarm_shell=NULL,opmod_shell=NULL;
+	static Widget alarm_shell=NULL;
 	Widget app_shell=NULL,title,button,button1;
 	Widget previous;
 	char sbuf[120];
@@ -784,7 +783,7 @@ void browser_fileViewWindow(Widget w,int option,Widget menuButton)
 			ac++;
 			button1 = XtCreateManagedWidget("Search",xmPushButtonWidgetClass,
 			    app_shell, al, ac);
-			XtAddCallback(button1, XmNactivateCallback, searchCallback, app_shell );
+			XtAddCallback(button1, XmNactivateCallback, (XtCallbackProc)searchCallback, app_shell );
 			ac = 0;
 			XtSetArg(al[ac], XmNallowShellResize, (XtArgVal) True); 
 			ac++;
@@ -828,7 +827,7 @@ void browser_fileViewWindow(Widget w,int option,Widget menuButton)
 			ac++;
 			findText = XtCreateManagedWidget("findText", xmTextWidgetClass, findBox, 
 			    al, ac);
-			XtAddCallback(findText, XmNactivateCallback, findForward, NULL);
+			XtAddCallback(findText, XmNactivateCallback, (XtCallbackProc)findForward, NULL);
 			ac = 0;
 			XtSetArg(al[ac], XmNborderWidth, (XtArgVal) 0); 
 			ac++;
@@ -842,7 +841,7 @@ void browser_fileViewWindow(Widget w,int option,Widget menuButton)
 			ac++;
 			findForwardButton = XtCreateManagedWidget("findForwardButton",
 			    xmPushButtonWidgetClass, findButtonBox, al, ac);
-			XtAddCallback(findForwardButton, XmNactivateCallback, findForward, 
+			XtAddCallback(findForwardButton, XmNactivateCallback, (XtCallbackProc)findForward, 
 			    app_shell);
 			ac = 0;
 			XtSetArg(al[ac], XmNlabelString, 
@@ -850,14 +849,14 @@ void browser_fileViewWindow(Widget w,int option,Widget menuButton)
 			ac++;
 			findReverseButton = XtCreateManagedWidget("findReverseButton",
 			    xmPushButtonWidgetClass, findButtonBox, al, ac);
-			XtAddCallback(findReverseButton,XmNactivateCallback,findReverse,app_shell);
+			XtAddCallback(findReverseButton,XmNactivateCallback,(XtCallbackProc)findReverse,app_shell);
 			ac = 0;
 			XtSetArg(al[ac], XmNlabelString,
 			    XmStringCreateLtoR("Dismiss", XmFONTLIST_DEFAULT_TAG)); 
 			ac++;
 			findDismissButton = XtCreateManagedWidget("findDismissButton",
 			    xmPushButtonWidgetClass, findButtonBox, al, ac);
-			XtAddCallback(findDismissButton, XmNactivateCallback, findDismiss, NULL);
+			XtAddCallback(findDismissButton, XmNactivateCallback, (XtCallbackProc)findDismiss, NULL);
 			ac = 0;
 			XtSetArg(al[ac], XmNmarginHeight, &margin_height); 
 			ac++;
@@ -879,12 +878,12 @@ void browser_fileViewWindow(Widget w,int option,Widget menuButton)
 
 			timeofday = time(0L);
 			tms = localtime(&timeofday);
-			sprintf(buf,"%04d%02d%02d%",
+			sprintf(buf,"%04d%02d%02d",
 			    1900+tms->tm_year,1+tms->tm_mon,tms->tm_mday);
 			sscanf(buf,"%4s%2s%2s",
-			    &defaultString_fy,&defaultString_fmo,&defaultString_fd);
+			    defaultString_fy,defaultString_fmo,defaultString_fd);
 			sscanf(buf,"%4s%2s%2s",
-			    &defaultString_ty,&defaultString_tmo,&defaultString_td);
+			    defaultString_ty,defaultString_tmo,defaultString_td);
 
 			ac=0;
 			XtSetArg (al[ac], XmNtopAttachment, XmATTACH_WIDGET);  
@@ -909,7 +908,7 @@ void browser_fileViewWindow(Widget w,int option,Widget menuButton)
 			text_fy=
 			    XtCreateManagedWidget("tex_fy",xmTextFieldWidgetClass, rowcol1,al,ac);
 			XtVaSetValues(text_fy, XmNvalue,defaultString_fy, NULL);
-			XtAddCallback(text_fy, XmNmodifyVerifyCallback, allDigit, NULL);
+			XtAddCallback(text_fy, XmNmodifyVerifyCallback, (XtCallbackProc)allDigit, NULL);
 
 			XtSetArg (al[ac], XmNcolumns, 2); 
 			ac++;
@@ -918,22 +917,22 @@ void browser_fileViewWindow(Widget w,int option,Widget menuButton)
 			text_fmo=
 			    XtCreateManagedWidget("tex_fmo",xmTextFieldWidgetClass,rowcol1,al,ac);
 			XtVaSetValues(text_fmo, XmNvalue,defaultString_fmo, NULL);
-			XtAddCallback(text_fmo, XmNmodifyVerifyCallback, allDigit, NULL);
+			XtAddCallback(text_fmo, XmNmodifyVerifyCallback, (XtCallbackProc)allDigit, NULL);
 
 			text_fd=
 			    XtCreateManagedWidget("tex_fd",xmTextFieldWidgetClass, rowcol1,al,ac);
 			XtVaSetValues(text_fd, XmNvalue,defaultString_fd, NULL);
-			XtAddCallback(text_fd, XmNmodifyVerifyCallback, allDigit, NULL);
+			XtAddCallback(text_fd, XmNmodifyVerifyCallback, (XtCallbackProc)allDigit, NULL);
 
 			text_fh=
 			    XtCreateManagedWidget("tex_fh",xmTextFieldWidgetClass,rowcol1,al,ac);
 			XtVaSetValues(text_fh, XmNvalue,defaultString_fh, NULL);
-			XtAddCallback(text_fh, XmNmodifyVerifyCallback, allDigit, NULL);
+			XtAddCallback(text_fh, XmNmodifyVerifyCallback, (XtCallbackProc)allDigit, NULL);
 
 			text_fmi=
 			    XtCreateManagedWidget("tex_fmi",xmTextFieldWidgetClass,rowcol1,al,ac);
 			XtVaSetValues(text_fmi, XmNvalue,defaultString_fmi, NULL);
-			XtAddCallback(text_fmi, XmNmodifyVerifyCallback, allDigit, NULL);
+			XtAddCallback(text_fmi, XmNmodifyVerifyCallback, (XtCallbackProc)allDigit, NULL);
 
 			XtVaCreateManagedWidget("With:",xmLabelGadgetClass, rowcol1, NULL);
 
@@ -963,7 +962,7 @@ void browser_fileViewWindow(Widget w,int option,Widget menuButton)
 			text_ty=
 			    XtCreateManagedWidget("tex_ty",xmTextFieldWidgetClass, rowcol2,al,ac);
 			XtVaSetValues(text_ty, XmNvalue,defaultString_ty, NULL);
-			XtAddCallback(text_ty, XmNmodifyVerifyCallback, allDigit, NULL);
+			XtAddCallback(text_ty, XmNmodifyVerifyCallback, (XtCallbackProc)allDigit, NULL);
 
 			XtSetArg (al[ac], XmNcolumns, 2); 
 			ac++;
@@ -972,22 +971,22 @@ void browser_fileViewWindow(Widget w,int option,Widget menuButton)
 			text_tmo=
 			    XtCreateManagedWidget("tex_tmo",xmTextFieldWidgetClass,rowcol2,al,ac);
 			XtVaSetValues(text_tmo, XmNvalue,defaultString_tmo, NULL);
-			XtAddCallback(text_tmo, XmNmodifyVerifyCallback, allDigit, NULL);
+			XtAddCallback(text_tmo, XmNmodifyVerifyCallback, (XtCallbackProc)allDigit, NULL);
 
 			text_td=
 			    XtCreateManagedWidget("tex_td",xmTextFieldWidgetClass,rowcol2,al,ac);
 			XtVaSetValues(text_td, XmNvalue,defaultString_td, NULL);
-			XtAddCallback(text_td, XmNmodifyVerifyCallback, allDigit, NULL);
+			XtAddCallback(text_td, XmNmodifyVerifyCallback, (XtCallbackProc)allDigit, NULL);
 
 			text_th=
 			    XtCreateManagedWidget("tex_th",xmTextFieldWidgetClass,rowcol2,al,ac);
 			XtVaSetValues(text_th, XmNvalue,defaultString_th, NULL);
-			XtAddCallback(text_th, XmNmodifyVerifyCallback, allDigit, NULL);
+			XtAddCallback(text_th, XmNmodifyVerifyCallback, (XtCallbackProc)allDigit, NULL);
 
 			text_tmi=
 			    XtCreateManagedWidget("tex_tmi",xmTextFieldWidgetClass,rowcol2,al,ac);
 			XtVaSetValues(text_tmi, XmNvalue,defaultString_tmi, NULL);
-			XtAddCallback(text_tmi, XmNmodifyVerifyCallback, allDigit, NULL);
+			XtAddCallback(text_tmi, XmNmodifyVerifyCallback, (XtCallbackProc)allDigit, NULL);
 
 			showButton=XtVaCreateManagedWidget("ShowSelected",
 			    xmPushButtonWidgetClass,rowcol2, NULL);
@@ -1089,7 +1088,6 @@ XtPointer call_data)
   char *fy,*fmo,*fd,*fh,*fmi,*ty,*tmo,*td,*th,*tmi;
   char *string_with;
   char month[10], day[10], hour[10], min[10], year[10], un1[10],un2[10];
-  int m;
   Boolean found;
   char *p;
   DIR *directory;
@@ -1101,8 +1099,6 @@ XtPointer call_data)
   XSetWindowAttributes attrs;
   char lin[250];
   char *selectedText;
-  static Widget dialog;
-  XmString str,str1;
   char *dirForAlLog;
   int count=0;
   register int gap, i, j;
@@ -1175,7 +1171,7 @@ XtPointer call_data)
   XFlush(display);
   
   len=strlen(FSnameshort)-10;   /*  length of name without "extension" */
-  while(rdr=readdir(directory)) 
+  while((rdr=readdir(directory))) 
     {
     if( strncmp(rdr->d_name,FSnameshort,len )) continue;
     if(!extensionIsDate(rdr->d_name+len))      continue; 
@@ -1199,12 +1195,12 @@ XtPointer call_data)
        return;
        }
 
-  v=(char **) XtCalloc(sizeof(char *),count);
+  v=(char **) calloc(sizeof(char *),count);
   i=0;
-  while(rdr=readdir(directory)) {
+  while((rdr=readdir(directory))) {
     if( strncmp(rdr->d_name,FSnameshort,len )) continue;
     if(!extensionIsDate(rdr->d_name+len))      continue; 
-    v[i]=(char *)calloc(sizeof(char), strlen(FSnameshort)+1 );
+    v[i]=(char *)XtCalloc(sizeof(char), strlen(FSnameshort)+1 );
     strcpy(v[i],rdr->d_name); 
     v[i][strlen(FSnameshort)]=0;
     i++;
@@ -1265,10 +1261,10 @@ XtPointer call_data)
     while ( fgets(line,159,ffp) ) {
       if(isdigit(line[0]))                    /* new time format Albert1*/
 	sscanf(line,"%3s %4s %5s %3s %3s",
-	       &day, &month,&year,&hour,&min);
+	       day, month,year,hour,min);
       else {                                   /* old time format Albert1*/
 	sscanf(line,"%4s %4s %3s %3s %3s %3s %4s",
-	       &un1,&month,&day,&hour,&min,&un2,&year);
+	       un1,month,day,hour,min,un2,year);
       month[3]=day[2]=hour[2]=min[2]=year[4]=0;
       
       if(atoi(day)<10) 
@@ -1288,7 +1284,7 @@ XtPointer call_data)
       if( strcmp(&buf1[0],&buf2[0]) > 0 ) continue;
       if (strlen(string_with)){
         found=False;
-        for (p = line; p = strchr( (const char *)p, *string_with); p++){
+        for (p = line;(p = strchr( (const char *)p, *string_with)); p++){
           if (!strncmp(p,string_with,strlen(string_with))) {found=True;break;}
 	}
         if (!found) continue;
@@ -1298,7 +1294,7 @@ XtPointer call_data)
 
 	createDialog((Widget) w, XmDIALOG_ERROR,
         "Result of the search is so long.\nPlease, detail search context.\n",
-        "I show only begin of result.");
+        "I show only beginning of result.");
     
          breakFlag=True;
 	 break;         /* Break from while( fgets()) */
@@ -1308,7 +1304,8 @@ XtPointer call_data)
    fclose(ffp);
   }
 
-  XtFree(v); for(i=0;i<count;i++) XtFree(v[i]);
+  for(i=0;i<count;i++) XtFree(v[i]);
+  free(v);
   XtFree(dirForAlLog);
   XtFree(string_with);
   XtFree(fy); 
@@ -1366,7 +1363,6 @@ XtPointer call_data)
 	char *search_pat, *p, *string;
 	Boolean found = False;
 	Widget text_w,search_w;
-	int operandFile=ALARM_FILE;
 	text_w = browserWidget;
 	search_w=findText;
 	string = XmTextGetString(text_w);
@@ -1387,7 +1383,7 @@ XtPointer call_data)
 	    XmHIGHLIGHT_NORMAL);
 	lenSearch=strlen(search_pat);
 	positionSearch = XmTextGetCursorPosition(text_w);
-	for(p=&string[positionSearch+1];p=strchr((const char *)p,*search_pat);p++)
+	for(p=&string[positionSearch+1];(p=strchr((const char *)p,*search_pat));p++)
 		if (!strncmp(p, search_pat, lenSearch)) {
 			found = True; 
 			break;
@@ -1412,10 +1408,9 @@ XtPointer call_data)
 static void findReverse(Widget w,XtPointer client_data,
 XtPointer call_data)
 {
-	char *search_pat, *p, *string;
+	char *search_pat, *p=0, *string;
 	Boolean found = False;
 	Widget text_w,search_w;
-	int operandFile=ALARM_FILE;
 	text_w = browserWidget;
 	search_w=findText;
 	string = XmTextGetString(text_w);

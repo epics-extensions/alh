@@ -132,7 +132,7 @@ void propShowDialog(ALINK *area,Widget menuButton)
 static void propUpdateDialogWidgets(struct propWindow *propWindow)
 {
 	struct gcData *pgcData;
-	struct chanData *pcData;
+	struct chanData *pcData = 0;
 	GCLINK *link;
 	int linkType;
 	XmString string;
@@ -408,7 +408,7 @@ static void propCreateDialog(ALINK *area)
 	Arg args[10];
 
 	Widget propDialogShell, propDialog, severityPVnameTextW;
-	Widget rowcol, form, maskFrameW;
+	Widget rowcol, form, maskFrameW=0;
 	Widget nameLabelW, nameTextW;
 	Widget forcePVlabel, severityPVlabel;
 	Widget alarmMaskToggleButtonW[ALARM_NMASK];
@@ -1399,8 +1399,6 @@ static void propApplyCallback( Widget widget,XtPointer calldata,XtPointer cbs)
 ******************************************************/
 static void propHelpCallback( Widget widget,XtPointer calldata,XtPointer cbs)
 {
-	struct propWindow *propWindow=(struct propWindow *)calldata;
-
 	char *messageALH1 =
 	"This dialog window allows an operator to view the alarm properties\n"
 	"for a group or channel.\n"
@@ -1647,5 +1645,6 @@ static GCLINK *propCreateClone(GCLINK *link,int linkType)
 		newChan->pchanData = pchanData;
 		return (GCLINK *)newChan;
 	}
+	return NULL;
 }
 

@@ -224,7 +224,7 @@ char *shortfile(char *name)
 ******************************************************/
 static int checkFilename(char *filename,int fileType)
 {
-	FILE *tt;
+	FILE *tt = 0;
 
 #ifndef WIN32
 	DIR *directory;

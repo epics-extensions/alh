@@ -108,8 +108,6 @@ void alPrecedeChan(GLINK *parent,CLINK *sibling,CLINK *clink)
 ***********************************************************************/
 void alDeleteChan(CLINK *clink)
 {
-	SNODE *pt,*next;
-	struct guideLink *guidelist;
 	struct chanData *cdata;
 
 	if (clink != NULL) {
@@ -141,9 +139,8 @@ void alDeleteChan(CLINK *clink)
 ********************************************************************/
 void alDeleteGroup(GLINK *glink)
 {
-	SNODE *snode,*cnode,*gnode,*next;
+	SNODE *cnode,*gnode,*next;
 	GLINK *pt;
-	struct guideLink *guidelist;
 	struct groupData *gdata;
 
 	if (glink) {
@@ -251,7 +248,6 @@ GLINK *alCopyGroup(GLINK *glink)
 	struct groupData *gdata;
 	struct groupData *gdataNew;
 	char *buff;
-	struct guideLink *guideLink;
 	SNODE *node;
 
 #if 0
@@ -368,8 +364,6 @@ CLINK *alCopyChan(CLINK *clink)
 	char *buff;
 	struct chanData *cdataNew;
 	struct chanData *cdata;
-	struct guideLink *guideLink;
-	SNODE *node;
 
 #if 0
 

@@ -611,8 +611,6 @@ XtPointer cbs)
 static void forcePVHelpCallback(Widget widget, XtPointer calldata,
 XtPointer cbs)
 {
-	struct forcePVWindow *forcePVWindow= (struct forcePVWindow *)calldata;
-
 	char *message1 =
 	"This dialog window allows an operator to specify"
 	" or modify the forcePV\n"

@@ -27,6 +27,8 @@ int colorEndLen;
 char msg[250];
 char buff[250];
 
+int printerInit(char *,int);
+int put2printer(char *,int,char *,int);
 
 int main(argc,argv)
 int argc;

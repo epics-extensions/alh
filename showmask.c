@@ -486,8 +486,6 @@ static void forceMaskChangeCallback(Widget widget,XtPointer calldata,XtPointer c
 ******************************************************/
 static void forceMaskHelpCallback(Widget widget,XtPointer calldata,XtPointer cbs)
 {
-	struct forceMaskWindow *forceMaskWindow=(struct forceMaskWindow *)calldata;
-
 	char *message1 = 
 	"This dialog window allows an operator to set the current mask for a group or channel.\n"
 	"  \n"

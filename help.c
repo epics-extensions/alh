@@ -61,7 +61,6 @@ XmAnyCallbackStruct *call_data)
 static XmString xs_str_array_to_xmstr(char *cs[],int n)
 {
 	XmString xmstr,xmsep, xmstr1,xmstr2 ;
-	XmString str;
 	int i;
 	/*
 	 	* if the array is empty just return an empty string.

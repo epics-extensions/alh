@@ -132,7 +132,7 @@ void editCutLink(ALINK *area,GCLINK *link,int linkType)
 	struct anyLine  *groupLine;
 	struct anyLine  *line;
 	WLINE *wline=0;
-	Widget pushButton;
+	Widget pushButton = 0;
 	XmPushButtonCallbackStruct *cbs=NULL;
 
 	if (!link) return;
@@ -207,7 +207,7 @@ void editCutLink(ALINK *area,GCLINK *link,int linkType)
 		    area->viewFilter);
 
 		/* redraw  Group window */
-		nameTreeW_callback(pushButton, line, cbs);
+		if (pushButton) nameTreeW_callback(pushButton, line, cbs);
 
 	}
 

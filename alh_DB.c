@@ -19,6 +19,8 @@
 
 char msg[250];
 
+int TCPInit(char *hostname,int port);
+int put2TCP(char *hostname,int port,char *string,int len);
 
 int main(argc,argv)
 int argc;

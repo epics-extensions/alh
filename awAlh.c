@@ -39,7 +39,9 @@ void awUpdateRowWidgets(line)                 Update line widgets
 #include <Xm/PushB.h>
 #include <Xm/PushBG.h>
 #include <Xm/RowColumn.h>
+#include <Xm/SelectioB.h>
 #include <Xm/SeparatoG.h>
+#include <Xm/TextF.h>
 #include <Xm/ToggleB.h>
 #include <Xm/ToggleBG.h>
 
@@ -122,6 +124,10 @@ static void alhSetupCallback( Widget widget, XtPointer calldata, XtPointer cbs);
 static void alhHelpCallback( Widget widget, XtPointer calldata, XtPointer cbs);
 static void browserFBSDialogCbOk();     /* Ok-button     for FSBox. Albert*/
 static void browserFBSDialogCbCancel(); /* Cancel-button for FSBox. Albert*/
+static void writeMessBroadcast(Widget dialog, Widget text_w);
+static void helpMessBroadcast(Widget w);
+static void canselMessBroadcast(Widget w);
+static void messBroadcastFileUnlock();
 
 
 /******************************************************
@@ -131,10 +137,6 @@ static void browserFBSDialogCbCancel(); /* Cancel-button for FSBox. Albert*/
 /* Create ALH MenuBar */
 Widget alhCreateMenu(Widget parent,XtPointer user_data)
 {
-	WidgetList children;
-	char label[MAX_STRING_LENGTH];
-	int i,numChildren;
-
 	static MenuItem file_menu[] = {
 		         { "Open ...",   &xmPushButtonGadgetClass, 'O', "Ctrl<Key>O", "Ctrl+O",
 		             alhFileCallback, (XtPointer)MENU_FILE_OPEN,   (MenuItem *)NULL, 0 },
@@ -693,12 +695,12 @@ static void messBroadcast(Widget widget,XtPointer item,XtPointer cbs)  /* Albert
 	    XtVaSetValues(dialog,XtVaTypedArg, XmNselectionLabelString, XmRString,
 			  "Type message (See help for detail):", 40,NULL);
 	    
-	    XtAddCallback(dialog, XmNcancelCallback,canselMessBroadcast, NULL);
-	    XtAddCallback(dialog, XmNhelpCallback,helpMessBroadcast, NULL);
+	    XtAddCallback(dialog, XmNcancelCallback,(XtCallbackProc)canselMessBroadcast, NULL);
+	    XtAddCallback(dialog, XmNhelpCallback,(XtCallbackProc)helpMessBroadcast, NULL);
 	    text_w = XmSelectionBoxGetChild(dialog, XmDIALOG_TEXT);
 	    XtVaSetValues(text_w, XmNvalue,"0 type your message", NULL);
 	    XtVaSetValues(dialog,XmNuserData,area,NULL);
-	    XtAddCallback(dialog, XmNokCallback,writeMessBroadcast, text_w);
+	    XtAddCallback(dialog, XmNokCallback,(XtCallbackProc)writeMessBroadcast, text_w);
 	    XtManageChild(dialog);
 
 	  }
@@ -737,7 +739,7 @@ char *real_world_name ="";
     string = XmTextFieldGetString(text_w);
 
     effective_uid = geteuid();
-    if (pp = getpwuid(effective_uid)) {
+    if ((pp = getpwuid(effective_uid))) {
       loginid=pp->pw_name;
       real_world_name=pp->pw_gecos;
     }

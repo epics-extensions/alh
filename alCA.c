@@ -17,7 +17,7 @@ static char *sccsId = "@(#) $Id$";
 static char buff[100];
 int toBeConnectedCount = 0;
 unsigned long caDelay = 100;        /* ms */
-extern XtIntervalId caTimeoutId = (XtIntervalId) 0;
+XtIntervalId caTimeoutId = (XtIntervalId) 0;
 extern XtAppContext appContext;
 
 /* forward declarations */
@@ -249,9 +249,11 @@ void alCaAddForcePVEvent(chid chid, void *link, evid * pevid, int type)
 
 	if (type == CHANNEL) pFunc = alCaChannelForceEvent;
 	else if (type == GROUP) pFunc = alCaGroupForceEvent;
-	else
+	else {
 		alLogConnection(ca_name(chid),
 		    "alCaAddForcePVEvent:Invalid type.");
+		return;
+        }
 
 	status = ca_add_masked_array_event(DBR_SHORT, 1,
 	    chid,
@@ -348,7 +350,7 @@ static void alCaChannelAccessRightsEvent(struct access_rights_handler_args args)
 static void alCaForcePVAccessRightsEvent(struct access_rights_handler_args args)
 {
 	if (ca_field_type(args.chid) == TYPENOTCONN) return;
-	sprintf(buff, "%s--(%s)", ca_puser(args.chid), ca_name(args.chid));
+	sprintf(buff, "%s--(%s)", (char *)ca_puser(args.chid), ca_name(args.chid));
 	if (!ca_read_access(args.chid)) {
 		alLogConnection(buff, "No read access (Force PVName)");
 	}
@@ -361,7 +363,7 @@ static void alCaForcePVAccessRightsEvent(struct access_rights_handler_args args)
 static void alCaSevrPVAccessRightsEvent(struct access_rights_handler_args args)
 {
 	if (ca_field_type(args.chid) == TYPENOTCONN) return;
-	sprintf(buff, "%s--(%s)", ca_puser(args.chid), ca_name(args.chid));
+	sprintf(buff, "%s--(%s)", (char *)ca_puser(args.chid), ca_name(args.chid));
 	if (!ca_write_access(args.chid)) {
 		alLogConnection(buff, "No write access (Sevr PVName)");
 	}
@@ -388,7 +390,7 @@ static void alCaChannelConnectionEvent(struct connection_handler_args args)
  *********************************************************************/
 static void alCaForcePVConnectionEvent(struct connection_handler_args args)
 {
-	sprintf(buff, "%s--(%s)", ca_puser(args.chid), ca_name(args.chid));
+	sprintf(buff, "%s--(%s)", (char *)ca_puser(args.chid), ca_name(args.chid));
 	if (args.op == CA_OP_CONN_UP) {
 		toBeConnectedCount--;
 	} else if (args.op == CA_OP_CONN_DOWN) {
@@ -404,7 +406,7 @@ static void alCaForcePVConnectionEvent(struct connection_handler_args args)
  *********************************************************************/
 static void alCaSevrPVConnectionEvent(struct connection_handler_args args)
 {
-	sprintf(buff, "%s--(%s)", ca_puser(args.chid), ca_name(args.chid));
+	sprintf(buff, "%s--(%s)", (char *)ca_puser(args.chid), ca_name(args.chid));
 	if (args.op == CA_OP_CONN_UP) {
 		toBeConnectedCount--;
 	} else if (args.op == CA_OP_CONN_DOWN) {

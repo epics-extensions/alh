@@ -11,6 +11,7 @@ static char *sccsId = "@(#) $Id$";
 #define DEBUG_CALLBACKS 0
 
 #include <stdio.h>
+#include <stdlib.h>
 
 #include <Xm/Xm.h>
 #include <Xm/AtomMgr.h>

@@ -298,7 +298,6 @@ static void GetChannelLine(char *buf,GLINK **pglink,CLINK **pclink,
 int caConnect,struct mainGroup *pmainGroup)
 {
 	CLINK 		*clink;
-	char 		command[20];
 	int  		rtn;
 	char 		name[TOKEN_MAXSIZE+2];
 	char 		*parent;

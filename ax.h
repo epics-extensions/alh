@@ -365,6 +365,7 @@ void getStringStatCommandList(ELLLIST *pList,char **pstr);
 void fileViewWindow( Widget w, int option, Widget menuButton);
 void updateLog( int fileIndex, char *string);
 void updateAlarmLog( int fileIndex, char *string);
+void browser_fileViewWindow(Widget w,int option,Widget menuButton);
 
 /********************************************************************
   testalarm.c   function prototypes

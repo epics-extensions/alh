@@ -56,7 +56,7 @@ int callBrowser(char *url)
 	int (*oldhandler)(Display *, XErrorEvent *);
 	static Window netscapew=(Window)0;
 	static pid_t pid=0;
-	int ntries=0,found,status;
+	int status;
 	char command[BUFSIZ];
 	char *envstring;
 
@@ -85,7 +85,7 @@ int callBrowser(char *url)
 				sprintf(command,"%s -install '%s' &",NETSCAPEPATH,url);
 			}
 			else {
-				sprintf(command,"%s -install '%s' &",envstring);
+				sprintf(command,"%s -install '%s' &",envstring,url);
 			}
 #if DEBUG
 			printf("execute(before): cmd=%s\n",command);
