@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.16  1998/07/01 20:03:59  jba
+ Bug fix for STATCOMMAND
+
  Revision 1.15  1998/05/12 18:22:39  evans
  Initial changes for WIN32.
 
@@ -1297,7 +1300,7 @@ void addNewStatCommand(pList,str)
     while( str[len] == ' ' || str[len] == '\t') len++;
     statCommand->command = &str[len];
     for (i=0; i<ALARM_NSTATUS; i++) {
-        if (strncmp(&str[len],alarmStatusString[i],
+        if (strncmp(&str[0],alarmStatusString[i],
              strlen(alarmStatusString[i]))==0) break;
     }
     statCommand->stat = i;

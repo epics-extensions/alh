@@ -107,4 +107,7 @@ Mon Jun 22 13:34:09 CDT 1998
                         	asynchronous, so we add additional task "alh_printer"
                         	and modificate Makefile.Unix.
 
+Wed Jul  1 15:02:21 CDT 1998
+        Bug fix for STATCOMMAND.
+
 
