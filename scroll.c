@@ -343,10 +343,12 @@ void fileViewWindow(Widget w,int option,Widget menuButton)
 		/* add titles */
 		if ( option == ALARM_FILE) {
 			ac = 0;
+/*
 			XtSetArg (al[ac], XmNwidth,800);  
 			ac++;
 			XtSetArg (al[ac], XmNheight,30);  
 			ac++;
+*/
 			XtSetArg (al[ac], XmNtopAttachment, XmATTACH_WIDGET);  
 			ac++;
 			XtSetArg (al[ac], XmNtopWidget, button);  
@@ -354,9 +356,9 @@ void fileViewWindow(Widget w,int option,Widget menuButton)
 			XtSetArg (al[ac], XmNleftAttachment, XmATTACH_FORM);  
 			ac++;
 		if (_global_flag) 
-			title = XtCreateManagedWidget("TIME_STAMP               PROCESS_VARIABLE_NAME     CURRENT_STATUS           UNACK_SEV  ACKT  VALUE",
+			title = XtCreateManagedWidget(" TIME_STAMP             PROCESS_VARIABLE_NAME        STATUS       SEVERITY         UNACK_SEV    ACKT  VALUE",
 				xmLabelGadgetClass,app_shell,al,ac);
-		else title = XtCreateManagedWidget("TIME_STAMP               PROCESS_VARIABLE_NAME     CURRENT_STATUS           VALUE",
+		else title = XtCreateManagedWidget(" TIME_STAMP             PROCESS_VARIABLE_NAME        STATUS       SEVERITY        VALUE",
 				xmLabelGadgetClass,app_shell,al,ac);
 			previous = title;
 
