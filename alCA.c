@@ -241,8 +241,8 @@ void alCaClearEvent(evid * pevid)
 
 	status = ca_clear_event(*pevid);
 	if (status != ECA_NORMAL){
-		errMsg("ca_clear_event failed for PV %s "
-			"Return status: %s\n",ca_name((*pevid)->chan),ca_message(status));
+		errMsg("ca_clear_event failed for PV "
+			"Return status: %s\n",ca_message(status));
 	}
 	*pevid = NULL;
 }
