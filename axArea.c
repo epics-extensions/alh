@@ -867,7 +867,7 @@ void changeSilenceForeverText(ALINK *area)
 }
 
 /***************************************************
- changeDisabledForcePVText
+ updateDisabledForcePVCount
 ****************************************************/
 void updateDisabledForcePVCount(ALINK *area,int value)
 {
