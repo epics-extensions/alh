@@ -243,7 +243,9 @@ XmFileSelectionBoxCallbackStruct *cbs)
 
 	/* get the filename string */
 	XmStringGetLtoR(cbs->value, XmSTRING_DEFAULT_CHARSET, &filename);
-	if ( DEBUG == 1 ) printf("\nFilename is %s \n", filename);
+
+	if ( DEBUG == 1 )
+	   printf("\nfileSetupCallback: filename is %s \n", filename);
 
 	/* get the area pointer */
 	XtVaGetValues(widget, XmNuserData, &area, NULL);
@@ -266,6 +268,7 @@ int programId,Widget widget)
 	char   str[MAX_STRING_LENGTH];
 	char  *dir=0;
 	char  *pattern=0;
+	char  *filename_dup;
 	FILE  *tt;
 	Widget fileSelectionBox;
 	time_t timeofday;
@@ -353,9 +356,10 @@ int programId,Widget widget)
 		case 3:
 			strcpy(str, filename);
 			strcat(str," already exists.  Overwrite?");
+			filename_dup = strdup(filename);
 			createActionDialog(fileSelectionBox,XmDIALOG_WARNING, str ,
 			    (XtCallbackProc)saveConfigFile_callback,
-			    (XtPointer)filename,(XtPointer)area);
+			    (XtPointer)filename_dup,(XtPointer)area);
 			break;
 
 		case 4:
@@ -410,7 +414,8 @@ int programId,Widget widget)
 
 		case FILE_SAVEAS:
 		case FILE_SAVE:
-			saveConfigFile_callback(widget,filename,(void *)NULL);
+			filename_dup = strdup(filename);
+			saveConfigFile_callback(widget,filename_dup,(void *)NULL);
 			break;
 
 		case FILE_PRINT:
@@ -440,11 +445,18 @@ XmAnyCallbackStruct *cbs)
 	/*
 	     strcpy(psetup.saveFile,filename);
 	*/
+
+	if ( DEBUG == 1 )
+		printf("\nSaving Config File to %s \n", filename);
+
 	alWriteConfig(filename,area->pmainGroup);
 	/* unmanage the warning dialog */
 	XtUnmanageChild(widget);
 	/* unmanage the fileSelection dialog */
 	createFileDialog(0,0,0,0,0,0,0,0,0);
+
+	/* Free the filename string copy */
+	free(filename);
 }
 
 /******************************************************
