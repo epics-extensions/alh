@@ -1,5 +1,9 @@
 /*
  $Log$
+ Revision 1.5  1996/06/07 15:46:43  jba
+ Added global alarm acknowledgement.
+ Simplified log output.
+
  Revision 1.4  1996/03/25 15:42:59  jba
  Removed unused alOpenLogFiles routine.
 
@@ -62,6 +66,7 @@ static char *sccsId = "@@(#)alLog.c	1.12\t12/15/93";
 --------------------------------------------------------------------------------------------
 
 alLogAlarm(cdata,stat,sev,h_unackStat,h_unackSevr)	Log new alarms
+alLogGblAckChan(cdata)				Log global acknowledgement channel
 alLogAckChan(cline)					Log acknowledged channel
 alLogAckGroup(gline)					Log acknowledged group
 alLogChanChangeMasks(cdata)				Log change channel Masks
@@ -85,12 +90,6 @@ alLogSetupSaveConfigFile(filename)			Log setup save config file
 #include <alLib.h>
 #include <line.h>
 #include <ax.h>
-
-#define  LOG_UNCONN_ALARM 		1
-#define  LOG_UNCONN_FORCE_GROUP 	2
-#define  LOG_UNCONN_FORCE_CHANNEL 	3
-#define  LOG_UNCONN_SEVR_GROUP 		4
-#define  LOG_UNCONN_SEVR_CHANNEL 	5
 
 static char *masksdata[] = {
         "Summary ...",
@@ -150,7 +149,7 @@ struct chanData *cdata;
 			alarmSeverityString[h_unackSevr],
 			cdata->value);	
 
-/* update file and Alarm Log text window */
+    /* update file and Alarm Log text window */
 		(void)fprintf(fl,"%s",buff);
 		fflush(fl);
 		updateLog(ALARM_FILE,buff);         
@@ -164,57 +163,19 @@ struct chanData *cdata;
  * log the connection change on operation file
  ***********************************************************************/
 void alLogConnection(pvname,ind)
-int ind;
+char *ind;
 char *pvname;
 {
 	timeofday = time(0L);
 	str = ctime(&timeofday);
 	*(str + strlen(str)-1) = '\0';
 
-switch (ind) {
-
- 	/* ind = 1 alarm channel not connected */
-	case   LOG_UNCONN_ALARM:
-
-		sprintf(buff,"%-26s Not Connected (Channel  PVname): [%s]\n",
-			str,pvname);
-		break;
-
-	/* ind = 2 Force Group channel not connected */
-	case  LOG_UNCONN_FORCE_GROUP:
-
-		sprintf(buff,"%-26s Not Connected (Force Gp PVName): [%s]\n",
-			str,pvname);
-		break;
-
-	/* ind = 3 Force channel not connected */
-	case  LOG_UNCONN_FORCE_CHANNEL:
-
-		sprintf(buff,"%-26s Not Connected (Force Ch PVName): [%s]\n",
-			str,pvname);
-		break;
-
-	/* ind = 4 Sevr Group channel not connected */
-	case  LOG_UNCONN_SEVR_GROUP:
-
-		sprintf(buff,"%-26s Not Connected (Sevr  Gp PVName): [%s]\n",
-			str,pvname);
-		break;
-
-	/* ind = 5 Sevr   channel not connected */
-	case  LOG_UNCONN_SEVR_CHANNEL:
-
-		sprintf(buff,"%-26s Not Connected (Sevr  Ch PVName): [%s]\n",
-			str,pvname);
-		break;
-
- 	}
+	sprintf(buff,"%-26s %-31s: [%s]\n", str,ind,pvname);
 
 	/* update file and Alarm Log text window */
-
-		fprintf(fo,"%s",buff);
-		fflush(fo);
-		updateLog(OPMOD_FILE,buff); 
+	fprintf(fo,"%s",buff);
+	fflush(fo);
+	updateLog(OPMOD_FILE,buff); 
 
 }
 
@@ -233,6 +194,25 @@ struct chanLine *cline;
   sprintf(buff,"%-26s Ack Channel--- %-28s %-16s %-16s\n",str, cline->pname,
 	alarmSeverityString[cline->unackSevr],
 	alarmSeverityString[cline->curSevr]);
+  fprintf(fo,"%s",buff);        /* update the file */
+  fflush(fo);
+  updateLog(OPMOD_FILE,buff);   /* update the text widget */
+
+}
+
+/***********************************************************************
+ * global log ackchan received on operation file
+ ***********************************************************************/
+void alLogGblAckChan(cdata)
+struct chanData *cdata;
+{
+  timeofday = time(0L);
+  str = ctime(&timeofday);
+  *(str + strlen(str)-1) = '\0';
+
+  sprintf(buff,"%-26s Gbl Ack Channel--- %-28s %-16s %-16s\n",str,cdata->name,
+	alarmSeverityString[cdata->unackSevr],
+	alarmSeverityString[cdata->curSevr]);
   fprintf(fo,"%s",buff);        /* update the file */
   fflush(fo);
   updateLog(OPMOD_FILE,buff);   /* update the text widget */
