@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.13  1997/09/12 19:28:03  jba
+ Fixed calloc for SEVRCOMMAND string.
+
  Revision 1.12  1997/04/17 18:16:16  jba
  Allow blank lines in input file.
 
@@ -645,7 +648,7 @@ static void GetOptionalLine(fp,buf,gclink,context,caConnect)
         sscanf(buf,"%20s",command);
         len = strlen(command);
         while( buf[len] == ' ' || buf[len] == '\t') len++;
-        str = (char *)calloc(1,strlen(&buf[len]));
+        str = (char *)calloc(1,strlen(&buf[len])+1);
         strcpy(str,&buf[len]);
         if(str[strlen(str)-1] == '\n') str[strlen(str)-1] = '\0'; 
         addNewSevrCommand(&gcdata->sevrCommandList,str);
@@ -663,7 +666,7 @@ static void GetOptionalLine(fp,buf,gclink,context,caConnect)
         sscanf(buf,"%20s",command);
         len = strlen(command);
         while( buf[len] == ' ' || buf[len] == '\t') len++;
-        str = (char *)calloc(1,strlen(&buf[len]));
+        str = (char *)calloc(1,strlen(&buf[len])+1);
         strcpy(str,&buf[len]);
         if(str[strlen(str)-1] == '\n') str[strlen(str)-1] = '\0'; 
         cdata=(struct chanData *)gcdata;
@@ -757,6 +760,7 @@ struct mainGroup *pmainGroup;
 {
 FILE *fw;
            fw = fopen(filename,"w");
+           if (!fw) return;
            if (psetup.beepSevr != 1)
                 fprintf(fw,"$BEEPSEVERITY  %s\n",alarmSeverityString[psetup.beepSevr]);
            alWriteGroupConfig(fw,(SLIST *)&(pmainGroup->p1stgroup));
@@ -769,7 +773,7 @@ FILE *fw;
 	write system configuration file
 *******************************************************************/
 static void alWriteGroupConfig(fw,pgroup)
-	FILE * fw;
+    FILE * fw;
 	SLIST *pgroup;
 {
 	CLINK *clink;
