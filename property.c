@@ -193,11 +193,16 @@ static void propUpdateDialogWidgets(propWindow)
      int i=0;
      struct guideLink *guideLink;
      MASK mask;
+     Pixel textBackground;
+     Pixel textBackgroundNS;
+
+     if (programId != ALH) textBackground = bg_pixel[3];
+     else textBackground = bg_pixel[0];
+     textBackgroundNS = bg_pixel[0];
 
      link =getSelectionLinkArea(propWindow->area);
 
-     if (! propWindow || !propWindow->propDialog ||
-           !XtIsManaged(propWindow->propDialog)) return;
+     if (! propWindow || !propWindow->propDialog) return;
 
      if (!link) {
 
@@ -315,14 +320,24 @@ static void propUpdateDialogWidgets(propWindow)
      /* ---------------------------------
      Alarm Count Filter 
      --------------------------------- */
-     if (linkType == GROUP) XtSetSensitive(propWindow->countFilterFrame, FALSE);
-     else {
+     if (linkType == GROUP) {
+          XmTextFieldSetString(propWindow->countFilterCountTextW,"");
+          XmTextFieldSetString(propWindow->countFilterSecondsTextW,"");
+          XtVaSetValues(propWindow->countFilterCountTextW,XmNbackground,textBackgroundNS,NULL);
+          XtVaSetValues(propWindow->countFilterSecondsTextW,XmNbackground,textBackgroundNS,NULL);
+          XtSetSensitive(propWindow->countFilterFrame, FALSE);
+     } else {
           XtSetSensitive(propWindow->countFilterFrame, TRUE);
+          XtVaSetValues(propWindow->countFilterCountTextW,XmNbackground,textBackground,NULL);
+          XtVaSetValues(propWindow->countFilterSecondsTextW,XmNbackground,textBackground,NULL);
           if(pcData->countFilter) {
                sprintf(buff,"%d",pcData->countFilter->inputCount);
                XmTextFieldSetString(propWindow->countFilterCountTextW,buff);
                sprintf(buff,"%d",pcData->countFilter->inputSeconds);
                XmTextFieldSetString(propWindow->countFilterSecondsTextW,buff);
+          } else {
+               XmTextFieldSetString(propWindow->countFilterCountTextW,"");
+               XmTextFieldSetString(propWindow->countFilterSecondsTextW,"");
           }
      }
 
@@ -393,10 +408,11 @@ static void propUpdateDialogWidgets(propWindow)
      --------------------------------- */
      if (linkType == GROUP) {
           XtSetSensitive(propWindow->statProcessTextW, FALSE);
-          XtVaSetValues(propWindow->statProcessTextW,XmNbackground,bg_pixel[0],NULL);
+          XtVaSetValues(propWindow->statProcessTextW,XmNbackground,textBackgroundNS,NULL);
+          XmTextSetString(propWindow->statProcessTextW,"");
      } else {
           XtSetSensitive(propWindow->statProcessTextW, TRUE);
-          XtVaSetValues(propWindow->statProcessTextW,XmNbackground,bg_pixel[3],NULL);
+          XtVaSetValues(propWindow->statProcessTextW,XmNbackground,textBackground,NULL);
           getStringStatCommandList(&pcData->statCommandList,&str);
           XmTextSetString(propWindow->statProcessTextW,str);
           free(str);
@@ -1190,19 +1206,23 @@ static void propApplyCallback(widget, propWindow, cbs)
      MASK mask;
      struct guideLink *guideLink;
      SNODE *pt;
+/* PROPERTY UNDO WORKS BUT NOT IMPLEMENTED YET
      GCLINK *undoLink=NULL;
      int undoLinkType;
 
      editUndoGet(&undoLink, &linkType, &link);
+*/
 
      link =getSelectionLinkArea(propWindow->area);
      if (!link) return;
      linkType =getSelectionLinkTypeArea(propWindow->area);
      pgcData = link->pgcData;
 
+/* PROPERTY UNDO WORKS BUT NOT IMPLEMENTED YET
      propDeleteClone(undoLink,undoLinkType);
      undoLink = propCreateClone(link,linkType);
      undoLinkType = linkType;
+*/
 
      /* ---------------------------------
      Group/Channel Name 
@@ -1318,7 +1338,7 @@ static void propApplyCallback(widget, propWindow, cbs)
           buff = XmTextGetString(propWindow->statProcessTextW);
           if (strlen(buff)){
                while (TRUE) {
-                    addNewSevrCommand(&cdata->statCommandList,buff);
+                    addNewStatCommand(&cdata->statCommandList,buff);
                     buff=strchr(buff,'\n');
                     if ( !buff ) break;
                     *buff='\0';
@@ -1380,7 +1400,9 @@ static void propApplyCallback(widget, propWindow, cbs)
      /* ---------------------------------
      set undo data
      --------------------------------- */
+/* PROPERTY UNDO WORKS BUT NOT IMPLEMENTED YET
      editUndoSet(undoLink,linkType, link, MENU_EDIT_UNDO_PROPERTIES, FALSE);
+*/
 }
 
 /******************************************************
