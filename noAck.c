@@ -288,7 +288,7 @@ static void noAckHelpCallback(Widget widget,XtPointer calldata,XtPointer cbs)
 	"to noAck and create a one hour timer.  After the one hour timer\n"
     "expires, the ack/noAck masks will be set to Ack.\n"
 	"  \n"
-	"Toggeling the 'noAck for One Hour' button means toggeling the ack/noAck\n"
+	"Toggling the 'noAck for One Hour' button means toggling the ack/noAck\n"
 	"mask for the selected channel or for all channels in the selected group\n"
 	"and creating or removing the one hour timer.\n"
 	"  \n"
