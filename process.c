@@ -1,8 +1,11 @@
 /*
  $Log$
- Revision 1.2  1994/06/22 21:17:47  jba
- Added cvs Log keyword
+ Revision 1.3  1995/05/30 16:04:36  jba
+ Renamed guidance_spawn_callback to processSpawn_callback
 
+ * Revision 1.2  1994/06/22  21:17:47  jba
+ * Added cvs Log keyword
+ *
  */
 
 static char *sccsId = "@(#)process.c	1.4\t8/12/93";
@@ -57,7 +60,7 @@ static char *sccsId = "@(#)process.c	1.4\t8/12/93";
 --------------
 |   PUBLIC   |
 --------------
-void guidance_spawn_callback(w,command,call_data)      Spawn a related process
+void processSpawn_callback(w,command,call_data)      Spawn a related process
      Widget w;
      char *command;
      void *call_data;
@@ -73,7 +76,7 @@ void relatedProcess_callback(widget,link,cbs) Related process callback
 /******************************************************
   spawn a new related prcess if command is not null
 ******************************************************/
-void guidance_spawn_callback(w,command,call_data)
+void processSpawn_callback(w,command,call_data)
 Widget w;
 char *command;
 void * call_data;
@@ -107,7 +110,7 @@ void relatedProcess_callback(widget,link,cbs)
      XtVaGetValues(widget, XmNuserData, &area, NULL);
 
      if (link && alProcessExists(link)){
-          guidance_spawn_callback(widget,link->pgcData->command,cbs);
+          processSpawn_callback(widget,link->pgcData->command,cbs);
      }
 }
 
