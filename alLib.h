@@ -27,8 +27,6 @@
 #include "sllLib.h"
 #include "ellLib.h"
 
-static char *alLibhsccsId = "@(#) $Id$";
-
 typedef struct mask {			/* mask bit setting */
 	unsigned Cancel    : 1;
 	unsigned Disable   : 1;

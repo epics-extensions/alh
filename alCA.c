@@ -18,8 +18,6 @@
   This file contains routines for channel access.
 **********************************************************************/
 
-static char *sccsId = "@(#) $Id$";
-
 #include <stdio.h>
 #include <stdlib.h>
 

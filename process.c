@@ -18,8 +18,6 @@
   This file contains routines for spawning a related process
 **********************************************************************/
 
-static char *sccsId = "@(#) $Id$";
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>

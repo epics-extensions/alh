@@ -21,8 +21,6 @@
 #ifndef INCaxSubWh
 #define INCaxSubWh
 
-static char *axSubWhsccsId = "@(#) $Id$";
-
 #include <Xm/Xm.h>
 
 #include "sllLib.h"

@@ -21,8 +21,6 @@
 #ifndef INCsllLibh
 #define INCsllLibh 1
 
-static char *sllLibhSccsId = "@(#)sllLib.h	1.6\t8/4/93";
-
 struct snode {
 	struct snode *next;
 };

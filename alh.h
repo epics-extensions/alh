@@ -21,8 +21,6 @@
 #ifndef INCalhh
 #define INCalhh
 
-static char *alhhsccsId = "@(#) $Id$";
-
 #include <stdio.h>
 
 #include <Xm/Xm.h>

@@ -18,8 +18,6 @@
   This file contains routines for edit functions
 **********************************************************************/
 
-static char *sccsId = "@(#) $Id$";
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

@@ -18,8 +18,6 @@
   routines for display of group and channel properties
 **********************************************************************/
 
-static char *sccsId = "@(#) $Id$";
-
 #include <stdlib.h>
 #include <stdio.h>
 

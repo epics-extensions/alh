@@ -18,7 +18,6 @@
   File contains file handling routines
 **********************************************************************/
 
-static char *sccsId = "@(#) $Id$";
 #include <stdlib.h>
 #include <stdio.h>
 #include <signal.h>

@@ -21,8 +21,6 @@
 #ifndef INCaxh
 #define INCaxh
 
-static char *axhsccsId = "@(#) $Id$";
-
 #include <time.h>
 #include <stdio.h>
 

@@ -16,8 +16,6 @@
   Printer routine. Work like independent process. Albert 
 **********************************************************************/
 
-static char *sccsId = "@(#) $Id$";
-
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>

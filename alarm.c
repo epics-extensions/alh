@@ -18,8 +18,6 @@
   Initial alhAlarm global variables
 **********************************************************************/
 
-static char *sccsId = "@@(#) $Id$";
-
 #include "alh.h"
 #include "ax.h"
 #include "alarmString.h"

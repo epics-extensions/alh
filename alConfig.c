@@ -18,8 +18,6 @@
   Routines related to construction of alarm configuration 
 **********************************************************************/
 
-static char *sccsId = "@(#) $Id$";
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
@@ -412,7 +410,7 @@ int context,int caConnect,struct mainGroup *pmainGroup)
 	char mask[6];
 	char string[10];
 	double dbl;
-	int value = 1;
+	short value = 1;
 	int valueIn;
 	float rate =1.0;
 	float rateIn;

@@ -19,8 +19,6 @@
   input parameters are the product name, and product description
 **********************************************************************/
 
-static char *sccsId = "@(#) $Id$";
-
 #define VERSION 1.1.0
 
 #define DEBUG_POSITION 0

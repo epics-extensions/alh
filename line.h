@@ -24,8 +24,6 @@
 #include "sllLib.h"
 #include "alh.h"
 
-static char *linehsccsId = "@(#) $Id$";
-
 #define LINEMESSAGE_SIZE   60           /* window message line size */
 
 typedef  void (*FUNPTR)();      /* define void function pointer */

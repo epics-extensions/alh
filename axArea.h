@@ -21,8 +21,6 @@
 #ifndef INCaxAreah
 #define INCaxAreah
 
-static char *axAreahsccsId = "@(#) $Id$";
-
 #include <X11/Intrinsic.h>
 #include <X11/Xlib.h>
 #include <Xm/Xm.h>

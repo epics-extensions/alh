@@ -18,8 +18,6 @@
   Routines for main window widgets
 **********************************************************************/
 
-static char *sccsId = "@(#) $Id$";
-
 #include <stdio.h>
 #include <stdlib.h>
 

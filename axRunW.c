@@ -35,8 +35,6 @@
   window, alarm beeping, and blinking of control button.
 **********************************************************************/
 
-static char *sccsId = "@@(#) $Id$";
-
 #define BLINK_DELAY 1000     /* ms */
 static XtIntervalId blinkTimeoutId = (XtIntervalId)0;
 static char *bg_color[] = {"lightblue","yellow","red","white","white","grey"};

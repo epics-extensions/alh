@@ -18,8 +18,6 @@
   This file contains routines for alarm acknowledgement
 **********************************************************************/
 
-static char *sccsId = "@(#) $Id$";
-
 #include <stdio.h>
 #include <Xm/Xm.h>
 #include "alh.h"

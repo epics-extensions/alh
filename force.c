@@ -18,8 +18,6 @@
   Routines for modifing the forcePV using a popup dialog window
 **********************************************************************/
 
-static char *sccsId = "@(#) $Id$";
-
 #include <stdlib.h>
 #include <ctype.h>
 
@@ -212,7 +210,7 @@ static void forcePVUpdateDialogWidgets(struct forcePVWindow *forcePVWindow)
 	else XmTextFieldSetString(forcePVWindow->forcePVnameTextW,"");
 
 	XmToggleButtonGadgetSetState(forcePVWindow->forcePVdisabledToggleButton,
-		pgcData->pforcePV->disabled,FALSE);
+		(Boolean)pgcData->pforcePV->disabled,FALSE);
 
 	alGetMaskString(pgcData->pforcePV->forceMask,buff);
 	string = XmStringCreateSimple(buff);
@@ -1162,14 +1160,14 @@ void forcePVUpdateFields(GCLINK* gclink,FORCEPV* pfPV,int context)
 	else {
 		holdValue=pforcePV->currentValue;
 		pforcePV->currentValue = -999;
-		forcePVNewValueEvent(gclink,context,holdValue);
+		forcePVNewValueEvent(gclink,(short)context,holdValue);
 	}
 }
 
 /*******************************************************************
     ForcePV New Value Event
 *******************************************************************/
-void forcePVNewValueEvent(GCLINK* gclink,short linktype,double value)
+static void forcePVNewValueEvent(GCLINK* gclink,short linktype,double value)
 {
 	struct gcData *pgcData;
 	FORCEPV* pforcePV;

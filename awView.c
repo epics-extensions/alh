@@ -18,8 +18,6 @@
   This file contains routines for altering the users view
 **********************************************************************/
 
-static char *sccsId = "@(#) $Id$";
-
 #define DEBUG_CALLBACKS 0
 
 #include <time.h>

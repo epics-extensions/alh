@@ -18,8 +18,6 @@
   This file contains subWindow handling routines.
 **********************************************************************/
 
-static char *sccsId = "@(#) $Id$";
-
 /********************************************************************
   Public functions defined in axSubW.c 
 

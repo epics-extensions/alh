@@ -18,8 +18,6 @@
   Routines for alloc, init, and update of a displayed line
 **********************************************************************/
 
-static char *sccsId = "@(#) $Id$";
-
 #include <stdio.h>
 #include <stdlib.h>
 

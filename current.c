@@ -18,8 +18,6 @@
   Routines for viewing the current alarm history window
 **********************************************************************/
 
-static char *sccsId = "@(#) $Id$";
-
 #include <stdio.h>
 #include <stdlib.h>
 

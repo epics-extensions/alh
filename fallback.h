@@ -21,8 +21,6 @@
 #ifndef INCfallbackh
 #define INCfallbackh 1
 
-static char *fallbackhSccsId = "@(#) $Id$";
-
 /* pushButtonName font needs to have 12 as height */
 
 static String fallbackResources[] = {

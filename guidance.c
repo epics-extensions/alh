@@ -18,8 +18,6 @@
   This file contains routines for displaying guidance text
 **********************************************************************/
 
-static char *sccsId = "@(#) $Id$";
-
 #include <stdlib.h>
 #include <Xm/Xm.h>
 

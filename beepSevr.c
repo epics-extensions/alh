@@ -19,8 +19,6 @@
   This file contains routines for creating beep severity dialog.
 **********************************************************************/
 
-static char *sccsId = "@(#) $Id$";
-
 #include <stdlib.h>
 
 #include <Xm/Xm.h>

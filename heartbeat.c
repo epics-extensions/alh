@@ -18,8 +18,6 @@
   Routines for the config file heartbeat
 **********************************************************************/
 
-static char *sccsId = "@(#) $Id$";
-
 #include <stdlib.h>
 
 #include "ax.h"

@@ -18,8 +18,6 @@
   *PUBLIC* functions for single link list operations.
 **********************************************************************/
 
-static char *sccsId = "@(#) $Id$";
-
 #include <stdio.h>
 #include "sllLib.h"
 

@@ -26,8 +26,6 @@
 *consecutive null strings indicates the end of help text.  
 **********************************************************************/
 
-static char *sccsId = "@(#) $Id$";
-
 #include <stdlib.h>
 
 #include <X11/StringDefs.h>

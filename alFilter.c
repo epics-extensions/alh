@@ -18,8 +18,6 @@
   Routines to filter alarm groups and channels
 **********************************************************************/
 
-static char *sccsId = "@(#) $Id$";
-
 #include "alLib.h"
 
 /***************************************************

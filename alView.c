@@ -18,8 +18,6 @@
   Routines for adjusting the tree view
 **********************************************************************/
 
-static char *sccsId = "@@(#) $Id$";
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

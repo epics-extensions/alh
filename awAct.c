@@ -18,8 +18,6 @@
   Routines for alarm configuration tool (act) mode 
 **********************************************************************/
 
-static char *sccsId = "@@(#) $Id$";
-
 #include <stdio.h>
 
 #include <Xm/SeparatoG.h>

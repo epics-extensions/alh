@@ -18,8 +18,6 @@
   Creates  alh dialogs
 **********************************************************************/
 
-static char *sccsId = "@(#) $Id$";
-
 #include <stdio.h>
 
 #include <Xm/Xm.h>

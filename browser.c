@@ -19,8 +19,6 @@
   Original Author : Kenneth Evans, Jr.
 **********************************************************************/
 
-static char *sccsId = "@(#) $Id$";
-
 /* Note that there are separate WIN32 and UNIX versions */
 
 #define DEBUG 0
@@ -116,11 +114,11 @@ int callBrowser(char *url)
 	envstring=getenv("NETSCAPEPATH");
 	if(!envstring) {
 		sprintf(command,"%s -id 0x%x -remote 'openURL(%s)' &",
-		    NETSCAPEPATH,netscapew,url);
+		    NETSCAPEPATH,(unsigned int)netscapew,url);
 	}
 	else {
 		sprintf(command,"%s -id 0x%x -remote 'openURL(%s)' &",
-		    envstring,netscapew,url);
+		    envstring,(unsigned int)netscapew,url);
 	}
 #if DEBUG
 	printf("execute(before): cmd=%s\n",command);

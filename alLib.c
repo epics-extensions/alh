@@ -18,8 +18,6 @@
   Routines for primative group & channel operation
 **********************************************************************/
 
-static char *sccsId = "@(#) $Id$";
-
 #define DEBUG_CALLBACKS 0
 
 #include <stdio.h>

@@ -18,8 +18,6 @@
   This file contains routines for alh menu.
 **********************************************************************/
 
-static char *sccsId = "@(#) $Id$";
-
 /******************************************************************
    Public routines defined in awAlh.c
 
