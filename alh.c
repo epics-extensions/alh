@@ -1,8 +1,11 @@
 /*
  $Log$
- Revision 1.2  1994/06/22 21:16:45  jba
- Added cvs Log keyword
+ Revision 1.3  1994/09/14 21:11:13  jba
+ Modified  to work with new CONFIG files
 
+ * Revision 1.2  1994/06/22  21:16:45  jba
+ * Added cvs Log keyword
+ *
  */
 
 static char *sccsId = "@(#)alh.c	1.23\t12/15/93";
@@ -109,7 +112,7 @@ void main(argc, argv)
      fileSetupInit(topLevelShell,argc,argv);
 
      /* display alh credits window */
-#if  XmVersion && XmVersion >= 1002
+#if  IWantGreetings &&  XmVersion && XmVersion >= 1002
      productDescriptionShell = createAndPopupProductDescriptionShell(appContext,
           topLevelShell,
           "  ALH  ", NULL, ALH_pixmap,
