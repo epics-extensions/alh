@@ -156,29 +156,29 @@ int sev,int unackSevr,int ackT)
 {
 
 #ifdef CMLOG
+   char cm_text[80];
    if (use_CMLOG_alarm && masterFlag) {
-	char cm_text[80];
-        if (_global_flag) {
-		sprintf(cm_text, "(%s / %s)",
+	    if (_global_flag) {
+		    sprintf(cm_text, "(%s / %s)",
 		    alhAlarmSeverityString[unackSevr],
 		    ackTransientsString[ackT]);
-        } else {
-		sprintf(cm_text, "( / )");
-	}
+	    } else {
+		    sprintf(cm_text, "( / )");
+	    }
 
-	cmlog_logmsg(cmlog,
-	    0,			/* verbosity */
-	    0,			/* dummy severity */
-	    REGULAR_RECORD,	/* code */
-	    "alh-Alarm",	/* facility */
-	    "host=%s status=%s severity=%s device=%s text=%s domain=%s value=%s",
-	    cm_host,
-	    alhAlarmStatusString[stat],
-	    alhAlarmSeverityString[sev],
-	    cdata->name,
-	    cm_text,
-	    alhArea->blinkString,
-	    cdata->value);
+	    cmlog_logmsg(cmlog,
+		    0,			/* verbosity */
+		    0,			/* dummy severity */
+		    REGULAR_RECORD,	/* code */
+		    "alh-Alarm",	/* facility */
+		    "host=%s status=%s severity=%s device=%s text=%s domain=%s value=%s",
+		    cm_host,
+		    alhAlarmStatusString[stat],
+		    alhAlarmSeverityString[sev],
+		    cdata->name,
+		    cm_text,
+		    (alhArea && alhArea->blinkString)?alhArea->blinkString:"unknown",
+		    cdata->value);
    }
 #endif
 
@@ -199,8 +199,8 @@ int sev,int unackSevr,int ackT)
 			alhAlarmStatusString[stat],
 			alhAlarmSeverityString[sev],
 			cdata->value);
-	}
-	filePrintf(fl,buff,ptimeofdayAlarm,REGULAR_RECORD);
+		}
+		filePrintf(fl,buff,ptimeofdayAlarm,REGULAR_RECORD);
 }
 
 /***********************************************************************
@@ -221,7 +221,7 @@ void alLogConnection(const char *pvname,const char *ind)
 	    "ERROR",
 	    pvname,
 	    ind,
-	    alhArea->blinkString);
+	    (alhArea && alhArea->blinkString)?alhArea->blinkString:"unknown");
    }
 #endif
 
@@ -239,8 +239,7 @@ void alLogAckChan(struct anyLine *line)
 	char cm_text[80];
         if (_global_flag) {
 		sprintf(cm_text, "Global Ack Channel (%s / %s)",
-		    alhAlarmSeverityString[line->unackSevr],
-		    ackTransientsString[line->ackT]);
+		    alhAlarmSeverityString[line->unackSevr]);
 	} else {
 		sprintf(cm_text, "Local Ack Channel ( / )");
 	}
@@ -282,10 +281,10 @@ void alLogAckGroup(struct anyLine *line)
 	char cm_text[80];
         if (_global_flag) {
 	    sprintf(cm_text, "Global Ack Group (%s)",
-	    alarmSeverityString[line->unackSevr]);
+	    alhAlarmSeverityString[line->unackSevr]);
 	} else {
 	    sprintf(cm_text, "Local Ack Group (%s)",
-	    alarmSeverityString[line->unackSevr]);
+	    alhAlarmSeverityString[line->unackSevr]);
 	}
 
 	cmlog_logmsg(cmlog,
@@ -295,7 +294,7 @@ void alLogAckGroup(struct anyLine *line)
 	    "alh-Opmod",	/* facility */
 	    "host=%s severity=%s device=%s text=%s domain=%s",
 	    cm_host,
-	    alarmSeverityString[line->curSevr],
+	    alhAlarmSeverityString[line->curSevr],
 	    line->pname,
 	    cm_text,
 	    alhArea->blinkString);
@@ -457,7 +456,7 @@ void alLogResetPVGroup(GLINK *glink,int ind)
 		      cm_host,
 		      gdata->name,
 		      cm_text,
-		      alhArea->blinkString);
+		      (alhArea && alhArea->blinkString)?alhArea->blinkString:"unknown");
 	   }
 #endif
 		sprintf(buff,"OPERATOR:Group PV RESET---[%s] <%s> [%d] [%s]\n",
@@ -486,7 +485,7 @@ void alLogResetPVGroup(GLINK *glink,int ind)
 		      cm_host,
 		      gdata->name,
 		      cm_text,
-		      alhArea->blinkString);
+		      (alhArea && alhArea->blinkString)?alhArea->blinkString:"unknown");
 	   }
 #endif
 		sprintf(buff,"AUTOMATIC:Group PV RESET---[%s] <%s> [%d] [%s]\n",
