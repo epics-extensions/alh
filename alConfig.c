@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.8  1996/06/17 19:14:40  jba
+ Fixed maximium lengthof filename on include line.
+
  Revision 1.7  1995/11/13 22:31:11  jba
  Added beepseverity command, ansi changes and other changes.
 
@@ -406,14 +409,14 @@ static void GetIncludeLine(buf,pglink,caConnect,pmainGroup)
      char command[20];
      int  rtn;
      char parent[PVNAME_SIZE];
-     char name[PVNAME_SIZE];
+     char name[NAMEDEFAULT_SIZE];
      GLINK *parent_link;
      char    filename[NAMEDEFAULT_SIZE];
 
 
      parent_link = *pglink; 
 
-     rtn = sscanf(buf,"%20s%32s%32s",command,parent,name);
+     rtn = sscanf(buf,"%20s%32s%s",command,parent,name);
 
      if(rtn!=3) {
           print_error(buf,"Illegal Include command");
