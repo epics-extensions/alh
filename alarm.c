@@ -10,10 +10,10 @@ static char *sccsId = "@@(#) $Id$";
 #include "ax.h"
 #include "alarmString.h"
 
-char * alhAlarmSeverityString[ALH_ALARM_NSEV ];
-char * alhAlarmStatusString[ALH_ALARM_NSTATUS];
-char * alhErrorSeverityString[] = { "ERROR" };
-char * alhErrorStatusString[] = { "NOT_CONNECTED","NO_READ_ACCESS","NO_WRITE_ACCESS" };
+const char * alhAlarmSeverityString[ALH_ALARM_NSEV ];
+const char * alhAlarmStatusString[ALH_ALARM_NSTATUS];
+const char * alhErrorSeverityString[] = { "ERROR" };
+const char * alhErrorStatusString[] = { "NOT_CONNECTED","NO_READ_ACCESS","NO_WRITE_ACCESS" };
 
 void alhAlarmStringInit()
 {
