@@ -35,16 +35,14 @@ typedef struct list SLIST;
 #define sllNext(PSNODE) \
         (((PSNODE) == NULL) ? NULL : (((SNODE *)(PSNODE))->next))
 
-SNODE *sllNth();
-
 /********************************************************************
   sllLib.c   function prototypes
 *********************************************************************/
-int sllAdd( SLIST *list, SNODE *new);
-SNODE *sllNth( SLIST *list, int n);
-void sllInsert( SLIST *list, SNODE *prev,SNODE *new);
-int sllPrecede( SLIST *list, SNODE *next,SNODE *new);
-void sllRemove( SLIST *list, SNODE *node);
+int sllAdd ( SLIST * plist, SNODE *pnode);
+SNODE *sllNth ( SLIST*plist, int n);
+void sllInsert( SLIST *plist, SNODE *pprev,SNODE *pnew);
+int sllPrecede( SLIST *plist, SNODE *pnext,SNODE *pnew);
+void sllRemove( SLIST *plist, SNODE *pnode);
 int sllFind( SLIST *plist, SNODE *pnode);
 
 /*------------------------------------------------------------------------------------
