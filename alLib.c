@@ -792,7 +792,8 @@ CLINK *clink,time_t timeofday)
  	if (mask.Log == 0) {
  	 	/* Don't log the initial connection */
  		if ( !(stat_prev==NO_ALARM && sevr_prev==ERROR_STATE )) {
-			alLogAlarm(&timeofday,cdata,stat,sev,acks,ackt);
+			alLogAlarm(&timeofday,cdata,stat,sev,
+				 cdata->unackSevr,cdata->curMask.AckT);
 		}
 	}
 
@@ -1065,6 +1066,7 @@ void alChangeChanMask(CLINK *clink,MASK mask)
 	int change=0,saveSevr;
 	int sevrHold, unackSevrHold;
 	char buff[80];
+	short disabledSevr = -1;
 
 	cdata = clink->pchanData;
 
@@ -1173,6 +1175,10 @@ void alChangeChanMask(CLINK *clink,MASK mask)
 					parent = parent->parent;
 				}
 			}
+			if (_global_flag && !_passive_flag && cdata->sevrchid) {
+				 alCaPutSevrValue(cdata->sevrchid,&disabledSevr);
+			}
+
 		}
 
 		if (mask.Disable == 0 && mask.Cancel == 0) {
