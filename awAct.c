@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.5  1997/09/09 22:21:19  jba
+ Changed Help menu and fixed Properties Window.
+
  Revision 1.4  1997/09/03 18:25:33  jba
  Removed calls to propShowDialog from menu insert channel/group.
 
@@ -65,30 +68,18 @@ static char *sccsId = "@(#)awAct.c	1.16\t12/15/93";
 *************************************************************************
 */
 
-/*
-#include <stdlib.h>
-
-#include <alarm.h>
-
-#include <alh.h>
-#include <ax.h>
-#include <line.h>
-#include <axSubW.h>
-#include <sllLib.h>
-
-#include <Xm/Xm.h>
-*/
 
 #include <stdio.h>
 
 #include <Xm/SeparatoG.h>
 #include <Xm/PushBG.h>
+#include <Xm/ToggleBG.h>
 
-#include <alh.h>
-#include <alLib.h>
-#include <axArea.h>
-#include <ax.h>
-
+#include "alh.h"
+#include "ax.h"
+#include "alLib.h"
+#include "axArea.h"
+#include "epicsVersion.h"
 
 /* external variables */
 extern ALINK *alhArea;
@@ -213,30 +204,17 @@ Widget actCreateMenu(parent, user_data)
              actViewCallback, (XtPointer)MENU_VIEW_COLLAPSEBRANCH,    (MenuItem *)NULL },
          { "",                       &xmSeparatorGadgetClass, '\0', NULL, NULL,
              NULL,    NULL,                         (MenuItem *)NULL },
-         { "Properties Window",  &xmPushButtonGadgetClass, 'W', NULL, NULL,
+         { "Properties Window",  &xmToggleButtonGadgetClass, 'W', NULL, NULL,
              actViewCallback, (XtPointer)MENU_VIEW_PROPERTIES,          (MenuItem *)NULL },
          {NULL},
      };
      
      static MenuItem help_menu[] = {
-         { "On Context",       &xmPushButtonGadgetClass, 'C', NULL, NULL,
-             actHelpCallback, (XtPointer)MENU_HELP_CONTEXT,      (MenuItem *)NULL },
-         { "On Windows",          &xmPushButtonGadgetClass, 'W', NULL, NULL,
-             actHelpCallback, (XtPointer)MENU_HELP_WINDOWS,      (MenuItem *)NULL },
-         { "On Keys",             &xmPushButtonGadgetClass, 'K', NULL, NULL,
-             actHelpCallback, (XtPointer)MENU_HELP_KEYS,         (MenuItem *)NULL },
-         { "Index",        &xmPushButtonGadgetClass, 'I', NULL, NULL,
-             actHelpCallback, (XtPointer)MENU_HELP_INDEX,        (MenuItem *)NULL },
-         { "On Help",              &xmPushButtonGadgetClass, 'H', NULL, NULL,
-             actHelpCallback, (XtPointer)MENU_HELP_HELP,         (MenuItem *)NULL },
-         { "Tutorial",         &xmPushButtonGadgetClass, 'T', NULL, NULL,
-             actHelpCallback, (XtPointer)MENU_HELP_TUTORIAL,     (MenuItem *)NULL },
-         { "",                       &xmSeparatorGadgetClass,  '\0', NULL, NULL,
-             NULL,    NULL,   (MenuItem *)NULL },
+         { "Help Topics",       &xmPushButtonGadgetClass, 'H', NULL, NULL,
+             actHelpCallback, (XtPointer)MENU_HELP_TOPICS,      (MenuItem *)NULL },
 #if  XmVersion && XmVersion >= 1002
-
-         { "Version",         &xmPushButtonGadgetClass, 'V', NULL, NULL,
-             actHelpCallback, (XtPointer)MENU_HELP_VERSION, (MenuItem *)NULL },
+         { "About ALH",         &xmPushButtonGadgetClass, 'A', NULL, NULL,
+             actHelpCallback, (XtPointer)MENU_HELP_ABOUT, (MenuItem *)NULL },
 #endif
          {NULL},
      };
@@ -432,7 +410,6 @@ static void actEditCallback(widget, item, cbs)
              area->managed = FALSE;
              area->pmainGroup->p1stgroup = NULL;
              setupConfig("",ACT,area);
-             propShowDialog(area,0);
              break;
 
         case MENU_EDIT_CUT:
@@ -582,9 +559,7 @@ static void actEditCallback(widget, item, cbs)
 
                 case MENU_EDIT_UNDO_PROPERTIES:
 
-                     editUndoGet(&link, &linkType, &configLink);
-
-                     propUndo(area, configLink, linkType, link);
+                     propUndo(area);
 
                      break;
 
@@ -762,9 +737,9 @@ static void actHelpCallback(widget, item, cbs)
 
      switch (item){
 
-        case MENU_HELP_VERSION:
+        case MENU_HELP_ABOUT:
+             createDialog(area->form_main,XmDIALOG_INFORMATION,"\nAlarm Configuration Tool\n\nDeveloped at Argonne National Laboratory\n\nAuthors: Ben-Chin Cha, Janet Anderson, Mark Anderson, and Marty Kraimer\n\n", EPICS_VERSION_STRING);
 
-             if (productDescriptionShell) XtPopup(productDescriptionShell,XtGrabNone);
              break;
 
         default:
