@@ -407,6 +407,13 @@ void propUpdateDialog(ALINK *area);
 void propShowDialog(ALINK *area, Widget widget);
 void propUndo(void *area);
 
+
+/********************************************************************
+  os/<osclass>/alAudio.c   function prototypes
+*********************************************************************/
+
+void alBeep(Display *displayBB);
+
 #endif /* INCaxh */
 /* alCaCommon.c */
 
