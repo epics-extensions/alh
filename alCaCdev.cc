@@ -406,7 +406,7 @@ void	alCaAddEvent	(chid 	chid,
   // need to use a different context.
   if (strcmp (signal->request().service().name(), CA_SERVICE_NAME) == 0)
   {
-    ctx.insert ("value", 1);
+    ctx.insert ("value", 0);
     ctx.insert ("severity", 2);
     ctx.insert ("status", 2);
   }
