@@ -39,7 +39,9 @@ static char *sccsId = "@(#) $Id$";
 #endif
 
 extern int DEBUG;
-
+extern int _DB_call_flag;
+char applicationName[64];  /* Albert1 applicationName = mainGroupName will be send to DB */
+char deviceName[64]="";    /* Albert1 reserved;  will be send to DB */
 
 /* alarm severity command list */
 struct sevrCommand {
@@ -172,7 +174,7 @@ struct mainGroup *pmainGroup)
 	gdata = glink->pgroupData;
 	gdata->name = (char *)calloc(1,strlen(name)+1);
 	strcpy(gdata->name,name);
-
+	if (_DB_call_flag) if(strlen(applicationName)==0) strncpy(applicationName,name,64);
 
 	alSetMask("-----",&(gdata->forcePVMask));
 	gdata->forcePVValue = 1;

@@ -20,6 +20,7 @@ static char *sccsId = "@(#) $Id$";
 extern int DEBUG;
 extern int ALARM_COUNTER;
 extern struct setup psetup;
+extern _DB_call_flag; /* Albert1 */ 
 
 /* forward declarations */
 static void alarmCountFilter_callback(XtPointer cd, XtIntervalId *id);
@@ -851,6 +852,7 @@ void alAckChan(CLINK *clink)
 	cdata = (struct chanData *)clink->pchanData;
 	if (cdata->unackSevr == 0) return;
 
+	alCaPutGblAck(cdata->chid,&cdata->unackSevr);
 
 	/*
 	 * update all parent groups
@@ -895,7 +897,7 @@ void alAckGroup(GLINK *glink)
 		clink = (CLINK *)pt;
 		cdata = clink->pchanData;
 		if (cdata->unackSevr > 0) {
-			alCaPutGblAck(cdata->chid,&cdata->unackSevr);
+			if(_DB_call_flag)  alLog2DBAckChan(cdata->name);
 			alAckChan(clink);
 		}
 		pt = sllNext(pt);
@@ -983,6 +985,7 @@ void alForceGroupMask(GLINK *glink,int index,int op)
 	while (pt) {
 		clink = (CLINK *)pt;
 		alForceChanMask(clink,index,op);
+		if(_DB_call_flag)  alLog2DBMask(clink->pchanData->name);
 		pt = sllNext(pt);
 	}
 	/*

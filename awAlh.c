@@ -29,7 +29,6 @@ void awUpdateRowWidgets(line)                 Update line widgets
 #include <errno.h>
 #include <sys/types.h>
 
-
 #include <Xm/Xm.h>
 #include <Xm/ArrowB.h>
 #include <Xm/CascadeBG.h>
@@ -109,12 +108,21 @@ extern int _time_flag; /* Dated flag. Albert*/
 extern int _message_broadcast_flag; /* messages sending flag. Albert1*/
 extern int messBroadcastDeskriptor;
 extern char messBroadcastInfoFileName[250];
-int messBroadcastLockDelay=60000;
+int messBroadcastLockDelay=60000; /* 1 min */
 extern char *rebootString;
 extern int max_not_save_time;
 extern int amIsender;
 extern int DEBUG;
 char FS_filename[128]; /* Filename      for FSBox. Albert*/
+
+struct UserInfo {
+char *loginid;
+char *real_world_name;
+char *myhostname;
+char *displayName;
+};
+
+extern struct UserInfo userID; /* info about current operator */
 
 /* prototypes for static routines */
 static void alhFileCallback( Widget widget, XtPointer calldata, XtPointer cbs);
@@ -671,7 +679,7 @@ static void messBroadcast(Widget widget,XtPointer item,XtPointer cbs)  /* Albert
     Widget dialog, text_w;
     ALINK   *area;
     XtVaGetValues(widget, XmNuserData, &area, NULL);
-    
+
     if(amIsender)
       {
 	createDialog(area->form_main,XmDIALOG_INFORMATION,
@@ -720,13 +728,8 @@ char *blank;
 
 int notsave_time;
 char buff[500];
-char myhostname[250];
-struct passwd *pp;              
-int effective_uid = -1;
-char *loginid = "";        
-char *real_world_name =""; 
+ALINK   *ar;
 
-    ALINK   *ar;
     XtVaGetValues(dialog, XmNuserData, &ar, NULL);
 
     if ( (fp=fopen(messBroadcastInfoFileName,"w")) == NULL )
@@ -741,13 +744,6 @@ char *real_world_name ="";
     time_tmp=time(0L); 
     
     string = XmTextFieldGetString(text_w);
-
-    effective_uid = geteuid();
-    if ((pp = getpwuid(effective_uid))) {
-      loginid=pp->pw_name;
-      real_world_name=pp->pw_gecos;
-    }
-    if(gethostname(myhostname,256) != 0) strcpy(myhostname,"unknoun");
 
     if( (blank=strchr(string,' ')) == NULL )
       {
@@ -768,15 +764,16 @@ char *real_world_name ="";
     if(notsave_time != 0)
       {
 	sprintf(buff,"%d %s %s\nDate is %sFROM: User=%s [%s] host=%s display=%s",notsave_time,
-		rebootString, blank,ctime(&time_tmp),loginid,real_world_name,myhostname,
-		DisplayString(display));
+		rebootString, blank,ctime(&time_tmp),userID.loginid,
+		userID.real_world_name,userID.myhostname,userID.displayName);
       }
     else
       {
 	sprintf(buff,"%s\nDate is %sFROM: User=%s [%s] host=%s display=%s",
-		blank,ctime(&time_tmp),loginid,real_world_name,myhostname,
-		DisplayString(display));
+		blank,ctime(&time_tmp),userID.loginid,
+		userID.real_world_name,userID.myhostname,userID.displayName);
       }
+
     fprintf(fp,"%ld\n%s",timeID,buff);
     createDialog(ar->form_main,XmDIALOG_MESSAGE,"For all people we send: \n""\n""\n",buff);
 

@@ -181,7 +181,7 @@ void fileViewWindow(Widget w,int option,Widget menuButton)
 	case ALARM_FILE:
 			strcpy(filename,psetup.logFile);
 			fp=fl;
-            		fseek(fp,0,SEEK_SET);
+            		if(alarmLogFileMaxRecords) fseek(fp,0,SEEK_SET);
 		        break;
 
 	case OPMOD_FILE:
@@ -223,11 +223,11 @@ void fileViewWindow(Widget w,int option,Widget menuButton)
 	    XtCalloc(1,(unsigned)viewFileMaxLength[operandFile]);
 	fread(viewFileString[operandFile], sizeof(char), 
 	    viewFileUsedLength[operandFile], fp);
-
+ clearerr(fp);
 	/* close up the file */
 	switch(operandFile) {
 	case ALARM_FILE:
-		fseek(fp,alarmLogFileOffsetBytes,SEEK_SET);
+		if(alarmLogFileMaxRecords) fseek(fp,alarmLogFileOffsetBytes,SEEK_SET);
 		break;
 	case CONFIG_FILE:
 	case OPMOD_FILE:
@@ -676,7 +676,7 @@ void browser_fileViewWindow(Widget w,int option,Widget menuButton)
 			fprintf(stderr, "Can't open file %s\n",filename);
 			return;
 		}
-		fseek(fp,0,SEEK_SET);
+		if(alarmLogFileMaxRecords)fseek(fp,0,SEEK_SET);
 
 	if (stat(filename, &statbuf) == 0)
 		viewFileUsedLength[operandFile] = statbuf.st_size;
@@ -703,7 +703,7 @@ void browser_fileViewWindow(Widget w,int option,Widget menuButton)
 	    viewFileUsedLength[operandFile], fp);
 
 	/* close up the file */
-		fseek(fp,alarmLogFileOffsetBytes,SEEK_SET);
+		if(alarmLogFileMaxRecords)fseek(fp,alarmLogFileOffsetBytes,SEEK_SET);
 		fclose (fp) ; /* ????? Albert1 */
 
 	if (!app_shell) {

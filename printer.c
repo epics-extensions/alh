@@ -18,9 +18,9 @@ static char *sccsId = "@(#) $Id$";
 #include <errno.h>
 #include <alarm.h>
 #include "printer.h"
-#define DEBUG 1
+#define DEBUG 0
 
-char *colorStart[ALARM_NSEV];
+char *colorStart[ALARM_NSEV]; 
 int colorStartLen[ALARM_NSEV];
 char *colorEnd;
 int colorEndLen;
@@ -34,13 +34,12 @@ int main(argc,argv)
 int argc;
 char *argv[];
 {
+int sev; /* define color for printer */
 struct msqid_ds infoBuf;  
 int printerMsgQId;
 int printerMsgQKey;
 int port;
 int bytes=250;
-char *blank;
-int sev;
 int socket;
 
 	if (argc != 5) {
@@ -134,30 +133,13 @@ int socket;
 	{
 	if( msgrcv(printerMsgQId,msg,bytes,0,0) >= 0)  /* got a new message */
 	{
-	  if ( (blank = strchr( (const char *) &msg[0], ' ')) != NULL) 
-	    {
-	      *blank=0;
-	      if ( (sev=atoi(msg)) == 0)
-		{
-		  fprintf(stderr,"msgrcv mast have number first,but msg=%s\n",msg);
-		  continue;
-		} 
-	      sev--;
-	      blank++;
-	    }
-	  else 
-	    {
-	      perror("msgrcv has bad format");
-	      break; 
-	    }
-
-	  sprintf(buff,"%s%s%s\n",colorStart[sev],blank,colorEnd);
+	  if ( (sev=compressMsg(msg+2,buff)) < 0 ) /* msg's big for 80char printer:cut it*/  
+	    { perror("bad format"); continue;}                     
 	  put2printer(argv[1],port,buff,strlen(buff));
 	}
 	else usleep(1000); /* # in microsec */ 
 	}
 
-exit(1);
 }
 
 int printerInit(char *hostname,int port)
@@ -232,6 +214,67 @@ while(1)
   }
 }
 
+int compressMsg(char * msg, char *compress_buff)
+{
+int sev,type;
+char *blank;
+  /* We assume that mess has next format: 
+     "typeOfRecord+1 time_stamp  buff"
+             in regular case buff =(name al al_type h_al h_al_type value)
+   then we calculate sevirity: if typeOfRecord > 0 sev=MAJOR=2 -- service error;
+   if typeOfRecord=0 we calculate 3-rd word in buff  
+   if word = NO_ALARM sev=0
+             MINOR sev=1;
+	     MAJOR sev=2;
+	     INVALID sev =3;
+	     all other sev=2;
+	     
+   in regular case (typeOfRecord = 0) we cut  al al_type h_al h_al_type till 5 char
+   in begin of compress_buff we add ColorStart-symbols and finish it ColorEnd-symbols,
+   so printer will print it in color!!!
+   */ 
+
+if ( ( type = atoi(msg) ) == 0 ) {
+  fprintf(stderr,"%s: first element must be number\n",msg);
+  return(-1); 
+} 
+
+if (type > 1) {
+  sprintf(compress_buff,"%s%s%s",colorStart[MAJOR_ALARM],msg+2,colorEnd);
+  if(DEBUG) fprintf(stderr,"buff=%s;",compress_buff);
+  return(MAJOR_ALARM);
+}
+
+/* EXAMPLE:0 01-Apr-1999 12:39:49 AHTST:out2_ao NO_ALARM NO_ALARM HIHI MAJOR 0.00  
+              + 20               +1       +28  +1  +12  +1 +16   +1+12+1+16 +1           
+           | |                    |             |        |        |    |     |         
+           0 2                    23            52       65       82   95    112  
+                                                              */
+
+if      (strncmp(msg+52,"NO_ALARM",7) == 0) sev=0;
+else if (strncmp(msg+52,"MINOR"   ,5) == 0) sev=1;
+else if (strncmp(msg+52,"INVALID", 6) == 0) sev=3;
+else sev=2;
+
+strcpy (compress_buff,colorStart[sev]);              /* color symb */
+strncat(compress_buff,msg+2,20);                     /* TS */
+
+if ( (blank = strchr( (const char *) msg+23, ' ')) == NULL) {
+  fprintf(stderr,"%s: bad 1 blank in msg \n",msg);
+  return(-1); 
+} 
+
+strncat(compress_buff,msg+22,blank - msg-22 );        /* blank + name */
+strncat(compress_buff,msg+51,6);                      /* blank + first 5 symbols of alarm */
+strncat(compress_buff,msg+64,6);                      /* blank + first 5 symbols of sev */
+strcat (compress_buff,msg+111);                       /* blank +value */
+strcat (compress_buff,colorEnd);                      /* color symb */
+strcat (compress_buff,"\n");                          /*  \n-it's important for printer */
+ 
+if(DEBUG) fprintf(stderr,"uncompress buff=%s;\n  compress buff=%s;\n",msg,compress_buff);
+
+return(sev);
+}
 
 
 

@@ -1,26 +1,51 @@
 /************************DESCRIPTION***********************************
-  DataBase call routine. Work like independent process. Albert 
+  DataBase call routine. Work like independent process.
+We have simple Perl call and more usefull C-RPC call. 
+rpc_gen X-files for RPC is :
+struct DBSend {string msg<>;};
+program DB_PORT {
+ version DB_VERS {
+         void dbSend(DBSend) = 1;
+         } =1;
+}=port;
 **********************************************************************/
 
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
+#define C_CALL
+#undef  PERL_CALL
+/* #define PERL_CALL */
+
 #include <stdio.h>
+#include <sys/msg.h> 
+#include <errno.h>
+
+#ifdef  PERL_CALL
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <netdb.h>
 #include <arpa/inet.h>
-#include <sys/msg.h> 
-#include <errno.h>
-#include <alarm.h>
-#define DEBUG 0
-
-char msg[250];
-
 int TCPInit(char *hostname,int port);
 int put2TCP(char *hostname,int port,char *string,int len);
+#endif
+
+#ifdef  C_CALL
+#include <rpc/rpc.h>
+struct DBSend {
+	char *msg;
+};
+typedef struct DBSend DBSend;
+#define	DB_VERS ((unsigned long)(1))
+#define	dbSend ((unsigned long)(1))
+extern  void * dbsend_1();
+extern bool_t xdr_DBSend();
+static struct timeval TIMEOUT = { 10, 0 };
+#endif
+
+#define DEBUG 1
+
+
+char msg[250];
 
 int main(argc,argv)
 int argc;
@@ -31,8 +56,6 @@ int DBMsgQId;
 int DBMsgQKey;
 int port;
 int bytes=250;
-char *blank;
-int sev;
 int socket;
 
 	if (argc != 4) {
@@ -59,9 +82,8 @@ int socket;
 	    }
 	  else {perror("msgctl()");  exit(1);}
 	  }
-
+#ifdef PERL_CALL
 	fprintf(stderr,"Please wait ...\n");
-
 	if( (socket=TCPInit(argv[1],port)) <= 0 ) { 
 	  perror("can't connect to TCP task"); 
 	  exit(1);
@@ -69,37 +91,77 @@ int socket;
 	else fprintf(stderr,"TCPInit for %s port=%d is OK\n",argv[1],port);
         close(socket);
         sleep(2);
+#endif
+		if(DEBUG)  fprintf(stderr,"star\n");
 
 	while(1)
-	{
-	if( msgrcv(DBMsgQId,msg,bytes,0,0) >= 0)  /* got a new message */
-	{
-        if(DEBUG)  fprintf(stderr,"msg=%s\n",msg);
-	  if ( (blank = strchr( (const char *) &msg[0], ' ')) != NULL) 
-	    {
-	      *blank=0;
-	      if ( (sev=atoi(msg)) == 0)
-		{
-		  fprintf(stderr,"msgrcv mast have number first,but msg=%s\n",msg);
-		  continue;
-		} 
-	      sev--;
-	      blank++;
-	    }
-	  else 
-	    {
-	      perror("msgrcv has bad format");
-	      break; 
-	    }
-
-	  put2TCP(argv[1],port,blank,strlen(blank));
-	}
-	else usleep(1000); /* # in microsec */ 
-	}
-
-exit(1);
+	  {
+	    if( msgrcv(DBMsgQId,msg,bytes,0,0) >= 0)  /* got a new message */
+	      {
+		if(DEBUG)  fprintf(stderr,"msg=%s\n",msg);
+#ifdef C_CALL
+		put2RPC(argv[1],port,msg,strlen(msg));
+#else
+		put2TCP(argv[1],port,msg,strlen(msg));
+#endif
+	      }
+	    else usleep(1000); /* # in microsec */ 
+	  }
+	
 }
 
+#ifdef C_CALL
+int put2RPC(char *host ,int port,char *msg,int len)
+{
+	CLIENT *clnt;
+	void  *result_1;
+	DBSend  dbsend_1_arg;
+	dbsend_1_arg.msg=msg;
+
+	clnt = clnt_create(host, port, DB_VERS, "netpath");
+	if (clnt == (CLIENT *) NULL) {
+		clnt_pcreateerror(host);
+		return(-1);
+	}
+	result_1 = dbsend_1(&dbsend_1_arg, clnt);
+	if (result_1 == (void *) NULL) {
+		clnt_perror(clnt, "call failed");
+	}
+	clnt_destroy(clnt);
+return (0);
+}
+void *
+dbsend_1(argp, clnt)
+	DBSend *argp;
+	CLIENT *clnt;
+{
+	static char clnt_res;
+
+	memset((char *)&clnt_res, 0, sizeof (clnt_res));
+	if (clnt_call(clnt, dbSend,
+		(xdrproc_t) xdr_DBSend, (caddr_t) argp,
+		(xdrproc_t) xdr_void, (caddr_t) &clnt_res,
+		TIMEOUT) != RPC_SUCCESS) {
+		return (NULL);
+	}
+	return ((void *)&clnt_res);
+}
+
+bool_t
+xdr_DBSend(xdrs, objp)
+	register XDR *xdrs;
+	DBSend *objp;
+{
+
+	register long *buf;
+
+	if (!xdr_string(xdrs, &objp->msg, ~0))
+		return (FALSE);
+	return (TRUE);
+}
+#endif
+
+#ifdef PERL_CALL
 int TCPInit(char *hostname,int port)
 {
 int DBSocket;
@@ -171,3 +233,4 @@ while(1)
 
   }
 }
+#endif
