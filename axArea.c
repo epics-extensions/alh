@@ -35,6 +35,8 @@ static char *sccsId = "@(#) $Id$";
 #include "ax.h"
 
 char *silenceString[] = {"Off","On"};
+char *executionModeString[] = {"Local","Global"};
+char *executionStateString[] = {"Active","Passive"};
 
 /* global variables */
 extern int _global_flag;
@@ -381,7 +383,7 @@ void createMainWindowWidgets(ALINK *area)
 {
 	char actTitle[] = "Alarm Configuration Tool";
 	char alhTitle[] = "Alarm Handler";
-	char execMode[35] = "Execution Mode: ";
+	char execMode[50] = "Execution Status:  ";
 	XmString    str;
 	char   *app_name;
 	char   *title_str;
@@ -481,10 +483,9 @@ void createMainWindowWidgets(ALINK *area)
 	XtAddCallback(area->scale, XmNdragCallback, (XtCallbackProc)scale_callback, area);
 
 	/* Create execution mode indicator label for the messageArea */
-    if (_global_flag ) strcat(execMode,"GLOBAL  ");
-    else strcat(execMode,"LOCAL  ");
-    if (_passive_flag ) strcat(execMode,"PASSIVE ");
-    else strcat(execMode,"ACTIVE ");
+	strcat(execMode,executionModeString[_global_flag]);
+	strcat(execMode," ");
+	strcat(execMode,executionStateString[_passive_flag]);
 	label_executionMode = XtVaCreateManagedWidget(
 	    execMode,
 	    xmLabelGadgetClass,        area->messageArea,
@@ -498,7 +499,7 @@ void createMainWindowWidgets(ALINK *area)
 
 	/* Create group alarm decoder label for the messageArea */
 	area->label_mask = XtVaCreateManagedWidget(
-	    "Mask <CDATL>: <Cancel,Disable,noAck,noackT,noLog>",
+	    "Mask <CDATL>:  <Cancel,Disable,noAck,noackT,noLog>",
 	    xmLabelGadgetClass,        area->messageArea,
 	    XmNmarginHeight,           3,
 	    XmNalignment,              XmALIGNMENT_BEGINNING,
@@ -510,7 +511,7 @@ void createMainWindowWidgets(ALINK *area)
 
 	/* Create group alarm decoder label for the messageArea */
 	area->label_groupAlarm = XtVaCreateManagedWidget(
-	    "Group Alarm Counts: (ERROR,INVALID,MAJOR,MINOR,NOALARM)",
+	    "Group Alarm Counts:  (ERROR,INVALID,MAJOR,MINOR,NOALARM)",
 	    xmLabelGadgetClass,        area->messageArea,
 	    XmNmarginHeight,           3,
 	    XmNalignment,              XmALIGNMENT_BEGINNING,
@@ -522,7 +523,7 @@ void createMainWindowWidgets(ALINK *area)
 
 	/* Create filenameTitle label for the messageArea */
 	area->label_channelAlarm = XtVaCreateManagedWidget(
-	    "Channel Alarm Data: <Current Status,Current Severity>,<Highest Unack Severity>",
+	    "Channel Alarm Data:  <Status,Severity>,<Unack Severity>",
 	    xmLabelGadgetClass,        area->messageArea,
 	    XmNmarginHeight,           3,
 	    XmNalignment,              XmALIGNMENT_BEGINNING,
@@ -533,7 +534,7 @@ void createMainWindowWidgets(ALINK *area)
 	    NULL);
 
 	/* Create filenameTitle label for the messageArea */
-	area->label_filenameTitle = XtVaCreateManagedWidget("Filename:",
+	area->label_filenameTitle = XtVaCreateManagedWidget("Filename:  ",
 	    xmLabelGadgetClass,        area->messageArea,
 	    XmNmarginHeight,           3,
 	    XmNalignment,              XmALIGNMENT_BEGINNING,
