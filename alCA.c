@@ -688,9 +688,15 @@ static void alCaException(struct exception_handler_args args)
 	    ca_message(args.stat) ? ca_message(args.stat) : "Unavailable",
 	    args.ctx ? args.ctx : "Unavailable");
 }
+
+
+
 static void description_callback (struct event_handler_args args);
 
-getDescriptionRecord(char *name,char *description,chid descriptionFieldCaId)
+/*********************************************************************
+ getDescriptionRecord
+ *********************************************************************/
+void getDescriptionRecord(char *name,char *description,chid descriptionFieldCaId)
 {
   int status;
   static char desc_name[64];
@@ -739,6 +745,9 @@ getDescriptionRecord(char *name,char *description,chid descriptionFieldCaId)
 
 }
 
+/*********************************************************************
+ description_callback
+ *********************************************************************/
 static void description_callback (struct event_handler_args args)
 {
   char *string= (char *)args.dbr;
