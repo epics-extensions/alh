@@ -373,7 +373,7 @@ static void alCaNewAlarmEvent(struct event_handler_args args)
 	ackt = ((struct dbr_stsack_string *) args.dbr)->ackt;
 
 	if (stat >= ALARM_NSTATUS) stat = ALARM_NSTATUS-1;
-	if (stat < 0) sevr = 0;
+	if (stat < 0) stat = 0;
 
 	if (sevr >= ALARM_NSEV) sevr = ALARM_NSEV-1;
 	if (sevr < 0) sevr = 0;
