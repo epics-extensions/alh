@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.4  1997/09/03 18:25:33  jba
+ Removed calls to propShowDialog from menu insert channel/group.
+
  Revision 1.3  1995/10/20 16:50:09  jba
  Modified Action menus and Action windows
  Renamed ALARMCOMMAND to SEVRCOMMAND
@@ -651,8 +654,6 @@ static void actInsertCallback(widget, item, cbs)
 
              editPasteLink(area,link,linkType);
 
-             propShowDialog(area,0);
-
              break;
 
         case MENU_INSERT_CHANNEL:
@@ -664,8 +665,6 @@ static void actInsertCallback(widget, item, cbs)
              linkType = CHANNEL;
 
              editPasteLink(area, link, linkType);
-
-             propShowDialog(area,0);
 
              break;
 
