@@ -1,8 +1,11 @@
 /*
  $Log$
- Revision 1.5  1995/05/31 20:29:55  jba
- fixed comment
+ Revision 1.6  1995/06/01 19:47:06  jba
+ Configuration mode bug fix
 
+ * Revision 1.5  1995/05/31  20:29:55  jba
+ * fixed comment
+ *
  * Revision 1.4  1995/05/30  15:58:05  jba
  * Added ALARMCOMMAND facility
  *
@@ -268,9 +271,14 @@ void setupConfig(filename, program, areaOld)
 
      /* initialize channel access */
      if (program == ALH) {
-          if (firstTime) firstTime = FALSE;
-          else alCaStop();
-          alCaInit();
+          if (firstTime) {
+               firstTime = FALSE;
+               alCaInit();
+          }
+          else  if (programId == ALH ) {
+               alCaStop();
+               alCaInit();
+          }
      }
 
      /* Log new configfile filename */

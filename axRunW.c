@@ -1,10 +1,13 @@
 /*
  $Log$
- Revision 1.3  1995/05/30 16:01:52  jba
- Changed blinking to static.
- Print blinkCOUNT only if DEBUG is 1.
- Add unused parm to blinking for fdmgr_add_timeout prototype.
+ Revision 1.4  1995/06/01 19:47:08  jba
+ Configuration mode bug fix
 
+ * Revision 1.3  1995/05/30  16:01:52  jba
+ * Changed blinking to static.
+ * Print blinkCOUNT only if DEBUG is 1.
+ * Add unused parm to blinking for fdmgr_add_timeout prototype.
+ *
  * Revision 1.2  1994/06/22  21:17:10  jba
  * Added cvs Log keyword
  *
@@ -644,7 +647,7 @@ static void axExitArea_callback(w,area,call_data)
 
      alLogExit();
      XUnmapWindow(XtDisplay(area->runtimeToplevel),XtWindow(area->runtimeToplevel));
-     XUnmapWindow(XtDisplay(area->toplevel),XtWindow(area->toplevel));
+     if (area->toplevel) XUnmapWindow(XtDisplay(area->toplevel),XtWindow(area->toplevel));
      area->mapped = FALSE;
      area->managed = FALSE;
      if (area->programId == ALH)  alCaCancel((SLIST *)area->pmainGroup);
