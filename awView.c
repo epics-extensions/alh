@@ -1,8 +1,11 @@
 /*
  $Log$
- Revision 1.6  1995/06/01 15:15:42  jba
- Fixed area selection bug.
+ Revision 1.7  1995/06/09 16:25:08  jba
+ Fixed arrow click and double click in group window
 
+ * Revision 1.6  1995/06/01  15:15:42  jba
+ * Fixed area selection bug.
+ *
  * Revision 1.5  1995/05/31  20:34:10  jba
  * Added name selection and arrow functions to Group window
  *
@@ -363,15 +366,22 @@ static void singleClickGroupW_callback(pdata)
           if ( parent->viewCount <= 1 ){
                displayNewViewTree(area,parent,EXPANDCOLLAPSE1);
           }
+/*
           if ( link->viewCount <= 1 ){
+*/
                displayNewViewTree(area,link,EXPANDCOLLAPSE1);
+/*
           }
+*/
      }
 
      /* update property sheet window if it is displayed */
+/*
      propUpdateDialog(area, (GCLINK *)link, GROUP);
+*/
 
      /* groupWindow must now display contents of new treeWindow selection */
+/*
      groupWindow = area->groupWindow;
      markSelectedWidget(groupWindow,NULL);
      markSelection(groupWindow, NULL);
@@ -379,20 +389,25 @@ static void singleClickGroupW_callback(pdata)
      groupWindow->viewConfigCount = alViewAdjustGroupW((GLINK *)link, area->viewFilter);
      groupWindow->viewOffset = 0;
      redraw(groupWindow,0);
+*/
 
      /* markSelection */
+/*
      area->selectionLink = link;
      area->selectionType = GROUP;
      area->selectionWindow = treeWindow;
      treeWindow->selectionLink = link;
+*/
 
      /* markSelectedWidget */
+/*
      if (link->lineTreeW) {
           wline = ((struct anyLine *)link->lineTreeW)->wline;
           markSelectedWidget(treeWindow,wline->name);
      } else {
           markSelectedWidget(treeWindow,NULL);
      }
+*/
 }
 
 /***************************************************
