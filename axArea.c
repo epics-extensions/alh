@@ -385,12 +385,13 @@ static ALINK *setupArea(ALINK *areaOld)
 ******************************************************/
 void createMainWindowWidgets(ALINK *area)
 {
-	char   *actTitle = "Alarm Configuration Tool";
-	char   *alhTitle = "Alarm Handler";
+	char actTitle[] = "Alarm Configuration Tool";
+	char alhTitle[] = "Alarm Handler";
 	XmString    str;
 	Widget dialog;
 	char   *app_name;
 	char   *title_str;
+	int len = 0;
 
 	if (area->toplevel) return;
 
@@ -404,15 +405,18 @@ void createMainWindowWidgets(ALINK *area)
 
 	free(app_name);
 
+	if (area->blinkString) len = strlen(area->blinkString);
 	if (area->programId == ACT){
-	   title_str = (char*) calloc(1,strlen(actTitle)+strlen(area->blinkString)+3);
+	   title_str = (char*) calloc(1,strlen(actTitle)+len+3);
 	   strcpy(title_str, actTitle);
 	} else {
-	   title_str = (char*) calloc(1,strlen(alhTitle)+strlen(area->blinkString)+3);
+	   title_str = (char*) calloc(1,strlen(alhTitle)+len+3);
 	   strcpy(title_str, alhTitle);
 	}
-	strcat(title_str, ": ");
-	strcat(title_str, area->blinkString);
+	if (area->blinkString){
+		strcat(title_str, ": ");
+		strcat(title_str, area->blinkString);
+	}
 
 	XtVaSetValues(area->toplevel,
 	    XmNtitle,     title_str,
