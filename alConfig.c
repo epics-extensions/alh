@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.12  1997/04/17 18:16:16  jba
+ Allow blank lines in input file.
+
  Revision 1.11  1997/03/31 16:45:15  jba
  Bug fix to SEVRCOMMAND for UP_ANY and DOWN_ANY.
  Bug fix to ALARMCOUNTFILTER.
@@ -313,9 +316,8 @@ int caConnect;
         context = GROUP_LINE;
 	    gclink = (GCLINK *)glink;
 	    }
-	else {
-	     
-     	    /*printf("Illegal line: %s\n",buf);*/
+	else if(first_char){
+     	    printf("Illegal line: %s\n",buf);
     	    }
     }
 
