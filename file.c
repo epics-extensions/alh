@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.20  1998/08/07 22:29:44  jba
+ Alh now quits when invalid config file is specified on command line.
+
  Revision 1.19  1998/08/05 18:20:10  jba
  Added silenceOneHour button.
  Moved silenceForever button to Setup menu.
@@ -225,8 +228,8 @@ void exit_quit(w, area, call_data)
      }
 
      if (programId==ACT) editClipboardSet(0,0);
-     free(area->pmainGroup);
-     free(area);
+     if (area  && area->pmainGroup) free(area->pmainGroup);
+     if (area) free(area);
      XtDestroyWidget(topLevelShell);
      exit(0);
 }

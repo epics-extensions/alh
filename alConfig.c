@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.19  1998/08/07 22:29:42  jba
+ Alh now quits when invalid config file is specified on command line.
+
  Revision 1.18  1998/08/05 20:28:23  jba
  Reading config file modified to compare whole word of command
  (GROUP,CHANNEL,$GUIDANCE,...)instead of first letter.
@@ -347,7 +350,7 @@ int caConnect;
 	    }
 	else if(buf[first_char]=='#') {
 	    }
-	else if(first_char){
+	else {
      	    printf("Illegal line: %s\n",buf);
     	    }
     }

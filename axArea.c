@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.13  1998/08/07 22:29:43  jba
+ Alh now quits when invalid config file is specified on command line.
+
  Revision 1.12  1998/08/05 18:20:08  jba
  Added silenceOneHour button.
  Moved silenceForever button to Setup menu.
@@ -417,6 +420,10 @@ void setupConfig(filename, program, areaOld)
                createDialog(areaOld->form_main,XmDIALOG_WARNING,"Configuration file error: ",filename);
                else if (areaOld->runtimeForm)
                createDialog(areaOld->runtimeForm,XmDIALOG_WARNING,"Configuration file error: ",filename);
+          } else {
+             area = NULL;
+             printf ("ALH Error: Invalid config file: %s\n",psetup.configFile);
+             exit_quit(NULL, area, NULL);
           }
      }
 

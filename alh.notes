@@ -148,3 +148,6 @@ Wed Aug  5 13:10:12 CDT 1998
             This is the second line of text guidance.
             $END
 
+Fri Aug  7 17:30:14 CDT 1998
+	Alh now quits when invalid config file is specified on command line.
+
