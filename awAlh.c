@@ -1153,6 +1153,17 @@ void awRowWidgets(struct anyLine *line,void *area)
 		XtVaGetValues(wline->mask,XmNwidth,&width,NULL);
 		nextX = nextX + width + 3;
 
+		str = XmStringCreateSimple(line->highestBeepSevrString);
+		wline->highestbeepsevr = XtVaCreateManagedWidget("highestbeepsevr",
+		    xmLabelWidgetClass,        wline->row_widget,
+		    XmNlabelString,            str,
+		    XmNx,                      nextX,
+		    XmNy,                      2,
+		    NULL);
+		XmStringFree(str);
+		XtVaGetValues(wline->highestbeepsevr,XmNwidth,&width,NULL);
+		nextX = nextX + width + 3;
+
 		str = XmStringCreateSimple(line->message);
 		wline->message = XtVaCreateManagedWidget("message",
 		    xmLabelWidgetClass,        wline->row_widget,
@@ -1161,6 +1172,8 @@ void awRowWidgets(struct anyLine *line,void *area)
 		    XmNy,                      2,
 		    NULL);
 		XmStringFree(str);
+		XtVaGetValues(wline->message,XmNwidth,&width,NULL);
+		nextX = nextX + width + 3;
 
 		awUpdateRowWidgets(line);
 
@@ -1292,7 +1305,13 @@ void awRowWidgets(struct anyLine *line,void *area)
 		XtVaGetValues(wline->mask,XmNwidth,&width,NULL);
 		nextX = nextX + width + 3;
 
+		XtVaSetValues(wline->highestbeepsevr,XmNx,nextX,NULL);
+		XtVaGetValues(wline->highestbeepsevr,XmNwidth,&width,NULL);
+		nextX = nextX + width + 3;
+
 		XtVaSetValues(wline->message,XmNx,nextX,NULL);
+		XtVaGetValues(wline->message,XmNwidth,&width,NULL);
+		nextX = nextX + width + 3;
 
 		awUpdateRowWidgets(line);
 
@@ -1386,7 +1405,6 @@ void awUpdateRowWidgets(struct anyLine *line)
 	XtVaGetValues(wline->message,
 	    XmNlabelString,           &strOld,
 	    NULL);
-
 	str = XmStringCreateSimple(line->message);
 	if (!XmStringCompare(str,strOld))
 		XtVaSetValues(wline->message,
@@ -1394,6 +1412,18 @@ void awUpdateRowWidgets(struct anyLine *line)
 		    NULL);
 	XmStringFree(str);
 	XmStringFree(strOld);
+
+	XtVaGetValues(wline->highestbeepsevr,
+	    XmNlabelString,           &strOld,
+	    NULL);
+	str = XmStringCreateSimple(line->highestBeepSevrString);
+	if (!XmStringCompare(str,strOld))
+		XtVaSetValues(wline->highestbeepsevr,
+		    XmNlabelString,            str,
+		    NULL);
+	XmStringFree(str);
+	XmStringFree(strOld);
+
 }
 
 
