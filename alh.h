@@ -29,6 +29,10 @@
 #include "alarm.h"
 #include "cadef.h"
 
+#if (!defined(WIN32) && !defined(__APPLE__))
+#define HAVE_SYSV_IPC
+#endif
+
 #ifdef EXCEED
 /* WIN32 differences */
 #ifdef WIN32

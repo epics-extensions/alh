@@ -22,10 +22,14 @@
 #include <stdio.h>
 #include <signal.h>
 #include <errno.h>
+#include "alh.h"
+
+#ifdef HAVE_SYSV_IPC
+#include <sys/msg.h>  
+#endif
 
 #ifndef WIN32
 /* WIN32 does not have dirent.h used by opendir, closedir */
-#include <sys/msg.h>  
 #include <sys/stat.h>  
 #include <pwd.h>
 #include <unistd.h>  
@@ -38,7 +42,6 @@
 
 #include <Xm/Xm.h>
 
-#include "alh.h"
 #include "version.h"
 #include "alLib.h"
 #include "axArea.h"
@@ -605,7 +608,7 @@ int programId,Widget widget)
 			  signal(SIGINT,broadcastMess_exit_quit); 
 			  }
 
-#ifndef WIN32
+#ifdef HAVE_SYSV_IPC
 			if( _printer_flag)
 			  {
 			    struct msqid_ds buf;  

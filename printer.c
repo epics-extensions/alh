@@ -26,7 +26,10 @@
 #include <netinet/tcp.h>
 #include <netdb.h>
 #include <arpa/inet.h>
+#include "alh.h"
+#ifdef HAVE_SYSV_IPC
 #include <sys/msg.h> 
+#endif
 #include <errno.h>
 #include <alarm.h>
 #include "printer.h"
@@ -45,6 +48,7 @@ int compressMsg(char * msg, char *compress_buff);
 
 int main(int argc,char *argv[])
 {
+#ifdef HAVE_SYSV_IPC
 int sev; /* define color for printer */
 struct msqid_ds infoBuf;  
 int printerMsgQId;
@@ -300,3 +304,7 @@ return(sev);
 
 
 
+#else /* HAVE_SYSV_IPC */
+    return 1;
+}
+#endif /* HAVE_SYSV_IPC */

@@ -31,10 +31,13 @@ program DB_PORT {
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <alh.h>
 #ifdef WIN32
 #include <process.h>
 #else
 #include <unistd.h>
+#endif
+#ifdef HAVE_SYSV_IPC
 #include <sys/msg.h>
 #endif
 #include <errno.h>

@@ -23,14 +23,8 @@
 #include <stdlib.h>
 #include <time.h>
 #include <errno.h>
-#ifdef WIN32
-#if 0
-#include <process.h>
-#endif
-#else
-#if 0
-#include <unistd.h>
-#endif
+#include "alh.h"
+#ifdef HAVE_SYSV_IPC
 #include <sys/msg.h>
 #endif
 
@@ -137,7 +131,7 @@ char *displayName;
 #endif
 
 int filePrintf(FILE *fPointer,char *buf,time_t *ptime,int typeOfRecord);
-#ifndef WIN32
+#ifdef HAVE_SYSV_IPC
 int write2MQ(int, char *);
 int write2msgQ(int, char *);
 #endif
@@ -480,7 +474,7 @@ int filePrintf(FILE *fPointer,char *buf,time_t *ptime,int typeOfRecord)
   if( (_printer_flag) && (fPointer==fl) &&printerMsgQId ) 
     {
       sprintf(DBbuff,"%d %d %s %s",ALARM_LOG_DB, typeOfRecord+1,buf_tmp,buff); 
-#ifndef WIN32
+#ifdef HAVE_SYSV_IPC
       write2MQ(printerMsgQId, DBbuff);
 #endif
     }
@@ -504,7 +498,7 @@ int filePrintf(FILE *fPointer,char *buf,time_t *ptime,int typeOfRecord)
           fprintf(stderr,"\nBad fPointer for writing\n"); 
 	  return (ret);
 	}
-#ifndef WIN32
+#ifdef HAVE_SYSV_IPC
       write2MQ(DBMsgQId, DBbuff);      
 #endif
     }
@@ -517,7 +511,7 @@ return (ret);
   After that it will be print in TCP-printer or save to DB. Albert 
 ***********************************************************************/
 
-#ifndef WIN32
+#ifdef HAVE_SYSV_IPC
 int write2MQ(int mq,char *message)
 {
   char buf[256];
