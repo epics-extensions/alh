@@ -175,7 +175,7 @@ int sev,int unackSevr,int ackT)
 		    cdata->name,
 		    (cdata->alias ? cdata->alias : "N/A"),
 		    cm_text,
-		    alhArea->blinkString,
+		    (alhArea ? alhArea->blinkString : "N/A"),
 		    cdata->value);
    }
 #endif
