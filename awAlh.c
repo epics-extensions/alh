@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.8  1997/09/09 22:21:56  jba
+ Changed help menu selections.
+
  Revision 1.7  1995/11/13 22:31:17  jba
  Added beepseverity command, ansi changes and other changes.
 
@@ -109,15 +112,16 @@ void awUpdateRowWidgets(line)                 Update line widgets
 #include <stdlib.h>
 #include <stdio.h>
 
-#include <alarm.h>
+#include "alarm.h"
 
-#include <ax.h>
-#include <alh.h>
-#include <axArea.h>
-#include <axSubW.h>
-#include <line.h>
-#include <alLib.h>
-#include <sllLib.h>
+#include "ax.h"
+#include "alh.h"
+#include "axArea.h"
+#include "axSubW.h"
+#include "line.h"
+#include "alLib.h"
+#include "sllLib.h"
+#include "epicsVersion.h"
 
 #include <Xm/Xm.h>
 #include <Xm/ArrowB.h>
@@ -249,23 +253,11 @@ Widget alhCreateMenu(parent, user_data)
      };
      
      static MenuItem help_menu[] = {
-         { "On Context",       &xmPushButtonGadgetClass, 'C', "Ctrl<Key>H", "Ctrl+H",
-             alhHelpCallback, "expandOne",         (MenuItem *)NULL },
-         { "On Windows",          &xmPushButtonGadgetClass, 'W', NULL, NULL,
-             alhHelpCallback, "expandBranch",      (MenuItem *)NULL },
-         { "On Keys",             &xmPushButtonGadgetClass, 'K', NULL, NULL,
-             alhHelpCallback, "expandAll",         (MenuItem *)NULL },
-         { "Index",        &xmPushButtonGadgetClass, 'I', NULL, NULL,
-             alhHelpCallback, "collapseBranch",    (MenuItem *)NULL },
-         { "On Help",              &xmPushButtonGadgetClass, 'H', NULL, NULL,
-             alhHelpCallback, "nameOnly",          (MenuItem *)NULL },
-         { "Tutorial",         &xmPushButtonGadgetClass, 'T', NULL, NULL,
-             alhHelpCallback, "allProperties",     (MenuItem *)NULL },
-         { "",                       &xmSeparatorGadgetClass,  '\0', NULL, NULL,
-             NULL,    NULL,   (MenuItem *)NULL },
+         { "Help Topics",       &xmPushButtonGadgetClass, 'H', "Ctrl<Key>H", "Ctrl+H",
+             alhHelpCallback, (XtPointer)MENU_HELP_TOPICS, (MenuItem *)NULL },
 #if  XmVersion && XmVersion >= 1002
-         { "Version",     &xmPushButtonGadgetClass, 'V', NULL, NULL,
-             alhHelpCallback, (XtPointer)MENU_HELP_VERSION, (MenuItem *)NULL },
+         { "About ALH",     &xmPushButtonGadgetClass, 'A', NULL, NULL,
+             alhHelpCallback, (XtPointer)MENU_HELP_ABOUT, (MenuItem *)NULL },
 #endif
          {NULL},
      };
@@ -661,9 +653,11 @@ static void alhHelpCallback(widget, item, cbs)
 
      switch (item){
 
-        case MENU_HELP_VERSION:
+        case MENU_HELP_ABOUT:
 
-             if (productDescriptionShell)  XtPopup(productDescriptionShell,XtGrabNone);
+             /* if (productDescriptionShell)  XtPopup(productDescriptionShell,XtGrabNone); */
+             createDialog(area->form_main,XmDIALOG_INFORMATION,"\nAlarm Handler\n\nDeveloped at Argonne National Laboratory\n\nAuthors: Ben-Chin Cha, Janet Anderson, Mark Anderson, and Marty Kraimer\n\n", EPICS_VERSION_STRING);
+
              break;
 
         default:
