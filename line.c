@@ -1,8 +1,11 @@
 /*
  $Log$
- Revision 1.2  1994/06/22 21:17:39  jba
- Added cvs Log keyword
+ Revision 1.3  1995/04/13 19:20:25  jba
+ Fixed bug in line mask size and initialization.
 
+ * Revision 1.2  1994/06/22  21:17:39  jba
+ * Added cvs Log keyword
+ *
  */
 
 static char *sccsId = "@(#)line.c	1.6\t9/14/93";
@@ -200,7 +203,7 @@ CLINK *clink;
 	if (cdata->curMask.Disable == MASK_ON)  
 		chanLine->curSevr = 0;
         alGetMaskString(cdata->curMask,buff);
-        sprintf(chanLine->mask,"<%s> ",buff);
+        sprintf(chanLine->mask,"<%s>",buff);
         awChanMessage(chanLine);
 }
 
@@ -229,7 +232,7 @@ int i;
         if (!glink) return;
         gdata = glink->pgroupData;
           awGetMaskString(gdata->mask,buff); 
-          sprintf(groupLine->mask,"<%s> ",buff);
+          sprintf(groupLine->mask,"<%s>",buff);
         for (i=0;i<ALARM_NSEV;i++) 
                 groupLine->curSev[i] = gdata->curSev[i];
         groupLine->unackSevr = alHighestSeverity(gdata->unackSev);
@@ -254,7 +257,7 @@ GLINK *glink;
                         alHighestSeverity(pData->unackSev);                     
 
           awGetMaskString(pData->mask,buff); 
-          sprintf(groupLine->mask,"<%s> ",buff);
+          sprintf(groupLine->mask,"<%s>",buff);
 
         
         strcpy(groupLine->message," ");
