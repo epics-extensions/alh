@@ -1,14 +1,17 @@
 # configuration file for cmlog
-# Type    Title    Tag    Width
-Col    Facility    facility     80
-Col    Time    cmlogTime     175
-Col    Domain    domain     100
-Col    Device    device     120
-Col    Alias     message    150
-Col    Severity    severity     85
-Col    Status    status     85
-Col    Value    value     120
-Col    Text    text     400
-Col    Host(Display)    host     105
+# Type    Title    Tag         Width
+Col    Facility    facility       45
+Col    Time        cmlogTime     165
+Col    Domain      domain        135
+Col    Device      device        145
+Col    Alias       message       255
+Col    Severity    severity       85
+Col    Status      status        100
+Col    Value       value         140
+Col    Text        text          270
+Col    Display     cmlogDispName  75
+Col    Name        name           30
+Col    User        user           50
+Col    Host        host           50
 # Buffer size for updating the message
 ubufsize     1000
