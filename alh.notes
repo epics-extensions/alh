@@ -27,3 +27,10 @@ Thu Jan 16 10:35:16 CST 1997
 Fri Feb 28 17:26:13 CST 1997
 
      Fixed INCLUDE file bug which caused counts and alarms to be incorrect.
+
+
+Mon Mar 31 10:41:19 CST 1997
+
+     Bug fix to SEVRCOMMAND for UP_ANY and DOWN_ANY.
+     Bug fix to ALARMCOUNTFILTER.
+

@@ -1,5 +1,9 @@
 /*
  $Log$
+ Revision 1.14  1997/03/31 16:45:16  jba
+ Bug fix to SEVRCOMMAND for UP_ANY and DOWN_ANY.
+ Bug fix to ALARMCOUNTFILTER.
+
  Revision 1.13  1997/01/16 16:34:59  jba
  Bug fix for ALARMCOUNTFILTER.
 
@@ -935,11 +939,14 @@ static void alarmCountFilter_callback(pdata)
      void *pdata;
 {
      COUNTFILTER *countFilter=pdata;
+     time_t alarmTime;
 
+     alarmTime = countFilter->alarmTime;
+     countFilter->alarmTime=0;
      countFilter->timeoutId=0;
      countFilter->curCount=0;
      alNewAlarmProcess(countFilter->stat,countFilter->sev,
-          countFilter->value,countFilter->clink,countFilter->alarmTime);
+          countFilter->value,countFilter->clink,alarmTime);
 }
 
 

@@ -1,5 +1,9 @@
 /*
  $Log$
+ Revision 1.11  1997/03/31 16:45:15  jba
+ Bug fix to SEVRCOMMAND for UP_ANY and DOWN_ANY.
+ Bug fix to ALARMCOUNTFILTER.
+
  Revision 1.10  1997/02/28 23:29:20  jba
  Fixed INCLUDE file bug which caused counts and alarms to be incorrect.
 
@@ -190,7 +194,7 @@ static void alConfigTreePrint(fw,glink,treeSym)
 
 /* ALARM_ANY must not be equal to any valid alarm severity value */
 #ifndef ALARM_ANY
-#define ALARM_ANY ALARM_NSEV + 1
+#define ALARM_ANY ALARM_NSEV 
 #endif
 /* UP_ALARM must not be equal to any valid alarm severity value */
 #ifndef UP_ALARM
