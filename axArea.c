@@ -1,13 +1,16 @@
 /*
  $Log$
- Revision 1.7  1995/10/20 16:50:23  jba
- Modified Action menus and Action windows
- Renamed ALARMCOMMAND to SEVRCOMMAND
- Added STATCOMMAND facility
- Added ALIAS facility
- Added ALARMCOUNTFILTER facility
- Make a few bug fixes.
+ Revision 1.8  1995/11/13 22:31:24  jba
+ Added beepseverity command, ansi changes and other changes.
 
+ * Revision 1.7  1995/10/20  16:50:23  jba
+ * Modified Action menus and Action windows
+ * Renamed ALARMCOMMAND to SEVRCOMMAND
+ * Added STATCOMMAND facility
+ * Added ALIAS facility
+ * Added ALARMCOUNTFILTER facility
+ * Make a few bug fixes.
+ *
  * Revision 1.6  1995/06/01  19:47:06  jba
  * Configuration mode bug fix
  *
@@ -107,6 +110,10 @@ void scale_callback(widget,area,cbs)  Scale moved callback
 void markSelectionArea(area,line)     Set area selection values
      ALINK *area;
      struct anyLine  *line;
+*
+void changeBeepSeverityText(area)
+     ALINK *area;
+
  -------------
  |  PRIVATE  |
  -------------
@@ -147,6 +154,7 @@ extern SLIST *areaList;
 extern Widget toggle_button,toggle_button1;
 extern struct setup psetup;
 extern Display *display;
+extern char *alarmSeverityString[];
 
 ALINK *alhArea;
 
@@ -676,6 +684,32 @@ void createMainWindowWidgets(area)
           XmNuserData,               (XtPointer)area,
           NULL);
 
+     /* Create BeepSeverity string for the messageArea */
+     str = XmStringCreateSimple(alarmSeverityString[psetup.beepSevr]);
+     area->beepSeverity = XtVaCreateManagedWidget("beepSeverity",
+          xmLabelGadgetClass,        area->messageArea,
+          XmNlabelString,            str,
+          XmNshadowThickness,        2,
+          XmNalignment,              XmALIGNMENT_BEGINNING,
+          XmNtopAttachment,          XmATTACH_WIDGET,
+          XmNtopWidget,              area->silenceCurrent,
+          XmNrightAttachment,        XmATTACH_FORM,
+          NULL);
+     XmStringFree(str);
+
+     /* Create BeepSeverityLabel string for the messageArea */
+     str = XmStringCreateSimple("Beep Severity:");
+     area->beepSeverityLabel = XtVaCreateManagedWidget("beepSeverityLabel",
+          xmLabelGadgetClass,        area->messageArea,
+          XmNshadowThickness,        2,
+          XmNlabelString,            str,
+          XmNtopAttachment,          XmATTACH_WIDGET,
+          XmNtopWidget,              area->silenceCurrent,
+          XmNrightAttachment,        XmATTACH_WIDGET,
+          XmNrightWidget,            area->beepSeverity,
+          NULL);
+     XmStringFree(str);
+
      /* add a test alarm button */
      if (DEBUG == -1) {
          Widget button = XtVaCreateManagedWidget("Generate Test Alarm",
@@ -683,7 +717,7 @@ void createMainWindowWidgets(area)
           XmNlabelString,
           XmStringCreateLtoR("Generate Test Alarm...",XmSTRING_DEFAULT_CHARSET),
           XmNtopAttachment,          XmATTACH_WIDGET,
-          XmNtopWidget,              area->silenceCurrent,
+          XmNtopWidget,              area->beepSeverity,
           XmNrightAttachment,        XmATTACH_FORM,
           NULL);
 
@@ -848,6 +882,26 @@ void axMakePixmap(w)
      return;
 }
 
+
+/***************************************************
+ changeBeepSeverityText
+****************************************************/
+
+void changeBeepSeverityText(area)
+     ALINK *area;
+{
+     XmString    str;
+
+     if (area->beepSeverity) {
+          str = XmStringCreateSimple(alarmSeverityString[psetup.beepSevr]);
+          XtVaSetValues(area->beepSeverity,
+               XmNlabelString,            str,
+               NULL);
+          XmStringFree(str);
+     }
+}
+
+
 /******************************************************
   axUpdateDialogs
 ******************************************************/
@@ -855,6 +909,9 @@ void axMakePixmap(w)
 void axUpdateDialogs(area)
      ALINK *area;
 {
+     /* update beepSeverity string on main window */
+     changeBeepSeverityText(area);
+
      /* update property sheet window if it is displayed */
      propUpdateDialog(area);
 

@@ -1,13 +1,16 @@
 /*
  $Log$
- Revision 1.7  1995/10/20 16:50:20  jba
- Modified Action menus and Action windows
- Renamed ALARMCOMMAND to SEVRCOMMAND
- Added STATCOMMAND facility
- Added ALIAS facility
- Added ALARMCOUNTFILTER facility
- Make a few bug fixes.
+ Revision 1.8  1995/11/13 22:31:22  jba
+ Added beepseverity command, ansi changes and other changes.
 
+ * Revision 1.7  1995/10/20  16:50:20  jba
+ * Modified Action menus and Action windows
+ * Renamed ALARMCOMMAND to SEVRCOMMAND
+ * Added STATCOMMAND facility
+ * Added ALIAS facility
+ * Added ALARMCOUNTFILTER facility
+ * Make a few bug fixes.
+ *
  * Revision 1.6  1995/06/22  19:40:20  jba
  * Started cleanup of file.
  *
@@ -96,6 +99,7 @@ void   createMainWindowWidgets( ALINK *area);
 int    isTreeWindow( ALINK *area, void * subWindow);
 void   scale_callback( Widget widget, ALINK *area, XmScaleCallbackStruct *cbs);
 void   markSelectionArea( ALINK *area, struct anyLine *line);
+void   changeBeepSeverityText( ALINK *area);
 void   unmapArea_callback( Widget main, Widget w, XmAnyCallbackStruct *cbs);
 void   axMakePixmap( Widget w);
 void   axUpdateDialogs(ALINK *area);
@@ -116,11 +120,9 @@ void createMainWindow_callback( Widget w, ALINK *area, XmAnyCallbackStruct *call
 void unmapwindow_callback( Widget w, Widget main, XmAnyCallbackStruct *call_data);
 void remapwindow_callback( Widget w, Widget main, XmAnyCallbackStruct *call_data);
 void resetBeep(void);
-void reInitBeep( Widget toggle_button1, Widget toggle_button);
 void beep_callback( Widget w, int beep, XmAnyCallbackStruct *call_data);
 void silenceForever_callback( Widget w, Widget toggleB, XmAnyCallbackStruct *call_data);
 
-void createBeepSevrDialog( void *area, Widget widget);
 
 /********************************************************************
   axSubW.c   function prototypes
@@ -496,6 +498,7 @@ void   createMainWindowWidgets();
 int    isTreeWindow();
 void   scale_callback();
 void   markSelectionArea();
+void   changeBeepSeverityText();
 void   unmapArea_callback();
 void   axMakePixmap();
 void   axUpdateDialogs();
@@ -515,10 +518,8 @@ void createMainWindow_callback();
 void unmapwindow_callback();
 void remapwindow_callback();
 void resetBeep();
-void reInitBeep();
 void beep_callback();
 void silenceForever_callback();
-void createBeepSevrDialog();
 
 /********************************************************************
   axSubW.c   function prototypes

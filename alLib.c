@@ -1,13 +1,16 @@
 /*
  $Log$
- Revision 1.9  1995/10/20 16:49:54  jba
- Modified Action menus and Action windows
- Renamed ALARMCOMMAND to SEVRCOMMAND
- Added STATCOMMAND facility
- Added ALIAS facility
- Added ALARMCOUNTFILTER facility
- Make a few bug fixes.
+ Revision 1.10  1995/11/13 22:31:13  jba
+ Added beepseverity command, ansi changes and other changes.
 
+ * Revision 1.9  1995/10/20  16:49:54  jba
+ * Modified Action menus and Action windows
+ * Renamed ALARMCOMMAND to SEVRCOMMAND
+ * Added STATCOMMAND facility
+ * Added ALIAS facility
+ * Added ALARMCOUNTFILTER facility
+ * Make a few bug fixes.
+ *
  * Revision 1.8  1995/06/22  19:48:46  jba
  * Added $ALIAS facility.
  *
@@ -978,7 +981,7 @@ void alNewAlarm(stat,sev,value,clink)
                countFilter->curCount++;
                if (countFilter->curCount >= countFilter->inputCount) {
                     if (countFilter->timeoutId)
-                         fdmgr_clear_timeout(pfdctx,countFilter->timeoutId);
+                         fdmgr_clear_timeout(pfdctx,(fdmgrAlarmId)(countFilter->timeoutId));
                     countFilter->timeoutId=0;
                     countFilter->curCount=0;
                     countFilter->alarmTime=0;
@@ -987,7 +990,7 @@ void alNewAlarm(stat,sev,value,clink)
           }
      } else if ((cdata->curSevr==0 && sev==0) || (cdata->curSevr!=0 && sevr_prev==0)){
           if (countFilter->timeoutId){
-               fdmgr_clear_timeout(pfdctx,countFilter->timeoutId);
+               fdmgr_clear_timeout(pfdctx,(fdmgrAlarmId)(countFilter->timeoutId));
           }
           countFilter->timeoutId=0;
           if (cdata->curSevr) alNewAlarmProcess(stat,sev,value,clink,alarmTime);

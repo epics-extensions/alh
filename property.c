@@ -1,13 +1,16 @@
 /*
  $Log$
- Revision 1.8  1995/10/20 16:50:52  jba
- Modified Action menus and Action windows
- Renamed ALARMCOMMAND to SEVRCOMMAND
- Added STATCOMMAND facility
- Added ALIAS facility
- Added ALARMCOUNTFILTER facility
- Make a few bug fixes.
+ Revision 1.9  1995/11/13 22:31:32  jba
+ Added beepseverity command, ansi changes and other changes.
 
+ * Revision 1.8  1995/10/20  16:50:52  jba
+ * Modified Action menus and Action windows
+ * Renamed ALARMCOMMAND to SEVRCOMMAND
+ * Added STATCOMMAND facility
+ * Added ALIAS facility
+ * Added ALARMCOUNTFILTER facility
+ * Make a few bug fixes.
+ *
  * Revision 1.7  1995/06/22  20:27:00  jba
  * Fixed alias overwriting Related process label.
  *
@@ -478,7 +481,7 @@ static void propCreateDialog(area)
      Widget processLabel, processTextW;
      Widget sevrProcessLabel, sevrProcessTextW;
      Widget statProcessLabel, statProcessTextW;
-     Widget forcePVcurrentValueTextW;
+     Widget forcePVcurrentValueTextW=0;
      Widget forcePVforceValueLabel,forcePVnameTextW, forcePVforceValueTextW,
             forcePVresetValueTextW, forcePVresetValueLabel;
      Widget forcePVmaskStringLabelW, frame2, rowcol2, frame3,

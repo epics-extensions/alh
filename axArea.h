@@ -1,13 +1,16 @@
 /*
  $Log$
- Revision 1.3  1995/10/20 16:50:25  jba
- Modified Action menus and Action windows
- Renamed ALARMCOMMAND to SEVRCOMMAND
- Added STATCOMMAND facility
- Added ALIAS facility
- Added ALARMCOUNTFILTER facility
- Make a few bug fixes.
+ Revision 1.4  1995/11/13 22:31:26  jba
+ Added beepseverity command, ansi changes and other changes.
 
+ * Revision 1.3  1995/10/20  16:50:25  jba
+ * Modified Action menus and Action windows
+ * Renamed ALARMCOMMAND to SEVRCOMMAND
+ * Added STATCOMMAND facility
+ * Added ALIAS facility
+ * Added ALARMCOUNTFILTER facility
+ * Make a few bug fixes.
+ *
  * Revision 1.2  1994/06/22  21:17:07  jba
  * Added cvs Log keyword
  *
@@ -84,6 +87,8 @@ typedef struct  areaLink{
      Widget           label_mask;
      Widget           silenceForever;
      Widget           silenceCurrent;
+     Widget           beepSeverity;
+     Widget           beepSeverityLabel;
      Widget           label_filenameTitle;
      Widget           treeWindowForm;
      Widget           groupWindowForm;

@@ -1,13 +1,16 @@
 /*
  $Log$
- Revision 1.6  1995/10/20 16:49:51  jba
- Modified Action menus and Action windows
- Renamed ALARMCOMMAND to SEVRCOMMAND
- Added STATCOMMAND facility
- Added ALIAS facility
- Added ALARMCOUNTFILTER facility
- Make a few bug fixes.
+ Revision 1.7  1995/11/13 22:31:11  jba
+ Added beepseverity command, ansi changes and other changes.
 
+ * Revision 1.6  1995/10/20  16:49:51  jba
+ * Modified Action menus and Action windows
+ * Renamed ALARMCOMMAND to SEVRCOMMAND
+ * Added STATCOMMAND facility
+ * Added ALIAS facility
+ * Added ALARMCOUNTFILTER facility
+ * Make a few bug fixes.
+ *
  * Revision 1.5  1995/06/22  19:48:44  jba
  * Added $ALIAS facility.
  *
@@ -178,7 +181,11 @@ static void alConfigTreePrint(fw,glink,treeSym)
 
 /* ALARM_ANY must not be equal to any valid alarm severity value */
 #ifndef ALARM_ANY
-#define ALARM_ANY 4
+#define ALARM_ANY ALARM_NSEV + 1
+#endif
+/* UP_ALARM must not be equal to any valid alarm severity value */
+#ifndef UP_ALARM
+#define UP_ALARM ALARM_ANY + 1
 #endif
 
 #define BUF_SIZE 150
@@ -239,7 +246,7 @@ static void print_error(buf,message)
     char *buf;
     char *message;
 {
-    printf("%s\nError in previous line: %s\n",buf,message);
+    printf("%sError in previous line: %s\n",buf,message);
 }
 
 /*******************************************************************
@@ -548,6 +555,7 @@ static void GetOptionalLine(fp,buf,gclink,context,caConnect)
     char mask[6];
     short f1,f2;
     char *str;
+    int i;
 
 	if(gclink==NULL) {
 	    print_error(buf,"Logic error: glink is NULL");
@@ -577,7 +585,7 @@ static void GetOptionalLine(fp,buf,gclink,context,caConnect)
 	return;
     }
 
-    if(buf[1]=='S') { /*SEVRPV*/
+    if(buf[1]=='S' && buf[5]=='P') { /*SEVRPV*/
 	int rtn;
 
 	    rtn = sscanf(buf,"%20s%32s",command,name);
@@ -604,7 +612,23 @@ static void GetOptionalLine(fp,buf,gclink,context,caConnect)
 	return;
     }
 
-    if(buf[1]=='S' && buf[5]=='C') { /*SEVRCOMMAND*/
+    if(buf[1]=='B') { /*BEEPSEVERITY*/
+        int len;
+
+        sscanf(buf,"%20s",command);
+        len = strlen(command);
+        while( buf[len] == ' ' || buf[len] == '\t') len++;
+        for (i=1; i<ALARM_NSEV; i++) {
+            if (strncmp(&buf[len],alarmSeverityString[i],
+                 strlen(alarmSeverityString[i]))==0){
+                 psetup.beepSevr = i;
+             }
+        }
+        return;
+    }
+
+
+    if(buf[1]=='S' && buf[2]=='E' && buf[5]=='C') { /*SEVRCOMMAND*/
        int len;
 
         sscanf(buf,"%20s",command);
@@ -617,7 +641,7 @@ static void GetOptionalLine(fp,buf,gclink,context,caConnect)
         return;
     }
 
-    if(buf[1]=='S' && buf[2]=='T') { /*STATCOMMAND*/
+    if(buf[1]=='S' && buf[2]=='T' && buf[5]=='C') { /*STATCOMMAND*/
        int len;
 
     if(context!=CHANNEL_LINE) {
@@ -722,6 +746,8 @@ struct mainGroup *pmainGroup;
 {
 FILE *fw;
            fw = fopen(filename,"w");
+           if (psetup.beepSevr != 1)
+                fprintf(fw,"$BEEPSEVERITY  %s\n",alarmSeverityString[psetup.beepSevr]);
            alWriteGroupConfig(fw,(SLIST *)&(pmainGroup->p1stgroup));
            fclose(fw);
 }
@@ -1103,11 +1129,12 @@ void addNewSevrCommand(pList,str)
         sevrCommand->direction = UP;
         len = 3;
     }
-    for (i=0; i<ALARM_ANY; i++) {
+    for (i=0; i<ALARM_NSEV; i++) {
         if (strncmp(&str[len],alarmSeverityString[i],
              strlen(alarmSeverityString[i]))==0) break;
     }
-    sevrCommand->sev = i;
+    if (strncmp(&str[len],"ALARM",5)==0) sevrCommand->sev = UP_ALARM;
+    else sevrCommand->sev = i;
     ellAdd(pList,(void *)sevrCommand);
 
 }
@@ -1172,8 +1199,11 @@ void spawnSevrCommandList(pList,sev,sevr_prev)
         if ( sev > sevr_prev ) direction=UP;
         else direction=DOWN;
         while (sevrCommand) {
-            if (sevrCommand->direction==direction &
-                (sevrCommand->sev==ALARM_ANY || sevrCommand->sev==sev)) {
+            if (sevrCommand->direction==direction) {
+                if (sevrCommand->sev==ALARM_ANY || sevrCommand->sev==sev )
+                    processSpawn_callback(NULL,sevrCommand->command,NULL);
+                else if (direction==UP && sevrCommand->sev==UP_ALARM &&
+                    sevr_prev==0) 
                     processSpawn_callback(NULL,sevrCommand->command,NULL);
             }
             sevrCommand=(struct sevrCommand *)ellNext((void *)sevrCommand);
@@ -1233,7 +1263,7 @@ void addNewStatCommand(pList,str)
     while( str[len] != ' ' && str[len] != '\t' && str[len] != '\0') len++;
     while( str[len] == ' ' || str[len] == '\t') len++;
     statCommand->command = &str[len];
-    for (i=0; i<ALARM_ANY; i++) {
+    for (i=0; i<ALARM_NSTATUS; i++) {
         if (strncmp(&str[len],alarmStatusString[i],
              strlen(alarmStatusString[i]))==0) break;
     }

@@ -1,13 +1,16 @@
 /*
  $Log$
- Revision 1.7  1995/10/20 16:49:47  jba
- Modified Action menus and Action windows
- Renamed ALARMCOMMAND to SEVRCOMMAND
- Added STATCOMMAND facility
- Added ALIAS facility
- Added ALARMCOUNTFILTER facility
- Make a few bug fixes.
+ Revision 1.8  1995/11/13 22:31:08  jba
+ Added beepseverity command, ansi changes and other changes.
 
+ * Revision 1.7  1995/10/20  16:49:47  jba
+ * Modified Action menus and Action windows
+ * Renamed ALARMCOMMAND to SEVRCOMMAND
+ * Added STATCOMMAND facility
+ * Added ALIAS facility
+ * Added ALARMCOUNTFILTER facility
+ * Make a few bug fixes.
+ *
  * Revision 1.6  1995/05/30  16:06:07  jba
  * Add unused parm to alCaPendEvent and alProcessX for fdmgr_add_timeout prototype.
  *
@@ -92,7 +95,8 @@ static char *sccsId = "%W%\t%G%";
 static char buff[81];
 
 fdctx *pfdctx;			/* fdmgr context */
-void *caTimeoutId;
+fdmgrAlarmId caTimeoutId;
+
 static struct timeval caDelay = {10, 0};
  
 extern int DEBUG;
@@ -254,7 +258,7 @@ static void alCaPendEvent(unused)
 {
 
      ca_pend_event(.00001);
-     caTimeoutId = (void *)fdmgr_add_timeout(pfdctx,&caDelay,alCaPendEvent,NULL);
+     caTimeoutId = fdmgr_add_timeout(pfdctx,&caDelay,alCaPendEvent,NULL);
 }
 
 /*****************************************************
@@ -273,7 +277,7 @@ void alCaInit()
 	SEVCHK(ca_add_fd_registration(registerCA,pfdctx),
 		"alCaInit: error in ca_add_fd_registration");
 
-     caTimeoutId = (void *)fdmgr_add_timeout(pfdctx,&caDelay,alCaPendEvent,NULL);
+     caTimeoutId = fdmgr_add_timeout(pfdctx,&caDelay,alCaPendEvent,NULL);
 
 }
 
@@ -437,7 +441,6 @@ void   alCaAddEvent(clink)
 CLINK *clink;
 {
 struct chanData *cdata;
-void NewAlarmEvent();
 int status;
 
 

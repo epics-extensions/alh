@@ -1,13 +1,16 @@
 /*
  $Log$
- Revision 1.6  1995/10/20 16:50:12  jba
- Modified Action menus and Action windows
- Renamed ALARMCOMMAND to SEVRCOMMAND
- Added STATCOMMAND facility
- Added ALIAS facility
- Added ALARMCOUNTFILTER facility
- Make a few bug fixes.
+ Revision 1.7  1995/11/13 22:31:17  jba
+ Added beepseverity command, ansi changes and other changes.
 
+ * Revision 1.6  1995/10/20  16:50:12  jba
+ * Modified Action menus and Action windows
+ * Renamed ALARMCOMMAND to SEVRCOMMAND
+ * Added STATCOMMAND facility
+ * Added ALIAS facility
+ * Added ALARMCOUNTFILTER facility
+ * Make a few bug fixes.
+ *
  * Revision 1.4  1995/06/22  19:48:50  jba
  * Added $ALIAS facility.
  *
@@ -228,7 +231,7 @@ Widget alhCreateMenu(parent, user_data)
              alhSetupCallback, (XtPointer)MENU_SETUP_BEEP_MINOR,  (MenuItem *)NULL },
          { "Major",      &xmPushButtonGadgetClass, 'A', NULL, NULL,
              alhSetupCallback, (XtPointer)MENU_SETUP_BEEP_MAJOR,  (MenuItem *)NULL },
-         { "Valid",      &xmPushButtonGadgetClass, 'V', NULL, NULL,
+         { "Invalid",      &xmPushButtonGadgetClass, 'V', NULL, NULL,
              alhSetupCallback, (XtPointer)MENU_SETUP_BEEP_INVALID,  (MenuItem *)NULL },
          {NULL},
      };
@@ -236,7 +239,7 @@ Widget alhCreateMenu(parent, user_data)
      static MenuItem setup_menu[] = {
          { "Active Alarms Only", &xmToggleButtonGadgetClass, 'A', NULL, NULL,
              alhSetupCallback, (XtPointer)MENU_SETUP_ACTIVE,     (MenuItem *)NULL },
-         { "Beep Condition",        &xmPushButtonGadgetClass, 'B', NULL, NULL,
+         { "Beep Severity",        &xmPushButtonGadgetClass, 'B', NULL, NULL,
                                       0, 0,    (MenuItem *)setup_beep_menu },
          { "New Alarm Log File Name...",  &xmPushButtonGadgetClass, 'L', NULL, NULL,
              alhSetupCallback, (XtPointer)MENU_SETUP_ALARMLOG,     (MenuItem *)NULL },
@@ -604,16 +607,19 @@ static void alhSetupCallback(widget, item, cbs)
         case MENU_SETUP_BEEP_MINOR:
 
              psetup.beepSevr = MINOR_ALARM;
+             changeBeepSeverityText(area);
              break;
 
         case MENU_SETUP_BEEP_MAJOR:
 
              psetup.beepSevr = MAJOR_ALARM;
+             changeBeepSeverityText(area);
              break;
 
         case MENU_SETUP_BEEP_INVALID:
 
              psetup.beepSevr = INVALID_ALARM;
+             changeBeepSeverityText(area);
              break;
 
         case MENU_SETUP_ALARMLOG:

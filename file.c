@@ -1,13 +1,16 @@
 /*
  $Log$
- Revision 1.5  1995/10/20 16:50:38  jba
- Modified Action menus and Action windows
- Renamed ALARMCOMMAND to SEVRCOMMAND
- Added STATCOMMAND facility
- Added ALIAS facility
- Added ALARMCOUNTFILTER facility
- Make a few bug fixes.
+ Revision 1.6  1995/11/13 22:31:29  jba
+ Added beepseverity command, ansi changes and other changes.
 
+ * Revision 1.5  1995/10/20  16:50:38  jba
+ * Modified Action menus and Action windows
+ * Renamed ALARMCOMMAND to SEVRCOMMAND
+ * Added STATCOMMAND facility
+ * Added ALIAS facility
+ * Added ALARMCOUNTFILTER facility
+ * Make a few bug fixes.
+ *
  * Revision 1.4  1995/05/30  16:04:02  jba
  * Removed references to ? as a valid input param since they do NOT work.
  *
@@ -74,6 +77,7 @@ static char *sccsId = "@(#)file.c	1.14\t2/3/94";
 
 extern int DEBUG;
 
+extern int getopt();
 extern char *optarg; /* needed for getopt() */
 extern int optind;   /* needed for getopt() */
 

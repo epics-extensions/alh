@@ -1,13 +1,16 @@
 /*
  $Log$
- Revision 1.5  1995/10/20 16:50:28  jba
- Modified Action menus and Action windows
- Renamed ALARMCOMMAND to SEVRCOMMAND
- Added STATCOMMAND facility
- Added ALIAS facility
- Added ALARMCOUNTFILTER facility
- Make a few bug fixes.
+ Revision 1.6  1995/11/13 22:31:28  jba
+ Added beepseverity command, ansi changes and other changes.
 
+ * Revision 1.5  1995/10/20  16:50:28  jba
+ * Modified Action menus and Action windows
+ * Renamed ALARMCOMMAND to SEVRCOMMAND
+ * Added STATCOMMAND facility
+ * Added ALIAS facility
+ * Added ALARMCOUNTFILTER facility
+ * Make a few bug fixes.
+ *
  * Revision 1.4  1995/06/01  19:47:08  jba
  * Configuration mode bug fix
  *
@@ -86,8 +89,6 @@ void blinking()                                      Initiate runtimeW blinking
 *
 void resetBeep()                                     Turn on beep option
 *
-void reInitBeep()                                    Reinitialize beep
-*
 void silenceForever_callback(w,toggleB,call_data)       Silence beep forever toggle
 	Widget w;
     Widget toggleB;
@@ -137,11 +138,6 @@ static void alLoadFont(fontname,font_info)
      char *fontname;
      XFontStruct **font_info;
 *
-static void toggled(widget,item,cbs)
-     Widget               widget;
-     int                  item;
-     XmToggleButtonCallbackStruct *cbs;
-*
 static void okCallback(widget,area,cbs)
      Widget               widget;
      void *               area;
@@ -174,7 +170,6 @@ static void alChangeOpenCloseButtonToRemap( XtPointer main);
 static void alChangeOpenCloseButtonToUnmap( XtPointer main);
 static void alChangeOpenCloseButtonToOpen( XtPointer main);
 static void alLoadFont( char *fontname, XFontStruct **font_info);
-static void toggled( Widget widget, int item, XmToggleButtonCallbackStruct *cbs);
 static void okCallback( Widget widget, void * area, XmAnyCallbackStruct *cbs);
 static void axExit_callback( Widget w, ALINK *area, XmAnyCallbackStruct *call_data);
 static void axExitArea_callback( Widget w, ALINK *area, XmAnyCallbackStruct *call_data);
@@ -185,7 +180,6 @@ static void alChangeOpenCloseButtonToRemap();
 static void alChangeOpenCloseButtonToUnmap();
 static void alChangeOpenCloseButtonToOpen();
 static void alLoadFont();
-static void toggled();
 static void okCallback();
 static void axExit_callback();
 static void axExitArea_callback();
@@ -208,7 +202,7 @@ extern Display *display;
 Widget blinkButton;
 Pixel  blinkPixel;
 extern fdctx *pfdctx;
-void *blinkTimeoutId;
+fdmgrAlarmId blinkTimeoutId;
 /*
 static struct timeval blinkDelay = {0, 500};
 */
@@ -295,7 +289,7 @@ void icon_update()
 	blinkTimeoutId = NULL;
   }
 
-  blinkTimeoutId = (void *)fdmgr_add_timeout(pfdctx,&blinkDelay,
+  blinkTimeoutId = fdmgr_add_timeout(pfdctx,&blinkDelay,
 	blinking,NULL); 
 }
 
@@ -521,8 +515,17 @@ void createRuntimeWindow(area)
           NULL);
      XmStringFree(str);
 
-     if (area->silenceForever)
-          reInitBeep(area->silenceForever,area->silenceCurrent);
+     /* reinitialize silence beep */
+     if (area->silenceForever) {
+          psetup.nobeep = FALSE;
+          psetup.beep = TRUE;
+          XmToggleButtonGadgetSetState(area->silenceForever,FALSE,FALSE);
+          XmToggleButtonGadgetSetState(area->silenceCurrent,FALSE,FALSE);
+      }
+
+     /* reinitialize beep severity */
+     psetup.beepSevr = 1;
+     changeBeepSeverityText(area);
 
      icon_update();
 
@@ -599,7 +602,7 @@ static void blinking(unused)
                XBell(displayBB,0);
                XRaiseWindow(displayBB,XtWindow(XtParent(XtParent(blinkButton))));
           }
-          blinkTimeoutId = (void *)fdmgr_add_timeout(pfdctx,&blinkDelay,
+          blinkTimeoutId = fdmgr_add_timeout(pfdctx,&blinkDelay,
 	       blinking, NULL); 
           blinking2State = TRUE;
 
@@ -612,7 +615,7 @@ static void blinking(unused)
                XtVaSetValues(blinkButton,XmNbackground,bg_pixel[0],NULL);
 #endif
           }
-          blinkTimeoutId = (void *)fdmgr_add_timeout(pfdctx,&blinkDelay,
+          blinkTimeoutId = fdmgr_add_timeout(pfdctx,&blinkDelay,
                blinking, NULL); 
           blinking2State = FALSE;
 
@@ -730,20 +733,6 @@ void resetBeep()
 	}
 }
 
-/**********************************************
- reinitialize beep variables
-**********************************************/
-void reInitBeep(toggle_button1,toggle_button)
-     Widget toggle_button1;
-     Widget toggle_button;
-{
-	   psetup.nobeep = FALSE;
-	   psetup.beep = TRUE;
-  	   XmToggleButtonGadgetSetState(toggle_button1,FALSE,FALSE);
-  	   XmToggleButtonGadgetSetState(toggle_button,FALSE,FALSE);
-}
-
-
 /***************************************************
  silence button call back
 ****************************************************/
@@ -778,22 +767,7 @@ void silenceForever_callback(w,toggleB,call_data)
 		psetup.beep = TRUE; 
 		}
 }
-/***************************************************
- toggled 
-****************************************************/
 
-static void toggled(widget,item,cbs)
-     Widget               widget;
-     int                  item;
-     XmToggleButtonCallbackStruct *cbs;
-{
-     Widget dialog;
-
-     if (cbs->set == FALSE) return;
-
-     dialog=XtParent(XtParent(widget));
-     XtVaSetValues(dialog,XmNuserData,item+1,NULL);
-}
 /***************************************************
  okCallback 
 ****************************************************/
@@ -811,46 +785,3 @@ static void okCallback(widget,area,cbs)
      XtDestroyWidget(widget);
 }
 
-/***************************************************
- createBeepSevrDialog 
-****************************************************/
-
-void createBeepSevrDialog(area,widget)
-     void                *area;
-     Widget               widget;
-{
-     Widget dialog, radioBox;
-     XmString one,two,three,str;
-
-    
-     dialog = XmCreateMessageDialog(widget, "Dialog", NULL, 0);
-     str = XmStringCreateSimple("Beep Condition");
-     XtVaSetValues(dialog,
-           XmNdialogTitle, str,
-           XmNmessageAlignment, XmALIGNMENT_CENTER,
-           XmNwidth, 250,
-           XmNheight, 250,
-           NULL);
-     XmStringFree(str);
-
-     XtSetSensitive(XmMessageBoxGetChild(dialog,XmDIALOG_HELP_BUTTON),FALSE);
-     XtAddCallback(dialog,XmNcancelCallback, (XtCallbackProc)XtUnmanageChild,NULL);
-     XtAddCallback(dialog,XmNokCallback,(XtCallbackProc)okCallback,area);
-
-     /* RadioBox  */
-     one = XmStringCreateSimple(alarmSeverityString[1]);
-     two = XmStringCreateSimple(alarmSeverityString[2]);
-     three = XmStringCreateSimple(alarmSeverityString[3]);
-     radioBox = XmVaCreateSimpleRadioBox(dialog,"Severity Condition",
-          psetup.beepSevr-1,(XtCallbackProc)toggled,
-          XmVaRADIOBUTTON, one, NULL, NULL, NULL,
-          XmVaRADIOBUTTON, two, NULL, NULL, NULL,
-          XmVaRADIOBUTTON, three, NULL, NULL, NULL,
-          NULL);
-     XmStringFree(one);
-     XmStringFree(two);
-     XmStringFree(three);
-     
-     XtManageChild(radioBox);
-     XtManageChild(dialog);
-}

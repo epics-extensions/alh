@@ -1,13 +1,16 @@
 /*
  $Log$
- Revision 1.3  1995/10/20 16:50:07  jba
- Modified Action menus and Action windows
- Renamed ALARMCOMMAND to SEVRCOMMAND
- Added STATCOMMAND facility
- Added ALIAS facility
- Added ALARMCOUNTFILTER facility
- Make a few bug fixes.
+ Revision 1.4  1995/11/13 22:31:15  jba
+ Added beepseverity command, ansi changes and other changes.
 
+ * Revision 1.3  1995/10/20  16:50:07  jba
+ * Modified Action menus and Action windows
+ * Renamed ALARMCOMMAND to SEVRCOMMAND
+ * Added STATCOMMAND facility
+ * Added ALIAS facility
+ * Added ALARMCOUNTFILTER facility
+ * Make a few bug fixes.
+ *
  * Revision 1.2  1994/06/22  21:16:48  jba
  * Added cvs Log keyword
  *
@@ -260,6 +263,8 @@ Widget toggle_button,toggle_button1;
 
 
 extern void XmMenuPosition();
+extern void exit();
+
 
 
 /*
