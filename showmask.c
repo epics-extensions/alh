@@ -601,7 +601,7 @@ static void forceMaskResetCallback(Widget widget,XtPointer calldata,XtPointer cb
 		if (programId != ALH) cdata->defaultMask = cdata->curMask;
 	}
 	if (linkType == GROUP) {
-		alRemoveNoAck1HrTimerChan((GLINK *)link);
+		alRemoveNoAck1HrTimerGroup((GLINK *)link);
 		alResetGroupMask((GLINK *)link);
 		alCaFlushIo();
 		alLogResetPVGroup((GLINK *)link,OPERATOR);
