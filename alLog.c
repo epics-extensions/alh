@@ -40,7 +40,7 @@
 #include "line.h"
 #endif
 #include <epicsVersion.h>
-#if (EPICS_VERSION <= 3) && (EPICS_RELEASE <= 13)
+#if (EPICS_VERSION <= 3) && (EPICS_REVISION <= 13)
 #include "truncateFile.h"
 #else
 #include <epicsStdio.h>
