@@ -323,13 +323,16 @@ XtPointer cbs)
 ************************************************/
 static void noAckSet(GCLINK *gclink,int linkType,int value)
 {
+	char buff[80];
+
 	if (linkType==GROUP) {
 	    alForceGroupMask((GLINK *)gclink,ALARMACK,value);
-	    alLogChangeGroupMasks((GLINK *)gclink,ALARMACK,value);
   	} else {
 		alForceChanMask((CLINK *)gclink,ALARMACK,value);
-		alLogChangeChanMasks((CLINK *)gclink,ALARMACK,value);
 	}
+	if (value) sprintf(buff,"Set noAck and one hour timer --- %-28s\n",gclink->pgcData->name);
+	else sprintf(buff,"Set ack and cancel one hour timer  --- %-28s\n",gclink->pgcData->name);
+	alLogOpMod(buff);
 	gclink->modified = 1;
 }
 
