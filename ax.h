@@ -1,8 +1,11 @@
 /*
  $Log$
- Revision 1.8  1995/11/13 22:31:22  jba
- Added beepseverity command, ansi changes and other changes.
+ Revision 1.9  1996/03/25 15:46:12  jba
+ Removed unused alOpenLogFiles references.
 
+ * Revision 1.8  1995/11/13  22:31:22  jba
+ * Added beepseverity command, ansi changes and other changes.
+ *
  * Revision 1.7  1995/10/20  16:50:20  jba
  * Modified Action menus and Action windows
  * Renamed ALARMCOMMAND to SEVRCOMMAND
@@ -272,7 +275,6 @@ int alProcessExists( GCLINK *link);
   alLog.c   function prototypes
 *********************************************************************/
 
-void alOpenLogFiles(void);
 void alLogAlarm( time_t *ptimeofdayAlarm, struct chanData *cdata, int stat,
      int sev, int h_unackStat, int h_unackSevr);
 void alLogConnection( char *pvname, int ind);
@@ -650,7 +652,6 @@ int alProcessExists();
   alLog.c   function prototypes
 *********************************************************************/
 
-void alOpenLogFiles();
 void alLogAlarm();
 void alLogConnection();
 void alLogAckChan();

@@ -1,13 +1,16 @@
 /*
  $Log$
- Revision 1.5  1995/10/20 16:49:57  jba
- Modified Action menus and Action windows
- Renamed ALARMCOMMAND to SEVRCOMMAND
- Added STATCOMMAND facility
- Added ALIAS facility
- Added ALARMCOUNTFILTER facility
- Make a few bug fixes.
+ Revision 1.6  1996/03/25 15:46:11  jba
+ Removed unused alOpenLogFiles references.
 
+ * Revision 1.5  1995/10/20  16:49:57  jba
+ * Modified Action menus and Action windows
+ * Renamed ALARMCOMMAND to SEVRCOMMAND
+ * Added STATCOMMAND facility
+ * Added ALIAS facility
+ * Added ALARMCOUNTFILTER facility
+ * Make a few bug fixes.
+ *
  * Revision 1.4  1995/06/22  19:48:48  jba
  * Added $ALIAS facility.
  *
@@ -318,7 +321,6 @@ static void GetOptionalLine(buf,pclink)        		Read an optional  line from con
 		Routines for log messages: defined in alLog.c
 --------------------------------------------------------------------------------------------
 
-alOpenLogFiles()					Open default files
 alLogAlarm(cdata,stat,sev,h_unackStat,h_unackSevr)	Log new alarms
 alLogAckChan(cline)					Log acknowledged channel
 alLogAckGroup(gline)					Log acknowledged group
