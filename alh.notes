@@ -365,3 +365,9 @@ Wed Sep 11 10:20:10 CDT 2002
 
 Mon Jan 20 09:18:18 CST 2003
 	Add ability to set and change beep severity for channels and groups.
+
+Tue Jan 21 15:53:59 CST 2003
+	Simplify Beep Severity dialog: set value immediately and remove Apply and Ok.
+	Add ability to set group/channel ack/noAck masks to noAck for one hour.
+	Add ability to disable a group/channel forcePV.
+
