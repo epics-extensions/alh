@@ -43,12 +43,10 @@ void alCaPend(double waitSeconds)
 	time_t startTime, currentTime;
 
 	currentTime = time(&startTime);
-printf ("time=%d\n",currentTime);
 	while (toBeConnectedCount > 0 && difftime(currentTime, startTime) < waitSeconds) {
 		ca_pend_event(.1);
 		time(&currentTime);
 	}
-printf ("time=%d\n",currentTime);
 }
 
 /*********************************************************************
