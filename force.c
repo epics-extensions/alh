@@ -791,11 +791,10 @@ XtPointer cbs)
 
 	forcePVUpdateFields(link,pforcePV,linkType);
 
-/* ############## IS THE FOLLOWING LOGGING NECESSARY ????? #######*/
 	if (linkType == GROUP){
 		awGetMaskString(((GLINK*)link)->pgroupData->mask,buff1);
 		alLogOpModMessage(FORCE_MASK_GROUP,link,
-			"OPER Group PV FORCE <%s> [%g] [%s]",
+			" Group forcePV modified <%s> [%g] [%s]",
               buff1,
               link->pgcData->pforcePV->forceValue,
               link->pgcData->pforcePV->name);
@@ -803,7 +802,7 @@ XtPointer cbs)
 	}else {
 		alGetMaskString(((CLINK*)link)->pchanData->curMask,buff1);
 		alLogOpModMessage(FORCE_MASK,(GCLINK*)link,
-			"OPER Channel PV FORCE <%s> [%g] [%s]",
+			"Channel forcePV modified <%s> [%g] [%s]",
               buff1,
               link->pgcData->pforcePV->forceValue,
               link->pgcData->pforcePV->name);
@@ -1182,7 +1181,7 @@ void forcePVNewValueEvent(GCLINK* gclink,short linktype,double value)
 				alChangeGroupMask((GLINK*)gclink,pforcePV->forceMask);
 				awGetMaskString(((GLINK*)gclink)->pgroupData->mask,buff1);
 				alLogOpModMessage(FORCE_MASK_GROUP,gclink,
-					"AUTO Group PV FORCE <%s> [%g] [%s]",
+					"Group forcePV FORCE <%s> [%g] [%s]",
               		buff1,
               		pforcePV->forceValue,
               		pforcePV->name);
@@ -1190,7 +1189,7 @@ void forcePVNewValueEvent(GCLINK* gclink,short linktype,double value)
 				alChangeChanMask((CLINK*)gclink,pforcePV->forceMask);
 				alGetMaskString(((CLINK*)gclink)->pchanData->curMask,buff1);
 				alLogOpModMessage(FORCE_MASK,gclink,
-					"AUTO Channel PV FORCE <%s> [%g] [%s]",
+					"Channel forcePV FORCE <%s> [%g] [%s]",
               		buff1,
               		pforcePV->forceValue,
               		pforcePV->name);
@@ -1209,7 +1208,7 @@ void forcePVNewValueEvent(GCLINK* gclink,short linktype,double value)
 					 sprintf(buff2,"%s %g","NE",pforcePV->forceValue);
 				else sprintf(buff2,"%g",pforcePV->resetValue);
 				alLogOpModMessage(CHANGE_MASK_GROUP,gclink,
-					"AUTO Group PV RESET <%s> [%s] [%s]",
+					"Group forcePV RESET <%s> [%s] [%s]",
               		buff1,
               		buff2,
               		pforcePV->name);
@@ -1222,7 +1221,7 @@ void forcePVNewValueEvent(GCLINK* gclink,short linktype,double value)
 					 sprintf(buff2,"%s %g","NE",pforcePV->forceValue);
 				else sprintf(buff2,"%g",pforcePV->resetValue);
 				alLogOpModMessage(CHANGE_MASK,gclink,
-					"AUTO Channel PV RESET <%s> [%s] [%s]",
+					"Channel forcePV RESET <%s> [%s] [%s]",
               		buff1,
               		buff2,
               		pforcePV->name);
@@ -1281,7 +1280,7 @@ static void forcePVCalcPerform(GCLINK* gclink,int linktype)
 				alChangeGroupMask((GLINK*)gclink,pforcePV->forceMask);
 				awGetMaskString(((GLINK*)gclink)->pgroupData->mask,buff1);
 				alLogOpModMessage(FORCE_MASK_GROUP,gclink,
-					"AUTO Group PV FORCE <%s> [%g] [%s]",
+					"Group forcePV FORCE <%s> [%g] [%s]",
               		buff1,
               		pforcePV->forceValue,
               		pforcePV->name);
@@ -1289,7 +1288,7 @@ static void forcePVCalcPerform(GCLINK* gclink,int linktype)
 				alChangeChanMask((CLINK*)gclink,pforcePV->forceMask);
 				alGetMaskString(((CLINK*)gclink)->pchanData->curMask,buff1);
 				alLogOpModMessage(FORCE_MASK,gclink,
-					"AUTO Channel PV FORCE <%s> [%g] [%s]",
+					"Channel forcePV FORCE <%s> [%g] [%s]",
               		buff1,
               		pforcePV->forceValue,
               		pforcePV->name);
@@ -1307,7 +1306,7 @@ static void forcePVCalcPerform(GCLINK* gclink,int linktype)
 					 sprintf(buff2,"%s %g","NE",pforcePV->forceValue);
 				else sprintf(buff2,"%g",pforcePV->resetValue);
 				alLogOpModMessage(CHANGE_MASK_GROUP,gclink,
-					"AUTO Group PV RESET <%s> [%s] [%s]",
+					"Group forcePV RESET <%s> [%s] [%s]",
               		buff1,
               		buff2,
               		pforcePV->name);
@@ -1319,7 +1318,7 @@ static void forcePVCalcPerform(GCLINK* gclink,int linktype)
 					 sprintf(buff2,"%s %g","NE",pforcePV->forceValue);
 				else sprintf(buff2,"%g",pforcePV->resetValue);
 				alLogOpModMessage(CHANGE_MASK,gclink,
-					"AUTO Channel PV RESET <%s> [%s] [%s]",
+					"Channel forcePV RESET <%s> [%s] [%s]",
               		buff1,
               		buff2,
               		pforcePV->name);
