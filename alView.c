@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.4  1997/09/12 19:30:14  jba
+ Added test for treeSym.
+
  Revision 1.3  1995/10/20 16:50:02  jba
  Modified Action menus and Action windows
  Renamed ALARMCOMMAND to SEVRCOMMAND
@@ -222,6 +225,12 @@ static void treeView(glink, command, treeSym, viewFilter)
      length = strlen(treeSym);
      if (length >= MAX_TREE_DEPTH) return;
 
+     if (glink->pgroupData->treeSym &&
+         (length+1) > strlen(glink->pgroupData->treeSym) )  {
+          free(glink->pgroupData->treeSym);
+          glink->pgroupData->treeSym = 0 ;
+     }
+
      if (!glink->pgroupData->treeSym)
           glink->pgroupData->treeSym = (char *)calloc(1,length+1);
 
@@ -240,8 +249,8 @@ static void treeView(glink, command, treeSym, viewFilter)
           if (pt) treeSym[length-1] = symMiddle;
           else treeSym[length-1] = symEnd;
           treeSym[length] = symNull;
+          strcpy(glink->pgroupData->treeSym,treeSym);
      }
-     strcpy(glink->pgroupData->treeSym,treeSym);
 
      if ( command == COLLAPSE) return;
 
