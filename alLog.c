@@ -49,15 +49,14 @@
 
 extern int DEBUG;
 extern int _DB_call_flag;
-#if 0
 extern int _global_flag;
-#endif
 extern int _lock_flag;
 extern int _message_broadcast_flag;
 extern int _printer_flag;           /* Printer flag. Albert */
 extern int _read_only_flag;         /* RO flag. Albert */
 extern int _time_flag;              /* Dated flag. Albert */
 extern char * alhAlarmSeverityString[];
+extern const char *ackTransientsString[];
 extern char * alhAlarmStatusString[];
 extern int DBMsgQId;
 extern int masterFlag;
@@ -200,13 +199,23 @@ void alLogAlarmMessage(time_t *ptimeofdayAlarm,int messageCode,CLINK* clink,cons
 	    cdata->value);
 #endif
 
-	sprintf(buff,
-		"%-28s %-12s %-16s %-20s %-40.40s\n",
-		cdata->name,
-		alhAlarmStatusString[cdata->curStat],
-		alhAlarmSeverityString[cdata->curSevr],
-		text,
-		cdata->value);
+	if (_global_flag) {
+		sprintf(buff,
+			"%-28s %-12s %-16s %-12s %-5s %-40.40s\n",
+			cdata->name,
+			alhAlarmStatusString[cdata->curStat],
+			alhAlarmSeverityString[cdata->curSevr],
+			alhAlarmSeverityString[cdata->unackSevr],
+			ackTransientsString[cdata->curMask.AckT],
+			cdata->value);
+	} else {
+		sprintf(buff,
+			"%-28s %-12s %-16s %-40.40s\n",
+			cdata->name,
+			alhAlarmStatusString[cdata->curStat],
+			alhAlarmSeverityString[cdata->curSevr],
+			cdata->value);
+	}
 
 	filePrintf(fl,buff,ptimeofdayAlarm,messageCode);
 }
@@ -462,7 +471,10 @@ int filePrintf(FILE *fPointer,char *buf,time_t *ptime,int typeOfRecord)
 	    bufSave,(fPointer==fl)?"LOGfile":"OpModFile" ); 
   }
 
-  if (alarmLogFileMaxRecords&&(fPointer==fl)) alarmLogFileOffsetBytes = ftell(fl);
+  if (alarmLogFileMaxRecords&&(fPointer==fl)){
+	if (!alarmLogFileOffsetBytes) alarmLogFileStringLength=ftell(fl);
+    alarmLogFileOffsetBytes = ftell(fl);
+  }
 
   fflush(fPointer);
 
