@@ -1,16 +1,5 @@
 /* axRunW.c */
 
-/************************DESCRIPTION***********************************
-  This file contains all the routines related to the iconlike runtime window
-  and silence buttons.  Functions include display, unmapping, remapping of main
-  window, alarm beeping, and blinking of control button.
-**********************************************************************/
-
-static char *sccsId = "@(#) $Id$";
-
-#define DEBUG_CALLBACKS 0
-
-#include <stdio.h>
 #include <stdlib.h>
 
 #include <Xm/Xm.h>
@@ -26,260 +15,55 @@ static char *sccsId = "@(#) $Id$";
 #include "axArea.h"
 #include "ax.h"
 
-/* prototypes for static routines */
-static void unmapwindow_callback(Widget w,Widget main,
-XmAnyCallbackStruct *call_data);
-static void remapwindow_callback(Widget w,Widget main,
-XmAnyCallbackStruct *call_data);
-static void alChangeOpenCloseButtonToRemap(XtPointer main);
-static void alChangeOpenCloseButtonToUnmap(XtPointer main);
-static void alChangeOpenCloseButtonToOpen(XtPointer main);
-static void alLoadFont(char *fontname,XFontStruct **font_info);
-static void axExit_callback(Widget w,ALINK *area,
-XmAnyCallbackStruct *call_data);
-static void axExitArea_callback(Widget w,ALINK *area,
-XmAnyCallbackStruct *call_data);
-static void blinking(XtPointer cd, XtIntervalId *id);
-static void silenceOneHourReset(void *area);
+/************************DESCRIPTION***********************************
+  This file contains all the routines related to the iconlike runtime window
+  and silence buttons.  Functions include display, unmapping, remapping of main
+  window, alarm beeping, and blinking of control button.
+**********************************************************************/
 
-/*   global variables */
-XmStringCharSet charset = (XmStringCharSet) XmSTRING_DEFAULT_CHARSET;
-char *fontname = "fixed";
-extern struct setup psetup;
-extern int DEBUG;
-extern char * alarmSeverityString[];
-extern char * alarmStatusString[];
+static char *sccsId = "@@(#) $Id$";
 
-/* some globals for blink Data */
-extern Display *display;
-Widget blinkButton;
+#define BLINK_DELAY 1000     /* ms */
+static XtIntervalId blinkTimeoutId = (XtIntervalId)0;
+static char *bg_color[] = {"lightblue","yellow","red","white","grey"};
+static char *channel_bg_color = "lightblue";
+
+/* global variabless */
 Widget blinkToplevel; /* Albert1 for locking status marking*/
-Pixel  blinkPixel;
-
-XtIntervalId blinkTimeoutId = (XtIntervalId)0;
-unsigned long blinkDelay = 1000;     /* ms */
-int blinkCOUNT=0;
-
-Dimension char_width;
-XmFontList fontlist;
-XFontStruct *font_info;
-
-Pixel foreground, background;
-
-
-/*** the following defines the mapping from alarm severity to color;
-      as such, the "alarm.h" and "alarmString.h" files should be consulted
-      and the code below made consistent with those definitions ***/
-
-/*** GTA alarm definitions &  APS alarm definitions 
-#ifdef GTA
-char *bg_color[] = {"grey","yellow","red",};
-char *bg_char[] = {" ", "Y", "R",};
-#else
-char *bg_color[] = {"lightblue","green","yellow","red","white","grey"};
-char *bg_char[] = {" ", "I", "Y", "R", "W" };
-#endif
-***/
-
-char *bg_color[] = {
-	"lightblue","yellow","red","white","grey"};
-char *bg_char[] = {
-	" ", "Y", "R", "V" };
-
+extern Display *display;
+extern struct setup psetup;
+extern char *programName;
+extern Pixmap ALH_pixmap;
 Pixel bg_pixel[ALARM_NSEV];
-
-/* and so that channels and groups are distinguishable... */
-char *channel_bg_color = "lightblue";
 Pixel channel_bg_pixel;
+char *bg_char[] = {" ", "Y", "R", "V" };
 
-
-/******************************************************
-  COLOR
-******************************************************/
-static unsigned long COLOR(Widget w,char *name)
-{
-	XColor  color;
-	Colormap cmap;
-
-	cmap = DefaultColormap(XtDisplay(w),DefaultScreen(XtDisplay(w)));
-	color.pixel = 0;
-	XParseColor(XtDisplay(w), cmap, name, &color);
-	XAllocColor(XtDisplay(w), cmap, &color);
-
-	return(color.pixel);
-}
-
-/******************************************************
-  Update runtime window
-******************************************************/
-void icon_update()
-{
-
-#if DEBUG_CALLBACKS
-	printf("icon_update\n");
-#endif
-
-#if  XmVersion && XmVersion >= 1002
-	XmChangeColor(blinkButton,bg_pixel[0]);
-#else
-	XtVaSetValues(blinkButton,XmNbackground,bg_pixel[0],NULL);
-#endif
-
-	/* Remove any existing timer */
-	if (blinkTimeoutId) {
-		XtRemoveTimeOut(blinkTimeoutId);
-		blinkTimeoutId = NULL;
-	}
-
-	/* Restart the timer */
-	blinkTimeoutId = XtAppAddTimeOut(appContext,blinkDelay,blinking,NULL);
-}
-
-/******************************************************
-  alChangeOpenCloseButtonToRemap
-******************************************************/
-static void alChangeOpenCloseButtonToRemap(XtPointer main)
-{
-	XtRemoveCallback(blinkButton,XmNactivateCallback,
-	    (XtCallbackProc)unmapwindow_callback,main);
-	XtAddCallback(blinkButton,XmNactivateCallback,
-	    (XtCallbackProc)remapwindow_callback,main);
-}
-
-/******************************************************
-  alChangeOpenCloseButtonToUnmap
-******************************************************/
-static void alChangeOpenCloseButtonToUnmap(XtPointer main)
-{
-	XtRemoveCallback(blinkButton,XmNactivateCallback,
-	    (XtCallbackProc)remapwindow_callback,main);
-	XtAddCallback(blinkButton,XmNactivateCallback,
-	    (XtCallbackProc)unmapwindow_callback,main);
-}
-
-/******************************************************
-  alChangeOpenCloseButtonToOpen
-******************************************************/
-static void alChangeOpenCloseButtonToOpen(XtPointer main)
-{
-	XtRemoveCallback(blinkButton,XmNactivateCallback,
-	    (XtCallbackProc)unmapwindow_callback,main);
-	XtRemoveCallback(blinkButton,XmNactivateCallback,
-	    (XtCallbackProc)remapwindow_callback,main);
-	XtAddCallback(blinkButton,XmNactivateCallback,
-	    (XtCallbackProc)createMainWindow_callback,main);
-}
-
-/******************************************************
-  alLoadFont
-******************************************************/
-static void alLoadFont(char *fontname,XFontStruct **font_info)
-{
-	if ((*font_info = XLoadQueryFont(display,fontname)) == NULL) {
-		*font_info = XLoadQueryFont(display,"fixed");
-	}
-}
-
-
-/********************************************************
-   trapExtraneousWarningsHandler
-*******************************************************/
-XtErrorMsgHandler trapExtraneousWarningsHandler(String message)
-{
-	if (message && *message) {
-		if (!strcmp(message,"Attempt to remove non-existant passive grab"))
-			return 0;
-			else
-			(void)fprintf(stderr,"Warning: %s\n",message);
-	}
-	return 0;
-}
-
-/*****************************************************
- Setup pixel and font data
-*****************************************************/
-void pixelData(Widget iconBoard,Widget bButton)
-{
-	Arg args[10];
-	int n;
-	XmFontList fontlist;
-	XmString mstring;
-
-
-	/*
-	 	* get bg color pixel
-	  	*/
-
-	for (n=1;n<ALARM_NSEV;n++)
-		bg_pixel[n] = COLOR(iconBoard,bg_color[n]);
-
-	channel_bg_pixel = COLOR(iconBoard,channel_bg_color);
-
-	/*
-	 	* retrieve the colors of the iconBoard
-	 	*/
-	n= 0;
-	XtSetArg(args[n], XmNforeground, &foreground); 
-	n++;
-	XtSetArg(args[n], XmNbackground, &background); 
-	n++;
-	XtGetValues(iconBoard,args,n);
-	bg_pixel[0] = background;
-
-
-	/*
-	 	* get string width in pixel
-	 	*/
-	if (bButton){
-		n=0;
-		XtSetArg(args[n], XmNfontList, &fontlist); 
-		n++;
-		XtGetValues(bButton,args,n);
-		mstring=XmStringCreateLtoR("W",charset);
-		char_width = XmStringWidth(fontlist,mstring);
-		XmStringFree(mstring);
-	}
-
-
-	/*
-	 	* set other blink data structure elements
-	 	*/
-	if (psetup.highestUnackSevr > 0)
-		blinkPixel = bg_pixel[psetup.highestUnackSevr];
-		else
-		blinkPixel = bg_pixel[psetup.highestSevr];
-
-}
+/* forward declarations */
+static void axExit_callback(Widget w,ALINK *area,XmAnyCallbackStruct *call_data);
+static void axExitArea_callback(Widget w,ALINK *area,XmAnyCallbackStruct *call_data);
+static void blinking(XtPointer pointer, XtIntervalId *id);
+static void createMainWindow_callback(Widget w,ALINK *area,XmAnyCallbackStruct *call_data);
+static void icon_update(Widget blinkButton);
+static void silenceOneHourReset(void *area);
 
 /******************************************************
   createRuntimeWindow
 ******************************************************/
 void createRuntimeWindow(ALINK *area)
 {
-	char   *alhTitle={
-		"Alarm Handler"	};
+	char   *alhTitle={"Alarm Handler"};
 	XmString str;
-	char   *app_name;
 
 	if (!area->runtimeToplevel){
-		/*
-		           * create toplevel setup window
-		           */
-		app_name = (char*) calloc(1,strlen(programName)+5);
-		strcpy(app_name, programName);
-		strcat(app_name, "-run");
-
-		area->runtimeToplevel = XtAppCreateShell( app_name, programName,
+		/* create toplevel setup window */
+		area->runtimeToplevel = XtAppCreateShell( "alh-run", programName,
 		    applicationShellWidgetClass, display, NULL, 0);
 
 		blinkToplevel = area->runtimeToplevel;  /* Albert1 for locking status marking*/
-		free(app_name);
 
 		XtVaSetValues(area->runtimeToplevel, XmNtitle, alhTitle, NULL);
 
-		/*
-		           create bulletin board widget
-		          */
+		/* create bulletin board widget */
 		area->runtimeForm = XtVaCreateManagedWidget("bulletinBoard1",
 		    xmFormWidgetClass, area->runtimeToplevel,
 		    XmNborderWidth, (Dimension)1,
@@ -297,9 +81,7 @@ void createRuntimeWindow(ALINK *area)
 		    XmNuserData,            (XtPointer)area,
 		    NULL);
 
-		/*
-		           * Modify the window manager menu "close" callback
-		           */
+		/* Modify the window manager menu "close" callback */
 		{
 			Atom         WM_DELETE_WINDOW;
 			XtVaSetValues(area->runtimeToplevel,
@@ -312,12 +94,9 @@ void createRuntimeWindow(ALINK *area)
 				    (XtCallbackProc) axExit_callback, (XtPointer)area );
 			else XmAddWMProtocolCallback(area->runtimeToplevel,WM_DELETE_WINDOW,
 			    (XtCallbackProc) axExitArea_callback, (XtPointer)area );
-
 		}
 
-		/*
-		          create control button  
-		          */
+		/* create control button */
 		str  = XmStringCreateLtoR( "--- No config file specified. ---",
 		    XmSTRING_DEFAULT_CHARSET);
 		area->blinkButton = XtVaCreateManagedWidget("iconButton",
@@ -327,9 +106,6 @@ void createRuntimeWindow(ALINK *area)
 		    XmNbottomAttachment,       XmATTACH_FORM,
 		    XmNleftAttachment,         XmATTACH_FORM,
 		    XmNrightAttachment,        XmATTACH_FORM,
-		    /*
-		               XmNrecomputeSize,          False,
-		     */
 		XmNactivateCallback,       NULL,
 		    XmNuserData,               (XtPointer)area,
 		    XmNlabelString,            str,
@@ -339,10 +115,6 @@ void createRuntimeWindow(ALINK *area)
 		XtAddCallback(area->blinkButton,XmNactivateCallback,
 		    (XtCallbackProc)createMainWindow_callback, area);
 
-		blinkButton = area->blinkButton;
-
-		alLoadFont(fontname,&font_info);
-
 		XtRealizeWidget(area->runtimeToplevel);
 
 	} else {
@@ -350,7 +122,7 @@ void createRuntimeWindow(ALINK *area)
 		    XtWindow(area->runtimeToplevel));
 	}
 
-	pixelData(area->runtimeForm,area->blinkButton);
+	pixelData(area->runtimeForm);
 
 	/*  update blinkButton string */
 	str = XmStringCreateSimple(area->blinkString);
@@ -363,124 +135,14 @@ void createRuntimeWindow(ALINK *area)
 	silenceCurrentReset(area);
 	silenceOneHourReset(area);
 
-	icon_update();
-}
-
-/******************************************************
-  createMainWindow_callback
-******************************************************/
-void createMainWindow_callback(Widget w,ALINK *area,
-XmAnyCallbackStruct *call_data)
-{
-	if (area->toplevel == 0){
-		area->mapped = FALSE;
-		createMainWindowWidgets(area);
-		XtRealizeWidget(area->toplevel);
-	}
-	if (area->mapped == FALSE){
-		XMapWindow(XtDisplay(area->toplevel),XtWindow(area->toplevel));
-		area->mapped = TRUE;
-		redraw(area->treeWindow,0);
-
-		/* mark first line as treeWindow selection */
-		defaultTreeSelection(area);
-	}
-	else {
-		XRaiseWindow(XtDisplay(area->toplevel), XtWindow(area->toplevel));
-		redraw(area->treeWindow,0);
-	}
-
-	/* remove this callback from callback list */
-	/*
-	     XtRemoveCallback(w,XmNactivateCallback,(XtCallbackProc)createMainWindow_callback,area);
-	     XtAddCallback(w,XmNactivateCallback,(XtCallbackProc)unmapwindow_callback,area->toplevel);
-	*/
-}
-
-/******************************************************
-  Initiate runtime window blinking 
-******************************************************/
-static void blinking(XtPointer cd, XtIntervalId *id)
-{
-	Display *displayBB;
-	static Boolean blinking2State = FALSE;
-	int restart=0;
-
-
-#if DEBUG_CALLBACKS
-	{
-		static int n=0;
-
-		printf("blinking: n=%d blinking2State=%d"
-		    " psetup.silenceForever=%d psetup.silenceCurrent=%d\n"
-		    " psetup.highestSev=%d blinkPixel=%d bg_pixel[0]=%d\n"
-		    " psetup.highestUnackSevr=%d psetup.beepSevr=%d\n",
-		    n++,blinking2State,psetup.silenceForever,psetup.silenceCurrent,
-		    psetup.highestSevr,blinkPixel,bg_pixel[0],
-		    psetup.highestUnackSevr,psetup.beepSevr);
-	}
-#endif
-
-	displayBB = XtDisplay(blinkButton);
-
-	if (!blinking2State) {
-
-		if (psetup.highestSevr > 0 || blinkPixel != bg_pixel[0]) {
-
-			if (psetup.highestUnackSevr > 0)
-				blinkPixel = bg_pixel[psetup.highestUnackSevr];
-				else
-				blinkPixel = bg_pixel[psetup.highestSevr];
-
-#if  XmVersion && XmVersion >= 1002
-			XmChangeColor(blinkButton,blinkPixel);
-#else
-			XtVaSetValues(blinkButton,XmNbackground,blinkPixel,NULL);
-#endif
-			restart=1;
-		}
-		if (!psetup.silenceForever &&
-		    !psetup.silenceOneHour && 
-		    !psetup.silenceCurrent && 
-		    (psetup.highestUnackSevr >= psetup.beepSevr)) {
-			XBell(displayBB,0);
-			XRaiseWindow(displayBB,XtWindow(XtParent(XtParent(blinkButton))));
-			restart=1;
-		}
-		restart=1;     /* This all needs to be fixed */
-		if(restart) {
-			blinkTimeoutId = XtAppAddTimeOut(appContext,blinkDelay,
-			    blinking,NULL);
-		}
-		blinking2State = TRUE;
-
-	} else {
-
-		if (psetup.highestUnackSevr > 0) {
-#if  XmVersion && XmVersion >= 1002
-			XmChangeColor(blinkButton,bg_pixel[0]);
-#else
-			XtVaSetValues(blinkButton,XmNbackground,bg_pixel[0],NULL);
-#endif
-		}
-		blinkTimeoutId = XtAppAddTimeOut(appContext,blinkDelay,
-		    blinking,NULL);
-		blinking2State = FALSE;
-	}
-
-	XFlush(displayBB);
-
-	if ( DEBUG == 1 ){
-		blinkCOUNT++;
-		if ((blinkCOUNT % 1000)==0) printf("blink times = %d \n",blinkCOUNT);
-	}
+	icon_update(area->blinkButton);
 }
 
 /******************************************************
  axExit_callback
 ******************************************************/
 static void axExit_callback(Widget w,ALINK *area,
-XmAnyCallbackStruct *call_data)
+	XmAnyCallbackStruct *call_data)
 {
 	createActionDialog(area->runtimeToplevel,XmDIALOG_WARNING,
 	    "Exit Alarm Handler?",(XtCallbackProc)exit_quit,
@@ -491,7 +153,7 @@ XmAnyCallbackStruct *call_data)
  axExitArea_callback
 ******************************************************/
 static void axExitArea_callback(Widget w,ALINK *area,
-XmAnyCallbackStruct *call_data)
+	XmAnyCallbackStruct *call_data)
 {
 	SNODE *proot;
 
@@ -510,50 +172,83 @@ XmAnyCallbackStruct *call_data)
 		proot = sllFirst(area->pmainGroup);
 		if (proot) alDeleteGroup((GLINK *)proot);
 	}
-
 	area->pmainGroup = NULL;
 }
 
 /******************************************************
- unmapwindow_callback
+  createMainWindow_callback
 ******************************************************/
-static void unmapwindow_callback(Widget w,Widget main,XmAnyCallbackStruct *call_data)
+static void createMainWindow_callback(Widget w,ALINK *area,
+	XmAnyCallbackStruct *call_data)
 {
-	ALINK *area;
-
-	XtVaGetValues(w, XmNuserData, &area, NULL);
-
-	XUnmapWindow(XtDisplay(main),XtWindow(main));
-
-	alChangeOpenCloseButtonToRemap((XtPointer)main);
-
-	area->mapped = FALSE;
+	showMainWindow(area);
 }
 
 /******************************************************
- remapwindow_callback
+  Update runtime window
 ******************************************************/
-static void remapwindow_callback(Widget w,Widget main,XmAnyCallbackStruct *call_data)
+static void icon_update(Widget blinkButton)
 {
-	ALINK *area;
+	XmChangeColor(blinkButton,bg_pixel[0]);
 
-	if (main) {
-
-		XtVaGetValues(w, XmNuserData, &area, NULL);
-
-		XMapWindow(XtDisplay(main),XtWindow(main));
-
-		alChangeOpenCloseButtonToUnmap((XtPointer)main);
-
-		area->mapped = TRUE;
+	/* Remove any existing timer */
+	if (blinkTimeoutId) {
+		XtRemoveTimeOut(blinkTimeoutId);
+		blinkTimeoutId = NULL;
 	}
-	else {
-		alChangeOpenCloseButtonToOpen((XtPointer)main);
+
+	/* Restart the timer */
+	blinkTimeoutId = XtAppAddTimeOut(appContext,BLINK_DELAY,blinking,(XtPointer)blinkButton);
+}
+
+/******************************************************
+  Initiate runtime window blinking 
+******************************************************/
+static void blinking(XtPointer pointer, XtIntervalId *id)
+{
+	Widget blinkButton = (Widget)pointer;
+	Display *displayBB;
+	static Pixel  blinkPixel = NULL;
+	static Boolean blinking2State = FALSE;
+
+	if (!blinkPixel) blinkPixel =  bg_pixel[0];
+	displayBB = XtDisplay(blinkButton);
+
+	if (!blinking2State) {
+
+		if (psetup.highestSevr > 0 || blinkPixel != bg_pixel[0]) {
+
+			if (psetup.highestUnackSevr > 0)
+				blinkPixel = bg_pixel[psetup.highestUnackSevr];
+			else
+				blinkPixel = bg_pixel[psetup.highestSevr];
+
+			XmChangeColor(blinkButton,blinkPixel);
+		}
+		if (!psetup.silenceForever &&
+		    !psetup.silenceOneHour && 
+		    !psetup.silenceCurrent && 
+		    (psetup.highestUnackSevr >= psetup.beepSevr)) {
+			XBell(displayBB,0);
+			XRaiseWindow(displayBB,XtWindow(XtParent(XtParent(blinkButton))));
+		}
+		blinkTimeoutId = XtAppAddTimeOut(appContext,BLINK_DELAY,
+		    blinking,blinkButton);
+		blinking2State = TRUE;
+
+	} else {
+		if (psetup.highestUnackSevr > 0) {
+			XmChangeColor(blinkButton,bg_pixel[0]);
+		}
+		blinkTimeoutId = XtAppAddTimeOut(appContext,BLINK_DELAY,
+		    blinking,blinkButton);
+		blinking2State = FALSE;
 	}
+	XFlush(displayBB);
 }
 
 /***********************************************
- Reset silenceCurrent to on state
+ Reset silenceCurrentReset  (to on state)
 ************************************************/
 void silenceCurrentReset(void *area)
 {
@@ -567,7 +262,7 @@ void silenceCurrentReset(void *area)
 }
 
 /***********************************************
- reset silenceOneHour
+ reset silenceOneHourReset
 ************************************************/
 static void silenceOneHourReset(void *area)
 {
@@ -626,5 +321,53 @@ void silenceForeverChangeState(ALINK *area)
 		else
 		alLogOpMod("Silence Forever set to FALSE");
 	changeSilenceForeverText(area);
+}
+
+/********************************************************
+   trapExtraneousWarningsHandler
+*******************************************************/
+XtErrorMsgHandler trapExtraneousWarningsHandler(String message)
+{
+	if (message && *message) {
+		if (!strcmp(message,"Attempt to remove non-existant passive grab"))
+			return 0;
+			else
+			(void)fprintf(stderr,"Warning: %s\n",message);
+	}
+	return 0;
+}
+
+/******************************************************
+  COLOR
+******************************************************/
+static unsigned long COLOR(Display *dsply,char *name)
+{
+	XColor  color;
+	Colormap cmap;
+
+	cmap = DefaultColormap(dsply,DefaultScreen(dsply));
+	color.pixel = 0;
+	XParseColor(dsply, cmap, name, &color);
+	XAllocColor(dsply, cmap, &color);
+	return(color.pixel);
+}
+
+/*****************************************************
+ Setup pixel and font data
+*****************************************************/
+void pixelData(Widget iconBoard)
+{
+	Display *dsply;
+	int n;
+
+	/* get bg color pixel */
+	dsply = XtDisplay(iconBoard);
+	for (n=1;n<ALARM_NSEV;n++)
+		bg_pixel[n] = COLOR(dsply,bg_color[n]);
+
+	channel_bg_pixel = COLOR(dsply,channel_bg_color);
+
+	/* retrieve the background color of the iconBoard */
+	XtVaGetValues(iconBoard, XmNbackground, &bg_pixel[0], NULL);
 }
 

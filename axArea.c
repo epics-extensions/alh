@@ -223,7 +223,7 @@ void setupConfig(char *filename,int program,ALINK *areaOld)
 		}
 
 		/* create/display main window for ACT */
-		if (program == ACT )  createMainWindow_callback(0,area,0);
+		if (program == ACT )  showMainWindow(area);
 
 		createConfigDisplay(area,EXPANDCOLLAPSE1);
 
@@ -419,7 +419,7 @@ void createMainWindowWidgets(ALINK *area)
 	    XmNuserData,               (XtPointer)area,
 	    NULL);
 
-	pixelData(area->form_main,NULL);
+	pixelData(area->form_main);
 
 	if (!ALH_pixmap) axMakePixmap(area->form_main);
 
@@ -658,6 +658,30 @@ void createMainWindowWidgets(ALINK *area)
 
 	createSubWindowWidgets(area->groupWindow,area->groupWindowForm);
 
+}
+
+/******************************************************
+  createMainWindow_callback
+******************************************************/
+void showMainWindow(ALINK *area)
+{
+	if (area->toplevel == 0){
+		area->mapped = FALSE;
+		createMainWindowWidgets(area);
+		XtRealizeWidget(area->toplevel);
+	}
+	if (area->mapped == FALSE){
+		XMapWindow(XtDisplay(area->toplevel),XtWindow(area->toplevel));
+		area->mapped = TRUE;
+		redraw(area->treeWindow,0);
+
+		/* mark first line as treeWindow selection */
+		defaultTreeSelection(area);
+	}
+	else {
+		XRaiseWindow(XtDisplay(area->toplevel), XtWindow(area->toplevel));
+		redraw(area->treeWindow,0);
+	}
 }
 
 /***************************************************

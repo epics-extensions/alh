@@ -80,6 +80,7 @@ void masterTesting();            /* periodical calback of masterStatus testing*/
 extern Widget blinkToplevel;     /* for locking status marking                */
 char masterStr[64],slaveStr[64]; /* titles of Master/Slave +- printer/database*/
 XtIntervalId lockTimeoutId=NULL;   
+extern XFontStruct *font_info;
  
 extern int DEBUG;
 
@@ -193,6 +194,7 @@ void exit_quit(Widget w,ALINK *area,XmAnyCallbackStruct *call_data)
 	if (area  && area->pmainGroup) free(area->pmainGroup);
 	if (area) free(area);
 	XtDestroyWidget(topLevelShell);
+	XFreeFont(display,font_info);
 #ifndef WIN32
 	if(_lock_flag)  {
 	  lockf(lockFileDeskriptor,F_ULOCK, 0L); /* Albert */

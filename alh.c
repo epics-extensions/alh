@@ -26,6 +26,7 @@ SLIST *areaList;
 char alhVersionString[60];
 extern XtAppContext appContext;
 extern Display *display;
+XFontStruct *font_info;
 
 /* externals */
 extern Widget createAndPopupProductDescriptionShell();
@@ -56,6 +57,9 @@ void main(int argc,char *argv[])
 
 	XtAppSetWarningMsgHandler(appContext,
 	    (XtErrorMsgHandler)trapExtraneousWarningsHandler);
+
+	/* load fixed font */
+	font_info = XLoadQueryFont(display,"fixed");
 
 	/* setup area and configuration */
 	fileSetupInit(topLevelShell,argc,argv);

@@ -229,3 +229,6 @@ Wed Jun  2 13:16:33 CDT 1999
 
 Mon Jun  7 09:20:02 CDT 1999
 	Modified definition of netscape path.
+
+Mon Jun 21 15:15:03 CDT 1999
+	Start cleanup of axRunW.c file.

@@ -36,17 +36,16 @@ void   axUpdateDialogs(ALINK *area);
 void   *getSelectionLinkArea(ALINK *area);
 int    getSelectionLinkTypeArea(ALINK *area);
 Widget createActionButtons(Widget parent,ActionAreaItem *actions,int num_buttons);
+void showMainWindow(ALINK *area);
 
 
 /********************************************************************
   axRunW.c   function prototypes
 *********************************************************************/
 
-void icon_update(void);
+void pixelData(Widget iconBoard);
 XtErrorMsgHandler trapExtraneousWarningsHandler( String message);
-void pixelData( Widget iconBoard, Widget bButton);
 void createRuntimeWindow( ALINK *area);
-void createMainWindow_callback( Widget w, ALINK *area, XmAnyCallbackStruct *call_data);
 void silenceCurrentReset(void *area);
 void silenceCurrent_callback( Widget w, int notUsed, XmAnyCallbackStruct *call_data);
 void silenceForeverChangeState( ALINK *area);
