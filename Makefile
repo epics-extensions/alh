@@ -1,12 +1,14 @@
-ADD_ON_TOP = ..
-include $(ADD_ON_TOP)/admin/CONFIG_ALL
+ADD_ON = ../..
+
+include $(ADD_ON)/src/admin/CONFIG
 
 USR_CFLAGS = $(MOTIF_CFLAGS) $(X11_CFLAGS)
 USR_LDFLAGS = $(MOTIF_LDFLAGS) $(X11_LDFLAGS) -lm
- 
+
 SRC = .
  
 CC = acc
+GCC = acc
 
    SRCS =  $(SRC)/acknowledge.c  \
 		$(SRC)/alCA.c \
@@ -76,7 +78,7 @@ OBJS =  acknowledge.o  \
 
 PROD = alh
 
-include $(ADD_ON_TOP)/admin/RULES
+include $(ADD_ON)/src/admin/RULES
 
 alh: $(OBJS) $(DEP_LIBS)
 	$(CC) -o $@ $(OBJS) $(LDFLAGS)
