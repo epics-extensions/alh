@@ -1280,7 +1280,6 @@ static void forcePVCalcPerform(GCLINK* gclink,int linktype,int forcePVChanged)
 	if (!pcalc->rpbuf) return;
 	status=calcPerform(pcalc->value,&calcValue,pcalc->rpbuf);
 	if (status) errMsg("ForcePV calcPerform failed: status=%ld\n",status);
-printf ("calcValue=%f\n",calcValue);
 
 	if (!forcePVChanged && calcValue == pforcePV->currentValue) return;
 
