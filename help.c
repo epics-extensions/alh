@@ -1,8 +1,11 @@
 /*
  $Log$
- Revision 1.2  1994/06/22 21:17:36  jba
- Added cvs Log keyword
+ Revision 1.3  1995/06/22 19:46:22  jba
+ Put group/channel alias in guidance window title bar.
 
+ * Revision 1.2  1994/06/22  21:17:36  jba
+ * Added cvs Log keyword
+ *
  */
 
 static char *sccsId = "@(#)help.c	1.12\t10/1/93";
@@ -243,11 +246,25 @@ void *call_data;
 	Widget  label;
 	XmString xmstr;
 	Arg	wargs[5];
+    char *title=NULL;
+    char *buff=NULL;
+
+/*
+ * Get the title name
+ */
+  XtVaGetValues(w, XmNuserData, &title,NULL);
+    if (title){
+         buff=(char *)calloc(1,strlen(title)+12);
+         strcpy(buff,title);
+         strcat(buff," Guidance");
+         strcat(buff,"\0");
+    }
 
 /* 
  * Create the message dialog to display the help.
  */
 	n=0;
+    if (buff) XtSetArg(wargs[n], XmNtitle, buff); n++;
 	XtSetArg(wargs[n], XmNautoUnmanage, FALSE); n++;
 	XtSetArg(wargs[n], XmNallowShellResize, FALSE); n++;
 	dialog = XmCreateMessageDialog(w, "Help", wargs, n);
@@ -261,12 +278,15 @@ void *call_data;
  * text left justified
  */
 
+/*
 	label = XmMessageBoxGetChild(dialog, 
 			XmDIALOG_MESSAGE_LABEL);
 
 	n = 0;
 	XtSetArg(wargs[n],XmNalignment,XmALIGNMENT_BEGINNING); n++;
 	XtSetValues(label, wargs, n);
+*/
+
 /*
  * Add an OK callback to pop down the dialog.
  */
