@@ -195,7 +195,7 @@ static void icon_update(Widget blinkButton)
 	/* Remove any existing timer */
 	if (blinkTimeoutId) {
 		XtRemoveTimeOut(blinkTimeoutId);
-		blinkTimeoutId = NULL;
+		blinkTimeoutId = 0;
 	}
 
 	/* Restart the timer */
@@ -209,7 +209,7 @@ static void blinking(XtPointer pointer, XtIntervalId *id)
 {
 	Widget blinkButton = (Widget)pointer;
 	Display *displayBB;
-	static Pixel  blinkPixel = NULL;
+	static Pixel  blinkPixel = 0;
 	static Boolean blinking2State = FALSE;
 
 	if (!blinkPixel) blinkPixel =  bg_pixel[0];
@@ -232,7 +232,9 @@ static void blinking(XtPointer pointer, XtIntervalId *id)
 		    !psetup.silenceOneHour && 
 		    !psetup.silenceCurrent && 
 		    (psetup.highestUnackSevr >= psetup.beepSevr)) {
-			XBell(displayBB,0);
+
+			alBeep(displayBB);
+
 			XRaiseWindow(displayBB,XtWindow(XtParent(XtParent(blinkButton))));
 		}
 		blinkTimeoutId = XtAppAddTimeOut(appContext,BLINK_DELAY,
@@ -294,7 +296,7 @@ XmAnyCallbackStruct *call_data)
 void silenceOneHour_callback(Widget w,void * area,
 XmAnyCallbackStruct *call_data)
 {
-	static XtIntervalId intervalId = NULL;
+	static XtIntervalId intervalId = 0;
 	int seconds = 3600;
 
 	psetup.silenceOneHour = psetup.silenceOneHour?FALSE:TRUE;
@@ -307,7 +309,7 @@ XmAnyCallbackStruct *call_data)
 	} else {
 		if (intervalId) {
 			XtRemoveTimeOut(intervalId);
-			intervalId = NULL;
+			intervalId = 0;
 		}
 		alLogOpMod("Silence One Hour set to FALSE\n");
 	}
