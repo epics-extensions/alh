@@ -5,6 +5,11 @@
 TOP = ../../..
 include $(TOP)/config/CONFIG_EXTENSIONS
 
+# Debugging options
+#CC = purify -first-only -chain-length=30  $($(ANSI)_$(CMPLR))
+#CC = purify $($(ANSI)_$(CMPLR))
+#HOST_OPT=NO
+
 I_WANT_CDEV             = NO
 I_WANT_GREETINGS        = NO
 I_WANT_CMLOG		= NO
@@ -147,11 +152,7 @@ include $(TOP)/config/RULES.Host
 
 alh.res:../alh.ico
 
-alh.o: ../version.h
-awAct.o: ../version.h
-awAlh.o: ../version.h
+alh$(OBJ):../version.h
+awAct$(OBJ):../version.h
+awAlh$(OBJ):../version.h
 
-# **************************** Emacs Editing Sequences *****************
-# Local Variables:
-# mode: makefile
-# End:
