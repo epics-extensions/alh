@@ -44,7 +44,7 @@ void ackChan(CLINK *clink)
 
    	if(_DB_call_flag)  alLog2DBAckChan(cdata->name);
 
-	if (_global_flag) {
+	if (_global_flag && !_passive_flag) {
 		alCaPutGblAck(cdata->chid,&cdata->unackSevr);
 	} else {
 		alSetUnackSevChan(clink,NO_ALARM);

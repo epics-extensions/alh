@@ -60,6 +60,8 @@ static void alFdmgrAddCdev (int fd, int opened, void *);
  
 //------------------------------
 // Define globals 
+extern int _global_flag;
+extern int _passive_flag;
 int toBeConnectedCount = 0;
 unsigned long caDelay = 100;     /* ms */
 extern XtIntervalId  caTimeoutId=(XtIntervalId)0;
@@ -505,6 +507,8 @@ void	alCaPutGblAck (chid chid, short *psevr)
   cdevSignal	*signal = (cdevSignal *)chid;
   cdevData 	out;
   
+  if (!_global_flag || _passive_flag)  return;
+
   if (!signal)
   {
     errMsg("alCaPutGblAck: null cdevSignal pointer\n");
@@ -528,6 +532,8 @@ void	alCaPutGblAckT(chid chid, short *pstate)
   cdevSignal	*signal = (cdevSignal *)chid;
   cdevData 	out;
   
+  if (!_global_flag ||_passive_flag) return;
+
   if (!signal)
   {
     errMsg("alCaPutGblAck: null cdevSignal pointer\n");
@@ -552,6 +558,8 @@ void	alCaPutSevrValue (chid chid, short *psevr)
   cdevRequestObject	*request;
   cdevData 		out;
   
+  if (!_global_flag || _passive_flag)  return;
+
   if (!signal)
   {
     errMsg("alCaPutSevrValue: null cdevSignal pointer\n");

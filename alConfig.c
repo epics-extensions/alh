@@ -56,7 +56,6 @@ extern char * alhAlarmSeverityString[];
 
 extern int _global_flag;
 extern int _passive_flag;
-extern int _transients_flag;
 extern int DEBUG;
 extern int _DB_call_flag;
 char applicationName[64];  /* Albert1 applicationName = mainGroupName will be send to DB */

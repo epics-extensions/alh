@@ -1241,7 +1241,7 @@ void alChangeChanMask(CLINK *clink,MASK mask)
 		alUpdateGroupMask(clink,ALARMACKT,mask.AckT);
 		cdata->curMask.AckT = mask.AckT;
 		change = 1;
-		if (_global_flag) {
+		if (_global_flag && !_passive_flag) {
 			/* NOTE: ackt and curMask.AckT have opposite meaning */
 			short ackt = (mask.AckT+1)%2;
 			alCaPutGblAckT(cdata->chid,&ackt);
@@ -1250,9 +1250,7 @@ void alChangeChanMask(CLINK *clink,MASK mask)
 
 	if (mask.Log != cdata->curMask.Log) {
 		alUpdateGroupMask(clink,ALARMLOG,mask.Log);
-
 		cdata->curMask.Log = mask.Log;
-
 		change = 1;
 	}
 

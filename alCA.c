@@ -322,6 +322,8 @@ void alCaPutGblAck(chid chid, short *psevr)
 
 	if (!chid || ca_field_type(chid) == TYPENOTCONN) return;
 
+	if (!_global_flag || _passive_flag)  return;
+
 	status = ca_put(DBR_PUT_ACKS, chid, psevr);
 	if (status != ECA_NORMAL) {
 		errMsg("alCaPutGblAck: ca_put alarm acknowledgement failed for PV %s "
@@ -336,6 +338,8 @@ void alCaPutGblAck(chid chid, short *psevr)
 void alCaPutGblAckT(chid chid, short *pstate)
 {
 	int status;
+
+    if ( !_global_flag ||_passive_flag) return;
 
 	if (!chid || ca_field_type(chid) == TYPENOTCONN) return;
 
@@ -359,6 +363,8 @@ void alCaPutSevrValue(chid chid, short *psevr)
 		printf("alCaPutSevrValue: name=%s value=%d\n", ca_name(chid), *psevr);
 	}
 #endif
+
+	if (!_global_flag || _passive_flag)  return;
 
 	if (!chid || ca_field_type(chid) == TYPENOTCONN) return;
 
