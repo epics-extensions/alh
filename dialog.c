@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.7  1998/06/03 12:57:14  evans
+ Added destroy callback (killWidget) for errMsg.
+
  Revision 1.6  1998/06/02 19:40:50  evans
  Changed from using Fgmgr to using X to manage events and file
  descriptors.  (Fdmgr didn't work on WIN32.)  Uses XtAppMainLoop,
@@ -77,6 +80,10 @@ static char *sccsId = "@(#)dialog.c	1.8\t2/3/94";
 #include <alh.h>
 #include <axArea.h>
 #include <ax.h>
+
+/* function prototypes */
+static void killWidget(Widget w, XtPointer clientdata, XtPointer calldata);
+
 
 /****************************************************
 *
@@ -395,10 +402,16 @@ void errMsg(const char *fmt, ...)
 	child=XmMessageBoxGetChild(warningbox,XmDIALOG_HELP_BUTTON);
 	XtDestroyWidget(child);
 	XtManageChild(warningbox);
+	XtAddCallback(warningbox,XmNokCallback,killWidget,NULL);
 #ifdef WIN32
 	lprintf("%s\n",lstring);
 #else
 	fprintf(stderr,"%s\n",lstring);
 #endif
     }
+}
+
+static void killWidget(Widget w, XtPointer clientdata, XtPointer calldata)
+{
+    XtDestroyWidget(w);
 }
