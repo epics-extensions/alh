@@ -39,7 +39,12 @@
 #include "alLib.h"
 #include "line.h"
 #endif
+#include <epicsVersion.h>
+#if (EPICS_VERSION <= 3) && (EPICS_RELEASE <= 13)
 #include "truncateFile.h"
+#else
+#include <epicsStdio.h>
+#endif
 
 extern int DEBUG;
 extern int _DB_call_flag;
