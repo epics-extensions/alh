@@ -1,8 +1,11 @@
 /*
  $Log$
- Revision 1.6  1995/06/22 19:48:57  jba
- Added $ALIAS facility.
+ Revision 1.7  1995/06/22 20:27:00  jba
+ Fixed alias overwriting Related process label.
 
+ * Revision 1.6  1995/06/22  19:48:57  jba
+ * Added $ALIAS facility.
+ *
  * Revision 1.5  1995/05/31  20:34:18  jba
  * Added name selection and arrow functions to Group window
  *
@@ -763,8 +766,8 @@ static void propCreateDialog(area, link, linkType)
 
      string = XmStringCreateSimple("Alias");
      aliasLabel = XtVaCreateManagedWidget("aliasLabel",
-          xmLabelGadgetClass, form,
-          XmNlabelString,     string,
+          xmLabelGadgetClass,        form,
+          XmNlabelString,            string,
           XmNcolumns,                80,
           XmNbottomAttachment,       XmATTACH_WIDGET,
           XmNbottomWidget,           aliasTextW,
@@ -775,30 +778,30 @@ static void propCreateDialog(area, link, linkType)
      /* ---------------------------------
      Related Process Command
      --------------------------------- */
+     string = XmStringCreateSimple("Related Process Command");
+     processLabel = XtVaCreateManagedWidget("processLabel",
+          xmLabelGadgetClass,        form,
+          XmNlabelString,            string,
+          XmNcolumns,                80,
+          XmNtopAttachment,          XmATTACH_WIDGET,
+          XmNtopWidget,              aliasTextW,
+          XmNleftAttachment,         XmATTACH_FORM,
+          NULL);
+     XmStringFree(string);
+
      processTextW = XtVaCreateManagedWidget("processTextW",
           xmTextFieldWidgetClass, form,
           XmNspacing,                0,
           XmNmarginHeight,           0,
           XmNbackground,             textBackground,
           XmNtopAttachment,          XmATTACH_WIDGET,
-          XmNtopWidget,              aliasTextW,
+          XmNtopWidget,              processLabel,
           XmNleftAttachment,         XmATTACH_FORM,
           XmNrightAttachment,        XmATTACH_FORM,
           NULL);
 
      XtAddCallback(processTextW, XmNactivateCallback,
           (XtCallbackProc)XmProcessTraversal, (XtPointer)XmTRAVERSE_NEXT_TAB_GROUP);
-
-     string = XmStringCreateSimple("Related Process Command");
-     processLabel = XtVaCreateManagedWidget("processLabel",
-          xmLabelGadgetClass, form,
-          XmNlabelString,     string,
-          XmNcolumns,                80,
-          XmNbottomAttachment,       XmATTACH_WIDGET,
-          XmNbottomWidget,           processTextW,
-          XmNleftAttachment,         XmATTACH_FORM,
-          NULL);
-     XmStringFree(string);
 
      /* ---------------------------------
      Alarm Process Command
