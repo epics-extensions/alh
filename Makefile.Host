@@ -17,8 +17,8 @@ Unix_DIR = $(INSTALL_LIB)
 #alh_LDFLAGS= -Dalh_LDFLAGS
 
 # Debugging options
-#CC = purify $(C_$(CMPLR))
-HOST_OPT=NO
+#CC = purify -first-only -chain-length=25  $($(ANSI)_$(CMPLR))
+#HOST_OPT=NO
 
 SRCS =  acknowledge.c  \
 		alCA.c \
