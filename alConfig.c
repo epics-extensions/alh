@@ -442,7 +442,7 @@ int context,int caConnect)
 			gcdata->forcePVName = (char *)calloc(1,strlen(name)+1);
 			strcpy(gcdata->forcePVName,name);
 			if (caConnect && strlen(gcdata->forcePVName) > (size_t) 1) {
-				gcdata->forcePVcurrentValue = gcdata->resetPVValue;
+				gcdata->PVValue = gcdata->resetPVValue;
 				alCaConnectForcePV(gcdata->forcePVName,&gcdata->forcechid,gcdata->name);
 				alCaAddForcePVEvent (gcdata->forcechid,gclink,
 				    &gcdata->forceevid,context);

@@ -283,7 +283,7 @@ void     alGroupForceEvent(GLINK *glink,short value)
 	gdata = glink->pgroupData;
 	if (strlen(gdata->forcePVName) <= (size_t) 1) return;
 
-	if (cdata->PVValue == value) return;
+	if (gdata->PVValue == value) return;
 	gdata->PVValue = value;
 	if (value == gdata->forcePVValue) {
 		alChangeGroupMask(glink, gdata->forcePVMask);
