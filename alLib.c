@@ -601,9 +601,12 @@ void alConnectEvent(CLINK *clink)
 {
 	struct chanData *cdata = clink->pchanData;
 
-	if (clink) alNewEvent(cdata->caAlarmEvent.stat,cdata->caAlarmEvent.sevr,
-                             cdata->caAlarmEvent.acks,cdata->caAlarmEvent.ackt,
-                             cdata->caAlarmEvent.value,clink);
+	/* skip initial connection */
+	if ( clink && !(cdata->curStat==NO_ALARM && cdata->curSevr==ERROR_STATE )) {
+		alNewEvent(cdata->caAlarmEvent.stat,cdata->caAlarmEvent.sevr,
+			cdata->caAlarmEvent.acks,cdata->caAlarmEvent.ackt,
+			cdata->caAlarmEvent.value,clink);
+	}
 }
 
 
