@@ -61,6 +61,7 @@ typedef struct  areaLink{
 	Widget           silenceForeverLabel;
 	Widget           beepSeverity;
 	Widget           beepSeverityLabel;
+	Widget           disabledForcePVCountLabel;
 	Widget           label_filenameTitle;
 	Widget           treeWindowForm;
 	Widget           groupWindowForm;
@@ -71,6 +72,7 @@ typedef struct  areaLink{
 	/* ----- setup info ----- */
 	int              (* viewFilter)();
 	int              beepCondition;
+	int              disabledForcePVCount;
 	char             *configFile;
 	char             *alarmlogFile;
 	char             *opmodFile;

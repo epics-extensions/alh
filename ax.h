@@ -51,6 +51,7 @@ int    isTreeWindow( ALINK *area, void * subWindow);
 void   markSelectionArea( ALINK *area, struct anyLine *line);
 void   changeBeepSeverityText( ALINK *area);
 void   changeSilenceForeverText( ALINK *area);
+void   updateDisabledForcePVCount(ALINK *area, int count);
 void   unmapArea_callback( Widget main, Widget w, XmAnyCallbackStruct *cbs);
 void   axMakePixmap( Widget w);
 void   axUpdateDialogs(ALINK *area);
@@ -128,6 +129,7 @@ char *shortfile(char *name);
 *********************************************************************/
 
 void ack_callback( Widget widget, struct anyLine  *line, XmAnyCallbackStruct *cbs);
+void ackChan(CLINK *clink);
 
 /********************************************************************
   awView.c   function prototypes
