@@ -337,6 +337,7 @@ void alCaStop(void);
 void alCaConnectChannel(char *name,chid *pchid,void *puser);
 void alCaConnectForcePV(char *name,chid *pchid,void *puser);
 void alCaConnectSevrPV(char *name,chid *pchid,void *puser);
+void alCaConnectAckPV(char *name,chid *pchid,void *puser);
 void alCaConnectHeartbeatPV(char *name,chid *pchid,void *puser);
 void alCaClearChannel(chid *pchid);
 void alCaClearEvent(evid *pevid);
