@@ -53,3 +53,31 @@ Mon Oct 27 12:28:36 CST 1997
 	Write of sevr to sevrPVs now done even if acknowledgement not
 	necessary and now write is done only when sevr has changed.
 
+
+May - June 1998
+	Changes made to allow alh to build using Exceed on WIN95/NT
+	Added new icon
+	Removed references to getopt
+	Created Makefile.Host and modified Makefile
+
+date: 1997/09/12 21:23:53
+	Bug fix for beep severity line placement.
+
+date: 1998/06/01 18:33:21
+	Modified the icon.
+
+date: 1998/06/02 19:40:43;  author: evans;  state: Exp;  lines: +2 -1
+	Changed from using Fgmgr to using X to manage events and file
+	descriptors.  (Fdmgr didn't work on WIN32.)  Uses XtAppMainLoop,
+	XtAppAddInput, and XtAppAddTimeOut instead of Fdmgr routines.
+	Updating areas is now in alCaUpdate, which is called every caDelay ms
+	(currently 100 ms).  Added a general error message routine (errMsg)
+	and an exception handler (alCAException).  Is working on Solaris and
+	WIN32.
+
+date: 1998/06/09 17:10:48;  author: evans;  state: Exp;  lines: +5 -1
+	Fixed a typo in the exception handler.
+
+Mon Jun 22 12:50:36 CDT 1998
+	Bug fixes for command line option handling.
+	Modified debug options in Makefile.Host
