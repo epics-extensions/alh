@@ -1290,3 +1290,35 @@ void alSetAckTChan(CLINK *clink,int newAckT)
 }
 
 
+
+/**************************************************************************
+ * This function checks each bit of the new mask  against to the current 
+ * mask.  If the bit of mask to be changed then  call alUpdateGroupMask 
+ * to update the parent group mask. Finally updates current channel mask.
+ **************************************************************************/
+void alSetCurChanMask(CLINK *clink,MASK mask)
+{
+	struct chanData *cdata;
+	cdata = clink->pchanData;
+
+	if (mask.Cancel != cdata->curMask.Cancel) {
+		alUpdateGroupMask(clink,ALARMCANCEL,mask.Cancel);
+		cdata->curMask.Cancel = mask.Cancel;
+	}
+	if (mask.Disable != cdata->curMask.Disable) {
+		alUpdateGroupMask(clink,ALARMDISABLE,mask.Disable);
+		cdata->curMask.Disable = mask.Disable;
+	}
+	if (mask.Ack != cdata->curMask.Ack) {
+		alUpdateGroupMask(clink,ALARMACK,mask.Ack);
+		cdata->curMask.Ack = mask.Ack;
+	}
+	if (mask.AckT != cdata->curMask.AckT) {
+		alUpdateGroupMask(clink,ALARMACKT,mask.AckT);
+		cdata->curMask.AckT = mask.AckT;
+	}
+	if (mask.Log != cdata->curMask.Log) {
+		alUpdateGroupMask(clink,ALARMLOG,mask.Log);
+		cdata->curMask.Log = mask.Log;
+	}
+}

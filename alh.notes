@@ -275,5 +275,10 @@ date: 1998/06/01 18:33:24;  author: evans; alh.ico
 Wed Oct  6 16:13:50 CDT 1999
 	Process forcePV ca value event only if value has changed.
 
+Thu Oct 14 10:11:23 CDT 1999
+	Fixed alarm channel count for include files.
+	Fix for ca put of ACKT values when config file is read.
+	
+
 
 

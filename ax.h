@@ -199,6 +199,8 @@ void alResetGroupMask( GLINK *glink);
 char *alAlarmGroupName( GLINK *link);
 int alProcessExists( GCLINK *link);
 void alSetUnackSevChan(CLINK *clink,int newSevr);
+void alSetCurChanMask(CLINK *clink,MASK mask);
+
 
 /********************************************************************
   alLog.c   function prototypes
@@ -332,7 +334,7 @@ void alCaPutSevrValue(chid chid,short *psevr);
 void alCaPutGblAckT(chid chid, short *pstate);
 
 /********************************************************************
-  alTest.c   function prototypes
+  alCaCommon.c   function prototypes
 *********************************************************************/
 void alCaStart(SLIST *proot);
 void alReplaceGroupForceEvent( GLINK *glink, char *str);
@@ -344,6 +346,7 @@ void alUpdateAreas();
 void alGroupForceEvent(GLINK *glink,short value);
 void alChannelForceEvent(CLINK *clink,short value);
 void alSetNotConnected(SLIST *proot);
+void alPutGblAckT(SLIST *proot);
 
 /********************************************************************
   alConfig.c   function prototypes
@@ -405,3 +408,5 @@ void propShowDialog(ALINK *area, Widget widget);
 void propUndo(void *area);
 
 #endif /* INCaxh */
+/* alCaCommon.c */
+

@@ -188,6 +188,7 @@ void setupConfig(char *filename,int program,ALINK *areaOld)
 			alCaPend(2.0);
 
 			alSetNotConnected((SLIST *)pmainGroup);
+			alPutGblAckT((SLIST *)pmainGroup);
 		}
 		else alGetConfig(pmainGroup,filename,CA_CONNECT_NO);
 

@@ -108,7 +108,7 @@ int caConnect)
 		exit(-1);
 	}
 
-	glink = NULL;
+	glink = pmainGroup->p1stgroup;
 	clink = NULL;
 	while( fgets(buf,MAX_STRING_LENGTH,fp) != NULL) {
 
@@ -193,10 +193,17 @@ struct mainGroup *pmainGroup)
 		      }
 		      */
 
+		if(pmainGroup->p1stgroup==NULL) {
 		pmainGroup->p1stgroup = glink;
 		glink->parent = NULL;
 		*pglink = glink;
 		return;
+		} else {
+		glink->parent = parent_link;
+		alAddGroup(parent_link,glink);
+		*pglink = glink;
+		return;
+		}
 	}
 
 	/* must find parent */
@@ -227,11 +234,11 @@ struct mainGroup *pmainGroup)
 	int  rtn;
 	char parent[PVNAME_SIZE];
 	char name[NAMEDEFAULT_SIZE];
-	GLINK *parent_link;
+	GLINK *parent_link=0;
 	char    filename[NAMEDEFAULT_SIZE];
 
 
-	parent_link = *pglink;
+	if (pglink) parent_link = *pglink;
 
 	rtn = sscanf(buf,"%20s%32s%s",command,parent,name);
 
@@ -249,46 +256,34 @@ struct mainGroup *pmainGroup)
 	/* set filename */
 	if (name[0] != '\0') strcat(filename,name);
 
+
 	glinkHold = pmainGroup->p1stgroup;
-	/* read config file */
-	alGetConfig(pmainGroup,filename,caConnect);
-
-	if ( !pmainGroup->p1stgroup) {
-		print_error(buf,"Ignoring Invalid INCLUDE file");
-		return;
-	}
-	glink = pmainGroup->p1stgroup;
-	pmainGroup->p1stgroup = glinkHold;
-
-	/*parent is NULL , i. e. main group*/
-
+   
 	if(strcmp("NULL",parent)==0)       {
 		if(pmainGroup->p1stgroup!=NULL) {
 			print_error(buf,"Missing parent");
 			return;
 		}
-
-		pmainGroup->p1stgroup = glink;
 		glink->parent = NULL;
-		*pglink = glink;
-		return;
 	}
 
 	/* must find parent */
-
 	while(parent_link!=NULL && strcmp(parent_link->pgroupData->name,parent)!=0)
 		parent_link = parent_link->parent;
 
-	if(parent_link==NULL) {
-		print_error(buf,"Can not find parent");
+
+	pmainGroup->p1stgroup = parent_link;
+
+	/* read config file */
+	alGetConfig(pmainGroup,filename,caConnect);
+
+	if (!pmainGroup->p1stgroup) {
+		print_error(buf,"Ignoring Invalid INCLUDE file");
 		return;
 	}
+	pmainGroup->p1stgroup = glinkHold;
 
-	glink->parent = parent_link;
-	alAddGroup(parent_link,glink);
-	*pglink = glink;
 	*pglink = parent_link;
-
 }
 
 /*******************************************************************
@@ -369,20 +364,17 @@ int caConnect,struct mainGroup *pmainGroup)
 		parent_link = parent_link->parent;
 	}
 
-	/* Set channel mask */
-	if (mask[0]) {
-		alSetMask(mask,&(cdata->defaultMask));
-		alChangeChanMask(clink,cdata->defaultMask);
-	}
-
 	if (caConnect && strlen(cdata->name) > (size_t) 1) {
 		alCaConnectChannel(cdata->name,&cdata->chid,clink);
+	}
+
+	if (mask) {
+		alSetMask(mask,&(cdata->defaultMask));
+		alSetCurChanMask(clink,cdata->defaultMask);
+	}
+
+	if (caConnect && cdata->curMask.Cancel == 0) {
 		alCaAddEvent(cdata->chid,&cdata->evid,clink);
-		if (_transients_flag && _global_flag && !_passive_flag){
-			/* NOTE: ackt and curMask.AckT have opposite meaning */
-			short ackt = (cdata->curMask.AckT+1)%2;
-			alCaPutGblAckT(cdata->chid,&ackt);
-		}
 	}
 
 }

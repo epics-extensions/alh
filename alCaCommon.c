@@ -25,6 +25,9 @@ static char *sccsId = "@(#) $Id$";
 
 extern SLIST *areaList;
 extern int toBeConnectedCount;
+extern int _transients_flag;
+extern int _global_flag;
+extern int _passive_flag;
 
 /* Struct for file descriptor linked list */
 struct FDLIST {
@@ -48,6 +51,7 @@ void alCaStart(SLIST *proot)
 	alCaSearch(proot);
 	alCaPend(2.0);
 	alSetNotConnected(proot);
+	alPutGblAckT((SLIST *)proot);
 }
 
 /**************************************************************
@@ -181,7 +185,9 @@ void            alCaSearch(SLIST *proot)
 		if (type == CHANNEL) {
 			cdata = (struct chanData *)gcdata;
 			alCaConnectChannel(cdata->name,&cdata->chid,gclink);
-			alCaAddEvent(cdata->chid,&cdata->evid,gclink);
+			if (cdata->curMask.Cancel == 0) {
+				alCaAddEvent(cdata->chid,&cdata->evid,gclink);
+			}
 		}
 
 		gclink = nextGroupChannel(gclink,&type);
@@ -240,6 +246,32 @@ void alSetNotConnected(SLIST *proot)
 		if (type == CHANNEL && ((struct chanData *)gcdata)->chid &&
 		    !alCaIsConnected(((struct chanData *)gcdata)->chid)) {
 			alNewEvent(NOT_CONNECTED,ERROR_STATE,0,1,"",(CLINK *)gclink);
+		}
+		gclink = nextGroupChannel(gclink,&type);
+	}
+}
+
+/*****************************************************************
+   alSetAckt
+ *****************************************************************/
+void alPutGblAckT(SLIST *proot)
+{
+	GCLINK *gclink;
+	struct chanData *cdata;
+	int type;
+
+	if (!proot) return;
+	if ( !_transients_flag || !_global_flag ||_passive_flag) return;
+
+	gclink = firstGroupChannel(proot,&type);
+	while (gclink) {
+		if (type == CHANNEL) {
+			cdata = ((CLINK *)gclink)->pchanData;
+			if ( alCaIsConnected(cdata->chid)) {
+				/*NOTE: ackt and curMask.AckT have opposite meaning */
+				short ackt = (cdata->curMask.AckT+1)%2;
+				alCaPutGblAckT(cdata->chid,&ackt);
+			}
 		}
 		gclink = nextGroupChannel(gclink,&type);
 	}
