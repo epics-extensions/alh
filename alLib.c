@@ -1,5 +1,17 @@
 /*
  $Log$
+ Revision 1.22  1998/08/05 20:28:24  jba
+ Reading config file modified to compare whole word of command
+ (GROUP,CHANNEL,$GUIDANCE,...)instead of first letter.
+ GUIDANCE modified to display urls. (on netscape browser).
+ The alhConfig file specification is now either URL guidance -
+     $GUIDANCE  http://www.aps.anl.gov/asd/controls
+ or text guidance -
+     $GUIDANCE
+     This is the first line of text guidance.
+     This is the second line of text guidance.
+     $END
+
  Revision 1.21  1998/08/05 18:20:03  jba
  Added silenceOneHour button.
  Moved silenceForever button to Setup menu.
@@ -292,9 +304,6 @@ alForcePVGroupEvent(glink,value) 	Force / reset group mask
 char *alAlarmGroupName(link)            Returns pointer to name
      GLINK *link;
 *
-int alGuidanceExists(link)              Returns True if guidance exists
-     GCLINK *link;
-*
 int alProcessExists(link)               Returns True if related process
      GCLINK *link;                      exists
 *
@@ -398,7 +407,7 @@ CLINK *clink;
 {
     SNODE *pt,*next;
     struct guideLink *guidelist; 
-	struct chanData *cdata;
+    struct chanData *cdata;
 
 	if (clink != NULL) {
 	    cdata = clink->pchanData;
@@ -414,17 +423,12 @@ CLINK *clink;
         removeSevrCommandList(&cdata->sevrCommandList);
         removeStatCommandList(&cdata->statCommandList);
 
-        pt = sllFirst(&clink->GuideList);
-        while (pt) {
-              next = sllNext(pt);
-              guidelist = (struct guideLink *)pt;
-              free(guidelist->list);
-              free(guidelist);
-              pt = next;
-        }
-		free(cdata);
-		free(clink);
-	}
+        if (clink->guidanceLocation) free(clink->guidanceLocation);
+        guidanceDeleteGuideList(&clink->GuideList);
+
+	free(cdata);
+	free(clink);
+    }
 }
 
 
@@ -441,7 +445,7 @@ GLINK *pt;
 struct guideLink *guidelist; 
 struct groupData *gdata;
 
-	if (glink) {
+    if (glink) {
         /* free all channels */
         cnode = sllFirst(&(glink->chanList));
         while (cnode) {
@@ -470,17 +474,12 @@ struct groupData *gdata;
 
         removeSevrCommandList(&gdata->sevrCommandList);
 
-        snode = sllFirst(&glink->GuideList);
-        while (snode) {
-              next = sllNext(snode);
-              guidelist = (struct guideLink *)snode;
-              free(guidelist->list);
-              free(guidelist);
-              snode = next;
-        }
+        if (glink->guidanceLocation) free(glink->guidanceLocation);
+        guidanceDeleteGuideList(&glink->GuideList);
+
         free(gdata);
         free(glink);
-	}
+    }
 }
 
 
@@ -715,16 +714,12 @@ GLINK *alCopyGroup(glink)
 	gdataNew->resetPVValue = gdata->resetPVValue;
 
 	/* copy guidance */
-	node = sllFirst(&(glink->GuideList));
-	while (node) {
-        buff = ((struct guideLink *)node)->list;
-		guideLink = (struct guideLink *)calloc(1,sizeof(struct guideLink));
-		guideLink->list = (char *)calloc(1,strlen(buff)+1);
-		strcpy(guideLink->list,buff);
-		sllAdd(&(glinkNew->GuideList),(SNODE *)guideLink);
-		node = sllNext(node);
+	buff = glink->guidanceLocation;
+	if (buff) {
+		glinkNew->guidanceLocation = (char*)calloc(1,strlen(buff)+1);
+		strcpy(glinkNew->guidanceLocation,buff);
 	}
-
+        guidanceCopyGuideList(&glinkNew->GuideList,&glink->GuideList);
 
 	/* copy all channels */
 	node = sllFirst(&(glink->chanList));
@@ -836,15 +831,12 @@ CLINK *alCopyChan(clink)
 	cdataNew->resetPVValue = cdata->resetPVValue;
 
 	/* copy guidance */
-	node = sllFirst(&(clink->GuideList));
-	while (node) {
-        buff = ((struct guideLink *)node)->list;
-		guideLink = (struct guideLink *)calloc(1,sizeof(struct guideLink));
-		guideLink->list = (char *)calloc(1,strlen(buff)+1);
-		strcpy(guideLink->list,buff);
-		sllAdd(&(clinkNew->GuideList),(SNODE *)guideLink);
-		node = sllNext(node);
+	buff = clink->guidanceLocation;
+	if (buff) {
+		clinkNew->guidanceLocation = (char*)calloc(1,strlen(buff)+1);
+		strcpy(clinkNew->guidanceLocation,buff);
 	}
+        guidanceCopyGuideList(&clinkNew->GuideList,&clink->GuideList);
 
 	return(clinkNew);
 
@@ -1938,17 +1930,6 @@ char *alAlarmGroupName(link)
      return(0);
 }
 
-
-/***************************************************
-  alGuidanceExists
-****************************************************/
-
-int alGuidanceExists(link)
-     GCLINK *link;
-{
-     if (sllFirst(&(link->GuideList) ))  return(TRUE);
-     return(FALSE);
-}
 
 /***************************************************
   alProcessExists

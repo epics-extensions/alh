@@ -1,5 +1,17 @@
 /*
  $Log$
+ Revision 1.18  1998/08/05 20:28:23  jba
+ Reading config file modified to compare whole word of command
+ (GROUP,CHANNEL,$GUIDANCE,...)instead of first letter.
+ GUIDANCE modified to display urls. (on netscape browser).
+ The alhConfig file specification is now either URL guidance -
+     $GUIDANCE  http://www.aps.anl.gov/asd/controls
+ or text guidance -
+     $GUIDANCE
+     This is the first line of text guidance.
+     This is the second line of text guidance.
+     $END
+
  Revision 1.17  1998/08/03 18:07:51  jba
  Increased config file max line size to 500 chars.
 
@@ -310,25 +322,30 @@ int caConnect;
 	/* find first non blank character */
 
 	first_char = 0;
-	while( buf[first_char] == ' ' || buf[first_char] == '\t') first_char++;
+	while( buf[first_char] == ' ' || buf[first_char] == '\t'
+		|| buf[first_char] == '\n') first_char++;
 
-	if(toupper(buf[first_char])=='G') {
+	if (strncmp(&buf[first_char],"GROUP",5)==0) {
 	    GetGroupLine(&buf[first_char],&glink,pmainGroup);
         context = GROUP_LINE;
 	    gclink = (GCLINK *)glink;
 	    }
-	else if(toupper(buf[first_char])=='C') {
+	else if (strncmp(&buf[first_char],"CHANNEL",7)==0) {
 	    GetChannelLine(&buf[first_char],&glink,&clink,caConnect,pmainGroup);
         context = CHANNEL_LINE;
 	    gclink = (GCLINK *)clink;
 	    }
-	else if(buf[first_char]=='$') {
+	else if (strncmp(&buf[first_char],"$",1)==0) {
 	    GetOptionalLine(fp,&buf[first_char],gclink,context,caConnect);
 	    }
-	else if(toupper(buf[first_char])=='I') {
+	else if (strncmp(&buf[first_char],"INCLUDE",7)==0) {
 	    GetIncludeLine(&buf[first_char],&glink,caConnect,pmainGroup);
-        context = GROUP_LINE;
+	    context = GROUP_LINE;
 	    gclink = (GCLINK *)glink;
+	    }
+	else if(buf[first_char]=='\0') {
+	    }
+	else if(buf[first_char]=='#') {
 	    }
 	else if(first_char){
      	    printf("Illegal line: %s\n",buf);
@@ -583,7 +600,7 @@ static void GetOptionalLine(fp,buf,gclink,context,caConnect)
     int i;
 
     /* config optional lines */
-    if(buf[1]=='B') { /*BEEPSEVERITY*/
+    if (strncmp(&buf[1],"BEEPSEVERITY",12)==0) { /*BEEPSEVERITY*/
         int len;
 
         sscanf(buf,"%20s",command);
@@ -612,7 +629,7 @@ static void GetOptionalLine(fp,buf,gclink,context,caConnect)
 	    return;
 	}
 
-    if(buf[1]=='F') { /*FORCEPV*/
+    if (strncmp(&buf[1],"FORCEPV",7)==0) { /*FORCEPV*/
 	int rtn;
 
     rtn = sscanf(buf,"%20s%32s%6s%hd%hd",command,name,
@@ -630,7 +647,7 @@ static void GetOptionalLine(fp,buf,gclink,context,caConnect)
 	return;
     }
 
-    if(buf[1]=='S' && buf[5]=='P') { /*SEVRPV*/
+    if (strncmp(&buf[1],"SEVRPV",6)==0) { /*SEVRPV*/
 	int rtn;
 
 	    rtn = sscanf(buf,"%20s%32s",command,name);
@@ -644,7 +661,7 @@ static void GetOptionalLine(fp,buf,gclink,context,caConnect)
 	return;
     }
 
-    if(buf[1]=='C') { /*COMMAND*/
+    if (strncmp(&buf[1],"COMMAND",7)==0) { /*COMMAND*/
 	int len;
 
 	sscanf(buf,"%20s",command);
@@ -657,7 +674,7 @@ static void GetOptionalLine(fp,buf,gclink,context,caConnect)
 	return;
     }
 
-    if(buf[1]=='S' && buf[2]=='E' && buf[5]=='C') { /*SEVRCOMMAND*/
+    if (strncmp(&buf[1],"SEVRCOMMAND",11)==0) { /*SEVRCOMMAND*/
        int len;
 
         sscanf(buf,"%20s",command);
@@ -670,7 +687,7 @@ static void GetOptionalLine(fp,buf,gclink,context,caConnect)
         return;
     }
 
-    if(buf[1]=='S' && buf[2]=='T' && buf[5]=='C') { /*STATCOMMAND*/
+    if (strncmp(&buf[1],"STATCOMMAND",11)==0) { /*STATCOMMAND*/
        int len;
 
     if(context!=CHANNEL_LINE) {
@@ -689,7 +706,7 @@ static void GetOptionalLine(fp,buf,gclink,context,caConnect)
         return;
     }
 
-    if(buf[1]=='A' && buf[3]=='I') { /*ALIAS*/
+    if (strncmp(&buf[1],"ALIAS",5)==0) { /*ALIAS*/
         int len;
 
         sscanf(buf,"%20s",command);
@@ -702,7 +719,7 @@ static void GetOptionalLine(fp,buf,gclink,context,caConnect)
         return;
     }
 
-    if(buf[1]=='A' && buf[8]=='U') { /*ALARMCOUNTFILTER*/
+    if (strncmp(&buf[1],"ALARMCOUNTFILTER",16)==0) { /*ALARMCOUNTFILTER*/
      int rtn;
      int count=1;
      int seconds=1;
@@ -725,38 +742,50 @@ static void GetOptionalLine(fp,buf,gclink,context,caConnect)
       return;
      }
 
-    if(buf[1]=='G') { /*GUIDANCE*/
- 	struct guideLink *pgl;
-	int first_char;
+    if (strncmp(&buf[1],"GUIDANCE",8)==0) { /*GUIDANCE*/
+        int len;
 
-    	while( fgets(buf,MAX_STRING_LENGTH,fp) != NULL) {
+        sscanf(buf,"%20s",command);
+        len = strlen(command);
+	while( buf[len] == ' ' || buf[len] == '\t' || buf[len] == '\n') len++;
 
-	    /*change return to blank for x message box*/
+	if (strlen(&buf[len])) {
+		gclink->guidanceLocation = (char *)calloc(1,strlen(&buf[len])+1);
+		strcpy(gclink->guidanceLocation,&buf[len]);
+		if(gclink->guidanceLocation[strlen(gclink->guidanceLocation)-1] == '\n')
+			gclink->guidanceLocation[strlen(gclink->guidanceLocation)-1] = '\0'; 
+		return;
+	} else {
 
-	    if(buf[strlen(buf)-1] == '\n') buf[strlen(buf)-1] = '\0'; 
+ 		struct guideLink *pgl;
+		int first_char;
+	
+    	        while( fgets(buf,MAX_STRING_LENGTH,fp) != NULL) {
 
-	   /* find the first non blank character */
+	    		/*change return to null for x message box*/
+	
+	    		if(buf[strlen(buf)-1] == '\n') buf[strlen(buf)-1] = '\0'; 
 
-	first_char = 0;
-	while( buf[first_char] == ' ' || buf[first_char] == '\t') first_char++;
+	   		/* find the first non blank character */
 
-
-	    if(buf[first_char]=='$') {
-	        if(strncmp("$END",&buf[first_char],4) == 0 || 
-			strncmp("$End",&buf[first_char],4) == 0)
-			return;
-		else {
-		 print_error(buf,"Illegal End");
-		 return;
-			}
-	        }
+			first_char = 0;
+			while( buf[first_char] == ' ' || buf[first_char] == '\t') first_char++;
 
 
-	    pgl = (struct guideLink *)calloc(1,sizeof(struct guideLink));
-	    pgl->list=(char *)calloc(1,strlen(buf)+1-first_char);
-	    strcpy(pgl->list,&buf[first_char]);
-	    sllAdd(&(gclink->GuideList),(SNODE *)pgl);
-
+	    		if(buf[first_char]=='$') {
+	        		if(strncmp("$END",&buf[first_char],4) == 0 || 
+					strncmp("$End",&buf[first_char],4) == 0)
+					return;
+				else {
+		 		print_error(buf,"Illegal End");
+		 		return;
+				}
+	        	}
+	    		pgl = (struct guideLink *)calloc(1,sizeof(struct guideLink));
+	    		pgl->list=(char *)calloc(1,strlen(buf)+1);
+	    		strcpy(pgl->list,buf);
+	    		sllAdd(&(gclink->GuideList),(SNODE *)pgl);
+		}
 	}
 	
     return;
@@ -842,17 +871,20 @@ static void alWriteGroupConfig(fw,pgroup)
 				sevrCommand=(struct sevrCommand *)ellNext((void *)sevrCommand);
 		}
 
-			gl = sllFirst(&(glink->GuideList));
-			if (gl) fprintf(fw,"$GUIDANCE\n");
-			while (gl) {
-				guidelist = (struct guideLink *)gl;
-				fprintf(fw,"%s\n",guidelist->list);
-				gl = sllNext(gl);
-				if (gl == NULL) fprintf(fw,"$END\n");
-				}
+		if (glink->guidanceLocation!=NULL)
+			fprintf(fw,"$GUIDANCE  %s\n",glink->guidanceLocation);
 
-                cpt = sllFirst(&(glink->chanList));
-                while (cpt) {
+		gl = sllFirst(&(glink->GuideList));
+		if (gl) fprintf(fw,"$GUIDANCE\n");
+		while (gl) {
+			guidelist = (struct guideLink *)gl;
+			fprintf(fw,"%s\n",guidelist->list);
+			gl = sllNext(gl);
+			if (gl == NULL) fprintf(fw,"$END\n");
+		}
+
+		cpt = sllFirst(&(glink->chanList));
+		while (cpt) {
                         clink = (CLINK *)cpt;
 
 			cdata = clink->pchanData;
@@ -903,6 +935,8 @@ static void alWriteGroupConfig(fw,pgroup)
             }
                         cpt = sllNext(cpt);
 
+			if (clink->guidanceLocation != NULL)
+			fprintf(fw,"$GUIDANCE  %s\n",clink->guidanceLocation);
 
 			cl = sllFirst(&(clink->GuideList));
 			if (cl)  fprintf(fw,"$GUIDANCE\n");
@@ -1034,6 +1068,9 @@ static void alConfigTreePrint(fw,glink,treeSym)
                 statCommand=(struct statCommand *)ellNext((void *)statCommand);
             }
 
+            if (glink->guidanceLocation != NULL)
+            fprintf(fw,"%s        GUIDANCE  %s\n",treeSym,glink->guidanceLocation);
+
             gl = sllFirst(&(glink->GuideList));
             if (gl) fprintf(fw,"%s        GUIDANCE\n",treeSym);
             while (gl) {
@@ -1098,6 +1135,9 @@ static void alConfigTreePrint(fw,glink,treeSym)
                 fprintf(fw,"%s        STATCOMMAND  %s\n",treeSym,statCommand->alarmStatusString);
                 statCommand=(struct statCommand *)ellNext((void *)statCommand);
             }
+
+            if (clink->guidanceLocation != NULL)
+            fprintf(fw,"%s        GUIDANCE  %s\n",treeSym,clink->guidanceLocation);
 
             cl = sllFirst(&(clink->GuideList));
             if (cl)  fprintf(fw,"%s        GUIDANCE\n",treeSym);

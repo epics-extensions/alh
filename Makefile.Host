@@ -38,6 +38,7 @@ alh_SRCS =  acknowledge.c  \
 		axArea.c \
 		axRunW.c \
 		axSubW.c \
+		browser.c \
 		clipboardOps.c \
 		current.c \
 		dialog.c \
@@ -63,7 +64,7 @@ USR_CFLAGS_WIN32 += /DWIN32 /D_WINDOWS
 USR_LDFLAGS_WIN32 += /SUBSYSTEM:WINDOWS
 
 PROD_LIBS += ca Com
-USR_LIBS_DEFAULT = Xm Xt X11
+USR_LIBS_DEFAULT = Xmu Xm Xt X11
 
 ifeq ($(EXCEED),Exceed5)
 USR_LIBS_WIN32 = XmStatic Xt XlibGUI Xlib
@@ -71,6 +72,7 @@ else
 USR_LIBS_WIN32 = XmStatic HCLXt XlibGUI Xlib
 endif
 
+Xmu_DIR = $(MOTIF_LIB)
 Xm_DIR = $(MOTIF_LIB)
 Xt_DIR = $(X11_LIB)
 X11_DIR = $(X11_LIB)

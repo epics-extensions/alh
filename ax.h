@@ -1,5 +1,17 @@
 /*
  $Log$
+ Revision 1.19  1998/08/05 20:28:28  jba
+ Reading config file modified to compare whole word of command
+ (GROUP,CHANNEL,$GUIDANCE,...)instead of first letter.
+ GUIDANCE modified to display urls. (on netscape browser).
+ The alhConfig file specification is now either URL guidance -
+     $GUIDANCE  http://www.aps.anl.gov/asd/controls
+ or text guidance -
+     $GUIDANCE
+     This is the first line of text guidance.
+     This is the second line of text guidance.
+     $END
+
  Revision 1.18  1998/08/05 18:20:07  jba
  Added silenceOneHour button.
  Moved silenceForever button to Setup menu.
@@ -247,7 +259,11 @@ void invokeDialogUpdate( ALINK *area);
   guidance.c   function prototypes
 *********************************************************************/
 
-void guidance_callback( Widget widget, GCLINK *link, XmAnyCallbackStruct *cbs);
+void guidanceCallback( Widget widget, GCLINK *link, XmAnyCallbackStruct *cbs);
+int guidanceExists(GCLINK *link);
+int guidanceDisplay(GCLINK *link);
+void guidanceCopyGuideList(SLIST *pToGuideList,SLIST *pFromGuideList);
+void guidanceDeleteGuideList(SLIST *pGuideList);
 
 
 /********************************************************************
@@ -310,7 +326,6 @@ void alResetGroupMask( GLINK *glink);
 void alForcePVChanEvent( CLINK *clink, int value);
 void alForcePVGroupEvent( GLINK *glink, int value);
 char *alAlarmGroupName( GLINK *link);
-int alGuidanceExists( GCLINK *link);
 int alProcessExists( GCLINK *link);
 
 /********************************************************************
@@ -523,7 +538,12 @@ void propUpdateDialog(ALINK *area);
 void propShowDialog(ALINK *area, Widget widget);
 void propUndo(void *area);
  
- 
+/********************************************************************
+  browser.c   function prototypes
+*********************************************************************/
+
+int callBrowser(char *url);
+
 #else
 
 /********************************************************************
@@ -635,7 +655,12 @@ void invokeDialogUpdate();
   guidance.c   function prototypes
 *********************************************************************/
 
-void guidance_callback();
+void guidanceCallback();
+int guidanceExists();
+int guidanceDisplay();
+void guidanceCopyGuideList();
+void guidanceDeleteGuideList();
+
 
 /********************************************************************
   process.c   function prototypes
@@ -694,7 +719,6 @@ void alResetGroupMask();
 void alForcePVChanEvent();
 void alForcePVGroupEvent();
 char *alAlarmGroupName();
-int alGuidanceExists();
 int alProcessExists();
 
 /********************************************************************
@@ -895,6 +919,11 @@ void propUpdateDialog();
 void propShowDialog();
 void propUndo();
  
+/********************************************************************
+  browser.c   function prototypes
+*********************************************************************/
+
+int callBrowser();
 
 #endif /*__STDC__*/
 

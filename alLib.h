@@ -1,5 +1,17 @@
 /*
  $Log$
+ Revision 1.9  1998/08/05 20:28:25  jba
+ Reading config file modified to compare whole word of command
+ (GROUP,CHANNEL,$GUIDANCE,...)instead of first letter.
+ GUIDANCE modified to display urls. (on netscape browser).
+ The alhConfig file specification is now either URL guidance -
+     $GUIDANCE  http://www.aps.anl.gov/asd/controls
+ or text guidance -
+     $GUIDANCE
+     This is the first line of text guidance.
+     This is the second line of text guidance.
+     $END
+
  Revision 1.8  1998/06/02 19:40:46  evans
  Changed from using Fgmgr to using X to manage events and file
  descriptors.  (Fdmgr didn't work on WIN32.)  Uses XtAppMainLoop,
@@ -192,6 +204,7 @@ struct chanData {
 struct groupLink {
     SNODE node;			/* single link list node type */
 	SLIST GuideList;		/* guidance link list */
+	char *guidanceLocation;		/* guidance location (url or filename)*/
     struct groupLink *parent;	/* parent groupLink pointer */
     struct groupData *pgroupData;	/* group data  pointer */
     struct mainGroup *pmainGroup;   /* mainGroup pointer */
@@ -207,6 +220,7 @@ struct groupLink {
 struct chanLink {
     SNODE node;			/* single link list node type */
 	SLIST GuideList;		/* guidance link list */
+	char *guidanceLocation;		/* guidance location (url or filename)*/
     struct groupLink *parent;	/* parent groupLinke pointer */
     struct chanData *pchanData;	/* channel data  pointer */
     struct mainGroup *pmainGroup;   /* mainGroup pointer */
@@ -221,6 +235,7 @@ struct chanLink {
 struct anyLink {
     SNODE node;			/* single link list node type */
 	SLIST GuideList;		/* guidance link list */
+	char *guidanceLocation;		/* guidance location (url or filename)*/
     struct groupLink *parent;	/* parent groupLinke pointer */
     struct gcData *pgcData;  	/* channel data  pointer */
     struct mainGroup *pmainGroup;   /* mainGroup pointer */

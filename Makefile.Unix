@@ -2,6 +2,18 @@
 # $Id$
 #
 # $Log$
+# Revision 1.13  1998/08/05 20:28:22  jba
+# Reading config file modified to compare whole word of command
+# (GROUP,CHANNEL,$GUIDANCE,...)instead of first letter.
+# GUIDANCE modified to display urls. (on netscape browser).
+# The alhConfig file specification is now either URL guidance -
+#     $GUIDANCE  http://www.aps.anl.gov/asd/controls
+# or text guidance -
+#     $GUIDANCE
+#     This is the first line of text guidance.
+#     This is the second line of text guidance.
+#     $END
+#
 # Revision 1.12  1998/07/16 17:45:18  jba
 # Moved productDescriptionShell code from libUnix to alh. (libUnix removed)
 #
@@ -44,7 +56,7 @@ DEPLIBS = $(EPICS_BASE_LIB)/libca.a $(EPICS_BASE_LIB)/libCom.a
 USR_CFLAGS = -DACCESS_SECURITY
 USR_INCLUDES = -I$(MOTIF_INC) -I$(X11_INC)
 USR_LDFLAGS = -L$(MOTIF_LIB) -L$(X11_LIB)
-USR_LDLIBS = -lca -lCom -lXm -lXt -lXext -lX11 
+USR_LDLIBS = -lca -lCom -lXmu -lXm -lXt -lXext -lX11 
 
 #CMPLR = STRICT
 #CC = purify -first_only -chain-length=20 $(C_$(CMPLR))
@@ -68,6 +80,7 @@ SRCS.c =  ../acknowledge.c  \
 		../axArea.c \
 		../axRunW.c \
 		../axSubW.c \
+		../browser.c \
 		../clipboardOps.c \
 		../current.c \
 		../dialog.c \
@@ -103,6 +116,7 @@ OBJS =  acknowledge.o  \
 		axArea.o \
 		axRunW.o \
 		axSubW.o \
+		browser.o \
 		clipboardOps.o \
 		current.o \
 		dialog.o \

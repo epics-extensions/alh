@@ -137,3 +137,14 @@ Wed Aug  5 13:10:12 CDT 1998
 	Added silenceOneHour button.
 	Moved silenceForever button to Setup menu.
 	Added logging for operator silence changes.
+	Reading config file modified to compare whole word of command 
+	(GROUP,CHANNEL,$GUIDANCE,...)instead of first letter. 
+	GUIDANCE modified to display urls. (on netscape browser).
+        The alhConfig file specification is now either URL guidance -
+            $GUIDANCE  http://www.aps.anl.gov/asd/controls
+        or text guidance -
+            $GUIDANCE
+            This is the first line of text guidance.
+            This is the second line of text guidance.
+            $END
+

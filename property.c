@@ -82,6 +82,7 @@ struct propWindow {
     Widget statProcessTextW;
     Widget sevrProcessTextW;
     Widget guidanceTextW;
+    Widget guidanceUrlW;
 
 };
 
@@ -222,6 +223,7 @@ static void propUpdateDialogWidgets(propWindow)
           XmTextFieldSetString(propWindow->sevrProcessTextW,"");
           XmTextFieldSetString(propWindow->statProcessTextW,"");
           XmTextSetString(propWindow->guidanceTextW, "");
+          XmTextSetString(propWindow->guidanceUrlW, "");
          
           return;
      }
@@ -399,6 +401,10 @@ static void propUpdateDialogWidgets(propWindow)
           free(str);
      }
 
+     /* ---------------------------------
+     Guidance URL
+     --------------------------------- */
+     XmTextFieldSetString(propWindow->guidanceUrlW,link->guidanceLocation);
 
      /* ---------------------------------
      Guidance Text
@@ -450,7 +456,8 @@ static void propCreateDialog(area)
      Widget forcePVforceValueLabel,forcePVnameTextW, forcePVforceValueTextW,
             forcePVresetValueTextW, forcePVresetValueLabel;
      Widget forcePVmaskStringLabelW, frame2, rowcol2, frame3,
-            rowcol3, guidanceLabel, guidanceTextW;
+            rowcol3, guidanceLabel, guidanceTextW,
+            guidanceUrlLabel, guidanceUrlW;
      Widget alarmMaskLabel, alarmMaskStringLabelW;
      Widget forceMaskLabel, forcePVnameLabel;
      Widget resetMaskLabel=0, resetMaskStringLabelW=0;
@@ -1034,14 +1041,41 @@ static void propCreateDialog(area)
      XtManageChild(statProcessTextW);
 
      /* ---------------------------------
+     Guidance URL Location
+     --------------------------------- */
+     string = XmStringCreateSimple("Guidance URL");
+     guidanceUrlLabel = XtVaCreateManagedWidget("guidanceUrlLabel",
+          xmLabelGadgetClass,        form,
+          XmNlabelString,            string,
+          XmNtopAttachment,          XmATTACH_WIDGET,
+          XmNtopWidget,              XtParent(statProcessTextW),
+          XmNleftAttachment,         XmATTACH_FORM,
+          NULL);
+     XmStringFree(string);
+
+     guidanceUrlW = XtVaCreateManagedWidget("guidanceUrlW",
+          xmTextFieldWidgetClass, form,
+          XmNspacing,                0,
+          XmNmarginHeight,           0,
+          XmNbackground,             textBackground,
+          XmNtopAttachment,          XmATTACH_WIDGET,
+          XmNtopWidget,              guidanceUrlLabel,
+          XmNleftAttachment,         XmATTACH_FORM,
+          XmNrightAttachment,        XmATTACH_FORM,
+          NULL);
+
+     XtAddCallback(processTextW, XmNactivateCallback,
+          (XtCallbackProc)XmProcessTraversal, (XtPointer)XmTRAVERSE_NEXT_TAB_GROUP);
+
+     /* ---------------------------------
      Guidance Text
      --------------------------------- */
-     string = XmStringCreateSimple("Guidance                   ");
+     string = XmStringCreateSimple("Guidance Text              ");
      guidanceLabel = XtVaCreateManagedWidget("guidanceLabel",
           xmLabelGadgetClass, form,
           XmNlabelString,     string,
           XmNtopAttachment,   XmATTACH_WIDGET,
-          XmNtopWidget,       XtParent(statProcessTextW),
+          XmNtopWidget,       guidanceUrlW,
           XmNleftAttachment,  XmATTACH_FORM,
           NULL);
      XmStringFree(string);
@@ -1103,6 +1137,7 @@ static void propCreateDialog(area)
      propWindow->sevrProcessTextW = sevrProcessTextW;
      propWindow->statProcessTextW = statProcessTextW;
      propWindow->guidanceTextW = guidanceTextW;
+     propWindow->guidanceUrlW = guidanceUrlW;
      if (programId != ALH) {
           for (i = 0; i < ALARM_NMASK; i++){
                propWindow->alarmMaskToggleButtonW[i] = alarmMaskToggleButtonW[i];
@@ -1321,6 +1356,13 @@ static void propApplyCallback( Widget widget,XtPointer calldata,XtPointer cbs)
                }
           }
      }
+
+     /* ---------------------------------
+     Guidance URL
+     --------------------------------- */
+     buff = XmTextFieldGetString(propWindow->guidanceUrlW);
+     if (strlen(buff)) link->guidanceLocation = buff;
+     else link->guidanceLocation = 0;
 
      /* ---------------------------------
      Guidance Text
@@ -1550,6 +1592,7 @@ static void propEditableDialogWidgets(area)
           XtVaSetValues(propWindow->sevrProcessTextW,XmNeditable, FALSE, NULL);
           XtVaSetValues(propWindow->statProcessTextW,XmNeditable, FALSE, NULL);
           XtVaSetValues(propWindow->guidanceTextW,XmNeditable, FALSE, NULL);
+          XtVaSetValues(propWindow->guidanceUrlW,XmNeditable, FALSE, NULL);
      } else {
           XtVaSetValues(propWindow->nameTextW,XmNeditable, TRUE, NULL);
           XtVaSetValues(propWindow->severityPVnameTextW,XmNeditable, TRUE, NULL);
@@ -1563,6 +1606,7 @@ static void propEditableDialogWidgets(area)
           XtVaSetValues(propWindow->sevrProcessTextW,XmNeditable, TRUE, NULL);
           XtVaSetValues(propWindow->statProcessTextW,XmNeditable, TRUE, NULL);
           XtVaSetValues(propWindow->guidanceTextW,XmNeditable, TRUE, NULL);
+          XtVaSetValues(propWindow->guidanceUrlW,XmNeditable, TRUE, NULL);
      }
      return;
 }
@@ -1594,6 +1638,8 @@ static void propDeleteClone(GCLINK *link,int linkType)
         if (pgData->treeSym) free(pgData->treeSym);
     }
  
+    if (link->guidanceLocation) free(link->guidanceLocation);
+
     pt = sllFirst(&link->GuideList);
     while (pt) {
         next = sllNext(pt);

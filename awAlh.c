@@ -1,5 +1,17 @@
 /*
  $Log$
+ Revision 1.15  1998/08/05 20:28:27  jba
+ Reading config file modified to compare whole word of command
+ (GROUP,CHANNEL,$GUIDANCE,...)instead of first letter.
+ GUIDANCE modified to display urls. (on netscape browser).
+ The alhConfig file specification is now either URL guidance -
+     $GUIDANCE  http://www.aps.anl.gov/asd/controls
+ or text guidance -
+     $GUIDANCE
+     This is the first line of text guidance.
+     This is the second line of text guidance.
+     $END
+
  Revision 1.14  1998/08/05 18:20:06  jba
  Added silenceOneHour button.
  Moved silenceForever button to Setup menu.
@@ -446,19 +458,8 @@ static void alhActionCallback( Widget widget, XtPointer calldata, XtPointer cbs)
              if (! line || line->pwindow != (void *)area->selectionWindow )
                   line = (struct anyLine *)link->lineGroupW;
              if (line){
-                  wline=(WLINE *)line->wline;
-                  if (sllFirst(&(link->GuideList))){
-                       guidance_callback(wline->guidance,(GCLINK *)link, cbs);
-                  }
-                  else {
-                       if (((GCLINK *)link)->pgcData->alias){
-                            createDialog(area->form_main,XmDIALOG_WARNING,"No guidance for ",
-                                 link->pgcData->alias);
-                       } else {
-                            createDialog(area->form_main,XmDIALOG_WARNING,"No guidance for ",
-                                 link->pgcData->name);
-                       }
-                  }
+                   wline=(WLINE *)line->wline;
+                   guidanceCallback(wline->guidance,(GCLINK *)link, cbs);
              }
              else {
                   createDialog(area->form_main,XmDIALOG_WARNING,
@@ -908,10 +909,10 @@ void awRowWidgets(line, area)
                XmNx,                      nextX,
                NULL);
 
-          if (alGuidanceExists(link)) {
+          if (guidanceExists(link)) {
                XtManageChild(wline->guidance);
                XtAddCallback(wline->guidance, XmNactivateCallback, 
-                    (XtCallbackProc)guidance_callback, link);
+                    (XtCallbackProc)guidanceCallback, link);
                XtVaGetValues(wline->guidance,XmNwidth,&width,NULL);
                nextX = nextX + width + 3;
           }
@@ -1052,12 +1053,12 @@ void awRowWidgets(line, area)
 
           if (XtHasCallbacks(wline->guidance,XmNactivateCallback))
                XtRemoveAllCallbacks(wline->guidance, XmNactivateCallback);
-          if (alGuidanceExists(link)) {
+          if (guidanceExists(link)) {
                XtVaSetValues(wline->guidance,XmNx,nextX,NULL);
                XtVaSetValues(wline->guidance,XmNuserData,line->alias,NULL);
                XtManageChild(wline->guidance);
                XtAddCallback(wline->guidance, XmNactivateCallback, 
-                    (XtCallbackProc)guidance_callback, link);
+                    (XtCallbackProc)guidanceCallback, link);
                XtVaGetValues(wline->guidance,XmNwidth,&width,NULL);
                nextX = nextX + width + 3;
           } else {
