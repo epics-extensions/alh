@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.13  1997/08/27 21:59:11  jba
+ Added calls to free.
+
  Revision 1.12  1997/04/17 18:01:16  jba
  Added calls to free allocated memory.
 
@@ -431,6 +434,7 @@ static void propUpdateDialogWidgets(propWindow)
      --------------------------------- */
      getStringSevrCommandList(&pgcData->sevrCommandList,&str);
      XmTextSetString(propWindow->sevrProcessTextW,str);
+     free(str);
 
      /* ---------------------------------
      Stat Command
@@ -440,6 +444,7 @@ static void propUpdateDialogWidgets(propWindow)
           XtSetSensitive(propWindow->statProcessTextW, TRUE);
           getStringStatCommandList(&pcData->statCommandList,&str);
           XmTextSetString(propWindow->statProcessTextW,str);
+          free(str);
      }
 
 
