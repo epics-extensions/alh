@@ -1,9 +1,6 @@
 #
 # $Id$
 #
-#  Lowest Level Directroy Makefile
-#
-#
 
 EPICS=../../..
 

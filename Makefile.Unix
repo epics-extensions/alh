@@ -1,16 +1,25 @@
+#
+# $Id$
+#
+# $Log$
+# Revision 1.2  1994/09/15 21:19:02  jba
+# Mods for new CONFIG definitions
+#
+#
+
 EPICS = ../../../..
 include Target.include
 include $(EPICS)/config/CONFIG_EXTENSIONS
 
-DEP_LIBS = $(EPICS_BASE_LIB)/$(T_A)/libca.a $(EPICS_BASE_LIB)/$(T_A)/libCom.a
+DEPLIBS = $(EPICS_BASE_LIB)/libca.a $(EPICS_BASE_LIB)/libCom.a
 
 USR_CFLAGS = -DACCESS_SECURITY -I$(MOTIF)/include -I$(X11_INC)
 USR_LDFLAGS = -L$(MOTIF)/lib -L$(X11_LIB)
 USR_LDLIBS = -lca -lCom -lXm -lXt -lX11 -lm
 
 # use following 3 lines if USR_CFLAGS contains -DIWantGreeting
-#DEP_LIBS = $(EPICS_BASE_LIB)/$(T_A)/libca.a $(EPICS_BASE_LIB)/$(T_A)/libCom.a $(EPICS_EXTENSIONS_LIB)/$(T_A)/libUnix.a
-#USR_LDFLAGS = -L$(EPICS_EXTENSIONS_LIB)/$(T_A) -L$(MOTIF)/lib -L$(X11_LIB)
+#DEPLIBS = $(EPICS_BASE_LIB)/libca.a $(EPICS_BASE_LIB)/libCom.a $(EPICS_EXTENSIONS_LIB)/libUnix.a
+#USR_LDFLAGS = -L$(EPICS_EXTENSIONS_LIB) -L$(MOTIF)/lib -L$(X11_LIB)
 #USR_LDLIBS = -lca -lCom -lUnix -lXm -lXt -lX11 -lm
 
 SRCS =  ../acknowledge.c  \
@@ -83,6 +92,6 @@ PROD = alh
 
 include $(EPICS)/config/RULES.Unix
 
-alh: $(OBJS) $(DEP_LIBS)
+alh: $(OBJS) $(DEPLIBS)
 	$(LINK.c) -o $@ $(OBJS) $(LDLIBS)
 
