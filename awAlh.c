@@ -83,6 +83,7 @@ void awUpdateRowWidgets(line)                 Update line widgets
 #define	MENU_VIEW_OPMOD			10401
 #define	MENU_VIEW_ALARMLOG		10402
 #define	MENU_VIEW_CURRENT		10403
+#define MENU_VIEW_CMLOG			10404
 
 #define MENU_SETUP_BEEP_MINOR	10500
 #define MENU_SETUP_BEEP_MAJOR	10501
@@ -138,6 +139,10 @@ static void writeMessBroadcast(Widget dialog, Widget text_w);
 static void helpMessBroadcast(Widget w);
 static void canselMessBroadcast(Widget w);
 static void messBroadcastFileUnlock();
+
+#ifdef CMLOG
+static void awCMLOGstartBrowser(void);
+#endif
 
 
 /******************************************************
@@ -210,10 +215,15 @@ static MenuItem action_menuNew[] = {
 		             alhViewCallback, (XtPointer)MENU_VIEW_COLLAPSEBRANCH,    (MenuItem *)NULL, 0 },
 		         { "",                       SeparatorGadgetClass,  '\0', NULL, NULL,
 		             NULL,    NULL,   (MenuItem *)NULL, 0 },
+
 		         { "Current Alarm History Window",  ToggleButtonGadgetClass, 'H', NULL, NULL,
-		             alhViewCallback, (XtPointer)MENU_VIEW_CURRENT,         (MenuItem *)NULL, 0 },
+		             alhViewCallback, (XtPointer)MENU_VIEW_CURRENT,           (MenuItem *)NULL, 0 },
 		         { "Configuration File Window",     ToggleButtonGadgetClass, 'f', NULL, NULL,
-		             alhViewCallback, (XtPointer)MENU_VIEW_CONFIG,           (MenuItem *)NULL, 0 },
+		             alhViewCallback, (XtPointer)MENU_VIEW_CONFIG,            (MenuItem *)NULL, 0 },
+#ifdef CMLOG
+		         { "Start CMLOG Log Browser", PushButtonGadgetClass, 's', NULL, NULL,
+		             alhViewCallback, (XtPointer)MENU_VIEW_CMLOG, (MenuItem *)NULL, 0 },
+#endif
 		         { "Alarm Log File Window",         ToggleButtonGadgetClass, 'r', NULL, NULL,
 		             alhViewCallback, (XtPointer)MENU_VIEW_ALARMLOG,         (MenuItem *)NULL, 0 },
 		         { "Operation Log File Window",     ToggleButtonGadgetClass, 'O', NULL, NULL,
@@ -588,7 +598,13 @@ static void alhViewCallback(Widget widget,XtPointer calldata,XtPointer cbs)
 		/* Display Operation Log File */
 		fileViewWindow(area->form_main,OPMOD_FILE,widget);
 		break;
+#ifdef CMLOG
+	case MENU_VIEW_CMLOG:
 
+		/* Start CMLOG Browser */
+		awCMLOGstartBrowser();
+		break;
+#endif
 	case MENU_VIEW_PROPERTIES:
 
 		/* Display Group/Chan Properties */
@@ -1344,3 +1360,32 @@ void awUpdateRowWidgets(struct anyLine *line)
 	XmStringFree(strOld);
 }
 
+
+/*+**************************************************************************
+ *
+ * Function:	awCMLOGstartBrowser
+ *
+ * Description:	Starts the standard Motif CMLOG browser
+ *
+ **************************************************************************-*/
+
+#ifdef CMLOG
+static void awCMLOGstartBrowser (void)
+{
+   switch (fork()) {
+				/* Error */
+   case -1:
+      perror("Cannot fork() to start CMLOG browser");
+      return;
+				/* Child */
+   case 0:
+      execlp(CMLOG_BROWSER, CMLOG_BROWSER, 0);
+      perror("Cannot start CMLOG browser - check PATH");
+      break;
+				/* Parent */
+   default:
+      break;
+   }
+   return;
+}
+#endif

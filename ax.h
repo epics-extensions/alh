@@ -216,6 +216,11 @@ void alLogSetupAlarmFile( char *filename);
 void alLogSetupOpmodFile( char *filename);
 void alLogSetupSaveConfigFile( char *filename);
 
+#ifdef CMLOG
+void alConnect(void);
+void alDisconnect(void);
+#endif
+
 /********************************************************************
   alView.c   function prototypes
 *********************************************************************/

@@ -38,6 +38,10 @@ alLogSetupSaveConfigFile(filename)			Log setup save config file
 #include <sys/msg.h>
 #endif
 
+#ifdef CMLOG
+#include <cmlog.h>
+#endif
+
 #include "alh.h"
 #include "alLib.h"
 #include "line.h"
@@ -105,6 +109,15 @@ extern int DBMsgQId;
 extern int _message_broadcast_flag;
 extern int notsave;
 
+#ifdef CMLOG
+				/* CMLOG flags & variables */
+extern int use_CMLOG_alarm;
+extern int use_CMLOG_opmod;
+cmlog_client_t cmlog;
+char *cm_host;
+extern ALINK *alhArea;
+#endif
+
 struct UserInfo {
 char *loginid;
 char *real_world_name;
@@ -120,15 +133,38 @@ extern  char deviceName[64];       /* Albert1 reserved;  will be send to DB */
 
 #define REGULAR_RECORD      1  /* usual alLog mess. */ 
 #define CONNECT_ALARM       2  /* specific alLog format about connection lost */
-#define STOP_LOGGING_ALARM  3  /* specific alLog format about stoping loging */
+#define STOP_LOGGING_ALARM  3  /* specific alLog format about stopping loging */
 #define MESSAGE_QUEUE_ALARM 4  /* specific alLog format about MQ problems */
-#define ACK_CHANEL          5  /*  op_mod action which will be saving in DB */
+#define ACK_CHANNEL         5  /*  op_mod action which will be saving in DB */
 #define ACK_GROUP           6  /*  Don't used now  */
 #define CHANGE_MASK         7  /*  op_mod action which will be saving in DB */
 #define CHANGE_MASK_GROUP   8  /*  op_mod action which will be saving in DB */
+#define FORCE_MASK          9  /*  op_mod action which will be saving in DB */
+#define FORCE_MASK_GROUP   10  /*  op_mod action which will be saving in DB */
 
 #define ALARM_LOG_DB 1 /* We are write to ALARM_LOG database */
 #define OP_MOD_DB    2 /* We are write to OP_MOD    database */
+
+
+#ifdef CMLOG
+/***********************************************************************
+ * open the CMLOG connection
+ ***********************************************************************/
+void alCMLOGconnect(void)
+{
+   cmlog = cmlog_open("alh");
+   cm_host = malloc(strlen(userID.myhostname)+strlen(userID.displayName)+4);
+   sprintf(cm_host, "%s (%s)", userID.myhostname, userID.displayName);
+}
+
+/***********************************************************************
+ * close the CMLOG connection
+ ***********************************************************************/
+void alCMLOGdisconnect(void)
+{
+   cmlog_close(cmlog);
+}
+#endif
 
 /***********************************************************************
  * log the channel alarm at the alarm logfile
@@ -136,6 +172,29 @@ extern  char deviceName[64];       /* Albert1 reserved;  will be send to DB */
 void alLogAlarm(time_t *ptimeofdayAlarm,struct chanData *cdata,int stat,
 int sev,int h_unackStat,int h_unackSevr)
 {
+#ifdef CMLOG
+   if (use_CMLOG_alarm && masterFlag) {
+	char cm_text[80];
+	sprintf(cm_text, "(%s / %s)",
+	    alarmStatusString[h_unackStat],
+	    alarmSeverityString[h_unackSevr]);
+
+	cmlog_logmsg(cmlog,
+	    0,			/* verbosity */
+	    0,			/* dummy severity */
+	    REGULAR_RECORD,	/* code */
+	    "alh-Alarm",	/* facility */
+	    "host=%s status=%s severity=%s device=%s text=%s domain=%s value=%s",
+	    cm_host,
+	    alarmStatusString[stat],
+	    alarmSeverityString[sev],
+	    cdata->name,
+	    cm_text,
+	    alhArea->blinkString,
+	    cdata->value);
+   }
+#endif
+
 	sprintf(buff,
 	    "%-28s %-12s %-16s %-12s %-16s %-40.40s\n",
 	    cdata->name,
@@ -151,6 +210,23 @@ int sev,int h_unackStat,int h_unackSevr)
  ***********************************************************************/
 void alLogConnection(const char *pvname,const char *ind)
 {
+#ifdef CMLOG
+   if (use_CMLOG_alarm && masterFlag) {
+	cmlog_logmsg(cmlog,
+	    0,			/* verbosity */
+	    0,			/* dummy severity */
+	    CONNECT_ALARM,	/* code */
+	    "alh-Alarm",	/* facility */
+	    "host=%s status=%s severity=%s device=%s text=%s domain=%s",
+	    cm_host,
+	    "CONNECT",
+	    "ERROR",
+	    pvname,
+	    ind,
+	    alhArea->blinkString);
+   }
+#endif
+
 	sprintf(buff,"%-31s: [%s]\n",ind,pvname);
 	filePrintf(fl,buff,NULL,0);
 }
@@ -160,10 +236,32 @@ void alLogConnection(const char *pvname,const char *ind)
  ***********************************************************************/
 void alLogAckChan(struct anyLine *line)
 {
+#ifdef CMLOG
+   if (use_CMLOG_opmod) {
+	char cm_text[80];
+	sprintf(cm_text, "Global Ack Channel (%s / %s)",
+	    alarmStatusString[line->unackStat],
+	    alarmSeverityString[line->unackSevr]);
+
+	cmlog_logmsg(cmlog,
+	    1,			/* verbosity */
+	    0,			/* dummy severity */
+	    ACK_CHANNEL,	/* code */
+	    "alh-Opmod",	/* facility */
+	    "host=%s status=%s severity=%s device=%s text=%s domain=%s",
+	    cm_host,
+	    alarmStatusString[line->curStat],
+	    alarmSeverityString[line->curSevr],
+	    line->pname,
+	    cm_text,
+	    alhArea->blinkString);
+   }
+#endif
+
 	sprintf(buff,"Ack Channel--- %-28s %-16s %-16s\n",line->pname,
 	    alarmSeverityString[line->unackSevr],
 	    alarmSeverityString[line->curSevr]);
-	filePrintf(fo,buff,NULL,ACK_CHANEL);  /* update the file */	
+	filePrintf(fo,buff,NULL,ACK_CHANNEL);  /* update the file */	
 }
 
 /***********************************************************************
@@ -183,6 +281,26 @@ void alLogGblAckChan(struct chanData *cdata)
  ***********************************************************************/
 void alLogAckGroup(struct anyLine *line)
 {
+#ifdef CMLOG
+   if (use_CMLOG_opmod) {
+	char cm_text[80];
+	sprintf(cm_text, "Global Ack Group (%s)",
+	    alarmSeverityString[line->unackSevr]);
+
+	cmlog_logmsg(cmlog,
+	    1,			/* verbosity */
+	    0,			/* dummy severity */
+	    ACK_GROUP,		/* code */
+	    "alh-Opmod",	/* facility */
+	    "host=%s severity=%s device=%s text=%s domain=%s",
+	    cm_host,
+	    alarmSeverityString[line->curSevr],
+	    line->pname,
+	    cm_text,
+	    alhArea->blinkString);
+   }
+#endif
+
 	sprintf(buff,"Ack Group---   %-28s %-16s %-16s\n",line->pname,
 	    alarmSeverityString[line->unackSevr],
 	    alarmSeverityString[alHighestSeverity(line->curSev)]);
@@ -196,6 +314,28 @@ void alLogChanChangeMasks(CLINK *clink,int maskno,int maskid)
 {
 	char buff1[6];
 	alGetMaskString(clink->pchanData->curMask,buff1);
+
+#ifdef CMLOG
+   if (use_CMLOG_opmod) {
+	char *cm_mask[3] = {"OFF", "ON", "RESET"};
+	char cm_text[80];
+	sprintf(cm_text, "Channel Mask [%s] %s <%s>",
+	    masksdata[3+maskid],
+	    cm_mask[maskno],
+	    buff1);
+
+	cmlog_logmsg(cmlog,
+	    2,			/* verbosity */
+	    0,			/* dummy severity */
+	    CHANGE_MASK,	/* code */
+	    "alh-Opmod",	/* facility */
+	    "host=%s device=%s text=%s domain=%s",
+	    cm_host,
+	    clink->pchanData->name,
+	    cm_text,
+	    alhArea->blinkString);
+   }
+#endif
 
 	if (maskno == 0)
 		sprintf(buff,"Chan  Mask ID ---[%-21s] OFF   [%s] <%s>\n",
@@ -218,9 +358,30 @@ void alLogForcePVGroup(GLINK *glink,int ind)
 	struct groupData *gdata;
 	char buff1[6];
 
+	gdata = glink->pgroupData;
+	awGetMaskString(gdata->mask,buff1);
+
 	if (ind == OPERATOR) {
-		gdata = glink->pgroupData;
-		awGetMaskString(gdata->mask,buff1);
+#ifdef CMLOG
+	   if (use_CMLOG_opmod) {
+	      char cm_text[80];
+	      sprintf(cm_text, "OPER Group PV FORCE <%s> [%d] [%s]",
+		      buff1,
+		      gdata->forcePVValue,
+		      gdata->forcePVName);
+	      
+	      cmlog_logmsg(cmlog,
+		      2,	           /* verbosity */
+		      0,	           /* dummy severity */
+		      CHANGE_MASK_GROUP,   /* code */
+		      "alh-Opmod",         /* facility */
+		      "host=%s device=%s text=%s domain=%s",
+		      cm_host,
+		      gdata->name,
+		      cm_text,
+		      alhArea->blinkString);
+	   }
+#endif
 		sprintf(buff,"OPERATOR:Group PV FORCE---[%s] <%s> [%d] [%s]\n",
 		    gdata->name,
 		    buff1,
@@ -230,8 +391,26 @@ void alLogForcePVGroup(GLINK *glink,int ind)
 	}
 
 	if (ind == AUTOMATIC) {
-		gdata = glink->pgroupData;
-		awGetMaskString(gdata->mask,buff1);
+#ifdef CMLOG
+	   if (use_CMLOG_opmod) {
+	      char cm_text[80];
+	      sprintf(cm_text, "AUTO Group PV FORCE <%s> [%d] [%s]",
+		      buff1,
+		      gdata->forcePVValue,
+		      gdata->forcePVName);
+	      
+	      cmlog_logmsg(cmlog,
+		      2,	          /* verbosity */
+		      0,	          /* dummy severity */
+		      FORCE_MASK_GROUP,   /* code */
+		      "alh-Opmod",        /* facility */
+		      "host=%s device=%s text=%s domain=%s",
+		      cm_host,
+		      gdata->name,
+		      cm_text,
+		      alhArea->blinkString);
+	   }
+#endif
 		sprintf(buff,"AUTOMATIC:Group PV FORCE---[%s] <%s> [%d] [%s]\n",
 		    gdata->name,
 		    buff1,
@@ -250,9 +429,30 @@ void alLogResetPVGroup(GLINK *glink,int ind)
 	struct groupData *gdata;
 	char buff1[6];
 
+	gdata = glink->pgroupData;
+	awGetMaskString(gdata->mask,buff1);
+
 	if (ind == OPERATOR) {
-		gdata = glink->pgroupData;
-		awGetMaskString(gdata->mask,buff1);
+#ifdef CMLOG
+	   if (use_CMLOG_opmod) {
+	      char cm_text[80];
+	      sprintf(cm_text, "OPER Group PV RESET <%s> [%d] [%s]",
+		      buff1,
+		      gdata->resetPVValue,
+		      gdata->forcePVName);
+	      
+	      cmlog_logmsg(cmlog,
+		      2,	           /* verbosity */
+		      0,	           /* dummy severity */
+		      CHANGE_MASK_GROUP,   /* code */
+		      "alh-Opmod",         /* facility */
+		      "host=%s device=%s text=%s domain=%s",
+		      cm_host,
+		      gdata->name,
+		      cm_text,
+		      alhArea->blinkString);
+	   }
+#endif
 		sprintf(buff,"OPERATOR:Group PV RESET---[%s] <%s> [%d] [%s]\n",
 		    gdata->name,
 		    buff1,
@@ -262,8 +462,26 @@ void alLogResetPVGroup(GLINK *glink,int ind)
 	}
 
 	if (ind == AUTOMATIC) {
-		gdata = glink->pgroupData;
-		awGetMaskString(gdata->mask,buff1);
+#ifdef CMLOG
+	   if (use_CMLOG_opmod) {
+	      char cm_text[80];
+	      sprintf(cm_text, "AUTO Group PV RESET <%s> [%d] [%s]",
+		      buff1,
+		      gdata->resetPVValue,
+		      gdata->forcePVName);
+	      
+	      cmlog_logmsg(cmlog,
+		      2,	          /* verbosity */
+		      0,	          /* dummy severity */
+		      FORCE_MASK_GROUP,   /* code */
+		      "alh-Opmod",        /* facility */
+		      "host=%s device=%s text=%s domain=%s",
+		      cm_host,
+		      gdata->name,
+		      cm_text,
+		      alhArea->blinkString);
+	   }
+#endif
 		sprintf(buff,"AUTOMATIC:Group PV RESET---[%s] <%s> [%d] [%s]\n",
 		    gdata->name,
 		    buff1,
@@ -282,9 +500,30 @@ void alLogForcePVChan(CLINK *clink,int ind)
 	struct chanData *cdata;
 	char buff1[6];
 
+	cdata = clink->pchanData;
+	alGetMaskString(cdata->curMask,buff1);
+
 	if (ind == OPERATOR) {
-		cdata = clink->pchanData;
-		alGetMaskString(cdata->curMask,buff1);
+#ifdef CMLOG
+	   if (use_CMLOG_opmod) {
+	      char cm_text[80];
+	      sprintf(cm_text, "OPER Channel PV FORCE <%s> [%d] [%s]",
+		      buff1,
+		      cdata->forcePVValue,
+		      cdata->forcePVName);
+	      
+	      cmlog_logmsg(cmlog,
+		      2,	           /* verbosity */
+		      0,	           /* dummy severity */
+		      CHANGE_MASK,         /* code */
+		      "alh-Opmod",         /* facility */
+		      "host=%s device=%s text=%s domain=%s",
+		      cm_host,
+		      cdata->name,
+		      cm_text,
+		      alhArea->blinkString);
+	   }
+#endif
 		sprintf(buff,"OPERATOR:Chan  PV FORCE---[%s] <%s> [%d] [%s]\n",
 		    cdata->name,
 		    buff1,
@@ -294,8 +533,26 @@ void alLogForcePVChan(CLINK *clink,int ind)
 	}
 
 	if (ind == AUTOMATIC) {
-		cdata = clink->pchanData;
-		alGetMaskString(cdata->curMask,buff1);
+#ifdef CMLOG
+	   if (use_CMLOG_opmod) {
+	      char cm_text[80];
+	      sprintf(cm_text, "AUTO Channel PV FORCE <%s> [%d] [%s]",
+		      buff1,
+		      cdata->forcePVValue,
+		      cdata->forcePVName);
+	      
+	      cmlog_logmsg(cmlog,
+		      2,	          /* verbosity */
+		      0,	          /* dummy severity */
+		      FORCE_MASK,         /* code */
+		      "alh-Opmod",        /* facility */
+		      "host=%s device=%s text=%s domain=%s",
+		      cm_host,
+		      cdata->name,
+		      cm_text,
+		      alhArea->blinkString);
+	   }
+#endif
 		sprintf(buff,"AUTOMATIC:Chan  PV FORCE---[%s] <%s> [%d] [%s]\n",
 		    cdata->name,
 		    buff1,
@@ -315,9 +572,30 @@ void alLogResetPVChan(CLINK *clink,int ind)
 	struct chanData *cdata;
 	char buff1[6];
 
+	cdata = clink->pchanData;
+	alGetMaskString(cdata->curMask,buff1);
+
 	if (ind == OPERATOR) {
-		cdata = clink->pchanData;
-		alGetMaskString(cdata->curMask,buff1);
+#ifdef CMLOG
+	   if (use_CMLOG_opmod) {
+	      char cm_text[80];
+	      sprintf(cm_text, "OPER Channel PV RESET <%s> [%d] [%s]",
+		      buff1,
+		      cdata->resetPVValue,
+		      cdata->forcePVName);
+	      
+	      cmlog_logmsg(cmlog,
+		      2,	           /* verbosity */
+		      0,	           /* dummy severity */
+		      CHANGE_MASK,         /* code */
+		      "alh-Opmod",         /* facility */
+		      "host=%s device=%s text=%s domain=%s",
+		      cm_host,
+		      cdata->name,
+		      cm_text,
+		      alhArea->blinkString);
+	   }
+#endif
 		sprintf(buff,"OPERATOR:Chan  PV RESET---[%s] <%s> [%d] [%s]\n",
 		    cdata->name,
 		    buff1,
@@ -327,8 +605,26 @@ void alLogResetPVChan(CLINK *clink,int ind)
 
 	}
 	if (ind == AUTOMATIC) {
-		cdata = clink->pchanData;
-		alGetMaskString(cdata->curMask,buff1);
+#ifdef CMLOG
+	   if (use_CMLOG_opmod) {
+	      char cm_text[80];
+	      sprintf(cm_text, "AUTO Channel PV RESET <%s> [%d] [%s]",
+		      buff1,
+		      cdata->resetPVValue,
+		      cdata->forcePVName);
+	      
+	      cmlog_logmsg(cmlog,
+		      2,	          /* verbosity */
+		      0,	          /* dummy severity */
+		      FORCE_MASK,         /* code */
+		      "alh-Opmod",        /* facility */
+		      "host=%s device=%s text=%s domain=%s",
+		      cm_host,
+		      cdata->name,
+		      cm_text,
+		      alhArea->blinkString);
+	   }
+#endif
 		sprintf(buff,"AUTOMATIC:Chan  PV RESET---[%s] <%s> [%d] [%s]\n",
 		    cdata->name,
 		    buff1,
@@ -356,22 +652,34 @@ void alLogExit()
 void alLogChangeGroupMasks(GLINK *glink,int maskno,int maskid)
 {
 	char buff1[6];
-
+	char *mask_str[3] = {"OFF", "ON", "RESET"};
 	awGetMaskString(glink->pgroupData->mask,buff1);
 
-	if (maskno == 0)
-		sprintf(buff,"Group Mask ID ---[%-21s] OFF   [%s] <%s>\n",
-		    masksdata[3+maskid],glink->pgroupData->name,
-		    buff1);
-	if (maskno == 1)
-		sprintf(buff,"Group Mask ID ---[%-21s] ON    [%s] <%s>\n",
-		    masksdata[3+maskid],glink->pgroupData->name,
-		    buff1);
-	if (maskno == 2)
-		sprintf(buff,"Group Mask ID ---[%-21s] RESET [%s] <%s>\n",
-		    masksdata[3+maskid],glink->pgroupData->name,
-		    buff1);
+#ifdef CMLOG
+   if (use_CMLOG_opmod) {
+	char cm_text[80];
+	sprintf(cm_text, "Group Mask [%s] %s <%s>",
+	    masksdata[3+maskid],
+	    mask_str[maskno],
+	    buff1);
 
+	cmlog_logmsg(cmlog,
+	    2,			/* verbosity */
+	    0,			/* dummy severity */
+	    CHANGE_MASK_GROUP,	/* code */
+	    "alh-Opmod",	/* facility */
+	    "host=%s device=%s text=%s domain=%s",
+	    cm_host,
+	    glink->pgroupData->name,
+	    cm_text,
+	    alhArea->blinkString);
+   }
+#endif
+
+	sprintf(buff,"Group Mask ID ---[%-21s] %-5s [%s] <%s>\n",
+	    masksdata[3+maskid], mask_str[maskno],
+	    glink->pgroupData->name,
+	    buff1);
 	filePrintf(fo,buff,NULL,0);        /* update the file */
 }
 
