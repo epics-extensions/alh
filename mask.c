@@ -39,6 +39,8 @@ static char *sccsId = "@(#) $Id$";
 #include "ax.h"
 
 extern int _passive_flag;
+extern const char *masksdata[];
+extern const char *mask_str[];
 
 typedef struct {
 	char *label;
@@ -356,7 +358,7 @@ XtPointer cbs)
 	void *link;
 	int maskid,maskno;
 	int linkType;
-
+	char buff1[6];
 
 	maskid = index/ 10;
 	maskno = index % 10;
@@ -370,11 +372,22 @@ XtPointer cbs)
 		if (linkType == GROUP){
 			if (maskid == ALARMACK) alRemoveNoAck1HrTimerGroup(link);
 			alForceGroupMask(link,maskid,maskno);
-			alLogChangeGroupMasks(link,maskno,maskid);
+			awGetMaskString(((GLINK*)link)->pgroupData->mask,buff1);
+			alLogOpModMessage(CHANGE_MASK,(GCLINK*)link,
+				"Group Mask [%s] %s <%s>",
+				masksdata[maskid],
+				mask_str[maskno],
+				buff1);
 		} else {
 			if (maskid == ALARMACK) alRemoveNoAck1HrTimerChan(link);
 			alForceChanMask(link,maskid,maskno);
-			alLogChangeChanMasks(link,maskno,maskid);
+
+			alGetMaskString(((CLINK*)link)->pchanData->curMask,buff1);
+			alLogOpModMessage(CHANGE_MASK,(GCLINK*)link,
+				"Channel Mask [%s] %s <%s>",
+				masksdata[maskid],
+				mask_str[maskno],
+				buff1);
 		}
 		silenceCurrentReset(area);
 	} else {

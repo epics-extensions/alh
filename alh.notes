@@ -405,3 +405,8 @@ Thu Feb 27 10:59:56 CST 2003
 	logical operations on up to 6 pvs. The result of the operations is then
 	compared to the forcePV forceValue and resetValue to determine whether
 	to set group/channel masks to the forceMask or resetMask.
+
+Fri Feb 28 16:38:19 CST 2003
+	Changed opMod file output. Now contains top group name followed by
+	group or channel name each followed by a colon or just a colon if
+	the name is not available.

@@ -174,7 +174,7 @@ static void axExitArea_callback(Widget w,ALINK *area,
 {
 	SNODE *proot;
 
-	alLogExit();
+	alLogOpModMessage(0,0,"Setup---Exit");
 	XUnmapWindow(XtDisplay(area->runtimeToplevel),
 	    XtWindow(area->runtimeToplevel));
 	if (area->toplevel) {
@@ -298,20 +298,20 @@ static void silenceOneHourReset(void *area)
 /***************************************************
  silenceCurrent button toggle callback
 ****************************************************/
-void silenceCurrent_callback(Widget w,int userdata,
+void silenceCurrent_callback(Widget w,ALINK *area,
 XmAnyCallbackStruct *call_data)
 {
 	psetup.silenceCurrent = psetup.silenceCurrent?FALSE:TRUE;
 	if (psetup.silenceCurrent)
-		alLogOpMod("Silence Current set to TRUE\n");
-		else
-		alLogOpMod("Silence Current set to FALSE\n");
+		alLogOpModMessage(0,0,"Silence Current set to TRUE");
+	else
+		alLogOpModMessage(0,0,"Silence Current set to FALSE");
 }
 
 /***************************************************
  silenceOneHour button toggle callback
 ****************************************************/
-void silenceOneHour_callback(Widget w,void * area,
+void silenceOneHour_callback(Widget w,ALINK* area,
 XmAnyCallbackStruct *call_data)
 {
 	static XtIntervalId intervalId = 0;
@@ -323,13 +323,13 @@ XmAnyCallbackStruct *call_data)
 		    (unsigned long)(1000*seconds),
 		    (XtTimerCallbackProc)silenceOneHourReset,
 		    (XtPointer)area);
-		alLogOpMod("Silence One Hour set to TRUE\n");
+		alLogOpModMessage(0,0,"Silence One Hour set to TRUE");
 	} else {
 		if (intervalId) {
 			XtRemoveTimeOut(intervalId);
 			intervalId = 0;
 		}
-		alLogOpMod("Silence One Hour set to FALSE\n");
+		alLogOpModMessage(0,0,"Silence One Hour set to FALSE");
 	}
 }
 
@@ -340,9 +340,9 @@ void silenceForeverChangeState(ALINK *area)
 {
 	psetup.silenceForever = psetup.silenceForever?FALSE:TRUE;
 	if (psetup.silenceForever)
-		alLogOpMod("Silence Forever set to TRUE\n");
+		alLogOpModMessage(0,0,"Silence Forever set to TRUE");
 		else
-		alLogOpMod("Silence Forever set to FALSE\n");
+		alLogOpModMessage(0,0,"Silence Forever set to FALSE");
 	changeSilenceForeverText(area);
 }
 

@@ -30,6 +30,8 @@ static char *sccsId = "@(#) $Id$";
 extern int _passive_flag;	/* Passive flag. Albert */
 extern int _global_flag;
 extern int _DB_call_flag;
+extern char * alhAlarmSeverityString[];
+extern const char *executionModeString[];
 
 /*************************************************************    
  * channel acknowledgement
@@ -97,12 +99,18 @@ XmAnyCallbackStruct * cbs)
 	if (line->linkType == GROUP) {
 		glink = (GLINK *)(line->link);
 		if (glink->pgroupData->unackSevr == NO_ALARM) return;
-		alLogAckGroup(line);
+		alLogOpModAckMessage(ACK_GROUP,(GCLINK*)glink,
+			"%s Ack Group (%s)",
+			executionModeString[_global_flag],
+			alhAlarmSeverityString[line->unackSevr]);
 		ackGroup(glink);
 	} else if (line->linkType == CHANNEL) {
 		clink = (CLINK *)(line->link);
 		if (clink->pchanData->unackSevr == NO_ALARM) return;
-		alLogAckChan(line);
+		alLogOpModAckMessage(ACK_CHANNEL,(GCLINK*)clink,
+			"%s Ack Channel (%s)",
+			executionModeString[_global_flag],
+			alhAlarmSeverityString[line->unackSevr]);
 		ackChan(clink);
 	}
 }

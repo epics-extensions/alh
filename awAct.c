@@ -273,7 +273,8 @@ static void actFileCallback(Widget widget, XtPointer calldata, XtPointer cbs)
 
 	case MENU_FILE_SAVE:
 
-		alLogSetupSaveConfigFile(psetup.configFile);
+		alLogOpModMessage(0,0,
+				"Setup Save New Config: %s",psetup.configFile);
 		alWriteConfig(psetup.configFile,area->pmainGroup);
 		break;
 

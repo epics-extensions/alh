@@ -49,7 +49,6 @@ static char *sccsId = "@(#) $Id$";
 #include "ax.h"
 
 char *silenceString[] = {"Off","On"};
-const char *executionModeString[] = {"Local","Global"};
 const char *executionStateString[] = {"Active","Passive"};
 char *disabledForcePVCountString[] = {" ","Disabled forcePVs:"};
 
@@ -64,6 +63,7 @@ extern Display *display;
 extern char *alhAlarmSeverityString[];
 extern int _main_window_flag;
 extern int (*default_display_filter)(GCLINK *);
+extern const char *executionModeString[];
 
 ALINK *alhArea;
 
@@ -213,7 +213,8 @@ void setupConfig(char *filename,int program,ALINK *areaOld)
 		}
 		else alGetConfig(pmainGroup,filename,CA_CONNECT_NO);
 		/* Log new configfile filename */
-		alLogSetupConfigFile(filename);
+		alLogOpModMessage(0,0,
+			"Setup Config File : %s",filename);
 		if (sllFirst(pmainGroup)) strcpy(psetup.configFile,filename);
 	} else{
 		if (program == ACT) alCreateConfig(pmainGroup);
@@ -665,7 +666,7 @@ void createMainWindowWidgets(ALINK *area)
 	    (XtCallbackProc)silenceOneHour_callback,area);
 
 	XtAddCallback(area->silenceCurrent, XmNvalueChangedCallback,
-	    (XtCallbackProc)silenceCurrent_callback,0);
+	    (XtCallbackProc)silenceCurrent_callback,area);
 
 	/* Create Disabled ForcePV Count string for the messageArea */
 	str = XmStringCreateSimple(disabledForcePVCountString[0]);

@@ -70,9 +70,9 @@ void pixelData(Widget iconBoard);
 XtErrorMsgHandler trapExtraneousWarningsHandler( String message);
 void createRuntimeWindow( ALINK *area);
 void silenceCurrentReset(void *area);
-void silenceCurrent_callback( Widget w, int notUsed, XmAnyCallbackStruct *call_data);
+void silenceCurrent_callback( Widget w, ALINK* area, XmAnyCallbackStruct *call_data);
 void silenceForeverChangeState( ALINK *area);
-void silenceOneHour_callback( Widget w, void * area, XmAnyCallbackStruct *call_data);
+void silenceOneHour_callback( Widget w, ALINK* area, XmAnyCallbackStruct *call_data);
 
 
 /********************************************************************
@@ -227,24 +227,13 @@ void alRemoveNoAck1HrTimerChan(CLINK *clink);
   alLog.c   function prototypes
 *********************************************************************/
 
-void alLogAlarm( time_t *ptimeofdayAlarm, struct chanData *cdata, int stat,
-int sev, int acks, int ackt);
+void alLogAlarmMessage(time_t *ptimeofdayAlarm,int messageCode,CLINK* clink,const char *fmt,...);
+void alLogOpModMessage(int messageCode,GCLINK* clink,const char *fmt,...);
 void alLogConnection(const char *pvname,const char *ind);
 void alLogAckChan( struct anyLine *line);
 void alLogAckGroup( struct anyLine *line);
-void alLogSetBeepSevr(char *name,const char *value);
 void alLogChangeChanMasks( CLINK *clink, int maskno, int maskid);
 void alLogChangeGroupMasks( GLINK *glink, int maskno, int maskid);
-void alLogForcePVGroup( GLINK *glink, int ind);
-void alLogResetPVGroup( GLINK *glink, int ind);
-void alLogForcePVChan( CLINK *clink, int ind);
-void alLogResetPVChan( CLINK *clink, int ind);
-void alLogOpMod(char *);
-void alLogExit(void);
-void alLogSetupConfigFile( char *filename);
-void alLogSetupAlarmFile( char *filename);
-void alLogSetupOpmodFile( char *filename);
-void alLogSetupSaveConfigFile( char *filename);
 void alLog2DBAckChan (char *name);
 void alLogNotSaveStart(int not_save_time);
 void alLogNotSaveFinish();

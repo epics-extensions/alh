@@ -18,32 +18,40 @@
   Routines for logging messages
 **********************************************************************/
 
-static char *sccsId = "@@(#) $Id$";
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 #include <errno.h>
 #ifdef WIN32
+#if 0
 #include <process.h>
+#endif
 #else
+#if 0
 #include <unistd.h>
+#endif
 #include <sys/msg.h>
 #endif
+
 
 #ifdef CMLOG
 #include <cmlog.h>
 #endif
 
+#include "ax.h"
+#if 0
 #include "alh.h"
 #include "alLib.h"
 #include "line.h"
-#include "ax.h"
+#endif
 #include "truncateFile.h"
 
 extern int DEBUG;
 extern int _DB_call_flag;
+#if 0
 extern int _global_flag;
+#endif
 extern int _lock_flag;
 extern int _message_broadcast_flag;
 extern int _printer_flag;           /* Printer flag. Albert */
@@ -66,17 +74,17 @@ extern  char deviceName[64];       /* Albert1 reserved;  will be send to DB */
 extern int use_CMLOG_alarm;
 extern int use_CMLOG_opmod;
 cmlog_client_t cmlog;
-extern ALINK *alhArea;
 #endif
+extern ALINK *alhArea;
 
-static const char *masksdata[] = {
+const char *masksdata[] = {
 	        "Add / Cancel",
 	        "Enable / Disable",
 	        "Ack / NoAck",
 	        "Ack / NoAck Transient",
 	        "Log / NoLog "
 };
-static const char *mask_str[3] = {"OFF", "ON", "RESET"};
+const char *mask_str[3] = {"OFF", "ON", "RESET"};
 
 struct setup psetup = {         /* initial files & beeping setup */
 	    "",    /* config file name */
@@ -101,6 +109,7 @@ FILE *fo=0;       /* write opmod file pointer */
 FILE *fl=0;       /* write alarm log file pointer */
 
 char buff[260];
+
 const char *digit2month[12]={"Jan","Feb","Mar","Apr","May","Jun","Jul","Aug",
 		       "Sep","Oct","Nov","Dec"};
 
@@ -110,6 +119,7 @@ char *real_world_name;
 char *myhostname;
 char *displayName;
 };
+#if 0
 
 
 #define REGULAR_RECORD      1  /* usual alLog mess. */ 
@@ -125,12 +135,13 @@ char *displayName;
 #define ALARM_LOG_DB 1 /* We are write to ALARM_LOG database */
 #define OP_MOD_DB    2 /* We are write to OP_MOD    database */
 
+#endif
+
 int filePrintf(FILE *fPointer,char *buf,time_t *ptime,int typeOfRecord);
 #ifndef WIN32
 int write2MQ(int, char *);
 int write2msgQ(int, char *);
 #endif
-
 
 #ifdef CMLOG
 /***********************************************************************
@@ -151,603 +162,158 @@ void alCMLOGdisconnect(void)
 #endif
 
 /***********************************************************************
- * log the channel alarm at the alarm logfile
+ * log channel alarm to the alarm logfile
  ***********************************************************************/
-void alLogAlarm(time_t *ptimeofdayAlarm,struct chanData *cdata,int stat,
-int sev,int unackSevr,int ackT)
+void alLogAlarmMessage(time_t *ptimeofdayAlarm,int messageCode,CLINK* clink,const char* fmt,...)
 {
-	const char *ackTransientsString[] = {"ackT","noackT"};
+    va_list vargs;
+    static char text[1024];  /* DANGER: Fixed buffer size */
+    int nargs=10;
+    Arg args[10];
+    struct chanData *cdata;
+
+    if (clink == NULL ) return;
+    cdata = clink->pchanData;
+    if (cdata == NULL ) return;
+
+    va_start(vargs,fmt);
+    vsprintf(text,fmt,vargs);
+    va_end(vargs);
+
+    if(text[0] == '\0') sprintf(text," ");
 
 #ifdef CMLOG
-   char cm_text[80];
-   if (use_CMLOG_alarm && masterFlag) {
-	    if (_global_flag) {
-		    sprintf(cm_text, "(%s / %s)",
-		    alhAlarmSeverityString[unackSevr],
-		    ackTransientsString[ackT]);
-	    } else {
-		    sprintf(cm_text, "( / )");
-	    }
-
-	    cmlog_logmsg(cmlog,
-		    0,			/* verbosity */
-		    0,			/* dummy severity */
-		    REGULAR_RECORD,	/* code */
-		    "Alarm",            /* facility */
-		    "status=%s severity=%s device=%s message=%s "
-		    "text=%s domain=%s value=%s",
-		    alhAlarmStatusString[stat],
-		    alhAlarmSeverityString[sev],
-		    cdata->name,
-		    (cdata->alias ? cdata->alias : "N/A"),
-		    cm_text,
-		    (alhArea ? alhArea->blinkString : "N/A"),
-		    cdata->value);
-   }
-#endif
-
-        if (_global_flag) {
-		sprintf(buff,
-			"%-28s %-12s %-16s %-12s %-5s %-40.40s\n",
-			cdata->name,
-			alhAlarmStatusString[stat],
-			alhAlarmSeverityString[sev],
-			alhAlarmSeverityString[unackSevr],
-			ackTransientsString[ackT],
-			cdata->value);
-        } else {
-
-		sprintf(buff,
-			"%-28s %-12s %-16s %-40.40s\n",
-			cdata->name,
-			alhAlarmStatusString[stat],
-			alhAlarmSeverityString[sev],
-			cdata->value);
-		}
-		filePrintf(fl,buff,ptimeofdayAlarm,REGULAR_RECORD);
-}
-
-/***********************************************************************
- * log the connection and access changes to alarm log file
- ***********************************************************************/
-void alLogConnection(const char *pvname,const char *ind)
-{
-#ifdef CMLOG
-   if (use_CMLOG_alarm && masterFlag) {
-	cmlog_logmsg(cmlog,
+    cmlog_logmsg(cmlog,
 	    0,			/* verbosity */
 	    0,			/* dummy severity */
-	    CONNECT_ALARM,	/* code */
-	    "Alarm",	        /* facility */
-	    "status=%s severity=%s device=%s text=%s domain=%s",
-	    "CONNECT",
-	    "ERROR",
-	    pvname,
-	    ind,
-	    alhArea->blinkString);
-   }
+	    messageCode,	/* code */
+	    "Alarm",            /* facility */
+	    "status=%s severity=%s device=%s message=%s "
+	    "text=%s domain=%s value=%s",
+	    alhAlarmStatusString[cdata->curStat],
+	    alhAlarmSeverityString[cdata->curSevr],
+	    cdata->name,
+		cdata->name,
+	    (cdata->alias ? cdata->alias : "N/A"),
+	    text,
+	    (alhArea ? alhArea->blinkString : "N/A"),
+	    cdata->value);
 #endif
 
-	sprintf(buff,"%-31s: [%s]\n",ind,pvname);
-	filePrintf(fl,buff,NULL,0);
+	sprintf(buff,
+		"%-28s %-12s %-16s %-20s %-40.40s\n",
+		cdata->name,
+		alhAlarmStatusString[cdata->curStat],
+		alhAlarmSeverityString[cdata->curSevr],
+		text,
+		cdata->value);
+
+	filePrintf(fl,buff,ptimeofdayAlarm,messageCode);
 }
 
+
 /***********************************************************************
- * log ackchan on operation file
+ * log operator changes to the opMod logfile
  ***********************************************************************/
-void alLogAckChan(struct anyLine *line)
+void alLogOpModMessage(int messageCode,GCLINK* gclink,const char* fmt,...)
 {
+    va_list vargs;
+    static char text[1024];  /* DANGER: Fixed buffer size */
+    int nargs=10;
+    Arg args[10];
+    struct gcData *gcdata=NULL;
+
+    if (gclink) gcdata = gclink->pgcData;
+
+    va_start(vargs,fmt);
+    vsprintf(text,fmt,vargs);
+    va_end(vargs);
+
+    if(text[0] == '\0') sprintf(text," ");
+
 #ifdef CMLOG
     if (use_CMLOG_opmod) {
-	char cm_text[80];
-        if (_global_flag) {
-		sprintf(cm_text, "Global Ack Channel (%s)",
-		    alhAlarmSeverityString[line->unackSevr]);
-	} else {
-		sprintf(cm_text, "Local Ack Channel (%s)",
-		    alhAlarmSeverityString[line->unackSevr]);
-	}
 
-	cmlog_logmsg(cmlog,
-	    1,			/* verbosity */
-	    0,			/* dummy severity */
-	    ACK_CHANNEL,	/* code */
-	    "Opmod",	        /* facility */
-	    "status=%s severity=%s device=%s message=%s text=%s domain=%s",
-	    alhAlarmStatusString[line->curStat],
-	    alhAlarmSeverityString[line->curSevr],
-	    line->pname,
-	    (line->alias ? line->alias : "N/A"),
-	    cm_text,
-	    alhArea->blinkString);
-   }
-#endif
-
-        if (_global_flag) {
-	    sprintf(buff,"Global Ack Channel--- %-28s %-16s %-16s\n",line->pname,
-		alhAlarmSeverityString[line->unackSevr],
-		alhAlarmSeverityString[line->curSevr]);
-	} else {
-	    sprintf(buff,"Local Ack Channel--- %-28s %-16s %-16s\n",line->pname,
-		alhAlarmSeverityString[line->unackSevr],
-		alhAlarmSeverityString[line->curSevr]);
-	}
-	filePrintf(fo,buff,NULL,ACK_CHANNEL);  /* update the file */	
-}
-
-/***********************************************************************
- * log ackgroup on operation file
- ***********************************************************************/
-void alLogAckGroup(struct anyLine *line)
-{
-#ifdef CMLOG
-   if (use_CMLOG_opmod) {
-	char cm_text[80];
-        if (_global_flag) {
-	    sprintf(cm_text, "Global Ack Group (%s)",
-	    alhAlarmSeverityString[line->unackSevr]);
-	} else {
-	    sprintf(cm_text, "Local Ack Group (%s)",
-	    alhAlarmSeverityString[line->unackSevr]);
-	}
-
-	cmlog_logmsg(cmlog,
-	    1,			/* verbosity */
-	    0,			/* dummy severity */
-	    ACK_GROUP,		/* code */
-	    "Opmod",	        /* facility */
-	    "severity=%s device=%s message=%s text=%s domain=%s",
-	    alhAlarmSeverityString[line->curSevr],
-	    line->pname,
-	    (line->alias ? line->alias : "N/A"),
-	    cm_text,
-	    alhArea->blinkString);
-   }
-#endif
-
-        if (_global_flag) {
-	    sprintf(buff,"Global Ack Group---   %-28s %-16s %-16s\n",line->pname,
-		alhAlarmSeverityString[line->unackSevr],
-		alhAlarmSeverityString[alHighestSeverity(line->curSev)]);
-	} else {
-	    sprintf(buff,"Local Ack Group---   %-28s %-16s %-16s\n",line->pname,
-		alhAlarmSeverityString[line->unackSevr],
-		alhAlarmSeverityString[alHighestSeverity(line->curSev)]);
-	}
-	    filePrintf(fo,buff,NULL,0);        /* update the file */
-}
-
-/***********************************************************************
- * log change channel Masks on operation file
- ***********************************************************************/
-void alLogChangeChanMasks(CLINK *clink,int maskno,int maskid)
-{
-	char buff1[6];
-
-	alGetMaskString(clink->pchanData->curMask,buff1);
-
-#ifdef CMLOG
-   if (use_CMLOG_opmod) {
-	char cm_text[80];
-	sprintf(cm_text, "Channel Mask [%s] %s <%s>",
-	    masksdata[maskid],
-	    mask_str[maskno],
-	    buff1);
-
-	cmlog_logmsg(cmlog,
-	    2,			/* verbosity */
-	    0,			/* dummy severity */
-	    CHANGE_MASK,	/* code */
-	    "Opmod",	        /* facility */
+      if (!gcdata) return;
+      cmlog_logmsg(cmlog,
+	    2,	           /* verbosity */
+	    0,	           /* dummy severity */
+	    messageCode,    /* code */
+	    "Opmod",             /* facility */
 	    "device=%s message=%s text=%s domain=%s",
-	    clink->pchanData->name,
-	    (clink->pchanData->alias ? clink->pchanData->alias : "N/A"),
+	    gcdata->name,
+	    (gcdata->alias ? gdata->alias : "N/A"),
 	    cm_text,
 	    alhArea->blinkString);
-   }
+    }
 #endif
 
-	sprintf(buff,"Channel Mask [%s] %s [%s] <%s>\n",
-	    masksdata[maskid],mask_str[maskno],clink->pchanData->name,buff1);
-
-	filePrintf(fo,buff,NULL,CHANGE_MASK);        /* update the file */
-}
-
-/***********************************************************************
- * log PV force group Masks on operation file
- ***********************************************************************/
-void alLogForcePVGroup(GLINK *glink,int ind)
-{
-	struct groupData *gdata;
-	char buff1[6];
-
-	gdata = glink->pgroupData;
-	awGetMaskString(gdata->mask,buff1);
-
-	if (ind == OPERATOR) {
-#ifdef CMLOG
-	   if (use_CMLOG_opmod) {
-	      char cm_text[80];
-	      sprintf(cm_text, "OPER Group PV FORCE <%s> [%d] [%s]",
-		      buff1,
-		      gdata->pforcePV->forceValue,
-		      gdata->pforcePV->name);
-	      
-	      cmlog_logmsg(cmlog,
-		      2,	           /* verbosity */
-		      0,	           /* dummy severity */
-		      FORCE_MASK_GROUP,    /* code */
-		      "Opmod",             /* facility */
-		      "device=%s message=%s text=%s domain=%s",
-		      gdata->name,
-		      (gdata->alias ? gdata->alias : "N/A"),
-		      cm_text,
-		      alhArea->blinkString);
-	   }
-#endif
-		sprintf(buff,"OPERATOR:Group PV FORCE---[%s] <%s> [%f] [%s]\n",
-		    gdata->name,
-		    buff1,
-		    gdata->pforcePV->forceValue,
-		    gdata->pforcePV->name);
-		filePrintf(fo,buff,NULL,0);        /* update the file */
+	if (!alhArea || !alhArea->blinkString){
+		sprintf(buff," : : %s \n",text);
+	} else {
+		if (!gcdata){
+			sprintf(buff,"%s: : %s\n",alhArea->blinkString,text);
+		} else {
+			sprintf(buff,"%s: %s:  %s\n",alhArea->blinkString,gcdata->name,text);
+		}
 	}
 
-	if (ind == AUTOMATIC) {
-#ifdef CMLOG
-	   if (use_CMLOG_opmod) {
-	      char cm_text[80];
-	      sprintf(cm_text, "AUTO Group PV FORCE <%s> [%f] [%s]",
-		      buff1,
-		      gdata->pforcePV->forceValue,
-		      gdata->pforcePV->name);
-	      
-	      cmlog_logmsg(cmlog,
-		      2,	          /* verbosity */
-		      0,	          /* dummy severity */
-		      FORCE_MASK_GROUP,   /* code */
-		      "Opmod",            /* facility */
-		      "device=%s message=%s text=%s domain=%s",
-		      gdata->name,
-		      (gdata->alias ? gdata->alias : "N/A"),
-		      cm_text,
-		      alhArea->blinkString);
-	   }
-#endif
-		sprintf(buff,"AUTOMATIC:Group PV FORCE---[%s] <%s> [%f] [%s]\n",
-		    gdata->name,
-		    buff1,
-		    gdata->pforcePV->forceValue,
-		    gdata->pforcePV->name);
-		filePrintf(fo,buff,NULL,0);        /* update the file */
-	}
+	filePrintf(fo,buff,NULL,messageCode);
 }
 
 
 /***********************************************************************
- * log PV reset group Masks on operation file
+ * log operator changes to the opMod logfile
  ***********************************************************************/
-void alLogResetPVGroup(GLINK *glink,int ind)
+void alLogOpModAckMessage(int messageCode,GCLINK* gclink,const char* fmt,...)
 {
-	struct groupData *gdata;
-	char buff1[6];
-	char buff2[10];
+    va_list vargs;
+    static char text[1024];  /* DANGER: Fixed buffer size */
+    int nargs=10;
+    Arg args[10];
+    struct gcData *gcdata=NULL;
 
-	gdata = glink->pgroupData;
-	awGetMaskString(gdata->mask,buff1);
+    if (gclink) gcdata = gclink->pgcData;
 
-	if (gdata->pforcePV->resetValue == gdata->pforcePV->forceValue ) sprintf(buff2,"%s %d","NE",gdata->pforcePV->forceValue);
-	else sprintf(buff2,"%d",gdata->pforcePV->resetValue);
+    va_start(vargs,fmt);
+    vsprintf(text,fmt,vargs);
+    va_end(vargs);
 
-	if (ind == OPERATOR) {
-#ifdef CMLOG
-	   if (use_CMLOG_opmod) {
-	      char cm_text[80];
-	      sprintf(cm_text, "OPER Group PV RESET <%s> [%s] [%s]",
-		      buff1,
-		      buff2,
-		      gdata->pforcePV->name);
-	      
-	      cmlog_logmsg(cmlog,
-		      2,	           /* verbosity */
-		      0,	           /* dummy severity */
-		      CHANGE_MASK_GROUP,   /* code */
-		      "Opmod",             /* facility */
-		      "device=%s message=%s text=%s domain=%s",
-		      gdata->name,
-		      (gdata->alias ? gdata->alias : "N/A"),
-		      cm_text,
-		      alhArea->blinkString);
-	   }
-#endif
-		sprintf(buff,"OPERATOR:Group PV RESET---[%s] <%s> [%s] [%s]\n",
-		    gdata->name,
-		    buff1,
-		    buff2,
-		    gdata->pforcePV->name);
-		filePrintf(fo,buff,NULL,0);        /* update the file */
-	}
-
-	if (ind == AUTOMATIC) {
-#ifdef CMLOG
-	   if (use_CMLOG_opmod) {
-	      char cm_text[80];
-	      sprintf(cm_text, "AUTO Group PV RESET <%s> [%s] [%s]",
-		      buff1,
-		      buff2,
-		      gdata->pforcePV->name);
-	      
-	      cmlog_logmsg(cmlog,
-		      2,	          /* verbosity */
-		      0,	          /* dummy severity */
-		      CHANGE_MASK_GROUP,  /* code */
-		      "Opmod",            /* facility */
-		      "device=%s message=%s text=%s domain=%s",
-		      gdata->name,
-		      (gdata->alias ? gdata->alias : "N/A"),
-		      cm_text,
-		      alhArea->blinkString);
-	   }
-#endif
-		sprintf(buff,"AUTOMATIC:Group PV RESET---[%s] <%s> [%s] [%s]\n",
-		    gdata->name,
-		    buff1,
-		    buff2,
-		    gdata->pforcePV->name);
-		filePrintf(fo,buff,NULL,0);        /* update the file */
-	}
-
-}
-
-/***********************************************************************
- * log PV force chan Masks on operation file
- ***********************************************************************/
-void alLogForcePVChan(CLINK *clink,int ind)
-{
-	struct chanData *cdata;
-	char buff1[6];
-
-	cdata = clink->pchanData;
-	alGetMaskString(cdata->curMask,buff1);
-
-	if (ind == OPERATOR) {
-#ifdef CMLOG
-	   if (use_CMLOG_opmod) {
-	      char cm_text[80];
-	      sprintf(cm_text, "OPER Channel PV FORCE <%s> [%d] [%s]",
-		      buff1,
-		      cdata->pforcePV->forceValue,
-		      cdata->pforcePV->name);
-	      
-	      cmlog_logmsg(cmlog,
-		      2,	           /* verbosity */
-		      0,	           /* dummy severity */
-		      FORCE_MASK,          /* code */
-		      "Opmod",             /* facility */
-		      "device=%s message=%s text=%s domain=%s",
-		      cdata->name,
-		      (cdata->alias ? cdata->alias : "N/A"),
-		      cm_text,
-		      alhArea->blinkString);
-	   }
-#endif
-		sprintf(buff,"OPERATOR:Chan  PV FORCE---[%s] <%s> [%d] [%s]\n",
-		    cdata->name,
-		    buff1,
-		    cdata->pforcePV->forceValue,
-		    cdata->pforcePV->name);
-		filePrintf(fo,buff,NULL,0);        /* update the file */
-	}
-
-	if (ind == AUTOMATIC) {
-#ifdef CMLOG
-	   if (use_CMLOG_opmod) {
-	      char cm_text[80];
-	      sprintf(cm_text, "AUTO Channel PV FORCE <%s> [%d] [%s]",
-		      buff1,
-		      cdata->pforcePV->forceValue,
-		      cdata->pforcePV->name);
-	      
-	      cmlog_logmsg(cmlog,
-		      2,	          /* verbosity */
-		      0,	          /* dummy severity */
-		      FORCE_MASK,         /* code */
-		      "Opmod",            /* facility */
-		      "device=%s message=%s text=%s domain=%s",
-		      cdata->name,
-		      (cdata->alias ? cdata->alias : "N/A"),
-		      cm_text,
-		      alhArea->blinkString);
-	   }
-#endif
-		sprintf(buff,"AUTOMATIC:Chan  PV FORCE---[%s] <%s> [%d] [%s]\n",
-		    cdata->name,
-		    buff1,
-		    cdata->pforcePV->forceValue,
-		    cdata->pforcePV->name);
-		filePrintf(fo,buff,NULL,0);        /* update the file */
-	}
-
-}
-
-
-/***********************************************************************
- * log PV reset chan Masks on operation file
- ***********************************************************************/
-void alLogResetPVChan(CLINK *clink,int ind)
-{
-	struct chanData *cdata;
-	char buff1[6];
-	char buff2[10];
-
-	cdata = clink->pchanData;
-	alGetMaskString(cdata->curMask,buff1);
-
-	if (cdata->pforcePV->resetValue == cdata->pforcePV->forceValue ) sprintf(buff2,"%s %d","NE",cdata->pforcePV->forceValue);
-	else sprintf(buff2,"%d",cdata->pforcePV->resetValue);
-
-	if (ind == OPERATOR) {
-#ifdef CMLOG
-	   if (use_CMLOG_opmod) {
-	      char cm_text[80];
-	      sprintf(cm_text, "OPER Channel PV RESET <%s> [%s] [%s]",
-		      buff1,
-		      buff2,
-		      cdata->pforcePV->name);
-	      
-	      cmlog_logmsg(cmlog,
-		      2,	           /* verbosity */
-		      0,	           /* dummy severity */
-		      CHANGE_MASK,         /* code */
-		      "Opmod",             /* facility */
-		      "device=%s message=%s text=%s domain=%s",
-		      cdata->name,
-		      (cdata->alias ? cdata->alias : "N/A"),
-		      cm_text,
-		      alhArea->blinkString);
-	   }
-#endif
-		sprintf(buff,"OPERATOR:Chan  PV RESET---[%s] <%s> [%s] [%s]\n",
-		    cdata->name,
-		    buff1,
-		    buff2,
-		    cdata->pforcePV->name);
-		filePrintf(fo,buff,NULL,0);        /* update the file */
-
-	}
-	if (ind == AUTOMATIC) {
-#ifdef CMLOG
-	   if (use_CMLOG_opmod) {
-	      char cm_text[80];
-	      sprintf(cm_text, "AUTO Channel PV RESET <%s> [%s] [%s]",
-		      buff1,
-		      buff2,
-		      cdata->pforcePV->name);
-	      
-	      cmlog_logmsg(cmlog,
-		      2,	          /* verbosity */
-		      0,	          /* dummy severity */
-		      CHANGE_MASK,        /* code */
-		      "Opmod",            /* facility */
-		      "device=%s message=%s text=%s domain=%s",
-		      cdata->name,
-		      (cdata->alias ? cdata->alias : "N/A"),
-		      cm_text,
-		      alhArea->blinkString);
-	   }
-#endif
-		sprintf(buff,"AUTOMATIC:Chan  PV RESET---[%s] <%s> [%s] [%s]\n",
-		    cdata->name,
-		    buff1,
-		    buff2,
-		    cdata->pforcePV->name);
-		filePrintf(fo,buff,NULL,0);        /* update the file */
-
-	}
-
-}
-
-
-/***********************************************************************
- * log exit on operation file
- ***********************************************************************/
-void alLogExit()
-{
-	sprintf(buff,"Setup---Exit\n");
-	filePrintf(fo,buff,NULL,0);        /* update the file */
-}
-
-/***********************************************************************
- * log change beep severity 
- ***********************************************************************/
-void alLogSetBeepSevr (char *name,const char *value)
-{
-	sprintf(buff,"Set Beep Severity --- %-28s  %s\n",name,value);
-	filePrintf(fo,buff,NULL,0);  /* update the file */	
-}
-
-/***********************************************************************
- * log change group mask selection 
- ***********************************************************************/
-void alLogChangeGroupMasks(GLINK *glink,int maskno,int maskid)
-{
-	char buff1[6];
-
-	awGetMaskString(glink->pgroupData->mask,buff1);
+    if(text[0] == '\0') sprintf(text," ");
 
 #ifdef CMLOG
-   if (use_CMLOG_opmod) {
-	char cm_text[80];
-	sprintf(cm_text, "Group Mask [%s] %s <%s>",
-	    masksdata[maskid],
-	    mask_str[maskno],
-	    buff1);
+    if (use_CMLOG_opmod) {
 
-	cmlog_logmsg(cmlog,
-	    2,			/* verbosity */
+      if (!gcdata) return;
+      cmlog_logmsg(cmlog,
+        1,			/* verbosity */
 	    0,			/* dummy severity */
-	    CHANGE_MASK_GROUP,	/* code */
-	    "Opmod",            /* facility */
-	    "device=%s message=%s text=%s domain=%s",
-	    glink->pgroupData->name,
-	    (glink->pgroupData->alias ? glink->pgroupData->alias : "N/A"),
-	    cm_text,
-	    alhArea->blinkString);
-   }
+        messageCode,		/* code */
+        "Opmod",	        /* facility */
+        "severity=%s device=%s message=%s text=%s domain=%s",
+        alhAlarmSeverityString[gcdata->curSevr],
+        gcdata->pname,
+        (gcdata->alias ? gcdata->alias : "N/A"),
+        cm_text,
+        alhArea->blinkString);
+    }
 #endif
 
-	sprintf(buff,"Group Mask [%s] %s [%s] <%s>\n",
-	    masksdata[maskid], mask_str[maskno],
-	    glink->pgroupData->name,
-	    buff1);
-	filePrintf(fo,buff,NULL,0);        /* update the file */
+	if (!alhArea || !alhArea->blinkString){
+		sprintf(buff," : : %s \n",text);
+	} else {
+		if (!gcdata){
+			sprintf(buff,"%s: : %s %-16s\n",alhArea->blinkString,text,
+				alhAlarmSeverityString[gcdata->curSevr]);
+		} else {
+			sprintf(buff,"%s: %s:  %s %-16s\n",alhArea->blinkString,gcdata->name,text,
+				alhAlarmSeverityString[gcdata->curSevr]);
+		}
+	}
+
+	filePrintf(fo,buff,NULL,messageCode);
 }
 
-/***********************************************************************
- * log setup config file 
- ***********************************************************************/
-void alLogSetupConfigFile(char *filename)
-{
-	sprintf(buff,"Setup---Config File : %s -> %s\n",psetup.configFile,filename);
-	filePrintf(fo,buff,NULL,0);        /* update the file */
-}
-
-/***********************************************************************
- * log setup alarm log file selection 
- ***********************************************************************/
-void alLogSetupAlarmFile(char *filename)
-{
-	sprintf(buff,"Setup---Alarm Log File : %s -> %s\n",psetup.logFile,filename);
-	filePrintf(fo,buff,NULL,0);        /* update the file */
-}
-
-/***********************************************************************
- * log setup operator's log file selection 
- ***********************************************************************/
-void alLogSetupOpmodFile(char *filename)
-{
-	sprintf(buff,"Setup---OpMod File : %s -> %s\n",psetup.opModFile,filename);
-	filePrintf(fo,buff,NULL,0);        /* update the file */
-}
-
-/***********************************************************************
- * log setup save configuration file selection 
- ***********************************************************************/
-void alLogSetupSaveConfigFile(char *filename)
-{
-	sprintf(buff,"Setup---Save New Config: %s\n",filename);
-	filePrintf(fo,buff,NULL,0);        /* update the file */
-}
-
-/***********************************************************************
- * log operator modifications 
- ***********************************************************************/
-void alLogOpMod(char *text)
-{
-	if (text[strlen(text)-1] == '\n') sprintf(buff,"%s",text);
-	else sprintf(buff,"%s\n",text);
-	filePrintf(fo,buff,NULL,0);        /* update the file */
-}
 
 /***********************************************************************
  * log not_save started to alarm log file
@@ -788,6 +354,7 @@ void alLog2DBMask (char *name)
 	sprintf(buff,"Group Mask ID --- %-28s\n",name);
 	filePrintf(fo,buff,NULL,CHANGE_MASK_GROUP);  /* update the file */	
 }
+
 
 /**********************************************************************
  Write info to HardDisk OpMod and AlarmLog files 

@@ -289,7 +289,7 @@ void errMsg(const char *fmt, ...)
 	if(lstring[0] == '\0') return;
 
 	if (_no_error_popup) {
-		alLogOpMod(lstring);
+		alLogOpModMessage(0,0,lstring);
 		return;
 	}
 
@@ -374,7 +374,7 @@ static void logMessageString(Widget w, XtPointer clientdata, XtPointer calldata)
 	}
 
 	while (XmStringGetNextSegment(context,&lstring,&tag,&direction,&separator)){
-		alLogOpMod(lstring);
+		alLogOpModMessage(0,0,lstring);
 		XtFree(lstring);
 		lstring=0;
 	}

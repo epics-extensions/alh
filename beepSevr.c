@@ -355,7 +355,8 @@ static void beepSevrChangeCallback(Widget widget,XtPointer calldata,XtPointer cb
 	if (linkType == GROUP) alSetBeepSevrGroup((GLINK *)link,beepSevr);
 
 	pgcData = link->pgcData;
-	alLogSetBeepSevr(pgcData->name,alhAlarmSeverityString[pgcData->beepSevr]);
+	alLogOpModMessage(0,link,"Beep Severity set to %s",alhAlarmSeverityString[pgcData->beepSevr]);
+
 	link->pmainGroup->modified = 1;
 
 	/* ---------------------------------

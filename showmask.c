@@ -537,6 +537,7 @@ static void forceMaskApplyCallback(Widget widget,XtPointer calldata,XtPointer cb
 	GCLINK *link;
 	int linkType;
 	MASK mask;
+	char buff1[6];
 
 	link =getSelectionLinkArea(forceMaskWindow->area);
 	if (!link) return;
@@ -555,7 +556,14 @@ static void forceMaskApplyCallback(Widget widget,XtPointer calldata,XtPointer cb
 		alRemoveNoAck1HrTimerChan((CLINK *)link);
 		alChangeChanMask((CLINK *)link,mask);
 		alCaFlushIo();
-		alLogForcePVChan((CLINK *)link,OPERATOR);
+
+		alGetMaskString(((CLINK*)link)->pchanData->curMask,buff1);
+		alLogOpModMessage(FORCE_MASK,(GCLINK*)link,
+			"OPER Channel PV FORCE <%s> [%d] [%s]",
+			buff1,
+			link->pgcData->pforcePV->forceValue,
+			link->pgcData->pforcePV->name);
+
 		cdata = (struct chanData *)pgcData;
 		if (programId != ALH) cdata->defaultMask = cdata->curMask;
 	}
@@ -563,7 +571,13 @@ static void forceMaskApplyCallback(Widget widget,XtPointer calldata,XtPointer cb
 		alRemoveNoAck1HrTimerGroup((GLINK *)link);
 		alChangeGroupMask((GLINK *)link,mask);
 		alCaFlushIo();
-		alLogForcePVGroup((GLINK *)link,OPERATOR);
+
+		awGetMaskString(((GLINK*)link)->pgroupData->mask,buff1);
+		alLogOpModMessage(FORCE_MASK_GROUP,link,
+			"OPER Group PV FORCE <%s> [%d] [%s]",
+			buff1,
+			link->pgcData->pforcePV->forceValue,
+			link->pgcData->pforcePV->name);
 	}
 
 	silenceCurrentReset(forceMaskWindow->area);
@@ -585,10 +599,14 @@ static void forceMaskResetCallback(Widget widget,XtPointer calldata,XtPointer cb
 	struct gcData *pgcData;
 	GCLINK *link;
 	int linkType;
+	char buff1[6];
+	char buff2[20];
+	FORCEPV* pforcePV;
 
 	link =getSelectionLinkArea(forceMaskWindow->area);
 	if (!link) return;
 	pgcData = link->pgcData;
+	pforcePV=pgcData->pforcePV;
 	linkType =getSelectionLinkTypeArea(forceMaskWindow->area);
 
 	if (linkType == CHANNEL) {
@@ -596,7 +614,17 @@ static void forceMaskResetCallback(Widget widget,XtPointer calldata,XtPointer cb
 		alRemoveNoAck1HrTimerChan((CLINK *)link);
 		alChangeChanMask((CLINK *)link,cdata->defaultMask);
 		alCaFlushIo();
-		alLogResetPVChan((CLINK *)link,OPERATOR);
+
+		alGetMaskString(cdata->curMask,buff1);
+		if (pforcePV->resetValue == pforcePV->forceValue )
+		sprintf(buff2,"%s %g","NE",pforcePV->forceValue);
+		else sprintf(buff2,"%g",pforcePV->resetValue);
+		alLogOpModMessage(CHANGE_MASK,link,
+			"OPER Channel PV RESET <%s> [%s] [%s]",
+			buff1,
+			buff2,
+			pforcePV->name);
+		
 		cdata = (struct chanData *)pgcData;
 		if (programId != ALH) cdata->defaultMask = cdata->curMask;
 	}
@@ -604,7 +632,16 @@ static void forceMaskResetCallback(Widget widget,XtPointer calldata,XtPointer cb
 		alRemoveNoAck1HrTimerGroup((GLINK *)link);
 		alResetGroupMask((GLINK *)link);
 		alCaFlushIo();
-		alLogResetPVGroup((GLINK *)link,OPERATOR);
+
+		awGetMaskString(((GLINK*)link)->pgroupData->mask,buff1);
+		if (pforcePV->resetValue == pforcePV->forceValue )
+		sprintf(buff2,"%s %g","NE",pforcePV->forceValue);
+		else sprintf(buff2,"%g",pforcePV->resetValue);
+		alLogOpModMessage(CHANGE_MASK_GROUP,link,
+			"OPER Group PV RESET <%s> [%s] [%s]",
+			buff1,
+			buff2,
+			pforcePV->name);
 	}
 
 	silenceCurrentReset(forceMaskWindow->area);

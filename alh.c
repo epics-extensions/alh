@@ -34,6 +34,9 @@ static char *sccsId = "@@(#) $Id$";
 #include "ax.h"
 
 /* global variables */
+const char *executionModeString[] = {"Local","Global"};
+const char *ackTransientsString[] = {"ackT","noackT"};
+
 int DEBUG = 0;
 SLIST *areaList;
 char alhVersionString[100];

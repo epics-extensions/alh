@@ -716,6 +716,7 @@ XtPointer cbs)
     FORCEPV_CALC calc;
 	FORCEPV* pforcePV;
     FORCEPV_CALC* pcalc;
+	char buff1[6];
 
 	link =getSelectionLinkArea(forcePVWindow->area);
 	if (!link) return;
@@ -790,10 +791,22 @@ XtPointer cbs)
 
 	forcePVUpdateFields(link,pforcePV,linkType);
 
+/* ############## IS THE FOLLOWING LOGGING NECESSARY ????? #######*/
 	if (linkType == GROUP){
-		alLogForcePVGroup((GLINK *)link,OPERATOR);
+		awGetMaskString(((GLINK*)link)->pgroupData->mask,buff1);
+		alLogOpModMessage(FORCE_MASK_GROUP,link,
+			"OPER Group PV FORCE <%s> [%g] [%s]",
+              buff1,
+              link->pgcData->pforcePV->forceValue,
+              link->pgcData->pforcePV->name);
+
 	}else {
-		alLogForcePVChan((CLINK *)link,OPERATOR);
+		alGetMaskString(((CLINK*)link)->pchanData->curMask,buff1);
+		alLogOpModMessage(FORCE_MASK,(GCLINK*)link,
+			"OPER Channel PV FORCE <%s> [%g] [%s]",
+              buff1,
+              link->pgcData->pforcePV->forceValue,
+              link->pgcData->pforcePV->name);
 	}
 
 	/* ---------------------------------
@@ -1154,6 +1167,8 @@ void forcePVNewValueEvent(GCLINK* gclink,short linktype,double value)
 {
 	struct gcData *pgcData;
 	FORCEPV* pforcePV;
+	char buff1[6];
+	char buff2[20];
 
 	pgcData=gclink->pgcData;
 	pforcePV=pgcData->pforcePV;
@@ -1165,10 +1180,20 @@ void forcePVNewValueEvent(GCLINK* gclink,short linktype,double value)
 		if (value==pforcePV->forceValue) {
 			if (linktype==GROUP){
 				alChangeGroupMask((GLINK*)gclink,pforcePV->forceMask);
-				alLogForcePVGroup((GLINK*)gclink,AUTOMATIC);
+				awGetMaskString(((GLINK*)gclink)->pgroupData->mask,buff1);
+				alLogOpModMessage(FORCE_MASK_GROUP,gclink,
+					"AUTO Group PV FORCE <%s> [%g] [%s]",
+              		buff1,
+              		pforcePV->forceValue,
+              		pforcePV->name);
 			} else {
 				alChangeChanMask((CLINK*)gclink,pforcePV->forceMask);
-				alLogForcePVChan((CLINK*)gclink,AUTOMATIC);
+				alGetMaskString(((CLINK*)gclink)->pchanData->curMask,buff1);
+				alLogOpModMessage(FORCE_MASK,gclink,
+					"AUTO Channel PV FORCE <%s> [%g] [%s]",
+              		buff1,
+              		pforcePV->forceValue,
+              		pforcePV->name);
 			}
 			alCaFlushIo();
 		}
@@ -1179,11 +1204,28 @@ void forcePVNewValueEvent(GCLINK* gclink,short linktype,double value)
                 	pforcePV->forceValue != pforcePV->resetValue  ) ) {
 			if (linktype==GROUP){
 				alResetGroupMask((GLINK*)gclink);
-				alLogResetPVGroup((GLINK*)gclink,AUTOMATIC);
+				awGetMaskString(((GLINK*)gclink)->pgroupData->mask,buff1);
+				if (pforcePV->resetValue == pforcePV->forceValue )
+					 sprintf(buff2,"%s %g","NE",pforcePV->forceValue);
+				else sprintf(buff2,"%g",pforcePV->resetValue);
+				alLogOpModMessage(CHANGE_MASK_GROUP,gclink,
+					"AUTO Group PV RESET <%s> [%s] [%s]",
+              		buff1,
+              		buff2,
+              		pforcePV->name);
+
 			} else {
 				CLINK *clink=(CLINK*)gclink;;
 				alChangeChanMask(clink,clink->pchanData->defaultMask);
-				alLogResetPVChan(clink,AUTOMATIC);
+				alGetMaskString(clink->pchanData->curMask,buff1);
+				if (pforcePV->resetValue == pforcePV->forceValue )
+					 sprintf(buff2,"%s %g","NE",pforcePV->forceValue);
+				else sprintf(buff2,"%g",pforcePV->resetValue);
+				alLogOpModMessage(CHANGE_MASK,gclink,
+					"AUTO Channel PV RESET <%s> [%s] [%s]",
+              		buff1,
+              		buff2,
+              		pforcePV->name);
 			}
 			alCaFlushIo();
 		}
@@ -1220,6 +1262,8 @@ static void forcePVCalcPerform(GCLINK* gclink,int linktype)
 	int i;
 	double calcValue=0;
 	int status =0;
+	char buff1[6];
+	char buff2[20];
 
 	for (i=0;i<NO_OF_CALC_PVS;i++){
 		if (pcalc->chid[i] && !alCaIsConnected(pcalc->chid[i])) return;
@@ -1232,27 +1276,53 @@ static void forcePVCalcPerform(GCLINK* gclink,int linktype)
 	if (calcValue == pforcePV->currentValue) return;
 
 	if (!pforcePV->disabled) {
-		if ((float)calcValue == pforcePV->forceValue) {
+		if ((float)calcValue == (float)pforcePV->forceValue) {
 			if (linktype==GROUP){
 				alChangeGroupMask((GLINK*)gclink,pforcePV->forceMask);
-				alLogForcePVGroup((GLINK*)gclink,AUTOMATIC);
+				awGetMaskString(((GLINK*)gclink)->pgroupData->mask,buff1);
+				alLogOpModMessage(FORCE_MASK_GROUP,gclink,
+					"AUTO Group PV FORCE <%s> [%g] [%s]",
+              		buff1,
+              		pforcePV->forceValue,
+              		pforcePV->name);
 			} else {
 				alChangeChanMask((CLINK*)gclink,pforcePV->forceMask);
-				alLogForcePVChan((CLINK*)gclink,AUTOMATIC);
+				alGetMaskString(((CLINK*)gclink)->pchanData->curMask,buff1);
+				alLogOpModMessage(FORCE_MASK,gclink,
+					"AUTO Channel PV FORCE <%s> [%g] [%s]",
+              		buff1,
+              		pforcePV->forceValue,
+              		pforcePV->name);
 			}
 			alCaFlushIo();
 		} else if (((pforcePV->currentValue=-999 ||
 				pforcePV->currentValue==pforcePV->forceValue) &&
 				pforcePV->forceValue==pforcePV->resetValue) ||
-              	( calcValue == pforcePV->resetValue  &&
+              	( (float)calcValue == (float)pforcePV->resetValue  &&
                 	pforcePV->forceValue!=pforcePV->resetValue) ){
 			if (linktype==GROUP){
 				alResetGroupMask((GLINK*)gclink);
-				alLogResetPVGroup((GLINK*)gclink,AUTOMATIC);
+				awGetMaskString(((GLINK*)gclink)->pgroupData->mask,buff1);
+				if (pforcePV->resetValue == pforcePV->forceValue )
+					 sprintf(buff2,"%s %g","NE",pforcePV->forceValue);
+				else sprintf(buff2,"%g",pforcePV->resetValue);
+				alLogOpModMessage(CHANGE_MASK_GROUP,gclink,
+					"AUTO Group PV RESET <%s> [%s] [%s]",
+              		buff1,
+              		buff2,
+              		pforcePV->name);
 			} else {
 				CLINK *clink=(CLINK*)gclink;;
 				alChangeChanMask(clink,clink->pchanData->defaultMask);
-				alLogResetPVChan(clink,AUTOMATIC);
+				alGetMaskString(clink->pchanData->curMask,buff1);
+				if (pforcePV->resetValue == pforcePV->forceValue )
+					 sprintf(buff2,"%s %g","NE",pforcePV->forceValue);
+				else sprintf(buff2,"%g",pforcePV->resetValue);
+				alLogOpModMessage(CHANGE_MASK,gclink,
+					"AUTO Channel PV RESET <%s> [%s] [%s]",
+              		buff1,
+              		buff2,
+              		pforcePV->name);
 				}
 			alCaFlushIo();
 		}

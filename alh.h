@@ -200,6 +200,20 @@ struct mainGroup {
 
 extern struct setup psetup;
 
+/* log message types */
+#define REGULAR_RECORD      1  /* usual alLog mess. */
+#define CONNECT_ALARM       2  /* specific alLog format about connection lost */
+#define STOP_LOGGING_ALARM  3  /* specific alLog format about stopping loging */
+#define MESSAGE_QUEUE_ALARM 4  /* specific alLog format about MQ problems */
+#define ACK_CHANNEL         5  /*  op_mod action which will be saving in DB */
+#define ACK_GROUP           6  /*  Don't used now  */
+#define CHANGE_MASK         7  /*  op_mod action which will be saving in DB */
+#define CHANGE_MASK_GROUP   8  /*  op_mod action which will be saving in DB */
+#define FORCE_MASK          9  /*  op_mod action which will be saving in DB */
+#define FORCE_MASK_GROUP   10  /*  op_mod action which will be saving in DB */
+#define ALARM_LOG_DB 1 /* We are write to ALARM_LOG database */
+#define OP_MOD_DB    2 /* We are write to OP_MOD    database */
+
 
 
 #endif /* INCalhh */

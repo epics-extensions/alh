@@ -225,7 +225,7 @@ void exit_quit(Widget w, XtPointer clientdata, XtPointer calldata)
 	return;
 	}
 
-	alLogExit();
+	alLogOpModMessage(0,0,"Setup---Exit");
 	fclose(fl);
 	fclose(fo);
 	if (area && area->pmainGroup) proot = area->pmainGroup->p1stgroup;
@@ -652,7 +652,8 @@ int programId,Widget widget)
 			break;
 
 		case FILE_ALARMLOG:
-			if (fo) alLogSetupAlarmFile(filename);
+			if (fo) alLogOpModMessage(0,0,
+				"Setup Alarm Log File : %s",filename);
 			strcpy(psetup.logFile,filename);
 			if (fl) fclose(fl); /* RO-flag. Albert */
 			if(_read_only_flag)  fl = fopen(psetup.logFile,"r");
@@ -677,7 +678,8 @@ int programId,Widget widget)
 			break;
 
 		case FILE_OPMOD:
-			if (fo) alLogSetupOpmodFile(filename);
+			if (fo) alLogOpModMessage(0,0,
+				"Setup OpMod File : %s",filename);
 			strcpy(psetup.opModFile,filename);
 			if (fo) fclose(fo);
 			if(!_read_only_flag) fo=fopen(psetup.opModFile,"a");
@@ -716,10 +718,7 @@ XmAnyCallbackStruct *cbs)
 
 	XtVaGetValues(widget, XmNuserData, &area, NULL);
 
-	alLogSetupSaveConfigFile(filename);
-	/*
-	     strcpy(psetup.saveFile,filename);
-	*/
+	if (fo) alLogOpModMessage(0,0,"Setup Save New Config: %s",filename);
 
 	if ( DEBUG == 1 )
 		printf("\nSaving Config File to %s \n", filename);

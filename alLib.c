@@ -32,6 +32,7 @@ static char *sccsId = "@(#) $Id$";
 
 extern char * alhAlarmSeverityString[];
 extern char * alhAlarmStatusString[];
+extern const char *ackTransientsString[];
 
 /* global variables */
 extern int _passive_flag;
@@ -745,7 +746,11 @@ CLINK *clink,time_t timeofday)
 		}
 		if (cdata->curStat == stat && cdata->curSevr == sev &&
 			cdata->curMask.Log == 0) {
-			alLogAlarm(&timeofday,cdata,stat,sev,acks,ackt);
+
+			alLogAlarmMessage(&timeofday,REGULAR_RECORD,clink,
+				"(%s / %s)",
+				alhAlarmSeverityString[acks],
+				ackTransientsString[ackt]);
 		}
 	}
 
@@ -768,8 +773,13 @@ CLINK *clink,time_t timeofday)
  	if (mask.Log == 0) {
  	 	/* Don't log the initial connection */
  		if ( !(stat_prev==NO_ALARM && sevr_prev==ERROR_STATE )) {
-			alLogAlarm(&timeofday,cdata,stat,sev,
-				 cdata->unackSevr,cdata->curMask.AckT);
+
+			if (_global_flag) alLogAlarmMessage(&timeofday,REGULAR_RECORD,clink,
+					"(%s / %s)", alhAlarmSeverityString[acks],
+					ackTransientsString[ackt]);
+			 else alLogAlarmMessage(&timeofday,REGULAR_RECORD,clink,
+					"( / )");
+
 		}
 	}
 
@@ -1168,8 +1178,7 @@ void alChangeChanMask(CLINK *clink,MASK mask)
 			} else {
 				if (cdata->unackSevr > 0 && _global_flag )  {
 					ackChan(clink);
-			  		sprintf(buff,"Auto ack of transient alarms on enable: %s\n", cdata->name);
-					alLogOpMod(buff);
+					alLogOpModMessage(0,(GCLINK*)clink,"Auto ack of transient alarms on enable");
 					cdata->unackSevr = NO_ALARM;
 				}
 			}
@@ -1211,8 +1220,7 @@ void alChangeChanMask(CLINK *clink,MASK mask)
 			} else {
 				if (cdata->unackSevr > 0 && _global_flag )  {
 					ackChan(clink);
-			  		sprintf(buff,"Auto ack of transient alarms on Ack: %s\n", cdata->name);
-					alLogOpMod(buff);
+					alLogOpModMessage(0,(GCLINK*)clink,"Auto ack of transient alarms");
 					cdata->unackSevr = NO_ALARM;
 				}
 			}
