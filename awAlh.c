@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.9  1997/09/12 19:32:04  jba
+ Added treeSym test.
+
  Revision 1.8  1997/09/09 22:21:56  jba
  Changed help menu selections.
 
@@ -253,8 +256,10 @@ Widget alhCreateMenu(parent, user_data)
      };
      
      static MenuItem help_menu[] = {
+/* HELP NOT IMPLEMENTED YET
          { "Help Topics",       &xmPushButtonGadgetClass, 'H', "Ctrl<Key>H", "Ctrl+H",
              alhHelpCallback, (XtPointer)MENU_HELP_TOPICS, (MenuItem *)NULL },
+*/
 #if  XmVersion && XmVersion >= 1002
          { "About ALH",     &xmPushButtonGadgetClass, 'A', NULL, NULL,
              alhHelpCallback, (XtPointer)MENU_HELP_ABOUT, (MenuItem *)NULL },
@@ -708,6 +713,7 @@ void awRowWidgets(line, area)
           nextX = 0;
 
           if ( isTreeWindow(area,subWindow) && line->linkType == GROUP) {
+               if ( glink->pgroupData->treeSym) {
                str = XmStringCreateSimple(glink->pgroupData->treeSym);
                wline->treeSym = XtVaCreateManagedWidget("treeSym",
                     xmLabelGadgetClass,        wline->row_widget,
@@ -717,6 +723,7 @@ void awRowWidgets(line, area)
                XmStringFree(str);
                XtVaGetValues(wline->treeSym,XmNwidth,&width,NULL);
                nextX = width + 3;
+               }
           }
 
           str = XmStringCreateSimple(bg_char[line->unackSevr]);
