@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.18  1998/07/23 18:06:43  jba
+ Exit routine changes.
+
  Revision 1.17  1998/07/16 18:30:56  jba
  not error to start alh with no filename on command line.
 
@@ -209,13 +212,15 @@ void exit_quit(w, area, call_data)
      if (proot) {
 
           /* cancel all the channel access requests */
-          alCaStop();
+          if (programId==ALH) alCaStop();
 
           /* delete all the subgroups of proot & free proot */
           alDeleteGroup(proot);
 
      }
 
+     if (programId==ACT) editClipboardSet(0,0);
+     free(area);
      XtDestroyWidget(topLevelShell);
      exit(0);
 }
