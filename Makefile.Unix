@@ -9,7 +9,7 @@ include $(EPICS)/config/CONFIG_EXTENSIONS
 DEPLIBS = $(EPICS_BASE_LIB)/libca.a $(EPICS_BASE_LIB)/libCom.a
 
 # baseR3.13.0.beta12 and later
-awAlh_CFLAGS += -DALH_HELP_URL="\"http://www.aps.anl.gov/asd/controls/epics/EpicsDocumentation/ExtensionsManuals/AlarmHandler/old/alh.html\""
+awAlh_CFLAGS += -DALH_HELP_URL="\"http://www.aps.anl.gov/asd/controls/epics/EpicsDocumentation/ExtensionsManuals/AlarmHandler/ALHUserGuide/ALHUserGuide.html\""
 
 USR_CFLAGS = -DACCESS_SECURITY
 USR_INCLUDES = -I$(MOTIF_INC) -I$(X11_INC)
