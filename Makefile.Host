@@ -30,7 +30,8 @@ endif
 ifeq ($(I_WANT_CMLOG),YES)
   alLog_CFLAGS	+= -I$(CMLOG)/include -DCMLOG
   file_CFLAGS   += -I$(CMLOG)/include -DCMLOG
-  awAlh_CFLAGS	+= -DCMLOG -DCMLOG_BROWSER="\"cmlog\""
+  awAlh_CFLAGS	+= -DCMLOG -DCMLOG_CONFIG="\"cmlogrc.ALH\"" \
+                   -DCMLOG_BROWSER="\"cmlog -xrm '*geometry: 1400x500' -c\""
   alh_LIBS	+= cmlog
   cmlog_DIR	= $(CMLOG)/lib/$(HOST_ARCH)
   LINK.c = $(LINK.cc)
@@ -131,6 +132,7 @@ PROD_LIBS_DEFAULT += Xmu Xm Xt X11
 PROD_LIBS_Linux +=  Xmu Xm Xt X11 Xp
 
 Xmu_DIR = $(X11_LIB)
+#Xmu_DIR = /usr/contrib/X11R6/lib
 Xm_DIR = $(MOTIF_LIB)
 Xt_DIR = $(X11_LIB)
 X11_DIR = $(X11_LIB)
