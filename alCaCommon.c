@@ -55,19 +55,6 @@ struct FDLIST *lastFdInList=(struct FDLIST *)0;
 #define AUTOMATIC    0
 #define UNKNOWN 0
 
-/****************************************************************************
-	initializes channel access and adds channel access events
-	for each channel monitored in the alarm configuration.
-****************************************************************************/
-void alCaStart(SLIST *proot)
-{
-	toBeConnectedCount=0;
-	alCaSearch(proot);
-	alCaPend(2.0);
-	alSetNotConnected(proot);
-	alPutGblAckT((SLIST *)proot);
-}
-
 /**************************************************************
   Replace old group force event with the new force group event
 *************************************************************/
@@ -177,49 +164,21 @@ GCLINK *nextGroupChannel(GCLINK *gclink,int *plinkType)
 	return next;
 }
 
-/***************************************************************
-	add alarm event handler for each channel
-***************************************************************/
-void            alCaSearch(SLIST *proot)
-{
-	GCLINK *gclink;
-	struct gcData *gcdata;
-	struct chanData *cdata;
-	int type;
-
-	gclink = firstGroupChannel(proot,&type);
-	while (gclink) {
-		gcdata = gclink->pgcData;
-
-		alCaConnectForcePV(gcdata->forcePVName,&gcdata->forcechid,gcdata->name);
-		alCaAddForcePVEvent(gcdata->forcechid,gclink,&gcdata->forceevid,type);
-
-		alCaConnectSevrPV(gcdata->sevrPVName,&gcdata->sevrchid,gcdata->name);
-
-		if (type == CHANNEL) {
-			cdata = (struct chanData *)gcdata;
-			alCaConnectChannel(cdata->name,&cdata->chid,gclink);
-			if (cdata->curMask.Cancel == 0) {
-				alCaAddEvent(cdata->chid,&cdata->evid,gclink);
-			}
-		}
-
-		gclink = nextGroupChannel(gclink,&type);
-	}
-}
 
 /*****************************************************************
 	close all the channel links, groups & subwindows
  *****************************************************************/
-void alCaCancel(SLIST *proot)
+void alCaCancel(struct mainGroup *pmainGroup)
 {
 	GCLINK *gclink;
 	struct gcData *gcdata;
 	int type;
 
-	if (!proot) return;
+	if (!pmainGroup) return;
 
-	gclink = firstGroupChannel(proot,&type);
+	if (pmainGroup->heartbeatPV.chid) alCaClearChannel(&(pmainGroup->heartbeatPV.chid));
+
+	gclink = firstGroupChannel((SLIST *)pmainGroup,&type);
 	while (gclink) {
 		gcdata = gclink->pgcData;
 		alCaClearEvent(&gcdata->forceevid);
@@ -237,16 +196,21 @@ void alCaCancel(SLIST *proot)
 /*****************************************************************
    alSetNotConnected
  *****************************************************************/
-void alSetNotConnected(SLIST *proot)
+void alSetNotConnected(struct mainGroup *pmainGroup)
 {
 	GCLINK *gclink;
 	struct gcData *gcdata;
 	int type;
 
-	if (!proot) return;
 	if (!toBeConnectedCount) return;
 
-	gclink = firstGroupChannel(proot,&type);
+	if (pmainGroup->heartbeatPV.chid && !alCaIsConnected(pmainGroup->heartbeatPV.chid) ) {
+		errMsg("Heartbeat PV %s Not Connected\n",pmainGroup->heartbeatPV.name);
+	}
+
+	if (!pmainGroup) return;
+
+	gclink = firstGroupChannel((SLIST *)pmainGroup,&type);
 	while (gclink) {
 		gcdata = gclink->pgcData;
 		if ( gcdata->forcechid && !alCaIsConnected(gcdata->forcechid) ) {
@@ -268,16 +232,16 @@ void alSetNotConnected(SLIST *proot)
 /*****************************************************************
    alSetAckt
  *****************************************************************/
-void alPutGblAckT(SLIST *proot)
+void alPutGblAckT(struct mainGroup *pmainGroup)
 {
 	GCLINK *gclink;
 	struct chanData *cdata;
 	int type;
 
-	if (!proot) return;
+	if (!pmainGroup) return;
 	if ( !_transients_flag || !_global_flag ||_passive_flag) return;
 
-	gclink = firstGroupChannel(proot,&type);
+	gclink = firstGroupChannel((SLIST*)pmainGroup,&type);
 	while (gclink) {
 		if (type == CHANNEL) {
 			cdata = ((CLINK *)gclink)->pchanData;
