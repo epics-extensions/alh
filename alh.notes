@@ -34,3 +34,16 @@ Mon Mar 31 10:41:19 CST 1997
      Bug fix to SEVRCOMMAND for UP_ANY and DOWN_ANY.
      Bug fix to ALARMCOUNTFILTER.
 
+Fri Sep 12 13:51:33 CDT 1997
+
+	Modified Help menu items.
+	Removed libUnix dependancy (product description shell)
+	Fixed calloc for SEVRCOMMAND string.
+	Fixed calloc for treeSym.
+	Alarm Configuration Tool (alh -c ) changes
+		Removed Undo from Edit menu - more confusing than helpful.
+		Many changes to get properties window working.
+		Changes to get cut/paste working.
+		Bug fixes for Save and SaveAs.
+		Bug fixes for tree and group window views.
+
