@@ -155,17 +155,17 @@ static struct parm_data ptable[] = {
 #endif
  		{ "-B",		2,	PARM_MESSAGE_BROADCAST }, /* Albert */
 		{ "-c",		2,	PARM_ACT },
- 		{ "-caputackt",	2,	PARM_CAPUT_ACK_TRANSIENTS },
+ 		{ "-caputackt",	10,	PARM_CAPUT_ACK_TRANSIENTS },
 		{ "-D",		2,	PARM_READONLY },
-		{ "-debug",	2,	PARM_DEBUG },
+		{ "-debug",	6 ,	PARM_DEBUG },
 		{ "-f",		2,	PARM_ALL_FILES_DIR },
- 		{ "-global",	2,	PARM_GLOBAL },
+ 		{ "-global",	7,	PARM_GLOBAL },
 		{ "-help",	5,	PARM_HELP },
 		{ "-L",		2,	PARM_LOCK },     /* Albert */
 		{ "-l",		2,	PARM_LOG_DIR },
 		{ "-m",		2,	PARM_ALARM_LOG_MAX },
-		{ "-noerrorpopup",	2,	PARM_NO_ERROR_POPUP },
-              	{ "-O",		2,	PARM_DATABASE }, /* Albert */
+		{ "-noerrorpopup",	13,	PARM_NO_ERROR_POPUP },
+		{ "-O",		2,	PARM_DATABASE }, /* Albert */
 		{ "-o",		2,	PARM_OPMOD_LOG_FILE },
 #ifdef CMLOG
 		{ "-oCM",	4,	PARM_OPMOD_LOG_CMLOG },
@@ -175,7 +175,7 @@ static struct parm_data ptable[] = {
 		{ "-s",		2,	PARM_SILENT },
 		{ "-T",		2,	PARM_DATED },
 		{ "-v",		2,	PARM_VERSION },
-		{ "-version",	2,	PARM_VERSION },
+		{ "-version",	8,	PARM_VERSION },
  		{ NULL,		-1,     -1 }};
 
 /* forward declarations */
@@ -493,6 +493,14 @@ int programId,Widget widget)
 		switch(fileType) {
 
 		case FILE_CONFIG:
+#ifdef CMLOG
+			if (_read_only_flag) {
+				use_CMLOG_alarm = 0;
+				use_CMLOG_opmod = 0;
+			}
+			else if (use_CMLOG_alarm || use_CMLOG_opmod) alCMLOGconnect();
+#endif
+
 			setupConfig(filename,programId,area);
 			if(_lock_flag)                              /* Albert */
 			  {
@@ -603,15 +611,6 @@ int programId,Widget widget)
 			  }
 			
 #endif
-
-#ifdef CMLOG
-			if (_read_only_flag) {
-				use_CMLOG_alarm = 0;
-				use_CMLOG_opmod = 0;
-			}
-			else if (use_CMLOG_alarm || use_CMLOG_opmod) alCMLOGconnect();
-#endif
-
 			break;
 
 		case FILE_ALARMLOG:
@@ -710,7 +709,7 @@ static int getCommandLineParms(int argc, char** argv)
 	{
 		for(j=0;!finished && !parm_error && ptable[j].parm;j++)
 		{
-			if(strncmp(ptable[j].parm,argv[i],ptable[j].len)==0)
+			if(strncmp(ptable[j].parm,argv[i],Mmax(ptable[j].len,strlen(argv[i])))==0)
 			{
 				switch(ptable[j].id)
 				{
@@ -908,7 +907,7 @@ if(_DB_call_flag&&!_lock_flag)
 
 	if(parm_error)
 	{
-  		fprintf(stderr,"\nInvalid command line option %s",argv[i-1]);
+  		fprintf(stderr,"\nInvalid command line option %s\n ",argv[i-1]);
 		printUsage(argv[0]);
 		return 1;
 	}
@@ -1153,12 +1152,12 @@ static char myhostname[256];
 static char loginid[16];        
 static char real_world_name[128]; 
 static char displayName[256];
-
-struct passwd *pp;              
-int effective_uid;
 int ret=0;
 
 #ifndef WIN32
+struct passwd *pp;              
+int effective_uid;
+
     effective_uid = geteuid();
     if ((pp = getpwuid(effective_uid))) 
       {
