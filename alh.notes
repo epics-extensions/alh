@@ -161,3 +161,14 @@ Thu Sep  3 14:11:17 CDT 1998
 Wed Sep 9 11:06:51 CDT 1998
 	Merged the new alh code changes from CEBAF:
 	Removed the old -DACCESS_SECURITY tests (pre baseR3.11).
+
+Thu Jan 19 14:14:01 CST 1999
+	Start of code cleanup. No functional changes. Modified comments, removed
+	unused code, used c beautifier, etc.
+
+Thu Jan 28 16:57:39 CST 1999
+	Added silenceForever command line option.
+	Modified silenceForever menu item to actually silence forever instead
+	        of silencing only for current file.
+	Modified the url help location.
+

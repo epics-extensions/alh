@@ -352,7 +352,6 @@ void createRuntimeWindow(ALINK *area)
 	/* reinitialize silence beep */
 	silenceCurrentReset(area);
 	silenceOneHourReset(area);
-	psetup.silenceForever = FALSE;
 
 	changeBeepSeverityText(area);
 

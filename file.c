@@ -69,6 +69,7 @@ static struct command_line_data commandLine = {
 #define PARM_PASSIVE			9
 #define PARM_READONLY			10
 #define PARM_HELP			11
+#define PARM_SILENT			12
 
 struct parm_data
 {
@@ -88,6 +89,7 @@ static struct parm_data ptable[] = {
 		{ "-P",		2,	PARM_PRINTER },
 		{ "-T",		2,	PARM_DATED },
 		{ "-S",		2,	PARM_PASSIVE },
+		{ "-s",		2,	PARM_SILENT },
 		{ "-D",		2,	PARM_READONLY },
 		{ "-help",	5,	PARM_HELP },
 	        { NULL,		-1,     -1 }};
@@ -477,6 +479,10 @@ static int getCommandLineParms(int argc, char** argv)
 					programId = ACT;
 					finished=1;
 					break;
+				case PARM_SILENT:
+					psetup.silenceForever=TRUE;
+					finished=1;
+					break;
 				case PARM_ALL_FILES_DIR:
 					if(++i>=argc) parm_error=1;
 					else
@@ -632,6 +638,7 @@ static void printUsage(char *pgm)
 	fprintf(stderr,"\n\t-a alarmlogfile\tAlarm log filename\n");
 	fprintf(stderr,"\n\t-o opmodlogfile\tOpMod log filename\n");
 	fprintf(stderr,"\n\t-m maxrecords\talarm log file max records (default 2000)\n");
+	fprintf(stderr,"\n\t-s\t\tSilent mode (no alarm beeping)\n");
 	fprintf(stderr,"\n\t-D\t\tDisable Writing\n");
 	fprintf(stderr,"\n\t-S\t\tPassive Mode\n");
 	fprintf(stderr,"\n\t-T\t\tAlarmLogDated\n");

@@ -99,6 +99,10 @@ int tearOff, MenuItem *items, XtPointer user_data)
 			    items[i].class == &xmToggleButtonGadgetClass)
 				XtVaSetValues(widget, XmNmarginHeight, 1, NULL);
 
+			/* Set initial state of of toggle button items */
+			if (items[i].class == &xmToggleButtonWidgetClass ||
+			    items[i].class == &xmToggleButtonGadgetClass)
+				XmToggleButtonSetState(widget,items[i].initial_state,FALSE);
 		}
 		/* Whether the item is a real item or a cascade button with a
 		         * menu, it can still have a mnemonic.  */

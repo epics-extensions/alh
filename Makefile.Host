@@ -46,7 +46,7 @@ endif
  
 USR_CFLAGS += -I$(MOTIF_INC) -I$(X11_INC)
 # baseR3.13.0.beta12 and later
-awAlh_CFLAGS += -DALH_HELP_URL="\"http://www.aps.anl.gov/asd/controls/epics/EpicsDocumentation/ExtensionsManuals/AlarmHandler/alh.html\""
+awAlh_CFLAGS += -DALH_HELP_URL="\"http://www.aps.anl.gov/asd/controls/epics/EpicsDocumentation/ExtensionsManuals/AlarmHandler/ALHUserGuide/ALHUserGuide.html\""
 
 # Debugging options
 #CC = purify -first-only -chain-length=25  $($(ANSI)_$(CMPLR))
