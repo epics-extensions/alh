@@ -1,8 +1,11 @@
 /*
  $Log$
- Revision 1.2  1994/06/22 21:17:05  jba
- Added cvs Log keyword
+ Revision 1.3  1995/02/28 16:43:36  jba
+ ansi c changes
 
+ * Revision 1.2  1994/06/22  21:17:05  jba
+ * Added cvs Log keyword
+ *
  */
 
 static char *sccsId = "@(#)axArea.c	1.14\t12/21/93";
@@ -815,7 +818,7 @@ void axMakePixmap(w)
 
           ALH_pixmap = XCreatePixmapFromBitmapData(XtDisplay(w),
                 RootWindowOfScreen(XtScreen(w)),
-                AH_bits,AH_width,AH_height,fg,bg,depth);
+                (char *)AH_bits,AH_width,AH_height,fg,bg,depth);
 
      }
      return;

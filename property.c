@@ -1,8 +1,11 @@
 /*
  $Log$
- Revision 1.2  1994/06/22 21:17:51  jba
- Added cvs Log keyword
+ Revision 1.3  1995/02/28 16:43:50  jba
+ ansi c changes
 
+ * Revision 1.2  1994/06/22  21:17:51  jba
+ * Added cvs Log keyword
+ *
  */
 
 static char *sccsId = "@(#)property.c	1.9\t2/18/94";
@@ -96,7 +99,7 @@ struct propWindow {
 static void propApplyCallback(Widget widget,struct propWindow *propWindow,XmAnyCallbackStruct *cbs);
 static void propCancelCallback(Widget widget,struct propWindow *propWindow,XmAnyCallbackStruct *cbs);
 static void propDismissCallback(Widget widget,struct propWindow *propWindow,XmAnyCallbackStruct *cbs);
-static Widget propCreateDialog(ALINK*area,GCLINK *link,int linkType);
+static void propCreateDialog(ALINK*area,GCLINK *link,int linkType);
 static Widget createActionButtons(Widget parent, ActionAreaItem *actions,int num_properties);
 static void propUpdateDialogData(struct propWindow *propWindow, GCLINK *link,int linkType);
 static void propUpdateDialogWidgets(struct propWindow *propWindow);
@@ -113,7 +116,7 @@ static void propMaskChange( Widget widget, int index, XmAnyCallbackStruct *cbs);
 static void propApplyCallback();
 static void propCancelCallback();
 static void propDismissCallback();
-static Widget propCreateDialog();
+static void propCreateDialog();
 static Widget createActionButtons();
 static void propUpdateDialogData();
 static void propUpdateDialogWidgets();
@@ -379,7 +382,7 @@ static void propUpdateDialogWidgets(propWindow)
   propCreateDialog
 ******************************************************/
 
-static Widget propCreateDialog(area, link, linkType)
+static void propCreateDialog(area, link, linkType)
      ALINK    *area;
      GCLINK   *link;
      int      linkType;

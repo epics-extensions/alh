@@ -1,8 +1,11 @@
 /*
  $Log$
- Revision 1.2  1994/06/22 21:16:26  jba
- Added cvs Log keyword
+ Revision 1.3  1995/02/28 16:43:27  jba
+ ansi c changes
 
+ * Revision 1.2  1994/06/22  21:16:26  jba
+ * Added cvs Log keyword
+ *
  */
 
 static char *sccsId = "@(#)alConfig.c	1.15\t12/15/93";
@@ -401,7 +404,7 @@ static void GetChannelLine(buf,pglink,pclink,caConnect,pmainGroup)
     *pglink = clink->parent;
     *pclink = clink;
 
-    if (caConnect && strlen(cdata->name) > 1)
+    if (caConnect && strlen(cdata->name) > (size_t) 1)
          alCaSearchName(cdata->name,&(cdata->chid));
 
 }
@@ -451,7 +454,7 @@ static void GetOptionalLine(fp,buf,glink,clink,context,caConnect)
 	    if(rtn>=2) {
 		gdata->forcePVName = (char *)calloc(1,strlen(name)+1);
 		strcpy(gdata->forcePVName,name);
-        if (caConnect && strlen(gdata->forcePVName) > 1)
+        if (caConnect && strlen(gdata->forcePVName) > (size_t) 1)
             alCaSearchName(gdata->forcePVName,&(gdata->forcechid));
 	    	}
 	    if(rtn>=3) alSetMask(mask,&(gdata->forcePVMask));
@@ -466,7 +469,7 @@ static void GetOptionalLine(fp,buf,glink,clink,context,caConnect)
 	    if(rtn>=2) {
 		cdata->forcePVName = (char *)calloc(1,strlen(name)+1);
 		strcpy(cdata->forcePVName,name);
-        if (caConnect && strlen(cdata->forcePVName) > 1)
+        if (caConnect && strlen(cdata->forcePVName) > (size_t) 1)
             alCaSearchName(cdata->forcePVName,&(cdata->forcechid));
 	        }
 	    if(rtn>=3) alSetMask(mask,&cdata->forcePVMask);
@@ -484,7 +487,7 @@ static void GetOptionalLine(fp,buf,glink,clink,context,caConnect)
 	    if(rtn>=2) {
 		gdata->sevrPVName = (char *)calloc(1,strlen(name)+1);
 		strcpy(gdata->sevrPVName,name);
-        if (caConnect && strlen(gdata->sevrPVName) > 1)
+        if (caConnect && strlen(gdata->sevrPVName) > (size_t) 1)
             alCaSearchName(gdata->sevrPVName,&(gdata->sevrchid));
 	    	}
 	    }
@@ -494,7 +497,7 @@ static void GetOptionalLine(fp,buf,glink,clink,context,caConnect)
 	    if(rtn>=2) {
 		cdata->sevrPVName = (char *)calloc(1,strlen(name)+1);
 		strcpy(cdata->sevrPVName,name);
-        if (caConnect && strlen(cdata->sevrPVName) > 1)
+        if (caConnect && strlen(cdata->sevrPVName) > (size_t) 1)
             alCaSearchName(cdata->sevrPVName,&(cdata->sevrchid));
 	    	}
 

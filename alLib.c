@@ -1,8 +1,11 @@
 /*
  $Log$
- Revision 1.2  1994/06/22 21:16:35  jba
- Added cvs Log keyword
+ Revision 1.3  1995/02/28 16:43:32  jba
+ ansi c changes
 
+ * Revision 1.2  1994/06/22  21:16:35  jba
+ * Added cvs Log keyword
+ *
  */
 
 static char *sccsId = "@(#)alLib.c	1.14\t10/15/93";
@@ -44,7 +47,6 @@ static char *sccsId = "@(#)alLib.c	1.14\t10/15/93";
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
 
 #include <sllLib.h>
 #include <alLib.h>
@@ -779,7 +781,7 @@ MASK *mask;
 char *s4;
 {
 char *s;
-int i;
+size_t i;
         mask->AckT = 0;
         mask->Log = 0;
         mask->Ack = 0;

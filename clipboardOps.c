@@ -1,8 +1,11 @@
 /*
  $Log$
- Revision 1.2  1994/06/22 21:17:17  jba
- Added cvs Log keyword
+ Revision 1.3  1995/02/28 16:43:40  jba
+ ansi c changes
 
+ * Revision 1.2  1994/06/22  21:17:17  jba
+ * Added cvs Log keyword
+ *
  */
 
 static char *sccsId = "@(#)clipboardOps.c	1.4\t9/9/93";
@@ -85,7 +88,7 @@ void clipboardPut(widget,topWidget,event)
   while( !done ) {
 
      result = XmClipboardStartCopy(XtDisplay(topWidget),XtWindow(topWidget),
-	"clipboard", event->xbutton.time, topWidget, NULL, &itemId);
+     XmStringCreateSimple("clipboard"), event->xbutton.time, topWidget, NULL, &itemId);
 
      done = (result == ClipboardSuccess);
      loopCount++;
@@ -118,7 +121,8 @@ void clipboardGet(widget,topWidget,event)
 {
   char string[CLIP_BUFFER_SIZE];
 
-  unsigned long length,id;
+  unsigned long length;
+  long id;
   int result;
   Boolean done;
   int loopCount;

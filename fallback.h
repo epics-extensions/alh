@@ -1,8 +1,11 @@
 /*
  $Log$
- Revision 1.2  1994/06/22 21:17:25  jba
- Added cvs Log keyword
+ Revision 1.3  1995/02/28 16:43:46  jba
+ ansi c changes
 
+ * Revision 1.2  1994/06/22  21:17:25  jba
+ * Added cvs Log keyword
+ *
  */
 
 static char *fallbackhsccsId = "@(#)fallback.h	1.5\t12/15/93";
@@ -79,7 +82,7 @@ static String fallbackResources[] = {
          "*sevr.fontList: 7x14",
          "*pushButtonName.fontList: -*-Helvetica-bold-r-*--12-*",
          "*pushButtonGroupName.fontList: -*-Helvetica-bold-r-*--12-*",
-         NULL
+         (String)NULL
 };
 
 #endif /* INCfallbackh */

@@ -1,8 +1,11 @@
 /*
  $Log$
- Revision 1.2  1994/06/22 21:18:05  jba
- Added cvs Log keyword
+ Revision 1.3  1995/02/28 16:43:56  jba
+ ansi c changes
 
+ * Revision 1.2  1994/06/22  21:18:05  jba
+ * Added cvs Log keyword
+ *
  */
 
 static char *sccsId = "@(#)testalarm.c	1.13\t10/1/93";
@@ -167,7 +170,8 @@ XtPointer userData;
 {
 Widget bb, ok_button, done_button, help_button;
 Arg     wargs[10];
-int     i, n=0,len=0;
+int     i, n=0;
+size_t  len=0;
 Dimension xloc;
         
         XtSetArg(wargs[n], XmNautoUnmanage, FALSE); n++;

@@ -1,8 +1,11 @@
 /*
  $Log$
- Revision 1.4  1994/06/22 21:16:23  jba
- Added cvs Log keyword
+ Revision 1.5  1995/02/28 16:43:25  jba
+ ansi c changes
 
+ * Revision 1.4  1994/06/22  21:16:23  jba
+ * Added cvs Log keyword
+ *
  */
 
 static char *sccsId = "%W%\t%G%";
@@ -560,7 +563,7 @@ int status;
 
 		/* add group force search */
 
-		if ( strlen(gdata->forcePVName) > 1) {
+		if ( strlen(gdata->forcePVName) > (size_t) 1) {
 
 		status = ca_search(gdata->forcePVName,&(gdata->forcechid));
                 if (status!=ECA_NORMAL) 
@@ -571,7 +574,7 @@ int status;
 
 		/* add group sevr search */
 
-		if ( strlen(gdata->sevrPVName) > 1) {
+		if ( strlen(gdata->sevrPVName) >  (size_t)1) {
 		status = ca_search(gdata->sevrPVName,&(gdata->sevrchid));
                 if (status!=ECA_NORMAL) 
 	            al_ca_error_code("alCaSearch","ca_search",status,gdata->sevrPVName);
@@ -596,7 +599,7 @@ int status;
 
 	/* add channel force channel search */
 
-		if (strlen(cdata->forcePVName) > 1) {
+		if (strlen(cdata->forcePVName) > (size_t) 1) {
 
 		status = ca_search(cdata->forcePVName,&(cdata->forcechid));
                 if (status!=ECA_NORMAL) 
@@ -607,7 +610,7 @@ int status;
 
 	/* add channel sevr search */
 
-		if (strlen(cdata->sevrPVName) > 1) {
+		if (strlen(cdata->sevrPVName) > (size_t) 1) {
 
 		status = ca_search(cdata->sevrPVName,&(cdata->sevrchid));
                 if (status!=ECA_NORMAL) 
@@ -836,7 +839,7 @@ MASK mask;
 
         gdata = glink->pgroupData;
                 
-        if (strlen(gdata->forcePVName) > 1) {
+        if (strlen(gdata->forcePVName) > (size_t) 1) {
 
 		/* add force group mask event */
 
@@ -862,7 +865,7 @@ MASK mask;
 
 	/* add change connection event for group sevrPV */
 
-        if (strlen(gdata->sevrPVName) > 1) {
+        if (strlen(gdata->sevrPVName) > (size_t) 1) {
 
   		ca_puser(gdata->sevrchid) = gdata; 
          	ca_change_connection_event(gdata->sevrchid,
@@ -912,7 +915,7 @@ MASK mask;
 
 
 
-        if (strlen(cdata->forcePVName) > 1 ) {
+        if (strlen(cdata->forcePVName) > (size_t) 1 ) {
 
 		/* add force channel mask event */
 
@@ -936,7 +939,7 @@ MASK mask;
 
 	/* add change connection event for channel sevrPV */
 
-        	if (strlen(cdata->sevrPVName) > 1 ) {
+        	if (strlen(cdata->sevrPVName) > (size_t) 1 ) {
  
 		ca_puser(cdata->sevrchid) = cdata;
         	ca_change_connection_event(cdata->sevrchid,
@@ -1038,7 +1041,7 @@ short *p;
 	
 	glink = (GLINK *)args.usr;
 	gdata = glink->pgroupData;
-	if (strlen(gdata->forcePVName) > 1) {
+	if (strlen(gdata->forcePVName) > (size_t) 1) {
 
 #ifdef ACCESS_SECURITY
     if (args.status != ECA_NORMAL) 
@@ -1102,7 +1105,7 @@ short *p;
 	
 	clink = (CLINK *)args.usr;
 	cdata = clink->pchanData;
-	if (strlen(cdata->forcePVName) > 1) {
+	if (strlen(cdata->forcePVName) > (size_t) 1) {
 
 #ifdef ACCESS_SECURITY
     if (args.status != ECA_NORMAL) {

@@ -1,8 +1,11 @@
 /*
  $Log$
- Revision 1.2  1994/06/22 21:17:54  jba
- Added cvs Log keyword
+ Revision 1.3  1995/02/28 16:43:53  jba
+ ansi c changes
 
+ * Revision 1.2  1994/06/22  21:17:54  jba
+ * Added cvs Log keyword
+ *
  */
 
 static char *sccsId = "@(#)scroll.c	1.16\t2/18/94";
@@ -159,7 +162,7 @@ Widget menuButton;
     viewFileUsedLength[option] = 0;
     viewFileMaxLength[option] = 0;
 
-    XtFree(viewFileString[option]);
+    XtFree((char *)viewFileString[option]);
     viewFileString[option]=NULL;
     XtUnmanageChild(app_shell);
 
@@ -332,7 +335,7 @@ if (!app_shell) {
   XmStringFree(str);
 
   /* add the file string to the text widget */
-  XmTextSetString(viewTextWidget[operandFile], viewFileString[operandFile]);
+  XmTextSetString(viewTextWidget[operandFile], (char *)viewFileString[operandFile]);
 
   XtVaSetValues(viewTextWidget[operandFile],
        XmNcursorPosition,  viewFileUsedLength[operandFile]-1,
@@ -368,7 +371,7 @@ caddr_t call_data;
     viewFileMaxLength[operandFile] = 0;
 
 
-    XtFree(viewFileString[operandFile]);
+    XtFree((char *)viewFileString[operandFile]);
     viewFileString[operandFile]=NULL;
     XtUnmanageChild(XtParent(w));
 
@@ -439,7 +442,7 @@ void updateLog(fileIndex,string)
   /* string doesn't fit - reallocate to get enough room */
      viewFileMaxLength[fileIndex] = MAX(INITIAL_FILE_LENGTH,
         2*viewFileMaxLength[fileIndex]);
-     XtFree(viewFileString[fileIndex]);
+     XtFree((char *)viewFileString[fileIndex]);
      viewFileString[fileIndex] = (unsigned char *) 
         XtCalloc(1,(unsigned)viewFileMaxLength[fileIndex]);
 
@@ -472,7 +475,7 @@ void updateLog(fileIndex,string)
         "updateLog: unable to close file %s.\n",filename);
   
   /* add the file string to the text widget */
-     XmTextSetString(viewTextWidget[fileIndex], viewFileString[fileIndex]);
+     XmTextSetString(viewTextWidget[fileIndex], (char *)viewFileString[fileIndex]);
 
   }
 

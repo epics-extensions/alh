@@ -1,8 +1,11 @@
 /*
  $Log$
- Revision 1.2  1994/06/22 21:17:31  jba
- Added cvs Log keyword
+ Revision 1.3  1995/02/28 16:43:47  jba
+ ansi c changes
 
+ * Revision 1.2  1994/06/22  21:17:31  jba
+ * Added cvs Log keyword
+ *
  */
 
 static char *sccsId = "@(#)force.c	1.7\t10/1/93";
@@ -294,7 +297,8 @@ GLINK *glink;
 {
 Widget bb, done_button, ok_button,  help_button;
 Arg     wargs[10];
-int     i, n=0,len=0,xloc,yloc;
+int     i, n=0,xloc,yloc;
+size_t     len=0;
 struct groupData *gdata;
 
 	gdata = glink->pgroupData;
@@ -416,7 +420,8 @@ GLINK *glink;
 Widget bb, done_button, ok_button, reset_button, help_button;
 Widget label;
 Arg     wargs[10];
-int     i, n=0,len=0,xloc,yloc;
+int     i, n=0,xloc,yloc;
+size_t  len=0;
 struct groupData *gdata;
 
 	gdata = glink->pgroupData;
@@ -607,7 +612,7 @@ struct groupData *gdata;
 /* New forcePVName replace CA search and event */
 
         str = ( char *)XmTextGetString(edit_forcePVG[1]);
-	if (strlen(str) > 1 && strcmp(str,gdata->forcePVName) != 0) {
+	if (strlen(str) > (size_t)1 && strcmp(str,gdata->forcePVName) != 0) {
 		alReplaceGroupForceEvent(glink,str);
 		}
         XtFree(str);
@@ -731,7 +736,8 @@ CLINK *clink;
 {
 Widget bb, done_button, ok_button,  help_button;
 Arg     wargs[10];
-int     i, n=0,len=0,xloc,yloc;
+int     i, n=0,xloc,yloc;
+size_t  len=0;
 struct chanData *cdata;
 
 	cdata = clink->pchanData;
@@ -856,7 +862,8 @@ CLINK *clink;
 Widget bb, done_button, ok_button, reset_button, help_button;
 Widget label;
 Arg     wargs[10];
-int     i, n=0,len=0,xloc,yloc;
+int     i, n=0,xloc,yloc;
+size_t  len=0;
 struct chanData *cdata;
 
 	cdata = clink->pchanData;
@@ -1055,7 +1062,7 @@ struct chanData *cdata;
 /* New forcePVName replace CA search and event */
 
         str = ( char *)XmTextGetString(edit_forcePVC[1]);
-	if (strlen(str) > 1 && strcmp(str,cdata->forcePVName) != 0) {
+	if (strlen(str) > (size_t)1 && strcmp(str,cdata->forcePVName) != 0) {
 		alReplaceChanForceEvent(clink,str);
 		}
 

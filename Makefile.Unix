@@ -2,7 +2,10 @@
 # $Id$
 #
 # $Log$
-# Revision 1.5  1995/02/16 22:52:40  jba
+# Revision 1.6  1995/02/28 16:43:23  jba
+# ansi c changes
+#
+# Revision 1.5  1995/02/16  22:52:40  jba
 # Added Xext for Motif2.0
 #
 # Revision 1.4  1994/11/09  20:33:18  jba
@@ -22,7 +25,8 @@ include $(EPICS)/config/CONFIG_EXTENSIONS
 
 DEPLIBS = $(EPICS_BASE_LIB)/libca.a $(EPICS_BASE_LIB)/libCom.a
 
-USR_CFLAGS = -DACCESS_SECURITY -I$(MOTIF_INC) -I$(X11_INC)
+USR_CFLAGS = -DACCESS_SECURITY
+USR_INCLUDES = -I$(MOTIF_INC) -I$(X11_INC)
 USR_LDFLAGS = -L$(MOTIF_LIB) -L$(X11_LIB)
 USR_LDLIBS = -lca -lCom -lXm -lXt -lXext -lX11 
 

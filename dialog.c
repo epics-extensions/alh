@@ -1,8 +1,11 @@
 /*
  $Log$
- Revision 1.2  1994/06/22 21:17:23  jba
- Added cvs Log keyword
+ Revision 1.3  1995/02/28 16:43:43  jba
+ ansi c changes
 
+ * Revision 1.2  1994/06/22  21:17:23  jba
+ * Added cvs Log keyword
+ *
  */
 
 static char *sccsId = "@(#)dialog.c	1.8\t2/3/94";
@@ -146,9 +149,9 @@ Widget createFileDialog(parent,okCallback,okParm,cancelCallback,cancelParm,userP
           XtAddCallback(fileselectdialog,XmNhelpCallback,(XtCallbackProc)helpCallback,(XtPointer)NULL);
      } else {
           if (oldOk)     XtRemoveCallback(fileselectdialog,XmNokCallback,
-                              oldOk     ,(XtPointer)oldOkParm);
+                              (XtCallbackProc)oldOk     ,(XtPointer)oldOkParm);
           if (oldCancel) XtRemoveCallback(fileselectdialog,XmNcancelCallback,
-                              oldCancel ,(XtPointer)oldCancelParm);
+                              (XtCallbackProc)oldCancel ,(XtPointer)oldCancelParm);
      }
 
      Xtitle = XmStringCreateSimple(title);
@@ -166,8 +169,8 @@ Widget createFileDialog(parent,okCallback,okParm,cancelCallback,cancelParm,userP
      XmStringFree(Xpattern);
      XmStringFree(Xdirectory);
 
-     XtAddCallback(fileselectdialog,XmNokCallback, okCallback, (XtPointer)okParm);
-     XtAddCallback(fileselectdialog,XmNcancelCallback, cancelCallback,(XtPointer)cancelParm);
+     XtAddCallback(fileselectdialog,XmNokCallback, (XtCallbackProc)okCallback, (XtPointer)okParm);
+     XtAddCallback(fileselectdialog,XmNcancelCallback, (XtCallbackProc)cancelCallback,(XtPointer)cancelParm);
      oldOk = okCallback;
      oldCancel = cancelCallback;
      oldOkParm = okParm;
