@@ -218,3 +218,5 @@ Tue May 18 10:24:41 CDT 1999
 	Bug fix for reversed parameters in alLogChanChangeMasks.
 	Added Silence Forever status to message area.
 
+Fri May 28 15:08:18 CDT 1999
+	Bug fix for forcePV. Removed alInitialize.c.

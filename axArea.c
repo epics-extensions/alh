@@ -148,13 +148,6 @@ void setupConfig(char *filename,int program,ALINK *areaOld)
 	SNODE *proot;
 	static int firstTime = TRUE;
 
-	/*****************   ERROR:   the following line has problems  !!!!!!!
-	       2- it doesn't show message the second time it is managed 
-	     if (areaOld)
-	          createDialog(areaOld->form_main,XmDIALOG_WORKING,"Reading configuration file:",filename);
-	     XFlush did not work.  Need to read about XtAppNextEvent,XtDispatchEvent
-	*************************/
-
 	/* initialize channel access */
 	if (program == ALH) {
 		if (firstTime) {
@@ -214,9 +207,6 @@ void setupConfig(char *filename,int program,ALINK *areaOld)
 	if ( sllFirst(pmainGroup)) {
 
 		proot = sllFirst(pmainGroup);
-
-		/* initialize group counters and group masks */
-		alInitialize((GLINK *)proot);
 
 		/*  initialize unused area  */
 		area = setupArea(0);

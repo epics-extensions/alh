@@ -8,6 +8,7 @@ $END
 CHANNEL  JBA_TEST_MAIN_GROUP  jba:Example1 -----
 CHANNEL  JBA_TEST_MAIN_GROUP  jba:Example2 -----
 GROUP JBA_TEST_MAIN_GROUP    GROUP
+$FORCEPV testjbaai -D--- 1 0
 $GUIDANCE
 This is the text guidance for group GROUP.
 This is the text guidance for group GROUP.

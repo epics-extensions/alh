@@ -348,16 +348,18 @@ int caConnect,struct mainGroup *pmainGroup)
 	cdata->name = (char *)calloc(1,strlen(name)+1);
 	strcpy(cdata->name,name);
 
-
-	if (mask[0]) alSetMask(mask,&(cdata->curMask));
-	else alSetMask("-----",&(cdata->curMask));
-
+	alSetMask("-----",&(cdata->curMask));
 	cdata->defaultMask = cdata->curMask;
 	cdata->forcePVMask = cdata->curMask;
 	cdata->forcePVValue = 1;
 	cdata->resetPVValue = 0;
 	cdata->forcePVName = "-";
 	cdata->sevrPVName = "-";
+
+	if (mask[0]) {
+		alSetMask(mask,&(cdata->defaultMask));
+		alChangeChanMask(clink,cdata->defaultMask);
+	}
 
 	/* must find parent */
 	parent_link = *pglink;
@@ -374,9 +376,16 @@ int caConnect,struct mainGroup *pmainGroup)
 	*pglink = clink->parent;
 	*pclink = clink;
 
-	if (caConnect && strlen(cdata->name) > (size_t) 1)
+	while(parent_link!=NULL) {
+		parent_link->pgroupData->curSev[NO_ALARM] ++;
+		parent_link->pgroupData->unackSev[NO_ALARM] ++;
+		parent_link = parent_link->parent;
+	}
+
+	if (caConnect && strlen(cdata->name) > (size_t) 1) {
 		alCaConnectChannel(cdata->name,&cdata->chid,clink);
-	alCaAddEvent(cdata->chid,&cdata->evid,clink);
+		alCaAddEvent(cdata->chid,&cdata->evid,clink);
+	}
 
 }
 
@@ -428,6 +437,9 @@ int context,int caConnect)
 
 		rtn = sscanf(buf,"%20s%32s%6s%hd%hd",command,name,
 		    mask,&f1,&f2);
+		if(rtn>=3) alSetMask(mask,&(gcdata->forcePVMask));
+		if (rtn >= 4) gcdata->forcePVValue = f1;
+		if (rtn == 5) gcdata->resetPVValue = f2;
 		if(rtn>=2) {
 			gcdata->forcePVName = (char *)calloc(1,strlen(name)+1);
 			strcpy(gcdata->forcePVName,name);
@@ -436,12 +448,7 @@ int context,int caConnect)
 				alCaAddForcePVEvent (gcdata->forcechid,gclink,
 				    &gcdata->forceevid,context);
 			}
-
 		}
-		if(rtn>=3) alSetMask(mask,&(gcdata->forcePVMask));
-		if (rtn >= 4) gcdata->forcePVValue = f1;
-		if (rtn == 5) gcdata->resetPVValue = f2;
-
 		return;
 	}
 
