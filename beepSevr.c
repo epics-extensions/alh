@@ -53,9 +53,7 @@ static struct beepSevrWindow {
 extern const char * alhAlarmSeverityString[];
 
 /* forward declarations */
-static void beepSevrApplyCallback(Widget widget,XtPointer calldata,XtPointer cbs);
 static void beepSevrDismissCallback(Widget widget,XtPointer calldata,XtPointer cbs);
-static void beepSevrOKCallback(Widget widget,XtPointer calldata,XtPointer cbs);
 static void beepSevrHelpCallback(Widget widget,XtPointer calldata,XtPointer cbs);
 static void beepSevrCreateDialog(ALINK*area);
 static void beepSevrUpdateDialogWidgets(struct beepSevrWindow *beepSevrWindow);
@@ -188,13 +186,11 @@ ALINK    *area;
 	Widget radiobox, form, beepSevrFrameW;
 	Widget nameLabelW, nameTextW;
 	Widget beepSevrToggleButtonW[ALH_ALARM_NSEV-1];
-	int i,j;
+	int i;
 	char *pstring;
 	XmString string;
 	static ActionAreaItem beepSevr_items[] = {
-		         { "Apply",   beepSevrApplyCallback,   NULL    },
 		         { "Dismiss",  beepSevrDismissCallback,  NULL    },
-		         { "OK",      beepSevrOKCallback,      NULL    },
 		         { "Help",    beepSevrHelpCallback,    NULL    },
 		     	};
 
@@ -212,7 +208,7 @@ ALINK    *area;
 	area->beepSevrWindow = (void *)beepSevrWindow;
 	beepSevrWindow->area = (void *)area;
 
-	beepSevrDialogShell = XtVaCreatePopupShell("Beep Severity",
+	beepSevrDialogShell = XtVaCreatePopupShell("Set Beep Severity",
 	    transientShellWidgetClass, area->toplevel, 
 	    XmNallowShellResize, TRUE,
 	    NULL);
@@ -281,21 +277,11 @@ ALINK    *area;
     radiobox = XmCreateRadioBox (beepSevrFrameW, "radiobox", NULL, 0);
 
 	for (i = 0; i < ALH_ALARM_NSEV-1; i++){
-		j=i+1;
-/*
-	    string = XmStringCreateSimple((char *)alhAlarmSeverityString[j]);
-		beepSevrToggleButtonW[i] = XtVaCreateManagedWidget("toggle_button",
-			xmToggleButtonGadgetClass, radiobox,
-			XmNlabelString, string,
-	    	XmNuserData,   area,
-			NULL);
-		XmStringFree(string);
-*/
 	    beepSevrToggleButtonW[i] = XmCreateToggleButtonGadget (radiobox,
-			 (char *)alhAlarmSeverityString[j], NULL, 0);
+			 (char *)alhAlarmSeverityString[i+1], NULL, 0);
 		XtVaSetValues(beepSevrToggleButtonW[i], XmNuserData, area, NULL);
 		XtAddCallback(beepSevrToggleButtonW[i], XmNvalueChangedCallback,
-		    beepSevrChangeCallback, (XtPointer)j);
+		    beepSevrChangeCallback, (XtPointer)(i+1));
 		XtManageChild(beepSevrToggleButtonW[i]);
 
 	}
@@ -307,8 +293,6 @@ ALINK    *area;
 	/* Set the client data "Apply", "Dismiss", "OK", and "Help" button's callbacks. */
 	beepSevr_items[0].data = (XtPointer)beepSevrWindow;
 	beepSevr_items[1].data = (XtPointer)beepSevrWindow;
-	beepSevr_items[2].data = (XtPointer)beepSevrWindow;
-	beepSevr_items[3].data = (XtPointer)beepSevrWindow;
 
 	(void)createActionButtons(beepSevrDialog, beepSevr_items, XtNumber(beepSevr_items));
 
@@ -327,23 +311,6 @@ ALINK    *area;
 }
 
 /******************************************************
-  beepSevrChangeCallback
-******************************************************/
-static void beepSevrChangeCallback(Widget widget,XtPointer calldata,XtPointer cbs)
-{
-	int beepSevr=(int)calldata;
-    ALINK *area;
-	struct beepSevrWindow *window;
-
-    XtVaGetValues(widget, XmNuserData, &area, NULL);
-	window=area->beepSevrWindow;
-
-	if (XmToggleButtonGadgetGetState(widget)) {
-		window->beepSevr = beepSevr;
-    }
-}
-
-/******************************************************
   beepSevrHelpCallback
 ******************************************************/
 static void beepSevrHelpCallback(Widget widget,XtPointer calldata,XtPointer cbs)
@@ -356,10 +323,8 @@ static void beepSevrHelpCallback(Widget widget,XtPointer calldata,XtPointer cbs)
     "Beeping for this group or channel will not occur when the highest\n"
 	"unacknowledged severity is less than the specified beep severity.\n"
 	"\n"
-	"Press the Apply button to set beep severity.\n"
-	"Press the Dismiss button to cancel change and close the dialog window.\n"
-	"Press the OK button to set beep severity and close the dialog window.\n"
-	"Press the Help	button to get this help description window.\n"
+	"Press the Dismiss button to close the dialog window.\n"
+	"Press the Help    button to get this help description window.\n"
     "  \n"
 	;
 	char * message2 = "  ";
@@ -369,36 +334,35 @@ static void beepSevrHelpCallback(Widget widget,XtPointer calldata,XtPointer cbs)
 }
 
 /******************************************************
-  beepSevrApplyCallback
+  beepSevrChangeCallback
 ******************************************************/
-static void beepSevrApplyCallback(Widget widget,XtPointer calldata,XtPointer cbs)
+static void beepSevrChangeCallback(Widget widget,XtPointer calldata,XtPointer cbs)
 {
-	struct beepSevrWindow *beepSevrWindow=(struct beepSevrWindow *)calldata;
+	int beepSevr=(int)calldata;
+    ALINK *area;
 	struct chanData *cdata;
 	struct gcData *pgcData;
 	GCLINK *link;
 	int linkType;
 
-	link =getSelectionLinkArea(beepSevrWindow->area);
+	if (!XmToggleButtonGadgetGetState(widget)) return;
+
+    XtVaGetValues(widget, XmNuserData, &area, NULL);
+
+	link =getSelectionLinkArea(area);
 	if (!link) return;
+	linkType =getSelectionLinkTypeArea(area);
+	if (linkType == CHANNEL) alSetBeepSevrChan((CLINK *)link,beepSevr);
+	if (linkType == GROUP) alSetBeepSevrGroup((GLINK *)link,beepSevr);
+
 	pgcData = link->pgcData;
-	linkType =getSelectionLinkTypeArea(beepSevrWindow->area);
-
-	if (linkType == CHANNEL) {
-		cdata = (struct chanData *)link->pgcData;
-		alSetBeepSevrChan((CLINK *)link,beepSevrWindow->beepSevr);
-	}
-	if (linkType == GROUP) {
-		alSetBeepSevrGroup((GLINK *)link,beepSevrWindow->beepSevr);
-	}
 	alLogSetBeepSevr(pgcData->name,alhAlarmSeverityString[pgcData->beepSevr]);
-
 	link->pmainGroup->modified = 1;
 
 	/* ---------------------------------
 	     Update all dialog Windows
 	     --------------------------------- */
-	axUpdateDialogs(beepSevrWindow->area);
+	axUpdateDialogs(area);
 
 }
 
@@ -418,12 +382,4 @@ static void beepSevrDismissCallback(Widget widget,XtPointer calldata,XtPointer c
 
 }
 
-/******************************************************
-  beepSevrOKCallback
-******************************************************/
-static void beepSevrOKCallback(Widget widget,XtPointer calldata,XtPointer cbs)
-{
-	beepSevrApplyCallback(widget,calldata,cbs);
-	beepSevrDismissCallback(widget,calldata,cbs);
-}
 
