@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.13  1997/01/16 16:34:59  jba
+ Bug fix for ALARMCOUNTFILTER.
+
  Revision 1.12  1996/06/07 15:44:59  jba
  Added global alarm acknowledgement.
 
@@ -950,11 +953,18 @@ void alNewEvent(stat,sevr,acks,value,clink)
      CLINK *clink;
 {
      struct chanData *cdata;
+     COUNTFILTER *countFilter;
 
      cdata = clink->pchanData;
-     if (cdata->curStat != stat || cdata->curSevr != sevr) {
+     countFilter = cdata->countFilter;
+     if ((!countFilter && (cdata->curStat != stat || cdata->curSevr != sevr)) ||
+        (countFilter && (countFilter->stat != stat || countFilter->sev != sevr)) )
+     {
           alNewAlarm(stat,sevr,value,clink);
-     }else if (cdata->unackSevr > 0) {
+     } 
+     else
+     if (cdata->unackSevr > 0)
+     {
           alLogGblAckChan(cdata);
           alAckChan(clink);
      }
