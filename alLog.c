@@ -180,7 +180,7 @@ void alLogConnection(const char *pvname,const char *ind)
 	/* update file and Alarm Log text window */
 	fprintf(fl,"%s",buff);
 	fflush(fl);
-	updateLog(OPMOD_FILE,buff);
+	updateLog(ALARM_FILE,buff);
 
 }
 
