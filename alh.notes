@@ -34,12 +34,13 @@ Mon Mar 31 10:41:19 CST 1997
      Bug fix to SEVRCOMMAND for UP_ANY and DOWN_ANY.
      Bug fix to ALARMCOUNTFILTER.
 
-Fri Sep 12 13:51:33 CDT 1997
+Fri Sep 12 16:25:02 CDT 1997
 
 	Modified Help menu items.
 	Removed libUnix dependancy (product description shell)
 	Fixed calloc for SEVRCOMMAND string.
 	Fixed calloc for treeSym.
+	Bug fix for $BEEPSEVERITY line.
 	Alarm Configuration Tool (alh -c ) changes
 		Removed Undo from Edit menu - more confusing than helpful.
 		Many changes to get properties window working.
