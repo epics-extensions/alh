@@ -1,5 +1,9 @@
 /*
  $Log$
+ Revision 1.6  1997/09/12 19:36:41  jba
+ Changes to get cut/paste working.
+ Bug fixes for tree and group window views.
+
  Revision 1.5  1997/09/09 22:23:43  jba
  Added initialization of undo data.
 
@@ -97,7 +101,7 @@ static struct undoInfo {
 struct clipInfo {
      GCLINK *link;
      int linkType;
-} clipData;
+} clipData = { 0, 0 };
 
 #define KEEP 0
 #define DELETE 1
@@ -116,17 +120,18 @@ void editUndoSet(link, linkType, configLink, command, delete)
      int delete;
 {
      /* delete unused configLink group or channel */
+/*
      if (delete && link && link != configLink){
           if (undoData.linkType == GROUP)
                alRemoveGroup((GLINK *)undoData.link);
           else 
                alRemoveChan((CLINK *)undoData.link);
      }
-
+*/
      undoData.link = link;
      undoData.linkType = linkType;
-     undoData.command = command;
      undoData.configLink = configLink;
+     undoData.command = command;
 }
 
 /******************************************************
@@ -185,17 +190,16 @@ void editClipboardSet(link, linkType)
      int linkType;
 {
      if (clipData.linkType == GROUP)
-          alRemoveGroup((GLINK *)clipData.link);
+          alDeleteGroup((GLINK *)clipData.link);
      else 
-          alRemoveChan((CLINK *)clipData.link);
+          alDeleteChan((CLINK *)clipData.link);
 
      if (linkType == GROUP){
           clipData.link = (GCLINK *)alCopyGroup((GLINK *)link);
-          clipData.linkType = linkType;
      } else {
           clipData.link = (GCLINK *)alCopyChan((CLINK *)link);
-          clipData.linkType = linkType;
      }
+     clipData.linkType = linkType;
 }
 
 /******************************************************
@@ -214,6 +218,11 @@ void editCutLink( area, link, linkType)
      struct anyLine  *treeLine;
      struct anyLine  *groupLine;
      struct anyLine  *line;
+     WLINE *wline=0;
+     Widget pushButton;
+     XmPushButtonCallbackStruct *cbs=NULL;
+
+     if (!link) return;
 
      treeWindow = area->treeWindow;
      groupWindow = area->groupWindow;
@@ -225,18 +234,8 @@ void editCutLink( area, link, linkType)
      /* treeWindow selection */
      if (link == treeWindow->selectionLink){
 
-          /* adjust treeWindow selection */
-          markSelectedWidget(treeWindow,0);
-          markSelection(treeWindow, 0);
-
-          /* adjust groupWindow selection */
-          markSelectedWidget(groupWindow,0);
-          markSelection(groupWindow, 0);
-
-          /* update dialog windows */
-          axUpdateDialogs(area);
-
           /* adjust lines of treeWindow*/
+/*
           line= treeLine;
           count = diffCount;
           while (count){
@@ -245,6 +244,16 @@ void editCutLink( area, link, linkType)
                if (!line) break;
                count--;
           }
+*/
+
+          /* adjust lines in groupWindow */
+/*
+          line = (struct anyLine *)sllFirst(groupWindow->lines);
+          while (line){
+               line->link = 0;
+               line = (struct anyLine *)sllNext(line);
+            }
+*/
 
           /* adjust treeWindow viewCount */
           linkTemp=link;
@@ -256,36 +265,37 @@ void editCutLink( area, link, linkType)
           }
           setViewConfigCount(area->treeWindow,count);
 
-          /* adjust groupWindow */
-          groupWindow = area->groupWindow;
-          groupWindow->parentLink = 0;
-          groupWindow->viewConfigCount = 0;
-          groupWindow->viewOffset = 0;
-
-          /* adjust lines in groupWindow */
-          line = (struct anyLine *)sllFirst(groupWindow->lines);
-          while (line){
-               line->link = 0;
-               line = (struct anyLine *)sllNext(line);
-          }
-
           /* update line data */
+/*
           link->lineTreeW = NULL;
           link->lineGroupW = NULL;
+*/
 
-          /* delete selected group */
+          /* remove selected group from parent's childlist*/
           alRemoveGroup((GLINK *)link);
 
           /* adjust treeSym for treeWindow */
           parent = (GLINK *)link->parent;
           alViewAdjustTreeW(parent, NOCHANGE, area->viewFilter);
 
-          /* redraw  windows */
+          /* redraw tree window */
           line = (struct anyLine *)parent->lineTreeW;
-          if (line) redraw(treeWindow, line->lineNo);
+          if (line) {
+              redraw(treeWindow, line->lineNo);
+              wline = (WLINE *)line->wline;
+              if (wline) pushButton = wline->name;
+          }
           else redraw(treeWindow,0);
 
-          redraw(groupWindow,0);
+          /* adjust groupWindow */
+          groupWindow = area->groupWindow;
+          groupWindow->parentLink = parent;
+          groupWindow->viewConfigCount = alViewAdjustGroupW((GLINK *)parent,
+             area->viewFilter);
+
+          /* redraw  Group window */
+          nameTreeW_callback(pushButton, line, cbs);
+
      }
 
      /* groupWindow selection */
@@ -459,6 +469,8 @@ void editPasteLink(area, newLink, linkType)
      GCLINK *parentLink;
      GCLINK *selectLink;
      int    selectType;
+
+     if (!newLink) return;
 
      selectLink = (GCLINK *)area->selectionLink;
      selectType = area->selectionType;
