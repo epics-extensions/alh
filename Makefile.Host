@@ -6,7 +6,7 @@ TOP = ../../..
 include $(TOP)/config/CONFIG_EXTENSIONS
 
 # Debugging options
-#ifeq ($(HOST_ARCH),solaris)
+#ifeq ($(OS_CLASS),solaris)
 #CC  = purify -first-only -chain-length=30 $($(ANSI)_$(CMPLR))
 #CXX = purify -first-only -chain-length=30 $($(CPLUSPLUS)_$(CXXCMPLR))
 #HOST_OPT=NO
