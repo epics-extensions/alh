@@ -458,3 +458,6 @@ Tue Aug 10 10:48:18 CDT 2004 ALH_1_2_19beta1
 
 Fri Oct 29 14:54:00 CDT 2004  ALH_1_2_19beta2
 	Set main window background color grey if Silence For One Hour is active.
+
+Tue Apr  5 10:06:27 CDT 2005
+	Added "ALH" to popup dialogs and added timestamp to popup error dialog.

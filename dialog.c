@@ -19,12 +19,15 @@
 **********************************************************************/
 
 #include <stdio.h>
+#include <time.h>
 
 #include <Xm/Xm.h>
 #include <Xm/MessageB.h>
 #include <Xm/FileSB.h>
 
 #include "ax.h"
+
+#define TIME_SIZE 18
 
 extern Display *display;
 extern int _no_error_popup;
@@ -125,7 +128,7 @@ String title,String pattern,String directory)
 void createDialog(Widget parent,int dialogType,char *message1,char *message2)
 {
 	static Widget   dialog = 0; /* make it static for reuse */
-	XmString        str,str1,str2,string;
+	XmString        str,str1,str2,str3,string,string2;
 
 	if (dialog) XtUnmanageChild(dialog);
 	if (!dialogType ) return;
@@ -174,9 +177,12 @@ void createDialog(Widget parent,int dialogType,char *message1,char *message2)
 	str2 = XmStringCreateLtoR(message2,XmFONTLIST_DEFAULT_TAG);
 	string = XmStringConcat(str1,str2);
 
+	str3 = XmStringCreateLtoR("ALH ",XmFONTLIST_DEFAULT_TAG);
+	string2 = XmStringConcat(str3,str);
+
 	XtVaSetValues(dialog,
 	    XmNdialogType,  dialogType,
-	    XmNdialogTitle, str,
+	    XmNdialogTitle, string2,
 	    XmNmessageString, string,
 	    NULL);
 	XmStringFree(str);
@@ -198,8 +204,7 @@ void createActionDialog(Widget parent,int dialogType,char *message1,
 XtCallbackProc okCallback,XtPointer okParm,XtPointer userParm)
 {
 	static Widget         dialog = 0; /* make it static for reuse */
-	XmString              str;
-	XmString              str2;
+	XmString              str,str1,str2,str3;
 	static XtCallbackProc oldOkCallback = 0;
 	static XtPointer      oldOkParm = 0;
 
@@ -246,11 +251,14 @@ XtCallbackProc okCallback,XtPointer okParm,XtPointer userParm)
 		break;
 	}
 
+	str1 = XmStringCreateLtoR("ALH ",XmFONTLIST_DEFAULT_TAG);
+	str3 = XmStringConcat(str1,str);
+
 	str2=XmStringCreateLtoR(message1,XmSTRING_DEFAULT_CHARSET);
 	XtVaSetValues(dialog,
 	    XmNuserData,      userParm,
 	    XmNdialogType,  dialogType,
-	    XmNdialogTitle, str,
+	    XmNdialogTitle, str3,
 	    XmNmessageString, str2,
 	    NULL);
 	XmStringFree(str);
@@ -279,12 +287,18 @@ void errMsg(const char *fmt, ...)
 	static int warningboxMessages = 0;
 	int nargs=10;
 	Arg args[10];
+    size_t len;
+    struct tm * tms;
+    time_t timeofday;
 
+    timeofday = time(0L);
+    tms = localtime(&timeofday);
+    len = strftime(lstring,TIME_SIZE,"%Y/%m/%d %H:%M ",tms);
 	va_start(vargs,fmt);
-	vsprintf(lstring,fmt,vargs);
+	vsprintf(&lstring[TIME_SIZE-1],fmt,vargs);
 	va_end(vargs);
 
-	if(lstring[0] == '\0') return;
+	if(lstring[TIME_SIZE-1] == '\0') return;
 
 	if (_no_error_popup) {
 		alLogOpModMessage(0,0,lstring);
@@ -319,7 +333,7 @@ void errMsg(const char *fmt, ...)
 		XBell(display,50);
 		cstring=XmStringCreateLtoR(lstring,XmSTRING_DEFAULT_CHARSET);
 		nargs=0;
-		XtSetArg(args[nargs],XmNtitle,"Warning"); 
+		XtSetArg(args[nargs],XmNtitle,"ALH Warning"); 
 		nargs++;
 		XtSetArg(args[nargs],XmNmessageString,cstring); 
 		nargs++;
