@@ -5,17 +5,22 @@
 TOP = ../../..
 include $(TOP)/config/CONFIG_EXTENSIONS
 
-USR_CFLAGS += -DACCESS_SECURITY -I$(MOTIF_INC) -I$(X11_INC)
+I_WANT_GREETINGS    = NO
+
+USR_CFLAGS += -I$(MOTIF_INC) -I$(X11_INC)
+alCa_CFLAGS += -DACCESS_SECURITY
 awAlh_CFLAGS += -DALH_HELP_URL="\"http://www.aps.anl.gov/asd/controls/epics/EpicsDocumentation/ExtensionsManuals/AlarmHandler/alh.html\""
 
-# Use following line for Greeting popup
-#alh_CFLAGS += -DIWantGreetings
+ifeq ($(I_WANT_GREETINGS),YES)
+alh_CFLAGS += -DIWantGreetings
+alh_SRCS += productDescriptionShell.c
+endif
 
 # Debugging options
 #CC = purify -first-only -chain-length=25  $($(ANSI)_$(CMPLR))
 #HOST_OPT=NO
 
-alh_SRCS =  acknowledge.c  \
+alh_SRCS +=  acknowledge.c  \
 		alCA.c \
 		alConfig.c \
 		alDebug.c \
@@ -43,7 +48,6 @@ alh_SRCS =  acknowledge.c  \
 		line.c \
 		mask.c \
 		process.c \
-		productDescriptionShell.c \
 		property.c \
 		scroll.c \
 		showmask.c \
@@ -74,23 +78,6 @@ XlibGUI_DIR = $(X11_LIB)
 XmStatic_DIR = $(MOTIF_LIB)
 HCLXt_DIR = $(X11_LIB)
 Xlib_DIR = $(X11_LIB)
-
-ifdef WIN32
-# If objects were compiled with different default runtime libraries
-#   (not a good idea), specify which one you want to use by making it
-#   the default and the others nodefault.
-ifeq ($(HOST_OPT),NO)
-USR_LDFLAGS += /defaultlib:"msvcrtd.lib" #-MDd Multi-thread DLL, Debug
-USR_LDFLAGS += /nodefaultlib:"msvcrt.lib"  #-MD  Multi-thread DLL
-else
-USR_LDFLAGS += /defaultlib:"msvcrt.lib"  #-MD  Multi-thread DLL
-USR_LDFLAGS += /nodefaultlib:"msvcrtd.lib" #-MDd Multi-thread DLL, Debug
-endif
-USR_LDFLAGS += /nodefaultlib:"libcmt.lib"  #-MT  Multi-thread
-USR_LDFLAGS += /nodefaultlib:"libcmtd.lib" #-MTd Multi-thread, Debug
-USR_LDFLAGS += /nodefaultlib:"libc.lib"    #-ML  Single-thread     
-USR_LDFLAGS += /nodefaultlib:"libcd.lib"   #-MLd Single-thread, Debug
-endif
 
 RCS_WIN32 += alh.rc
 alh.res:../alh.ico
