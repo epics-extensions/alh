@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.10  1997/08/27 22:00:47  jba
+ Added calls to XtFree.
+
  Revision 1.9  1997/04/17 18:39:47  jba
  Bug fix for mask.
 
@@ -631,12 +634,14 @@ static void forcePVApplyCallback(widget, forcePVWindow, cbs)
      rtn = sscanf(buff,"%hd",&f1);
      if (rtn == 1) pgcData->forcePVValue = f1;
      else pgcData->forcePVValue = 1;
+     XtFree(buff);
 
      /*  update link field  - resetPVValue */
      buff = XmTextFieldGetString(forcePVWindow->forcePVresetValueTextW);
      rtn = sscanf(buff,"%hd",&f1);
      if (rtn == 1) pgcData->resetPVValue = f1;
      else pgcData->resetPVValue = 0;
+     XtFree(buff);
 
      /*  update link field  - forcePVName */
      buff = XmTextFieldGetString(forcePVWindow->forcePVnameTextW);
@@ -644,6 +649,7 @@ static void forcePVApplyCallback(widget, forcePVWindow, cbs)
           if (linkType == GROUP) alReplaceGroupForceEvent((GLINK *)link,buff);
           else alReplaceChanForceEvent((CLINK *)link,buff);
      }
+     XtFree(buff);
 
      /*  log on operation file */
      if (linkType == GROUP) alLogForcePVGroup((GLINK *)link,OPERATOR);
