@@ -76,7 +76,9 @@ void createRuntimeWindow(ALINK *area)
 		if (!ALH_pixmap) axMakePixmap(area->runtimeForm);
 
 		XtVaSetValues(area->runtimeToplevel,
+#ifndef WIN32
 		    XmNiconPixmap,          ALH_pixmap,
+#endif
 		    XmNiconName,            area->blinkString,
 		    XmNallowShellResize,    TRUE,
 		    XmNuserData,            (XtPointer)area,

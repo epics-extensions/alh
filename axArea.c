@@ -439,7 +439,9 @@ void createMainWindowWidgets(ALINK *area)
 
 	if (!ALH_pixmap) axMakePixmap(area->form_main);
 
+#ifndef WIN32
 	XtVaSetValues(area->toplevel, XmNiconPixmap, ALH_pixmap, NULL);
+#endif
 
 	/* Modify the window manager menu "close" callback */
 	{
