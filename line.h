@@ -43,8 +43,9 @@ struct anyLine {
 	char message[LINEMESSAGE_SIZE]; /* summary message string */
 	void *wline;                    /* address of line_widget */
 	int linkType;                   /* type of gclink group or channel */
-	short curSevr;                    /* current severity */
-	short unackSevr;                  /* highest unack severity */
+	short curSevr;                   /* current severity */
+	short unackSevr;                 /* highest unack severity */
+	char highestBeepSevrString[2]; /* highest beep severity */
 	int curStat;                    /* Channel: current status */
 	int curSev[ALH_ALARM_NSEV];   /* Group: current sevr channel counts*/
 };
@@ -60,6 +61,7 @@ struct widgetLine {
 	Widget process;
 	Widget mask;
 	Widget message;
+	Widget highestbeepsevr;
 };
 
 typedef struct widgetLine WLINE;
