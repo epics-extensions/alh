@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.9  1998/08/03 14:33:20  jba
+ Changed MAX_STRING_LENGTH to 500
+
  Revision 1.8  1998/07/29 17:27:35  jba
  Added "Unacknowledged Alarms Only" display filter.
 
@@ -234,7 +237,7 @@ typedef  void (*FUNPTR)();      /* define void function pointer */
 #define GROUP     1
 #define CHANNEL   2
 
-#define	MAX_STRING_LENGTH		150
+#define MAX_STRING_LENGTH	500
 
 /* define commands for modifying the current view */
 #define EXPAND		0
