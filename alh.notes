@@ -306,3 +306,6 @@ Wed Aug  9 09:16:57 CDT 2000 - V1.2.5
 
 Tue Sep 26 10:30:55 CDT 2000
 	Added audio for WIN32 and fixed some memory leaks.
+
+Thu Oct  5 14:49:17 CDT 2000 - V1.2.6
+	Added audio for solaris.
