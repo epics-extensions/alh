@@ -1,5 +1,9 @@
 /*
  $Log$
+ Revision 1.16  1998/06/22 18:42:13  jba
+ Merged the new alh-options created at DESY MKS group:
+  -D Disable Writing, -S Passive Mode, -T AlarmLogDated, -P Printing
+
  Revision 1.15  1998/06/02 19:40:49  evans
  Changed from using Fgmgr to using X to manage events and file
  descriptors.  (Fdmgr didn't work on WIN32.)  Uses XtAppMainLoop,
@@ -193,6 +197,8 @@ void fileSetupCallback( Widget widget, int client_data, XmFileSelectionBoxCallba
 void fileCancelCallback( Widget widget, ALINK *area, XmFileSelectionBoxCallbackStruct *cbs);
 void fileSetup(char *filename,ALINK *area,int fileType,int programId,Widget widget);
 void fileSetupInit(Widget widget,int argc,char *argv[]);
+char *shortfile(char *name);
+
 
 
 
@@ -587,6 +593,7 @@ void fileSetupCallback();
 void fileCancelCallback();
 void fileSetup();
 void fileSetupInit();
+char *shortfile();
 
 /********************************************************************
   acknowledge.c   function prototypes

@@ -1,6 +1,10 @@
 
 /*
  $Log$
+ Revision 1.7  1998/06/22 18:42:15  jba
+ Merged the new alh-options created at DESY MKS group:
+  -D Disable Writing, -S Passive Mode, -T AlarmLogDated, -P Printing
+
  Revision 1.6  1997/01/09 14:38:24  jba
  Added alarmLog circular file facility.
 
@@ -86,6 +90,7 @@ static void closeFileViewShell(w,operandFile,call_data)
 *
 **********************************************************/
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <sys/stat.h>
 
@@ -97,9 +102,39 @@ static void closeFileViewShell(w,operandFile,call_data)
 #include <Xm/PushB.h>
 #include <Xm/ScrollBar.h>
 #include <Xm/Text.h>
-
+#include <dirent.h>
 #include <alh.h>
 #include <ax.h>
+/* Headers and definitions for  search routines. Albert */
+#include <dirent.h>
+#include <Xm/PanedW.h>
+#include <Xm/Label.h>
+#include <Xm/ToggleB.h>
+#include <Xm/RowColumn.h>
+#include <Xm/TextF.h>
+#include <ctype.h>
+#include <X11/cursorfont.h>
+
+extern int _time_flag; 
+extern Display *display;
+
+static XmTextPosition positionSearch;
+static int lenSearch;
+extern char FS_filename[128];   /*FileName from FileSelectBox for AlLogV. */
+
+static Widget findShell, findText;
+static Widget text_with,text_fy,text_fmo,text_fd,text_fh,text_fmi,
+text_ty,text_tmo,text_td,text_th,text_tmi;
+
+static void findForward(), findReverse(), findDismiss();
+static void searchCallback(); 
+void allDigit();
+static void showAllCallback();
+static void showSelectedCallback();
+void compactDataAscMonth(); 
+void compactData();
+char *digitalMonth();
+/* End for search routines. Albert */
 
 #ifndef MAX
 #  define MAX(a,b) ((a) > (b) ? a : b)
@@ -136,16 +171,13 @@ char error_file_size[] = {
 static void closeFileViewWindow_callback( Widget w, int operandFile, caddr_t call_data);
 static void closeFileViewShell( Widget w, int operandFile, caddr_t call_data);
 
+
 #else
 
 static void closeFileViewWindow_callback();
 static void closeFileViewShell();
 
 #endif /*__STDC__*/
-
-
-
-
 
 /**************************************************************************
     create scroll window for file view
@@ -156,16 +188,28 @@ int option;
 Widget menuButton;
 {
   static Widget config_shell=NULL,alarm_shell=NULL,opmod_shell=NULL;
-  Widget app_shell=NULL,title,button;
+  Widget app_shell=NULL,title,button,button1;
   Widget previous;
-
+  char sbuf[120];
+  DIR *directory;
   struct stat statbuf;         /* Information on a file. */
-  FILE *fp = NULL;             /* Pointer to open file   */
+  FILE *fp = NULL;             /* Pointer to open file.  */
   char filename[120];
   int operandFile=0;
+/* definitions for search widgets. Albert */
   Arg al[20];
   int ac;
   XmString str=NULL;
+  Dimension height, margin_height;
+  Widget findPane, findBox, findLabel, findButtonBox,
+  findForwardButton, findReverseButton, findDismissButton;
+  Widget rowcol1,rowcol2,showButton,showAllButton;
+  time_t timeofday;
+  struct tm *tms;
+  char buf[120];
+  char defaultString_fy[5],defaultString_fmo[3],defaultString_fd[3],defaultString_fh[3]="00",defaultString_fmi[3]="00";
+  char defaultString_ty[5],defaultString_tmo[3],defaultString_td[3],defaultString_th[3]="24",defaultString_tmi[3]="00";
+/* End definitions for search routins. Albert */
 
   switch (option) {
     case CONFIG_FILE:   
@@ -214,8 +258,27 @@ Widget menuButton;
         break;
 
     case ALARM_FILE:   
-        strcpy(filename,psetup.logFile);
-        fp=fl;
+       if (!_time_flag) { 
+          strcpy(filename,psetup.logFile);  
+          fp=fl;
+                        }
+       else { 
+         strcpy(filename,FS_filename);             /* Dated flag. Albert */
+         directory = opendir(filename);
+         if (directory) {
+          closedir(directory);
+          sprintf(sbuf, "%s is a directory\n",filename);  
+          createDialog(w,XmDIALOG_WARNING,sbuf," ");
+          return;
+	 }
+	 if ((fp = fopen(filename, "r")) == NULL) {
+          sprintf(sbuf, "fileViewWindow: Can't open file %s\n",filename);
+          createDialog(w,XmDIALOG_WARNING,sbuf," ");
+	  fprintf(stderr, "Can't open file %s\n",filename);
+          return;
+	 }
+       }
+
         fseek(fp,0,SEEK_SET);
         break;
 
@@ -264,6 +327,7 @@ Widget menuButton;
      switch(operandFile) {
 	case ALARM_FILE:
 		fseek(fp,alarmLogFileOffsetBytes,SEEK_SET);
+                if (_time_flag)	fclose (fp) ; /* Albert */
 		break;
 	case CONFIG_FILE:   
 	case OPMOD_FILE:
@@ -335,17 +399,208 @@ if (!app_shell) {
                          (XtCallbackProc)closeFileViewWindow_callback,
                          (XtPointer) operandFile);
 
-  previous = button;
-
+  previous = button; 
 /* create file name widget */
   ac = 0;
   XtSetArg (al[ac], XmNtopAttachment, XmATTACH_FORM);  ac++;
   XtSetArg (al[ac], XmNtopOffset, 6);  ac++;
   XtSetArg (al[ac], XmNleftAttachment, XmATTACH_WIDGET);  ac++;
-  XtSetArg (al[ac], XmNleftWidget, button);  ac++;
+  XtSetArg (al[ac], XmNleftWidget, button);  ac++; 
   XtSetArg (al[ac], XmNleftOffset, 6);  ac++;
   viewFilenameWidget[operandFile] = XtCreateManagedWidget(filename,xmLabelGadgetClass,
     app_shell,al, ac);
+
+/* For Search Widgets. 
+We define "Serch" button in AlLogViewPanel. Albert.
+*/
+if ( (_time_flag) && (option == ALARM_FILE))
+{
+  ac = 0;
+  XtSetArg (al[ac], XmNtopAttachment, XmATTACH_FORM);  ac++;
+  XtSetArg (al[ac], XmNtopOffset, 5);  ac++;
+  XtSetArg (al[ac], XmNleftAttachment, XmATTACH_WIDGET);  ac++;
+  XtSetArg (al[ac], XmNleftWidget,viewFilenameWidget[operandFile] );  ac++;
+  XtSetArg (al[ac], XmNleftOffset, 5);  ac++;
+  XtSetArg (al[ac], XmNuserData, menuButton);  ac++;
+  button1 = XtCreateManagedWidget("Search",xmPushButtonWidgetClass,
+                        app_shell, al, ac);
+  XtAddCallback(button1, XmNactivateCallback, searchCallback, app_shell );
+  ac = 0;
+  XtSetArg(al[ac], XmNallowShellResize, (XtArgVal) True); ac++;
+  XtSetArg(al[ac], XmNmappedWhenManaged, (XtArgVal) False); ac++;
+  findShell=XtVaCreatePopupShell("pshell",transientShellWidgetClass,app_shell,
+                                  NULL);
+  findPane = XtVaCreateManagedWidget("findPane", xmPanedWindowWidgetClass, 
+                                    findShell);
+  ac = 0;
+  XtSetArg(al[ac], XmNhorizontalSpacing, (XtArgVal) 5); ac++;
+  XtSetArg(al[ac], XmNverticalSpacing, (XtArgVal) 5); ac++;
+  findBox = XtCreateManagedWidget("findBox", xmRowColumnWidgetClass, 
+                                   findPane, al, ac);
+  ac = 0;
+  XtSetArg(al[ac], XmNleftAttachment, (XtArgVal) XmATTACH_FORM); ac++;
+  XtSetArg(al[ac], XmNrightAttachment, (XtArgVal) XmATTACH_FORM); ac++;
+  XtSetArg(al[ac], XmNtopAttachment, (XtArgVal) XmATTACH_FORM); ac++;
+  XtSetArg(al[ac], XmNlabelString, XmStringCreateLtoR("Search:",
+			XmFONTLIST_DEFAULT_TAG)); ac++;
+  XtSetArg(al[ac], XmNalignment, (XtArgVal) XmALIGNMENT_CENTER); ac++;
+  findLabel = XtCreateManagedWidget("findLabel", xmLabelWidgetClass, 
+                                     findBox, al, ac);
+  ac = 0;
+  XtSetArg(al[ac], XmNleftAttachment, (XtArgVal) XmATTACH_FORM); ac++;
+  XtSetArg(al[ac], XmNrightAttachment, (XtArgVal) XmATTACH_FORM); ac++;
+  XtSetArg(al[ac], XmNtopAttachment, (XtArgVal) XmATTACH_WIDGET); ac++;
+  XtSetArg(al[ac], XmNtopWidget, (XtArgVal) findLabel); ac++;
+  XtSetArg(al[ac], XmNcolumns, (XtArgVal) 40); ac++;
+  findText = XtCreateManagedWidget("findText", xmTextWidgetClass, findBox, 
+                                    al, ac);
+  XtAddCallback(findText, XmNactivateCallback, findForward, NULL);
+  ac = 0;
+  XtSetArg(al[ac], XmNborderWidth, (XtArgVal) 0); ac++;
+  XtSetArg(al[ac], XmNorientation, (XtArgVal) XmHORIZONTAL); ac++;
+  findButtonBox=XtCreateManagedWidget("findButtonBox", xmRowColumnWidgetClass,
+                                       findPane, al, ac);
+  ac = 0;
+  XtSetArg(al[ac], XmNlabelString,
+           XmStringCreateLtoR("Forward", XmFONTLIST_DEFAULT_TAG)); ac++;
+  findForwardButton = XtCreateManagedWidget("findForwardButton",
+                      xmPushButtonWidgetClass, findButtonBox, al, ac);
+  XtAddCallback(findForwardButton, XmNactivateCallback, findForward, 
+                app_shell);
+  ac = 0;
+  XtSetArg(al[ac], XmNlabelString, 
+           XmStringCreateLtoR("Reverse", XmFONTLIST_DEFAULT_TAG)); ac++;
+  findReverseButton = XtCreateManagedWidget("findReverseButton",
+	              xmPushButtonWidgetClass, findButtonBox, al, ac);
+  XtAddCallback(findReverseButton,XmNactivateCallback,findReverse,app_shell);
+  ac = 0;
+  XtSetArg(al[ac], XmNlabelString,
+		XmStringCreateLtoR("Dismiss", XmFONTLIST_DEFAULT_TAG)); ac++;
+  findDismissButton = XtCreateManagedWidget("findDismissButton",
+	              xmPushButtonWidgetClass, findButtonBox, al, ac);
+  XtAddCallback(findDismissButton, XmNactivateCallback, findDismiss, NULL);
+  ac = 0;
+  XtSetArg(al[ac], XmNmarginHeight, &margin_height); ac++;
+  XtGetValues(findButtonBox, al, ac);
+  ac = 0;
+  XtSetArg(al[ac], XmNheight, &height); ac++;
+  XtGetValues(findDismissButton, al, ac);
+  ac = 0;
+  XtSetArg(al[ac], XmNpaneMinimum, 
+          (XtArgVal)  (height + (margin_height * 2))); ac++;
+  XtSetArg(al[ac], XmNpaneMaximum,
+	   (XtArgVal) (height + (margin_height * 2))); ac++;
+  XtSetValues(findButtonBox, al, ac);
+  XtRealizeWidget(findShell); 
+  previous = button1;
+
+  timeofday = time(0L);
+  tms = localtime(&timeofday);
+  sprintf(buf,"%04d%02d%02d%",
+  1900+tms->tm_year,1+tms->tm_mon,tms->tm_mday,tms->tm_hour,tms->tm_min);
+  sscanf(buf,"%4s%2s%2s",
+  &defaultString_fy,&defaultString_fmo,&defaultString_fd);
+  sscanf(buf,"%4s%2s%2s",
+  &defaultString_ty,&defaultString_tmo,&defaultString_td);
+
+  ac=0;
+  XtSetArg (al[ac], XmNtopAttachment, XmATTACH_WIDGET);  ac++;
+  XtSetArg (al[ac], XmNtopWidget,button );  ac++;
+  XtSetArg (al[ac], XmNleftAttachment, XmATTACH_FORM);  ac++;
+  XtSetArg (al[ac], XmNrightAttachment, XmATTACH_FORM);  ac++;
+  XtSetArg (al[ac], XmNorientation, XmHORIZONTAL); ac++;
+  rowcol1=
+  XtCreateManagedWidget("rowcol1",xmRowColumnWidgetClass,app_shell, al,ac);
+  ac=0;
+  XtSetArg (al[ac], XmNcolumns, 4); ac++; 
+  XtSetArg (al[ac], XmNmaxLength, 4); ac++; 
+  XtVaCreateManagedWidget("From:(YYYY-MM-DD-HH-MI)",xmLabelGadgetClass, 
+                         rowcol1, NULL);
+  text_fy=
+  XtCreateManagedWidget("tex_fy",xmTextFieldWidgetClass, rowcol1,al,ac);
+  XtVaSetValues(text_fy, XmNvalue,defaultString_fy, NULL);
+  XtAddCallback(text_fy, XmNmodifyVerifyCallback, allDigit, NULL);
+
+  XtSetArg (al[ac], XmNcolumns, 2); ac++; 
+  XtSetArg (al[ac], XmNmaxLength, 2); ac++; 
+  text_fmo=
+   XtCreateManagedWidget("tex_fmo",xmTextFieldWidgetClass,rowcol1,al,ac); 
+  XtVaSetValues(text_fmo, XmNvalue,defaultString_fmo, NULL);
+  XtAddCallback(text_fmo, XmNmodifyVerifyCallback, allDigit, NULL);
+
+  text_fd=
+   XtCreateManagedWidget("tex_fd",xmTextFieldWidgetClass, rowcol1,al,ac); 
+  XtVaSetValues(text_fd, XmNvalue,defaultString_fd, NULL);
+  XtAddCallback(text_fd, XmNmodifyVerifyCallback, allDigit, NULL);
+
+  text_fh=
+   XtCreateManagedWidget("tex_fh",xmTextFieldWidgetClass,rowcol1,al,ac); 
+  XtVaSetValues(text_fh, XmNvalue,defaultString_fh, NULL);
+  XtAddCallback(text_fh, XmNmodifyVerifyCallback, allDigit, NULL);
+
+  text_fmi=
+   XtCreateManagedWidget("tex_fmi",xmTextFieldWidgetClass,rowcol1,al,ac); 
+  XtVaSetValues(text_fmi, XmNvalue,defaultString_fmi, NULL);
+  XtAddCallback(text_fmi, XmNmodifyVerifyCallback, allDigit, NULL);
+
+  XtVaCreateManagedWidget("With:",xmLabelGadgetClass, rowcol1, NULL);
+
+  text_with=
+   XtVaCreateManagedWidget("tex_with",xmTextFieldWidgetClass, rowcol1,NULL); 
+  XtManageChild(rowcol1);
+  ac=0;
+  XtSetArg (al[ac], XmNtopAttachment, XmATTACH_WIDGET);  ac++;
+  XtSetArg (al[ac], XmNtopWidget,rowcol1 );  ac++;
+  XtSetArg (al[ac], XmNleftAttachment, XmATTACH_FORM);  ac++;
+  XtSetArg (al[ac], XmNrightAttachment, XmATTACH_FORM);  ac++;
+  XtSetArg (al[ac], XmNorientation, XmHORIZONTAL); ac++;
+  rowcol2=
+  XtCreateManagedWidget("rowcol1",xmRowColumnWidgetClass,app_shell, al,ac);
+  ac=0;
+  XtSetArg (al[ac], XmNcolumns, 4); ac++; 
+  XtSetArg (al[ac], XmNmaxLength, 4); ac++; 
+  XtVaCreateManagedWidget("  To:(YYYY-MM-DD-HH-MI)",xmLabelGadgetClass, 
+                          rowcol2, NULL);
+  text_ty=
+   XtCreateManagedWidget("tex_ty",xmTextFieldWidgetClass, rowcol2,al,ac); 
+  XtVaSetValues(text_ty, XmNvalue,defaultString_ty, NULL);
+  XtAddCallback(text_ty, XmNmodifyVerifyCallback, allDigit, NULL);
+
+  XtSetArg (al[ac], XmNcolumns, 2); ac++; 
+  XtSetArg (al[ac], XmNmaxLength, 2); ac++; 
+  text_tmo=
+   XtCreateManagedWidget("tex_tmo",xmTextFieldWidgetClass,rowcol2,al,ac); 
+  XtVaSetValues(text_tmo, XmNvalue,defaultString_tmo, NULL);
+  XtAddCallback(text_tmo, XmNmodifyVerifyCallback, allDigit, NULL);
+
+  text_td=
+   XtCreateManagedWidget("tex_td",xmTextFieldWidgetClass,rowcol2,al,ac);
+  XtVaSetValues(text_td, XmNvalue,defaultString_td, NULL);
+  XtAddCallback(text_td, XmNmodifyVerifyCallback, allDigit, NULL);
+
+  text_th=
+   XtCreateManagedWidget("tex_th",xmTextFieldWidgetClass,rowcol2,al,ac); 
+  XtVaSetValues(text_th, XmNvalue,defaultString_th, NULL);
+  XtAddCallback(text_th, XmNmodifyVerifyCallback, allDigit, NULL);
+
+  text_tmi=
+   XtCreateManagedWidget("tex_tmi",xmTextFieldWidgetClass,rowcol2,al,ac); 
+  XtVaSetValues(text_tmi, XmNvalue,defaultString_tmi, NULL);
+  XtAddCallback(text_tmi, XmNmodifyVerifyCallback, allDigit, NULL);
+
+  showButton=XtVaCreateManagedWidget("ShowSelected",
+                                     xmPushButtonWidgetClass,rowcol2, NULL);
+  XtAddCallback(showButton,XmNactivateCallback,showSelectedCallback,app_shell);
+
+  showAllButton=XtVaCreateManagedWidget("Show Current File",
+                                     xmPushButtonWidgetClass,rowcol2, NULL);
+  XtAddCallback(showAllButton, XmNactivateCallback,showAllCallback,NULL);
+
+  XtManageChild(rowcol2);
+  previous = rowcol2;
+}
+/* End for Search Widgets. Albert_____________________________________ */
+
 
 /* add titles */
   if ( option == ALARM_FILE) {
@@ -353,7 +608,7 @@ if (!app_shell) {
         XtSetArg (al[ac], XmNwidth,800);  ac++;
         XtSetArg (al[ac], XmNheight,30);  ac++;
         XtSetArg (al[ac], XmNtopAttachment, XmATTACH_WIDGET);  ac++;
-        XtSetArg (al[ac], XmNtopWidget, button);  ac++;
+        XtSetArg (al[ac], XmNtopWidget, previous);  ac++; /* was button. Albert */
         XtSetArg (al[ac], XmNleftAttachment, XmATTACH_FORM);  ac++;
         title = XtCreateManagedWidget("    TIME_STAMP        PROCESS_VARIABLE_NAME        CURRENT_STATUS              HIGHEST_UNACK_STATUS              VALUE",
                 xmLabelGadgetClass,app_shell,al,ac);
@@ -361,10 +616,9 @@ if (!app_shell) {
 
    }
 
-
   /* create text widget */
   ac = 0;
-  XtSetArg (al[ac], XmNrows, 24);  ac++;
+  XtSetArg (al[ac], XmNrows, 30);  ac++; /* Was 24. Albert*/
   XtSetArg (al[ac], XmNcolumns, 80);  ac++;
   XtSetArg (al[ac], XmNscrollVertical, True);  ac++;
   XtSetArg (al[ac], XmNscrollHorizontal, True);  ac++;
@@ -375,8 +629,8 @@ if (!app_shell) {
   XtSetArg (al[ac], XmNtopWidget, previous);  ac++;
   XtSetArg (al[ac], XmNleftAttachment, XmATTACH_FORM);  ac++;
   XtSetArg (al[ac], XmNrightAttachment, XmATTACH_FORM);  ac++;
-  XtSetArg (al[ac], XmNbottomAttachment, XmATTACH_FORM);  ac++;
-  viewTextWidget[operandFile] = XmCreateScrolledText(app_shell, "text", al, ac);
+  XtSetArg (al[ac], XmNbottomAttachment, XmATTACH_FORM);  ac++; 
+  viewTextWidget[operandFile]=XmCreateScrolledText(app_shell, "text", al, ac);
 
   /* make appropriate item sensitive */
   XtSetSensitive(viewTextWidget[operandFile], True);
@@ -394,7 +648,7 @@ if (!app_shell) {
   XmTextSetString(viewTextWidget[operandFile], (char *)viewFileString[operandFile]);
 
      switch(operandFile) {
-	case ALARM_FILE:
+	case ALARM_FILE: 
 		XtVaSetValues(viewTextWidget[operandFile],
 			XmNcursorPosition,  alarmLogFileOffsetBytes+1,
 			NULL);
@@ -406,19 +660,218 @@ if (!app_shell) {
 			NULL);
 		XmTextShowPosition(viewTextWidget[operandFile], viewFileUsedLength[operandFile]-1);
 		break;
-    }
-
-
-
+     }
 /*
   XtSetSensitive(viewTextWidget[operandFile], False);
 */
 
-
   XtManageChild(app_shell); 
-
 }
 
+/*
+Callbacks for ShowAll and ShowSelected Buttons. Albert
+*/
+
+static void showAllCallback(w,client_data,call_data)
+Widget w;
+XtPointer client_data;
+XtPointer call_data;
+{
+   XmTextSetString(viewTextWidget[ALARM_FILE],
+      (char *)viewFileString[ALARM_FILE]);
+   XtManageChild(viewTextWidget[ALARM_FILE]); 
+}
+
+static void showSelectedCallback(w,client_data,call_data)
+Widget w;
+XtPointer client_data;
+XtPointer call_data;
+{
+  FILE *ffp;
+  char *fy,*fmo,*fd,*fh,*fmi,*ty,*tmo,*td,*th,*tmi;
+  char *string_with;
+  char month[10], day[10], hour[10], min[10], year[10], un1[10],un2[10];
+  int m;
+  Boolean found;
+  char *p;
+  DIR *directory;
+  struct dirent *rdr;
+  char fname[120];
+  char FSnameshort[120];
+  char buf1[13],  buf2[13]; 
+  static Cursor waitCursor;
+  XSetWindowAttributes attrs;
+  char lin[250];
+  char *selectedText;
+  static Widget dialog;
+  XmString str,str1;
+  char *dirForAlLog;
+  int count=0;
+  register int gap, i, j;
+  char **v;
+  register char *temp;
+  char fromStr[11];
+  char toStr[11];
+  int len;
+  int begin;
+  int end;
+  Boolean breakFlag=False;
+  char *line=&lin[0];
+
+  fy =XmTextGetString(text_fy); fmo=XmTextGetString(text_fmo);
+  fd =XmTextGetString(text_fd); fh =XmTextGetString(text_fh);
+  fmi=XmTextGetString(text_fmi);
+  ty =XmTextGetString(text_ty); tmo=XmTextGetString(text_tmo);
+  td =XmTextGetString(text_td); th =XmTextGetString(text_th);
+  tmi=XmTextGetString(text_tmi);
+
+  compactData(fy,fmo,fd,fh,fmi,&buf1[0]);
+  compactData(ty,tmo,td,th,tmi,&buf2[0]);
+  if(strcmp(buf1,buf2) > 0) 
+    {
+    createDialog((Widget) client_data, XmDIALOG_WARNING,
+    "DataFrom > DataTo.\n","Please, change Data");
+    XtFree(fy); XtFree(fmo); XtFree(fh);  XtFree(fd); XtFree(fmi);
+    XtFree(ty); XtFree(tmo); XtFree(th);  XtFree(td); XtFree(tmi);
+    return;
+    }
+
+  dirForAlLog=XtCalloc(1,500);
+  strcpy( FSnameshort, (const char *)shortfile(FS_filename) );
+  strncpy(dirForAlLog,FS_filename,strlen(FS_filename)-strlen(FSnameshort)-1);
+  if ( (directory=opendir( (char *) dirForAlLog)) == NULL)
+       {
+       fprintf(stderr,"%s-wrong directory\n",dirForAlLog);
+       XtFree(dirForAlLog);
+       XtFree(fy); XtFree(fmo); XtFree(fh);  XtFree(fd); XtFree(fmi);
+       XtFree(ty); XtFree(tmo); XtFree(th);  XtFree(td); XtFree(tmi);
+       return;
+       }
+
+  string_with=XmTextGetString(text_with);
+  selectedText=XtCalloc(1,viewFileMaxLength[ALARM_FILE]);
+  if (!waitCursor) waitCursor=XCreateFontCursor(display,XC_watch);
+  attrs.cursor=waitCursor;
+  XChangeWindowAttributes(display, XtWindow (client_data),CWCursor,&attrs);
+  XFlush(display);
+
+  while(rdr=readdir(directory)) 
+    {
+    strcpy(fname,rdr->d_name);
+    if( strncmp(fname,FSnameshort,strlen(FSnameshort)-10) ) continue;
+    count++;
+    }
+    closedir(directory);
+  if ( (directory=opendir( (char *) dirForAlLog)) == NULL)
+       {
+       fprintf(stderr,"%s-wrong directory\n",dirForAlLog);
+       XtFree(dirForAlLog);
+       XtFree(fy); XtFree(fmo); XtFree(fh);  XtFree(fd); XtFree(fmi);
+       XtFree(ty); XtFree(tmo); XtFree(th);  XtFree(td); XtFree(tmi);
+       return;
+       }
+
+  v=(char **) XtCalloc(sizeof(char *),count);
+  i=0;
+  while(rdr=readdir(directory)) {
+    if( strncmp(rdr->d_name,FSnameshort,strlen(FSnameshort)-10) ) continue;
+    v[i]=(char *)calloc(sizeof(char), strlen(FSnameshort)+1 );
+    strcpy(v[i],rdr->d_name); 
+    v[i][strlen(FSnameshort)]=0;
+    i++;
+  }
+  closedir(directory);
+  /* BinarySortAlgoritm. Albert */
+  for (gap = count/2; gap > 0; gap /= 2)
+    for (i = gap; i < count; i++)
+    for (j=i-gap; j>=0 && (strcmp(v[j],v[j+gap])>0); j-=gap) {
+      temp = v[j];
+      v[j] = v[j+gap];
+      v[j+gap] = temp;
+    }
+
+  len=strlen(FSnameshort)-10;
+  memcpy(&fromStr[0],fy,4);
+  fromStr[4]='-';
+  memcpy(&fromStr[5],fmo,2);
+  fromStr[7]='-';
+  memcpy(&fromStr[8],fd,2);
+  fromStr[10]=0;
+  memcpy(&toStr[0],ty,4);
+  toStr[4]='-';
+  memcpy(&toStr[5],tmo,2);
+  toStr[7]='-';
+  memcpy(&toStr[8],td,2);
+  toStr[10]=0;
+
+  for(i=0;i<count;i++)     if(strcmp((v[i]+len),fromStr)>=0) break; 
+  begin=i;
+  for(i=begin;i<count;i++) if(strcmp((v[i]+len),toStr)  >0) break; 
+  end=i;
+  for( i=begin; (i<end)&&(!breakFlag) ;i++)
+  {
+    if( (ffp=fopen(v[i],"r")) == NULL) {
+      createDialog((Widget) client_data, XmDIALOG_WARNING,fname,
+                   " - can't open file!");
+      continue;
+    }
+    XFlush(display);
+    XmUpdateDisplay(client_data);
+    while ( fgets(line,159,ffp) ) {
+      sscanf(line,"%4s %4s %3s %3s %3s %3s %4s",
+      &un1,&month,&day,&hour,&min,&un2,&year);
+      month[3]=day[2]=hour[2]=min[2]=year[4]=0;
+      compactDataAscMonth(year,month,day,hour,min,&buf1[0]);
+      compactData(fy,fmo,fd,fh,fmi,&buf2[0]);
+      if( strcmp(&buf1[0],&buf2[0]) < 0 ) continue;
+      compactData(ty,tmo,td,th,tmi,&buf2[0]);
+      if( strcmp(&buf1[0],&buf2[0]) > 0 ) continue;
+      if (strlen(string_with)){
+        found=False;
+        for (p = line; p = strchr( (const char *)p, *string_with); p++){
+          if (!strncmp(p,string_with,strlen(string_with))) {found=True;break;}
+	}
+        if (!found) continue;
+      }
+      if( strlen(selectedText) > (viewFileMaxLength[ALARM_FILE] -2*159) )
+        {
+	createDialog((Widget) client_data, XmDIALOG_ERROR,
+        "Result of the search is so long.\nPlease, detail search context.\n",
+        "I show only begin of result.");
+         breakFlag=True;
+	 break;         /* Break from while( fgets()) */
+        }
+      strcat(selectedText,line); 
+   }
+   fclose(ffp);
+  }
+  for(i=0;i<count;i++) XtFree(v[i]);
+  XtFree(dirForAlLog);
+  XtFree(string_with);
+  XtFree(fy); XtFree(fmo); XtFree(fh);  XtFree(fd); XtFree(fmi);
+  XtFree(ty); XtFree(tmo); XtFree(th);  XtFree(td); XtFree(tmi);
+  XmTextSetString(viewTextWidget[ALARM_FILE],selectedText);
+  attrs.cursor=None;
+  XChangeWindowAttributes(display, XtWindow (client_data),CWCursor,&attrs);
+  XFlush(display);
+  XtManageChild(viewTextWidget[ALARM_FILE]);
+  XtFree(selectedText);
+}
+
+
+void allDigit(text_w, unused, cbs)
+Widget      text_w;
+XtPointer   unused;
+XmTextVerifyCallbackStruct *cbs;
+{
+  char c;
+  int len = XmTextGetLastPosition(text_w);
+  if (cbs->text->ptr == NULL) return; /* backspace */
+  /* don't allow non-digits or let the input exceed 5 chars */
+  if (!isdigit(c = cbs->text->ptr[0]) || len >= 5) 
+      cbs->doit = False;
+}
+/* End Callbacks for Show... buttons Albert */
 
 /**************************************************************************
     close scroll window for file view
@@ -442,7 +895,6 @@ caddr_t call_data;
 
     XtFree((char *)viewFileString[operandFile]);
     viewFileString[operandFile]=NULL;
-
 }
 
 
@@ -456,7 +908,6 @@ int operandFile;
 caddr_t call_data;
 {
     Widget menuButton;
-
     XtVaGetValues(w, XmNuserData, &menuButton, NULL);
     XtVaSetValues(menuButton, XmNset, FALSE, NULL);
 
@@ -466,8 +917,7 @@ caddr_t call_data;
 
     XtFree((char *)viewFileString[operandFile]);
     viewFileString[operandFile]=NULL;
-    XtUnmanageChild(XtParent(w));
-
+    XtUnmanageChild(XtParent(w)); 
 }
 
 
@@ -530,7 +980,7 @@ void updateLog(fileIndex,string)
   /* string doesn't fit - reallocate to get enough room */
      viewFileMaxLength[fileIndex] = MAX(INITIAL_FILE_LENGTH,
         2*viewFileMaxLength[fileIndex]);
-     XtFree((char *)viewFileString[fileIndex]);
+     XtFree((char *)viewFileString[fileIndex]); 
      viewFileString[fileIndex] = (unsigned char *) 
         XtCalloc(1,(unsigned)viewFileMaxLength[fileIndex]);
 
@@ -632,4 +1082,159 @@ void updateAlarmLog(fileIndex,string)
 	XmTextShowPosition(viewTextWidget[fileIndex], alarmLogFileOffsetBytes+1);
 
 }
+
+/* Callbacks routines for Search widgets. Albert */
+
+static void searchCallback(w,client_data,call_data)
+Widget w;
+XtPointer client_data;
+XmAnyCallbackStruct *call_data;
+{
+  if (XtIsRealized(findShell))  XtMapWidget(findShell);
+  XtPopup(findShell, XtGrabNone);
+  /*  XMapRaised(XtDisplay(findShell), XtWindow(XtParent(findShell))); */
+}
+
+static void findForward(w, client_data, call_data)
+Widget w;
+XtPointer client_data;
+XtPointer call_data;
+{
+  char *search_pat, *p, *string;
+  Boolean found = False;
+  Widget text_w,search_w;
+  int operandFile=ALARM_FILE;
+  text_w = viewTextWidget[operandFile];
+  search_w=findText;
+  string = XmTextGetString(text_w);
+  if (!*string) {
+  createDialog((Widget)findShell,XmDIALOG_WARNING,"No text to search."," ");
+  XtFree(string); return;
+  }
+  search_pat = XmTextGetString(search_w);
+  if (!*search_pat) {
+    createDialog((Widget)client_data,XmDIALOG_WARNING,
+                  "Specify a search pattern."," ");
+    XtFree(string);XtFree(search_pat);  return;
+  }
+  XmTextSetHighlight(text_w,positionSearch,positionSearch+lenSearch, 
+                     XmHIGHLIGHT_NORMAL);
+  lenSearch=strlen(search_pat);
+  positionSearch = XmTextGetCursorPosition(text_w);
+  for(p=&string[positionSearch+1];p=strchr((const char *)p,*search_pat);p++)
+    if (!strncmp(p, search_pat, lenSearch)) {found = True; break;}
+  if (!found) {
+    createDialog((Widget)client_data,XmDIALOG_WARNING,
+               "Forward Pattern not found."," "); 
+  }
+  else {
+    positionSearch = (XmTextPosition)(p - string);
+    XmTextSetInsertionPosition(text_w, positionSearch);
+    XmTextSetHighlight(text_w,positionSearch,positionSearch+lenSearch,
+                       XmHIGHLIGHT_SELECTED);
+  }
+  XtFree(string);
+  XtFree(search_pat);
+} 
+
+static void findReverse(w, client_data, call_data)
+Widget w;
+XtPointer client_data;
+XtPointer call_data;
+{
+  char *search_pat, *p, *string;
+  Boolean found = False;
+  Widget text_w,search_w;
+  int operandFile=ALARM_FILE;
+  text_w = viewTextWidget[operandFile];
+  search_w=findText;
+  string = XmTextGetString(text_w);
+  if (!*string) {
+  createDialog((Widget)client_data,XmDIALOG_WARNING,"No text to search."," ");
+  XtFree(string); return;
+  }
+  search_pat = XmTextGetString(search_w);
+  if (!*search_pat) {
+    createDialog((Widget)client_data,XmDIALOG_WARNING,
+                  "Specify a search pattern."," ");
+    XtFree(string);XtFree(search_pat); return;
+  }
+  XmTextSetHighlight(text_w,positionSearch,positionSearch+lenSearch, 
+                     XmHIGHLIGHT_NORMAL);
+  lenSearch=strlen(search_pat);
+  if((positionSearch=XmTextGetCursorPosition(text_w))>0)
+    {
+    for (p = &string[positionSearch-1]; p >= string; p--)
+    if (!strncmp(p, search_pat, lenSearch)) {found = True; break;}
+    }
+  if (!found) {
+    createDialog((Widget)client_data,XmDIALOG_WARNING,
+    "Reverse pattern not found."," ");
+    }
+    else {
+      positionSearch = (XmTextPosition)(p - string);
+      XmTextSetInsertionPosition(text_w, positionSearch);
+      XmTextSetHighlight(text_w,positionSearch,positionSearch+lenSearch,
+                         XmHIGHLIGHT_SELECTED);
+    }
+  XtFree(string);
+  XtFree(search_pat);
+} 
+
+static void findDismiss(w, client_data, call_data)
+Widget w;
+XtPointer client_data;
+XtPointer call_data;
+{
+  XtUnmapWidget(findShell);
+}
+/* Compact presentation of YYY-MM-DD. Albert. */
+void compactData(year,month,day,hour,min,presentation)
+char *year;
+char *month;
+char *day;
+char *hour;
+char *min;
+char *presentation;
+{
+  memcpy(&presentation[0],year,4); 
+  memcpy(&presentation[4],month,2);
+  memcpy(&presentation[6],day,2); 
+  memcpy(&presentation[8],hour,2); 
+  memcpy(&presentation[10],min,2);
+  presentation[12]=0;
+}
+/* Compact presentation of YYY-MMM-DD. Albert. */
+
+void compactDataAscMonth(year,month,day,hour,min,presentation)
+char *year;
+char *month;
+char *day;
+char *hour;
+char *min;
+char *presentation;
+{
+  compactData(year,digitalMonth(month),day,hour,min,presentation);
+}
+
+/* Month to Digit. Albert */
+char *digitalMonth(strMonth)
+char *strMonth;
+{
+  if(!strcmp(strMonth,"Jan")) return("01");
+  if(!strcmp(strMonth,"Feb")) return("02");
+  if(!strcmp(strMonth,"Mar")) return("03");
+  if(!strcmp(strMonth,"Apr")) return("04");
+  if(!strcmp(strMonth,"May")) return("05"); 
+  if(!strcmp(strMonth,"Jun")) return("06");
+  if(!strcmp(strMonth,"Jul")) return("07");
+  if(!strcmp(strMonth,"Aug")) return("08");
+  if(!strcmp(strMonth,"Sep")) return("09");
+  if(!strcmp(strMonth,"Oct")) return("10");
+  if(!strcmp(strMonth,"Nov")) return("11");
+  if(!strcmp(strMonth,"Dec")) return("12");
+  fprintf(stderr,"%s --- NOT A MONTH !!!!!\n",strMonth);
+  return("00");
+}
+
 

@@ -1,3 +1,4 @@
+
 #
 # $Id$
 #
@@ -20,7 +21,7 @@ Unix_DIR = $(INSTALL_LIB)
 #CC = purify -first-only -chain-length=25  $($(ANSI)_$(CMPLR))
 #HOST_OPT=NO
 
-SRCS =  acknowledge.c  \
+alh_SRCS =  acknowledge.c  \
 		alCA.c \
 		alConfig.c \
 		alDebug.c \
@@ -53,7 +54,9 @@ SRCS =  acknowledge.c  \
 		sllLib.c \
 		testalarm.c
 
-PROD = alh
+alh_printer_SRCS = printer.c
+
+PROD = alh alh_printer
 
 USR_CFLAGS_WIN32 += /DWIN32 /D_WINDOWS
 USR_LDFLAGS_WIN32 += /SUBSYSTEM:WINDOWS
@@ -96,3 +99,4 @@ RCS_WIN32 += alh.rc
 alh.res:../alh.ico
 
 include $(TOP)/config/RULES.Host
+

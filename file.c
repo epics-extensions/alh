@@ -1,5 +1,9 @@
 /*
  $Log$
+ Revision 1.16  1998/06/22 18:42:14  jba
+ Merged the new alh-options created at DESY MKS group:
+  -D Disable Writing, -S Passive Mode, -T AlarmLogDated, -P Printing
+
  Revision 1.15  1998/06/22 17:49:29  jba
  Bug fixes for command line option handling.
 
@@ -109,6 +113,15 @@ static char *sccsId = "@(#)file.c	1.14\t2/3/94";
 #include <axArea.h>
 #include <ax.h>
 
+int _read_only_flag=0; /* Read-only flag. Albert */
+int _passive_flag=0;   /* Passive flag. Albert */
+int _tm_day_old;       /* Day-variable for dated. Albert */
+int _printer_flag=0;   /* Printer flag. Albert */
+  char printerHostname[120];
+  int  printerPort;
+  char printerColorModel[120];
+int _time_flag=0;      /* Dated flag. Albert */
+
 extern int DEBUG;
 
 extern int alarmLogFileMaxRecords;  /* alarm log file maximum # records */
@@ -137,7 +150,11 @@ static struct command_line_stuff commandLine = { NULL,NULL,NULL,NULL,NULL,0};
 #define PARM_ALARM_LOG_FILE		4
 #define PARM_OPMOD_LOG_FILE		5
 #define PARM_ALARM_LOG_MAX		6
-#define PARM_HELP			7
+#define PARM_PRINTER			7
+#define PARM_DATED			8
+#define PARM_PASSIVE			9
+#define PARM_READONLY			10
+#define PARM_HELP			11
 
 struct parm_stuff
 {
@@ -155,6 +172,10 @@ static PARM_STUFF ptable[] = {
 	{ "-a",		2,	PARM_ALARM_LOG_FILE },
 	{ "-o",		2,	PARM_OPMOD_LOG_FILE },
 	{ "-m",		2,	PARM_ALARM_LOG_MAX },
+	{ "-P",		2,	PARM_PRINTER },
+	{ "-T",		2,	PARM_DATED },
+	{ "-S",		2,	PARM_PASSIVE },
+	{ "-D",		2,	PARM_READONLY },
 	{ "-help",	5,	PARM_HELP },
         { NULL,		-1,     -1 }
 };
@@ -343,7 +364,21 @@ void fileSetup(filename,area,fileType,programId, widget)
      char  *pattern=0;
      FILE  *tt;
      Widget fileSelectionBox;
-
+     time_t timeofday;
+     struct tm *tms;
+     char buf[16];
+/* _______ For Dated AlLog File. Albert______________________________*/
+     timeofday = time(0L);
+     tms = localtime(&timeofday);  
+     sprintf(buf,".%.4d-%.2d-%.2d",
+             1900+tms->tm_year,1+tms->tm_mon,tms->tm_mday);
+     buf[11]=0;
+     _tm_day_old = tms->tm_mday;
+     if ((fileType == FILE_ALARMLOG)&&(_time_flag)) 
+     {
+      strncat(filename, &buf[0], strlen(buf));
+     } 
+/* _______ End. Albert______________________________*/
      error = checkFilename(filename,fileType);
      if (error){
           switch(fileType) {
@@ -436,8 +471,10 @@ void fileSetup(filename,area,fileType,programId, widget)
                case FILE_ALARMLOG:
                     if (fo) alLogSetupAlarmFile(filename);
                     strcpy(psetup.logFile,filename);
-                    if (fl) fclose(fl);
-                    fl = fopen(psetup.logFile,"r+");
+                    if (fl) fclose(fl); /* RO-flag. Albert */
+		    if(_read_only_flag)  fl = fopen(psetup.logFile,"r"); 
+                    else if(_time_flag)  fl = fopen(psetup.logFile,"a+");
+                    else                 fl = fopen(psetup.logFile,"r+");
 /*---------------- 
                     if (alarmLogFileMaxRecords && alarmLogFileEndStringLength) {
                         fseek(fl,0,SEEK_SET);
@@ -459,7 +496,9 @@ void fileSetup(filename,area,fileType,programId, widget)
                     if (fo) alLogSetupOpmodFile(filename);
                     strcpy(psetup.opModFile,filename);
                     if (fo) fclose(fo);
-                    fo = fopen(psetup.opModFile,"a");
+		    if(!_read_only_flag) fo=fopen(psetup.opModFile,"a");
+		    /* RO-option. Albert */
+		    else  fo=fopen(psetup.opModFile,"r");
                     break;
 
                case FILE_SAVEAS:
@@ -514,6 +553,7 @@ int getCommandLineParms(int argc, char** argv)
 	int i,j;
 	int finished=0;
 	int parm_error=0;
+	char *p,*q;  /* for printer parameters. Albert */
 
 	for(i=1;i<argc && !parm_error;i++)
 	{
@@ -597,6 +637,52 @@ int getCommandLineParms(int argc, char** argv)
 						}
 					}
 					break;
+				case PARM_PRINTER: /* Printer parameters. Albert */
+					if(++i>=argc) {
+						parm_error=1;
+						break;
+					}
+					if(argv[i][0]=='-') {
+						parm_error=1;
+						break;
+					}
+					if ( (p= strchr(argv[i],':')) == NULL) {
+						fprintf(stderr,"%s - you must specify <printerHostname>:<portNumber>:[printerColorModel] for printer.\nPrinting will be disable\n",argv[i]); 
+						parm_error=1;
+						break;
+					}
+					*p=0; p++;
+					strcpy(printerHostname,argv[i]);
+					if ( (q= strchr(p,':')) != NULL) {
+						*q=0;q++;
+						printerPort=atoi(p);
+						strcpy(printerColorModel,q);     
+					}
+					else {
+						printerPort=atoi(p);
+						strcpy(printerColorModel,"mono"); 
+					}    
+					if (printerPort== 0) {
+						fprintf(stderr,"%s - is not number.\nPrinting will be disable\n",p);
+						parm_error=1;
+						break;
+					}
+					_printer_flag=1;   
+					finished=1;
+					break;
+				case PARM_DATED:
+					_time_flag=1; /* Dated-option. Albert */
+					finished=1;
+					break;
+				case PARM_PASSIVE:
+					_read_only_flag=1; /* Passive-option. Albert */
+					_passive_flag=1;
+					finished=1;
+					break;
+				case PARM_READONLY:
+					_read_only_flag=1;  /* RO-option. Albert */
+					finished=1;
+					break;
 				default:
 					parm_error=1;
 					break;
@@ -635,7 +721,7 @@ int getCommandLineParms(int argc, char** argv)
 void printUsage(char *pgm)
 {
           fprintf(stderr,
-          "\nusage: %s [-c] [-f filedir] [-l logdir] [-a alarmlogfile] [-o opmodlogfile] [-m alarmlogmaxrecords [Xoptions] [configfile] \n",
+          "\nusage: %s [-cdst] [-f filedir] [-l logdir] [-a alarmlogfile] [-o opmodlogfile] [-m alarmlogmaxrecords] [-P printerName:portNumber:<printerColorModel>] [Xoptions] [configfile] \n",
                pgm);
           fprintf(stderr,"\n\tconfigfile\tAlarm configuration filename\n");
           fprintf(stderr,"\n\t-c\t\tAlarm Configuration Tool mode\n");
@@ -644,6 +730,10 @@ void printUsage(char *pgm)
           fprintf(stderr,"\n\t-a alarmlogfile\tAlarm log filename\n");
           fprintf(stderr,"\n\t-o opmodlogfile\tOpMod log filename\n");
           fprintf(stderr,"\n\t-m maxrecords\talarm log file max records (default 2000)\n");
+          fprintf(stderr,"\n\t-D\t\tDisable Writing\n");
+          fprintf(stderr,"\n\t-S\t\tPassive Mode\n");
+          fprintf(stderr,"\n\t-T\t\tAlarmLogDated\n");
+          fprintf(stderr,"\n\t-P Name:port:colorModel\tPrint to TCP printer(colorMod={mono,hp_color,...})\n");
           exit(1);
 }
 
@@ -662,6 +752,7 @@ void fileSetupInit( widget, argc, argv)
      char   logFile[NAMEDEFAULT_SIZE];
      char   opModFile[NAMEDEFAULT_SIZE];
      char   *name = NULL;
+     char *p,*q;  /* for printer parameters. Albert */
 
      programId = ALH;
      programName = (char *)calloc(1,4);
@@ -695,7 +786,7 @@ void fileSetupInit( widget, argc, argv)
      }
      name = opModFile;
      if ( name[0] == '/' || (name[0] == '.' && name[1] == '.') ||
-          (name[0] == '.' && name[1] == '/')) { 
+          (name[0] == '.' && name[1] == '/')) {
           strncpy(psetup.opModFile,opModFile,NAMEDEFAULT_SIZE);
      } else {
           len = strlen(psetup.opModFile);

@@ -2,6 +2,10 @@
 # $Id$
 #
 # $Log$
+# Revision 1.11  1998/06/22 18:42:10  jba
+# Merged the new alh-options created at DESY MKS group:
+#  -D Disable Writing, -S Passive Mode, -T AlarmLogDated, -P Printing
+#
 # Revision 1.10  1997/09/12 19:27:24  jba
 # Removed dependancy on libUnix (product description shell)
 #
@@ -75,7 +79,8 @@ SRCS.c =  ../acknowledge.c  \
 		../scroll.c \
 		../showmask.c \
 		../sllLib.c \
-		../testalarm.c
+		../testalarm.c \
+                ../printer.c
 
 OBJS =  acknowledge.o  \
 		alCA.o \
@@ -108,12 +113,20 @@ OBJS =  acknowledge.o  \
 		scroll.o \
 		showmask.o \
 		sllLib.o \
-		testalarm.o   
+		testalarm.o
 
-PROD = alh
+SRCS1.c =  ../printer.c  
+
+OBJS1 =  printer.o  
+
+PROD = alh alh_printer
 
 include $(EPICS)/config/RULES.Unix
 
 alh: $(OBJS) $(DEPLIBS)
 	$(LINK.c) -o $@ $(OBJS) $(LDLIBS)
 
+alh_printer: $(OBJS1) $(DEPLIBS)
+	$(LINK.c) -o $@ $(OBJS1) $(LDLIBS)
+
+all: $(PROD)

@@ -1,5 +1,9 @@
 /*
  $Log$
+ Revision 1.4  1998/06/22 18:42:11  jba
+ Merged the new alh-options created at DESY MKS group:
+  -D Disable Writing, -S Passive Mode, -T AlarmLogDated, -P Printing
+
  Revision 1.3  1996/06/07 15:43:47  jba
  Added global alarm acknowledgement.
 
@@ -51,7 +55,7 @@ static char *sccsId = "@(#)acknowledge.c	1.4\t9/9/93";
 #include <alLib.h>
 #include <line.h>
 #include <ax.h>
-
+extern int _passive_flag; /* Passive flag. Albert */
 
 /*
 ******************************************************************
@@ -126,12 +130,20 @@ static void ackGroup(gline)
 /***************************************************
   ack_callback
 ****************************************************/
- 
+
 void ack_callback(widget,line,cbs)
      Widget widget;
      struct anyLine  *line;
      XmAnyCallbackStruct *cbs;
 {
+     ALINK *area; /* We need it in passive mode only; Albert */
+     if (_passive_flag) {
+            XtVaGetValues(widget, XmNuserData, &area, NULL);
+	    createDialog(area->form_main,XmDIALOG_WARNING,
+            "You can't acknowledge alarms in passive mode."," ");
+	    return;
+     }
+
      if (line->linkType == GROUP) ackGroup((struct groupLine *)line); 
      else if (line->linkType == CHANNEL) ackChan((struct chanLine *)line); 
 }

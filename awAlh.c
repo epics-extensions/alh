@@ -1,5 +1,9 @@
 /*
  $Log$
+ Revision 1.11  1998/06/22 18:42:12  jba
+ Merged the new alh-options created at DESY MKS group:
+  -D Disable Writing, -S Passive Mode, -T AlarmLogDated, -P Printing
+
  Revision 1.10  1998/05/13 19:29:48  evans
  More WIN32 changes.
 
@@ -149,14 +153,17 @@ extern Pixel bg_pixel[];
 extern Pixel channel_bg_pixel;
 extern struct setup psetup;
 extern Widget versionPopup;
-
-
+extern int _time_flag; /* Dated flag. Albert*/
+void dialogCbOk();     /* Ok-button     for FSBox. Albert*/
+void dialogCbCansel(); /* Cansel-button for FSBox. Albert*/
+char FS_filename[128]; /* Filename      for FSBox. Albert*/
 #ifdef __STDC__
 
 /* prototypes for static routines */
 static void alhFileCallback( Widget widget, XtPointer calldata, XtPointer cbs);
 static void alhActionCallback( Widget widget, XtPointer calldata, XtPointer cbs);
 static void alhViewCallback( Widget widget, XtPointer calldata, XtPointer cbs);
+static void alhViewCallback1( Widget widget, XtPointer item, XtPointer cbs);
 static void alhSetupCallback( Widget widget, XtPointer calldata, XtPointer cbs);
 static void alhHelpCallback( Widget widget, XtPointer calldata, XtPointer cbs);
 
@@ -165,6 +172,7 @@ static void alhHelpCallback( Widget widget, XtPointer calldata, XtPointer cbs);
 static void alhFileCallback();
 static void alhActionCallback();
 static void alhViewCallback();
+static void alhViewCallback1();
 static void alhSetupCallback();
 static void alhHelpCallback();
 
@@ -226,8 +234,10 @@ Widget alhCreateMenu(parent, user_data)
              alhViewCallback, (XtPointer)MENU_VIEW_CURRENT,         (MenuItem *)NULL },
          { "Configuration File Window",     &xmToggleButtonGadgetClass, 'f', NULL, NULL,
              alhViewCallback, (XtPointer)MENU_VIEW_CONFIG,           (MenuItem *)NULL },
+/* Next Callback for FSBox adding. Albert */
          { "Alarm Log File Window",         &xmToggleButtonGadgetClass, 'r', NULL, NULL,
-             alhViewCallback, (XtPointer)MENU_VIEW_ALARMLOG,         (MenuItem *)NULL },
+             alhViewCallback1, (XtPointer)MENU_VIEW_ALARMLOG,         (MenuItem *)NULL },
+/* End. Albert */
          { "Operation Log File Window",     &xmToggleButtonGadgetClass, 'O', NULL, NULL,
              alhViewCallback, (XtPointer)MENU_VIEW_OPMOD,         (MenuItem *)NULL },
          { "Group/Channel Properties Window", &xmToggleButtonGadgetClass, 'W', NULL, NULL,
@@ -388,6 +398,7 @@ static void alhActionCallback( Widget widget, XtPointer calldata, XtPointer cbs)
              if (link){
                   line = (struct anyLine *)link->lineTreeW;
                   if (line && line->pwindow == (void *)area->selectionWindow ){
+
                        ack_callback(widget,line,cbs);
                   }
                   else {
@@ -551,7 +562,7 @@ static void alhViewCallback( Widget widget, XtPointer calldata, XtPointer cbs)
         case MENU_VIEW_ALARMLOG:
 
              /* Display Alarm Log File */
-             fileViewWindow(area->form_main,ALARM_FILE,widget);
+             fileViewWindow(area->form_main,ALARM_FILE,widget); 
              break;
 
         case MENU_VIEW_OPMOD:
@@ -569,6 +580,68 @@ static void alhViewCallback( Widget widget, XtPointer calldata, XtPointer cbs)
      }
 }
  
+/* ___________ FileSelect for AlhView. Albert ________________________ */
+static void alhViewCallback1(widget, item, cbs)
+    Widget widget;
+    XtPointer item;
+    XtPointer cbs;
+{
+    ALINK   *area;
+    Widget dialog;
+    Arg al[10];
+    int ac=0;
+    XmString Xpattern,Xtitle,Xcurrentdir;
+    char *pattern=ALARMLOG_PATTERN;
+    char *title="Alarm Log File";
+    if (!_time_flag) alhViewCallback(widget, item, cbs);
+    else 
+    {   
+    XtVaGetValues(widget, XmNuserData, &area, NULL); 
+    dialog=XmCreateFileSelectionDialog(area->form_main,"dialog",al,ac);
+    XtAddCallback(dialog,XmNokCallback,dialogCbOk,widget);
+    XtAddCallback(dialog,XmNcancelCallback,dialogCbCansel,NULL);
+    XtUnmanageChild(XmFileSelectionBoxGetChild(dialog,
+        XmDIALOG_HELP_BUTTON));
+    Xtitle = XmStringCreateSimple(title);
+    Xpattern = XmStringCreateSimple(psetup.logFile);
+    Xcurrentdir = XmStringCreateSimple(psetup.configDir);
+    XtVaSetValues(dialog,
+          XmNdirectory,     Xcurrentdir,
+          XmNdialogTitle,   Xtitle,
+          XmNdirMask,       Xpattern,
+          NULL);
+    XtManageChild(dialog);
+    XmStringFree(Xpattern);
+    XmStringFree(Xtitle);
+    }
+}
+
+void dialogCbCansel(w,client_data,call_data)
+    Widget w;
+    int client_data;
+    XmSelectionBoxCallbackStruct *call_data;
+{
+    XtUnmanageChild(w);
+}
+
+void dialogCbOk(w,wdgt,call_data)
+    Widget w;
+    Widget wdgt;
+    XmSelectionBoxCallbackStruct *call_data;
+{
+    ALINK   *area;
+    char *s;
+    XmStringGetLtoR(call_data->value,XmSTRING_DEFAULT_CHARSET,&s);
+    strcpy(FS_filename,s);
+    XtFree(s);
+    XtVaGetValues(wdgt, XmNuserData, &area, NULL);
+    fileViewWindow(area->form_main,ALARM_FILE,wdgt);
+    XtUnmanageChild(w);
+}
+/* _____________________ End. Albert ___________________ */
+ 
+
+
 
 /******************************************************
   alhSetupCallback
@@ -1079,3 +1152,4 @@ void awUpdateRowWidgets(line)
      XmStringFree(str);
      XmStringFree(strOld);
 }
+

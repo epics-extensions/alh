@@ -81,3 +81,30 @@ date: 1998/06/09 17:10:48;  author: evans;  state: Exp;  lines: +5 -1
 Mon Jun 22 12:50:36 CDT 1998
 	Bug fixes for command line option handling.
 	Modified debug options in Makefile.Host
+
+Mon Jun 22 13:34:09 CDT 1998
+	Merged the new alh-options created at DESY MKS group:
+
+	-D Disable Writing  --- allows running alh without creating/modifying 
+                        	alarmLog and alarmOpMod files.
+	-S Passive Mode     --- means that operator can't acknowledge alarms 
+                        	and can't save alarmLog and alarmOpMod files.
+	-T AlarmLogDated    --- 1) alarmLog files will have "date" extensions 
+                           	like YYYY-MM-DD, and automatical switching 
+                           	this files in midnight.
+	
+                        	2)  We add FSbox for search LogFiles in 
+                            	View->"Alarm Log File Window" and 
+	
+                        	3) We add search button for finding string at LogFile.
+				
+                        	4) We add "Find from <t1> to <t2> with <String>" 
+                             	widget, which allow search <String> from
+                             	all AlLog-files at some directory
+                       	 
+	-P Printing         --- simultaneously printing Alarm to TCP printer
+                        	(socket connection and so on). Now we print it
+                        	asynchronous, so we add additional task "alh_printer"
+                        	and modificate Makefile.Unix.
+
+

@@ -1,5 +1,9 @@
 /*
  $Log$
+ Revision 1.10  1998/06/22 18:42:11  jba
+ Merged the new alh-options created at DESY MKS group:
+  -D Disable Writing, -S Passive Mode, -T AlarmLogDated, -P Printing
+
  Revision 1.9  1998/05/13 19:29:47  evans
  More WIN32 changes.
 
@@ -144,8 +148,13 @@ char buff[260],*str;
 extern char * alarmSeverityString[];
 extern char * alarmStatusString[];
 
-
-
+extern int _read_only_flag;         /* RO flag. Albert */
+extern int _tm_day_old;             /* DayofMonth. Albert */
+extern int _printer_flag;           /* Printer flag. Albert */
+  extern char printerHostname[120];
+  extern int  printerPort;
+  extern char printerColorModel[120];
+extern int _time_flag;              /* Dated flag. Albert */
 /***********************************************************************
  * log the channel alarm at the alarm logfile
  ***********************************************************************/
@@ -155,8 +164,12 @@ int stat,sev,h_unackStat,h_unackSevr;
 struct chanData *cdata;
 {
 	int status=0;
+/*___________________ For AlLog dated. Albert ___________________ */
+        time_t timeofday;
+        struct tm *tms;
+        char buf[16];
+/*________________________ End. Albert___________________________ */
 	/* 158 chars put into buff */
-
 	str = ctime(ptimeofdayAlarm);
 		*(str + strlen(str)-1) = '\0';
 
@@ -169,15 +182,39 @@ struct chanData *cdata;
 		cdata->value);	
 
 	/* update file and Alarm Log text window */
+/*______ For AlLog dated. Albert  ___________________________ */
+        if (_time_flag) 
+        {
+	  timeofday = time(0L);
+	  tms = localtime(&timeofday);  
+	  if(tms->tm_mday != _tm_day_old)
+	    {
+	      sprintf(buf,".%.4d-%.2d-%.2d",
+		      1900+tms->tm_year,1+tms->tm_mon,tms->tm_mday);
+	      buf[11]=0;
+	      psetup.logFile[strlen(psetup.logFile) - 11] = 0;
+	      strncat(psetup.logFile, &buf[0], strlen(buf));
+	      fclose(fl);  
+	      fl = fopen(psetup.logFile,"w");
+	      fclose(fl);
+	      if(!_read_only_flag) fl = fopen(psetup.logFile,"r+");
+	      else fl = fopen(psetup.logFile,"r");
+	      _tm_day_old=tms->tm_mday;
+	      alarmLogFileOffsetBytes =0;
+	    }
+	}
+/*________________________ end for AlLog dated. Albert__________ */
 	if (alarmLogFileMaxRecords) {
-		if (alarmLogFileOffsetBytes != ftell(fl))
-        		fseek(fl,alarmLogFileOffsetBytes,SEEK_SET);
+              if (alarmLogFileOffsetBytes != ftell(fl)) 
+        		fseek(fl,alarmLogFileOffsetBytes,SEEK_SET); 
 		if (alarmLogFileOffsetBytes >= alarmLogFileStringLength*alarmLogFileMaxRecords) {
 			rewind(fl);
 			status=truncateFile(psetup.logFile,alarmLogFileOffsetBytes);
 			alarmLogFileOffsetBytes = 0;
 		}
-		(void)fprintf(fl,"%s",buff);
+
+	        (void)fprintf(fl,"%s",buff); 
+                if(_printer_flag) write2printer(buff,158,sev);/* Albert */
 /*---------------
 	        (void)fprintf(fl,"%-157s\n",alarmLogFileEndString);
                 fseek(fl,-alarmLogFileStringLength,SEEK_CUR);
@@ -187,10 +224,10 @@ struct chanData *cdata;
 		fflush(fl);
 	} else {
 	    (void)fprintf(fl,"%s",buff);
+            if(_printer_flag) write2printer(buff,sizeof(buff),sev); /*Albert*/
 	    fflush(fl);
     }
-
-	updateAlarmLog(ALARM_FILE,buff);         
+	updateAlarmLog(ALARM_FILE,buff);   
 }
 
 
@@ -629,4 +666,27 @@ char *filename;
 	   fprintf(fo,"%s",buff);        /* update the file */
   fflush(fo);
 	   updateLog(OPMOD_FILE,buff);   /* update the text widget */
+}
+
+/*  
+Call to independent alh_printer process. Albert.
+*/
+
+int write2printer(message,len,sev) /* Write message to TCP-printer. Albert */
+char *message;
+int len; 
+int sev;  /*"NO_ALARM","MINOR","MAJOR","INVALID" */
+{
+char cmd_buf[250];
+int pid;
+/*cmd_buf=alh_printer ip_addr port printerColorMode  len_mes sev message*/
+sprintf(cmd_buf,"alh_printer %s %d %s %d %d \"%s\"",printerHostname,
+        printerPort,printerColorModel,len,sev,message);
+
+if ((pid=fork ()))
+  {
+  execl("/bin/sh","sh","-c",cmd_buf,0);
+  exit(0);
+  }
+
 }
