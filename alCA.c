@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.13  1998/06/01 18:33:22  evans
+ Modified the icon.
+
  Revision 1.12  1998/05/12 18:22:38  evans
  Initial changes for WIN32.
 
@@ -33,6 +36,8 @@ prototype.
  * Added cvs Log keyword
  *
  */
+
+#define DEBUG_CALLBACKS 1
 
 static char *sccsId = "%W%\t%G%";
 
@@ -259,27 +264,44 @@ r channel
 void alFdmgrInit(display)
 Display *display;
 {
+#if DEBUG_CALLBACKS
+    {
+	printf("alFdmgrInit: fd=%d\n",ConnectionNumber(display));
+    }
+#endif
     /*
      *  initialize fdmgr 
      */
-    pfdctx = (void *) fdmgr_init();
+    pfdctx = fdmgr_init();
 
     /*
      * add X's fd to fdmgr ...
      */
-    fdmgr_add_fd(pfdctx, ConnectionNumber(display), alProcessX, NULL);
+    /*fdmgr_add_fd(pfdctx, ConnectionNumber(display), alProcessX, NULL);*/
+#if 0
+    fdmgr_add_callback(pfdctx, ConnectionNumber(display),fdi_read,alProcessX, NULL);
+#endif    
 
 }
 
 /*****************************************************
  alCaPendEvent
 ****************************************************/
-static void alCaPendEvent(unused)
-void *unused;
+static void alCaPendEvent(void *unused)
 {
+#if DEBUG_CALLBACKS
+    {
+	static int n=0;
+
+	printf("alCaPendEvent: n=%d\n",n++);
+    }
+#endif
 
     ca_pend_event(.00001);
     caTimeoutId = fdmgr_add_timeout(pfdctx,&caDelay,alCaPendEvent,NULL);
+#if DEBUG_CALLBACKS
+	printf("          caTimeoutId=%d\n",caTimeoutId);
+#endif
 }
 
 /*****************************************************
@@ -287,6 +309,11 @@ void *unused;
 ****************************************************/
 void alCaInit()
 {
+#if DEBUG_CALLBACKS
+    {
+	printf("alCaInit: caTimeoutId=%d\n",caTimeoutId);
+    }
+#endif
     /*
      *  initialize channel access
      */
@@ -300,6 +327,9 @@ void alCaInit()
 
     caTimeoutId = fdmgr_add_timeout(pfdctx,&caDelay,alCaPendEvent,NULL);
 
+#if DEBUG_CALLBACKS
+	printf("          caTimeoutId=%d\n",caTimeoutId);
+#endif
 }
 
 /********************************************************
@@ -309,15 +339,28 @@ void alCaInit()
 ********************************************************/
 void alProcessCA()
 {
+#if DEBUG_CALLBACKS
+    {
+	static int n=0;
+
+	printf("alProcessCA: n=%d\n",n++);
+    }
+#endif
     ca_flush_io();
     ca_pend_event(CA_PEND_EVENT_TIME);
 }
 
-static void alProcessX(unused)
-void *unused;
+static void alProcessX(void *unused)
 {
     XEvent event;
 
+#if DEBUG_CALLBACKS
+    {
+	static int n=0;
+
+	printf("alProcessX: n=%d\n",n++);
+    }
+#endif
     while (XtAppPending(appContext)) {
         XtAppNextEvent(appContext,&event);
         XtDispatchEvent(&event);
@@ -332,10 +375,17 @@ int condition;
 {
 
 
+#if DEBUG_CALLBACKS
+    {
+	printf("registerCA: fd=%d condition=%d\n",fd,condition);
+    }
+#endif
     if (condition) {
-        fdmgr_add_fd(pfdctx,fd,(void (*)(void *))alProcessCA,NULL);
+        /*fdmgr_add_fd(pfdctx,fd,(void (*)(void *))alProcessCA,NULL); */
+        fdmgr_add_callback(pfdctx, fd,fdi_read ,(void (*)(void *))alProcessCA, NULL);
     } else {
-        fdmgr_clear_fd(pfdctx,fd);
+        /*fdmgr_clear_fd(pfdctx,fd); */
+        fdmgr_clear_callback(pfdctx,fd,fdi_read);
     }
 }
 

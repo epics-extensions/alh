@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.12  1998/06/01 18:33:25  evans
+ Modified the icon.
+
  Revision 1.11  1998/05/12 18:22:46  evans
  Initial changes for WIN32.
 
@@ -38,6 +41,8 @@
  * Added cvs Log keyword
  *
  */
+
+#define DEBUG_CALLBACKS 1
 
 static char *sccsId = "@(#)axRunW.c	1.8\t9/14/93";
 
@@ -596,6 +601,15 @@ static void blinking(unused)
      Display *displayBB;
      static Boolean blinking2State = FALSE;
 
+
+#if DEBUG_CALLBACKS
+    {
+	static int n=0;
+
+	printf("blinking: n=%d\n",n++);
+    }
+#endif
+
      displayBB = XtDisplay(blinkButton);
 
      if (!blinking2State) {
@@ -634,6 +648,9 @@ static void blinking(unused)
           blinkTimeoutId = fdmgr_add_timeout(pfdctx,&blinkDelay,
                blinking, NULL); 
           blinking2State = FALSE;
+#if DEBUG_CALLBACKS
+	printf("          blinkTimeoutId=%d\n",blinkTimeoutId);
+#endif
 
      }
 

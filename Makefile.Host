@@ -6,7 +6,7 @@ include $(TOP)/config/CONFIG_EXTENSIONS
 
 USR_CFLAGS = -DACCESS_SECURITY -I$(MOTIF_INC) -I$(X11_INC)
 
-# use following 3 lines if USR_CFLAGS contains -DIWantGreeting
+# Use following 3 lines if USR_CFLAGS contains -DIWantGreeting
 PROD_LIBS += Unix
 USR_CFLAGS += -DIWantGreetings
 Unix_DIR = $(INSTALL_LIB)
@@ -16,9 +16,9 @@ Unix_DIR = $(INSTALL_LIB)
 #alh_INCLUDES= -Dalh_INCLUDES
 #alh_LDFLAGS= -Dalh_LDFLAGS
 
-# debugging options
+# Debugging options
 #CC = purify $(C_$(CMPLR))
-#HOST_OPT=NO
+HOST_OPT=NO
 
 SRCS =  acknowledge.c  \
 		alCA.c \

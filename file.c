@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.13  1998/06/01 18:33:26  evans
+ Modified the icon.
+
  Revision 1.12  1998/05/13 19:29:49  evans
  More WIN32 changes.
 
@@ -641,8 +644,7 @@ void fileSetupInit( widget, argc, argv)
      int argc;
      char *argv[];
 {
-     int    input_error;
-     int    c, len;
+     int    len;
      char   configFile[NAMEDEFAULT_SIZE];
      char   logFile[NAMEDEFAULT_SIZE];
      char   opModFile[NAMEDEFAULT_SIZE];

@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.14  1998/06/01 18:33:25  evans
+ Modified the icon.
+
  Revision 1.13  1998/05/12 18:22:44  evans
  Initial changes for WIN32.
 
@@ -42,6 +45,8 @@
  * Added cvs Log keyword
  *
  */
+
+#define DEBUG_CALLBACKS 1
 
 static char *sccsId = "@(#)awView.c	1.14\t10/22/93";
 
@@ -328,7 +333,15 @@ static void singleClickTreeW_callback(pdata)
 {
      ALINK  *area;
 
-     XtVaGetValues(pdata->pushButton, XmNuserData, &area, NULL);
+#if DEBUG_CALLBACKS
+    {
+	static int n=0;
+
+	printf("singleClickTreeW_callback: n=%d\n",n++);
+    }
+#endif
+
+    XtVaGetValues(pdata->pushButton, XmNuserData, &area, NULL);
 
      pdata->timeoutId= 0;
      displayNewViewTree(area,(GLINK *)pdata->gdata,EXPANDCOLLAPSE1);
@@ -349,8 +362,7 @@ void arrowTreeW_callback(pushButton, glink, cbs)
      static struct timeoutData data;
      static struct timeval timeout;
 
-
-     if (cbs->click_count == 1){
+    if (cbs->click_count == 1){
           if (!interval) interval = XtGetMultiClickTime(display);
           timeout.tv_sec = 0;
           timeout.tv_usec = 1000*interval;
@@ -389,7 +401,7 @@ void nameGroupW_callback(pushButton, line, cbs)
      struct subWindow  *groupWindow;
 
 
-     XtVaGetValues(pushButton, XmNuserData, &groupWindow, NULL);
+    XtVaGetValues(pushButton, XmNuserData, &groupWindow, NULL);
      area = groupWindow->area;
 
      if (line->linkType == GROUP ) {
@@ -434,6 +446,14 @@ static void singleClickNameGroupW_callback(pdata)
      void               *area;
      struct subWindow  *groupWindow;
 
+#if DEBUG_CALLBACKS
+    {
+	static int n=0;
+
+	printf("singleClickNameGroupW_callback: n=%d\n",n++);
+    }
+#endif
+
      pdata->timeoutId= 0;
      XtVaGetValues(pdata->pushButton, XmNuserData, &groupWindow, NULL);
      area = groupWindow->area;
@@ -459,6 +479,15 @@ static void singleClickArrowGroupW_callback(pdata)
      GLINK     *glinkTemp;
      struct subWindow  *treeWindow;
      int grandparentsOpen;
+
+
+#if DEBUG_CALLBACKS
+    {
+	static int n=0;
+
+	printf("singleClickArrowTreeW_callback: n=%d\n",n++);
+    }
+#endif
 
      pdata->timeoutId= 0;
 

@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.6  1998/06/01 18:33:24  evans
+ Modified the icon.
+
  Revision 1.5  1998/05/13 19:29:48  evans
  More WIN32 changes.
 
@@ -18,6 +21,8 @@
  * Added cvs Log keyword
  *
  */
+
+#define DEBUG_CALLBACKS 1
 
 static char *sccsId = "@(#)alh.c	1.23\t12/15/93";
 
@@ -145,7 +150,17 @@ void main(argc, argv)
      alProcessCA();
      XFlush(display);
      /* start alh Process events loop */
+#if DEBUG_CALLBACKS
+     printf("Before main loop, after alProcessCA\n");
+#endif
      while(TRUE) {
+#if DEBUG_CALLBACKS
+    {
+	static int n=0;
+
+	printf("main loop: n=%d\n",n++);
+    }
+#endif
           fdmgr_pend_event(pfdctx,&timeout);
           area = 0;
           if (areaList) area = (ALINK *)sllFirst(areaList);

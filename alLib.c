@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.18  1998/06/01 18:33:23  evans
+ Modified the icon.
+
  Revision 1.17  1998/05/12 18:22:40  evans
  Initial changes for WIN32.
 
@@ -55,6 +58,8 @@
  * Added cvs Log keyword
  *
  */
+
+#define DEBUG_CALLBACKS 1
 
 static char *sccsId = "@(#)alLib.c	1.14\t10/15/93";
 
@@ -954,6 +959,13 @@ static void alarmCountFilter_callback(void *pdata)
      COUNTFILTER *countFilter=pdata;
      time_t alarmTime;
 
+#if DEBUG_CALLBACKS
+    {
+	static int n=0;
+
+	printf("alarmCountFilter_callback: n=%d\n",n++);
+    }
+#endif
      alarmTime = countFilter->alarmTime;
      countFilter->alarmTime=0;
      countFilter->timeoutId=0;
