@@ -39,7 +39,7 @@ static char *sccsId = "@(#) $Id$";
 #include "ax.h"
 #include "alarm.h"
 
-static struct beepSevrWindow {
+struct beepSevrWindow {
 	void   *area;
 	Widget menuButton;
 	Widget beepSevrDialog;
@@ -128,7 +128,6 @@ struct beepSevrWindow *beepSevrWindow;
 	int i,linkType;
 	int beepSevr;
 	XmString string;
-	char buff[MAX_STRING_LENGTH];
 
 	if (! beepSevrWindow || !beepSevrWindow->beepSevrDialog ) return;
 
@@ -187,8 +186,6 @@ ALINK    *area;
 	Widget nameLabelW, nameTextW;
 	Widget beepSevrToggleButtonW[ALH_ALARM_NSEV-1];
 	int i;
-	char *pstring;
-	XmString string;
 	static ActionAreaItem beepSevr_items[] = {
 		         { "Dismiss",  beepSevrDismissCallback,  NULL    },
 		         { "Help",    beepSevrHelpCallback,    NULL    },
@@ -339,7 +336,6 @@ static void beepSevrChangeCallback(Widget widget,XtPointer calldata,XtPointer cb
 {
 	int beepSevr=(int)calldata;
     ALINK *area;
-	struct chanData *cdata;
 	struct gcData *pgcData;
 	GCLINK *link;
 	int linkType;

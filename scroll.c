@@ -642,7 +642,7 @@ void browser_fileViewWindow(Widget w,int option,Widget menuButton)
 {
 	static Widget alarm_shell=NULL;
 	static Widget opmod_shell=NULL;
-	Widget app_shell=NULL,title,button,button1;
+	Widget app_shell=NULL,title=0,button,button1;
 	Widget previous;
 	char sbuf[120];
 #ifndef WIN32
@@ -1107,9 +1107,11 @@ void browser_fileViewWindow(Widget w,int option,Widget menuButton)
 		ac++;
 		XtSetArg (al[ac], XmNcursorPositionVisible, FALSE);  
 		ac++;
+		if (previous) {
 		XtSetArg (al[ac], XmNtopAttachment, XmATTACH_WIDGET);  
 		ac++;
 		XtSetArg (al[ac], XmNtopWidget, previous);  
+		}
 		ac++;
 		XtSetArg (al[ac], XmNleftAttachment, XmATTACH_FORM);  
 		ac++;

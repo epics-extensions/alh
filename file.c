@@ -87,7 +87,7 @@ char messBroadcastLockFileName[250];   /* FN for lock file. Albert */
 char messBroadcastInfoFileName[250];   /* FN for info file. Albert */
 int  messBroadcastDeskriptor;          /* FD for lock file. Albert */
 void broadcastMessTesting();
-XtIntervalId broadcastMessTimeoutId=NULL;
+XtIntervalId broadcastMessTimeoutId=0;
 int amIsender=0;
 int notsave=0;     
 const char *rebootString="MIN  ALH  WILL  NOT  SAVE ALARM LOG!!!!";
@@ -103,7 +103,7 @@ int masterFlag=1;                /* am I master for write operations? Albert  */
 void masterTesting();            /* periodical calback of masterStatus testing*/
 extern Widget blinkToplevel;     /* for locking status marking                */
 char masterStr[64],slaveStr[64]; /* titles of Master/Slave +- printer/database*/
-XtIntervalId lockTimeoutId=NULL;   
+XtIntervalId lockTimeoutId=0;   
 extern XFontStruct *font_info;
 extern char alhVersionString[100];
  
@@ -617,11 +617,11 @@ int programId,Widget widget)
 						printerMsgQKey);
 			      if (msgctl(printerMsgQId,IPC_STAT,&buf) != 1)
 				{
-				  if(DEBUG)fprintf(stderr,"printer:o=%d.%d,perm=%04o,max byte=%d\n",
+				  if(DEBUG)fprintf(stderr,"printer:o=%d.%d,perm=%04o,max byte=%ld\n",
 						   buf.msg_perm.uid,buf.msg_perm.gid,
 						   buf.msg_perm.mode,
 						   buf.msg_qbytes);
-				  if(DEBUG) fprintf(stderr,"printer:%d msgs = %d bytes on queue\n",
+				  if(DEBUG) fprintf(stderr,"printer:%ld msgs = %ld bytes on queue\n",
 						    buf.msg_qnum, buf.msg_cbytes);
 				}
 			      else {perror("printer:msgctl()");  exit(1);}
@@ -637,11 +637,11 @@ int programId,Widget widget)
 						DBMsgQKey);
 			      if (msgctl(DBMsgQId,IPC_STAT,&buf) != 1)
 				{
-				  if(DEBUG)fprintf(stderr,"DB:o=%d.%d,perm=%04o,max byte=%d\n",
+				  if(DEBUG)fprintf(stderr,"DB:o=%d.%d,perm=%04o,max byte=%ld\n",
 						   buf.msg_perm.uid,buf.msg_perm.gid,
 						   buf.msg_perm.mode,
 						   buf.msg_qbytes);
-				  if(DEBUG) fprintf(stderr,"DB:%d msgs = %d bytes on queue\n",
+				  if(DEBUG) fprintf(stderr,"DB:%ld msgs = %ld bytes on queue\n",
 						    buf.msg_qnum, buf.msg_cbytes);
 				}
 			      else {perror("DB:msgctl()");  exit(1);}

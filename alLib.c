@@ -1052,7 +1052,6 @@ void alChangeChanMask(CLINK *clink,MASK mask)
 	GLINK *parent;
 	int change=0,saveSevr;
 	int sevrHold, unackSevrHold;
-	char buff[80];
 	short disabledSevr = -1;
 
 	cdata = clink->pchanData;

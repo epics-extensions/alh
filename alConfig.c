@@ -789,13 +789,13 @@ static void alWriteGroupConfig(FILE * fw,SLIST *pgroup)
 
 		if(gdata->pforcePV) {
 			alGetMaskString(gdata->pforcePV->forceMask,pvmask);
-			fprintf(fw,"$FORCEPV  %-28s %6s %3d ",
+			fprintf(fw,"$FORCEPV  %-28s %6s %g ",
 			    gdata->pforcePV->name,
 			    pvmask,
 			    gdata->pforcePV->forceValue);
-			if (gdata->pforcePV->resetValue==gdata->pforcePV->forceValue )
+			if ((float)gdata->pforcePV->resetValue==(float)gdata->pforcePV->forceValue )
 				fprintf(fw,"%s","NE\n");
-			else fprintf(fw,"%3d\n",gdata->pforcePV->resetValue);
+			else fprintf(fw,"%g\n",gdata->pforcePV->resetValue);
 			if (strcmp(gdata->pforcePV->name,"CALC")==0 && gdata->pforcePV->pcalc) {
 				int i;
 				const char *letter[]={"A","B","C","D","E","F"};
@@ -861,13 +861,13 @@ static void alWriteGroupConfig(FILE * fw,SLIST *pgroup)
 
 			if(cdata->pforcePV) {
 				alGetMaskString(cdata->pforcePV->forceMask,pvmask);
-				fprintf(fw,"$FORCEPV  %-28s %6s %3d ",
+				fprintf(fw,"$FORCEPV  %-28s %6s %g ",
 			    	cdata->pforcePV->name,
 			    	pvmask,
 			    	cdata->pforcePV->forceValue);
-				if (cdata->pforcePV->resetValue==cdata->pforcePV->forceValue )
+				if ((float)cdata->pforcePV->resetValue==(float)cdata->pforcePV->forceValue )
 					fprintf(fw,"%s","NE\n");
-				else fprintf(fw,"%3d\n",cdata->pforcePV->resetValue);
+				else fprintf(fw,"%g\n",cdata->pforcePV->resetValue);
 				if (strcmp(cdata->pforcePV->name,"CALC")==0 && cdata->pforcePV->pcalc) {
 					int i;
 					const char *letter[]={"A","B","C","D","E","F"};

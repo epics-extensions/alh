@@ -40,7 +40,7 @@ static char *sccsId = "@(#) $Id$";
 
 extern int _passive_flag;
 
-static struct forceMaskWindow {
+struct forceMaskWindow {
 	void   *area;
 	Widget menuButton;
 	Widget maskDialog;
@@ -505,19 +505,15 @@ static void forceMaskChangeCallback(Widget widget,XtPointer calldata,XtPointer c
 static void forceMaskHelpCallback(Widget widget,XtPointer calldata,XtPointer cbs)
 {
 	char *message1 = 
-	"This dialog window allows an operator to set the current mask for a group or channel.\n"
-	"  \n"
-	"Setting the mask for a group means setting the mask for all channels in the group.\n"
-	"  \n"
-    "\nChanging NoAck Transient Alarm is not allowed when executing in passive state\n "
-	"  \n"
+	"Set the current mask for a group or channel.\n \n"
+	"Setting the mask for a group means setting the mask for all channels in the group.\n \n \n"
+    "Changing NoAck Transient Alarm is not allowed when executing in passive state\n \n"
 	"Press the Apply   button to force the mask on the selected channel or on\n"
 	"                  all channels in the selected group.\n"
 	"Press the Reset   button to reset channel mask(s) to their initial values.\n"
 	"Press the Dismiss button to close the Force Mask dialog window.\n"
-	"Press the Help    button to get this help description window.\n"
-    "  \n"
-	;
+	"Press the Help    button to get this help description window.\n\n";
+
 	char * message2 = "  ";
 
 	createDialog(widget,XmDIALOG_INFORMATION, message1,message2);

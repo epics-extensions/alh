@@ -54,8 +54,6 @@ struct noAckWindow {
 	Widget noAckOneHourToggleButton;
 };
 
-static char buff[100];
-
 /* forward declarations */
 static void noAckDismissCallback(Widget widget,XtPointer calldata,XtPointer cbs);
 static void noAckHelpCallback(Widget widget,XtPointer calldata,XtPointer cbs);

@@ -167,8 +167,6 @@ void alLogAlarmMessage(time_t *ptimeofdayAlarm,int messageCode,CLINK* clink,cons
 {
     va_list vargs;
     static char text[1024];  /* DANGER: Fixed buffer size */
-    int nargs=10;
-    Arg args[10];
     struct chanData *cdata;
 
     if (clink == NULL ) return;
@@ -228,8 +226,6 @@ void alLogOpModMessage(int messageCode,GCLINK* gclink,const char* fmt,...)
 {
     va_list vargs;
     static char text[1024];  /* DANGER: Fixed buffer size */
-    int nargs=10;
-    Arg args[10];
     struct gcData *gcdata=NULL;
 
     if (gclink) gcdata = gclink->pgcData;
@@ -278,8 +274,6 @@ void alLogOpModAckMessage(int messageCode,GCLINK* gclink,const char* fmt,...)
 {
     va_list vargs;
     static char text[1024];  /* DANGER: Fixed buffer size */
-    int nargs=10;
-    Arg args[10];
     struct gcData *gcdata=NULL;
 
     if (gclink) gcdata = gclink->pgcData;

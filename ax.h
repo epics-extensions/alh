@@ -229,11 +229,7 @@ void alRemoveNoAck1HrTimerChan(CLINK *clink);
 
 void alLogAlarmMessage(time_t *ptimeofdayAlarm,int messageCode,CLINK* clink,const char *fmt,...);
 void alLogOpModMessage(int messageCode,GCLINK* clink,const char *fmt,...);
-void alLogConnection(const char *pvname,const char *ind);
-void alLogAckChan( struct anyLine *line);
-void alLogAckGroup( struct anyLine *line);
-void alLogChangeChanMasks( CLINK *clink, int maskno, int maskid);
-void alLogChangeGroupMasks( GLINK *glink, int maskno, int maskid);
+void alLogOpModAckMessage(int messageCode,GCLINK* gclink,const char* fmt,...);
 void alLog2DBAckChan (char *name);
 void alLogNotSaveStart(int not_save_time);
 void alLogNotSaveFinish();

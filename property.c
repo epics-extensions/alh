@@ -495,7 +495,7 @@ static void propCreateDialog(ALINK *area)
 	Widget forcePVCalcExpressionLabel, forcePVCalcExpressionTextW;
 	Widget forcePVCalcPVLabel[NO_OF_CALC_PVS],
            forcePVCalcPVTextW[NO_OF_CALC_PVS];
-	Widget frame2, form2, frame3, form3, rowcol4;
+	Widget frame2, form2, frame3, form3;
 	Widget  guidanceLabel, guidanceTextW,
 	    guidanceUrlLabel, guidanceUrlW;
 	Widget alarmMaskLabel, alarmMaskStringLabelW;
@@ -1428,7 +1428,7 @@ static void propApplyCallback( Widget widget,XtPointer calldata,XtPointer cbs)
 	     Beep Severity
 	     --------------------------------- */
 	buff = XmTextFieldGetString(propWindow->beepSeverityValueTextW);
-	pgcData->beepSevr = i;
+	pgcData->beepSevr = 0;
 	if (strlen(buff)) {
 		for (i=1; i<ALH_ALARM_NSEV; i++) {
 			if (strncmp(buff,alhAlarmSeverityString[i],
@@ -1494,7 +1494,7 @@ static void propApplyCallback( Widget widget,XtPointer calldata,XtPointer cbs)
 	/*  update link field  - pforcePV->forceValue */
 	buff = XmTextFieldGetString(propWindow->forcePVforceValueTextW);
 	dbl=0.0;
-	rtn = sscanf(buff,"%hd",&dbl);
+	rtn = sscanf(buff,"%lf",&dbl);
 	if (rtn == 1) pgcData->pforcePV->forceValue = dbl;
 	else pgcData->pforcePV->forceValue = 1;
 
@@ -1504,7 +1504,7 @@ static void propApplyCallback( Widget widget,XtPointer calldata,XtPointer cbs)
 		pgcData->pforcePV->resetValue = pgcData->pforcePV->forceValue;
 	} else {
 		dbl=0.0;
-		rtn = sscanf(buff,"%hd",&dbl);
+		rtn = sscanf(buff,"%lf",&dbl);
 		if (rtn == 1) pgcData->pforcePV->resetValue = dbl;
 		else pgcData->pforcePV->resetValue = 0;
 	}
