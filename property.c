@@ -39,6 +39,7 @@ static char *sccsId = "@(#) $Id$";
 #include <Xm/TextF.h>
 #include <Xm/ToggleBG.h>
 
+#include "alarm.h"
 #include "axArea.h"
 #include "alLib.h"
 #include "ax.h"
@@ -55,6 +56,7 @@ struct propWindow {
 	Widget alarmMaskToggleButtonW[ALARM_NMASK];
 	Widget resetMaskStringLabelW;
 	Widget maskFrameW;
+	Widget beepSeverityValueTextW;
 	Widget severityPVnameTextW;
 	Widget countFilterFrame;
 	Widget countFilterCountTextW;
@@ -73,6 +75,8 @@ struct propWindow {
 	Widget guidanceUrlW;
 
 };
+
+extern char * alhAlarmSeverityString[];
 
 /* forward declarations */
 static void propApplyCallback(Widget widget,XtPointer calldata,XtPointer cbs);
@@ -185,6 +189,7 @@ static void propUpdateDialogWidgets(struct propWindow *propWindow)
 			XmToggleButtonSetState(propWindow->alarmMaskToggleButtonW[3],FALSE,TRUE);
 			XmToggleButtonSetState(propWindow->alarmMaskToggleButtonW[4],FALSE,TRUE);
 		}
+		XmTextFieldSetString(propWindow->beepSeverityValueTextW,"");
 		XmTextFieldSetString(propWindow->severityPVnameTextW,"");
 		XmTextFieldSetString(propWindow->countFilterCountTextW,"");
 		XmTextFieldSetString(propWindow->countFilterSecondsTextW,"");
@@ -273,6 +278,13 @@ static void propUpdateDialogWidgets(struct propWindow *propWindow)
 		XtVaSetValues(propWindow->resetMaskStringLabelW, XmNlabelString, string, NULL);
 		XmStringFree(string);
 	}
+
+	/* ---------------------------------
+	     Beep Severity
+	     --------------------------------- */
+	if(pgcData->beepSevr > 1)
+		XmTextFieldSetString(propWindow->beepSeverityValueTextW,alhAlarmSeverityString[pgcData->beepSevr]);
+	else XmTextFieldSetString(propWindow->beepSeverityValueTextW,alhAlarmSeverityString[1]);
 
 	/* ---------------------------------
 	     Severity Process Variable
@@ -422,9 +434,10 @@ static void propCreateDialog(ALINK *area)
 	Arg args[10];
 
 	Widget propDialogShell, propDialog, severityPVnameTextW;
+	Widget beepSeverityValueTextW;
 	Widget rowcol, form, maskFrameW=0;
 	Widget nameLabelW, nameTextW;
-	Widget forcePVlabel, severityPVlabel;
+	Widget forcePVlabel, beepSeverityLabel, severityPVlabel;
 	Widget alarmMaskToggleButtonW[ALARM_NMASK];
 	Widget forceMaskToggleButtonW[ALARM_NMASK];
 	Widget aliasLabel, aliasTextW;
@@ -695,6 +708,35 @@ static void propCreateDialog(ALINK *area)
 	/* Form is full -- now manage */
 	XtManageChild(form4);
 
+	/* ----------------
+	     Beep Severity
+	     -------------- */
+	string = XmStringCreateSimple("Beep Severity: ");
+	beepSeverityLabel = XtVaCreateManagedWidget("beepSeverityLabel",
+	    xmLabelGadgetClass, form,
+	    XmNlabelString,            string,
+	    XmNtopAttachment,          XmATTACH_WIDGET,
+	    XmNtopWidget,              countFilterFrame,
+	    XmNleftAttachment,         XmATTACH_FORM,
+	    NULL);
+	XmStringFree(string);
+
+	beepSeverityValueTextW = XtVaCreateManagedWidget("beepSeverityValueTextW",
+	    xmTextFieldWidgetClass, form,
+	    XmNspacing,                0,
+	    XmNmarginHeight,           0,
+	    XmNcolumns,                10,
+	    XmNmaxLength,              10,
+	    XmNbackground,             textBackground,
+	    XmNtopAttachment,          XmATTACH_WIDGET,
+	    XmNtopWidget,              countFilterFrame,
+	    XmNleftAttachment,         XmATTACH_WIDGET,
+	    XmNleftWidget,             beepSeverityLabel,
+	    NULL);
+
+	XtAddCallback(beepSeverityValueTextW, XmNactivateCallback,
+	    (XtCallbackProc)XmProcessTraversal, (XtPointer)XmTRAVERSE_NEXT_TAB_GROUP);
+
 	/* ---------------------------------
 	     Severity Process Variable
 	     --------------------------------- */
@@ -703,7 +745,7 @@ static void propCreateDialog(ALINK *area)
 	    xmLabelGadgetClass, form,
 	    XmNlabelString,    string,
 	    XmNtopAttachment,   XmATTACH_WIDGET,
-	    XmNtopWidget,       countFilterFrame,
+	    XmNtopWidget,       beepSeverityLabel,
 	    XmNleftAttachment,  XmATTACH_FORM,
 	    NULL);
 	XmStringFree(string);
@@ -1111,6 +1153,7 @@ static void propCreateDialog(ALINK *area)
 	propWindow->alarmMaskStringLabelW = alarmMaskStringLabelW;
 	propWindow->resetMaskStringLabelW = resetMaskStringLabelW;
 	propWindow->maskFrameW = maskFrameW;
+	propWindow->beepSeverityValueTextW = beepSeverityValueTextW;
 	propWindow->severityPVnameTextW = severityPVnameTextW;
 	propWindow->countFilterFrame = countFilterFrame;
 	propWindow->countFilterCountTextW = countFilterCountTextW;
@@ -1192,7 +1235,7 @@ static void propApplyCallback( Widget widget,XtPointer calldata,XtPointer cbs)
 {
 	struct propWindow *propWindow=(struct propWindow *)calldata;
 	short f1, f2;
-	int rtn, rtn2;
+	int i, rtn, rtn2;
 	struct anyLine *line;
 	struct chanData *cdata;
 	XmString string;
@@ -1239,6 +1282,21 @@ static void propApplyCallback( Widget widget,XtPointer calldata,XtPointer cbs)
 		alChangeChanMask((CLINK *)link,mask);
 		if (programId != ALH) cdata->defaultMask = cdata->curMask;
 	}
+
+	/* ---------------------------------
+	     Beep Severity
+	     --------------------------------- */
+	buff = XmTextFieldGetString(propWindow->beepSeverityValueTextW);
+	pgcData->beepSevr = i;
+	if (strlen(buff)) {
+		for (i=1; i<ALH_ALARM_NSEV; i++) {
+			if (strncmp(buff,alhAlarmSeverityString[i],
+			strlen(alhAlarmSeverityString[i]))==0){
+				pgcData->beepSevr = i;
+			}
+		}
+	}
+
 
 	/* ---------------------------------
 	     Severity Process Variable
@@ -1566,6 +1624,7 @@ static void propEditableDialogWidgets(ALINK  *area)
 
 	if (programId == ALH) {
 		XtVaSetValues(propWindow->nameTextW,XmNeditable, FALSE, NULL);
+		XtVaSetValues(propWindow->beepSeverityValueTextW,XmNeditable, FALSE, NULL);
 		XtVaSetValues(propWindow->severityPVnameTextW,XmNeditable, FALSE, NULL);
 		XtVaSetValues(propWindow->countFilterCountTextW,XmNeditable, FALSE, NULL);
 		XtVaSetValues(propWindow->countFilterSecondsTextW,XmNeditable, FALSE, NULL);
@@ -1580,6 +1639,7 @@ static void propEditableDialogWidgets(ALINK  *area)
 		XtVaSetValues(propWindow->guidanceUrlW,XmNeditable, FALSE, NULL);
 	} else {
 		XtVaSetValues(propWindow->nameTextW,XmNeditable, TRUE, NULL);
+		XtVaSetValues(propWindow->beepSeverityValueTextW,XmNeditable, TRUE, NULL);
 		XtVaSetValues(propWindow->severityPVnameTextW,XmNeditable, TRUE, NULL);
 		XtVaSetValues(propWindow->countFilterCountTextW,XmNeditable, TRUE, NULL);
 		XtVaSetValues(propWindow->countFilterSecondsTextW,XmNeditable, TRUE, NULL);
