@@ -40,7 +40,6 @@ endif
 
 .PHONY::	libcmlog.a
 
-
 ifeq ($(I_WANT_CDEV),YES)
 
   CDEV_LIB      = $(CDEVLIB)
@@ -131,35 +130,15 @@ PROD_LIBS += Com
 PROD_LIBS_DEFAULT += Xmu Xm Xt X11
 PROD_LIBS_Linux +=  Xmu Xm Xt X11 Xp
 
+USR_LIBS_WIN32 += $(EXCEED_XLIBS)
+USR_CFLAGS_WIN32 += $(EXCEED_CFLAGS)
+
 Xmu_DIR = $(X11_LIB)
 #Xmu_DIR = /usr/contrib/X11R6/lib
 Xm_DIR = $(MOTIF_LIB)
 Xt_DIR = $(X11_LIB)
 X11_DIR = $(X11_LIB)
 Xp_DIR = $(MOTIF_LIB)
-
-ifeq ($(EXCEED),Exceed5)
-# We cannot distribute Exceed Xm dynamic library.
-  PROD_LIBS_WIN32 = XmStatic Xt XlibGUI Xlib Xmu
-endif
-# We cannot distribute Exceed HCLXm dynamic library.
-ifeq ($(EXCEED),Exceed6)
-  PROD_LIBS_WIN32 = XmStatic HCLXt XlibGUI Xlib HCLXmu
-endif
-# We cannot distribute Exceed HCLXm dynamic library.
-ifeq ($(EXCEED),Exceed6.1)
-  #PROD_LIBS_WIN32 = HCLXm HCLXt XlibGUI Xlib
-  PROD_LIBS_WIN32 = XmStatic XMSTATXT XlibGUI Xlib
-  USR_CFLAGS_WIN32 += /DXMSTATIC
-endif
-
-XmStatic_DIR = $(MOTIF_LIB)
-HCLXm_DIR = $(MOTIF_LIB)
-HCLXt_DIR = $(X11_LIB)
-XlibGUI_DIR = $(X11_LIB)
-Xlib_DIR = $(X11_LIB)
-HCLXmu_DIR = $(X11_LIB)
-XMSTATXT_DIR = $(X11_LIB)
 
 RCS_WIN32 += alh.rc
 
@@ -171,3 +150,7 @@ alh.o: ../version.h
 awAct.o: ../version.h
 awAlh.o: ../version.h
 
+# **************************** Emacs Editing Sequences *****************
+# Local Variables:
+# mode: makefile
+# End:

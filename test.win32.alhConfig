@@ -1,35 +1,39 @@
 $BEEPSEVERITY  MAJOR
-GROUP    NULL                         JBA_TEST_MAIN_GROUP                       
+GROUP    NULL   JBATestMainGroup
 $COMMAND command /K dir
 $GUIDANCE
-This is the text guidance for JBA_TEST_MAIN_GROUP alarms.    
-This is the text guidance for JBA_TEST_MAIN_GROUP alarms.    
+This is the text guidance for JBATestMainGroup alarms.    
+This is more guidance for JBATestMainGroup alarms.    
 $END
-CHANNEL  JBA_TEST_MAIN_GROUP  jba:Example1 -----
-CHANNEL  JBA_TEST_MAIN_GROUP  jba:Example2 -----
-GROUP JBA_TEST_MAIN_GROUP    GROUP
+CHANNEL  JBATestMainGroup  jba:Example1 -----
+CHANNEL  JBATestMainGroup  jba:Example2 -----
+GROUP JBATestMainGroup  Group1
 $GUIDANCE
-This is the text guidance for group GROUP.
-This is the text guidance for group GROUP.
+This is the text guidance for group Group1.
+This is more guidance for group Group1.
 $END
-$COMMAND probe.exe
-CHANNEL  GROUP  jba:Example3 -----
-CHANNEL  GROUP  jba:Example4 -----
-GROUP   GROUP   SUBGROUP                          
+$COMMAND start probe.exe
+CHANNEL  Group1  jba:Example3 -----
+CHANNEL  Group1  jba:Example4 -----
+GROUP    Group1   Group1.SubGroup1
 $GUIDANCE
-This is the text guidance for SUBGROUP.
-This is the text guidance for SUBGROUP.
+This is the text guidance for Group1.SubGroup1.
+This is more guidance for Group1.SubGroup1.
 $END
-CHANNEL  SUBGROUP  jba:Example5 -----
-CHANNEL  SUBGROUP  jba:Example6 -----
-GROUP   GROUP   SECONDSUBGROUP                          
+CHANNEL  Group1.SubGroup1  jba:Example5 -----
+CHANNEL  Group1.SubGroup1  jba:Example6 -----
+GROUP    Group1   Group1.SubGroup2
 $GUIDANCE
-This is the text guidance for SECONDSUBGROUP.
-This is the text guidance for SECONDSUBGROUP.
+This is the text guidance for Group1.SubGroup2.
+This is more guidance for Group1.SubGroup2.
 $END
-CHANNEL  SECONDSUBGROUP  jba:Example7 -----
-CHANNEL  SECONDSUBGROUP  jba:Example8 -----
-GROUP JBA_TEST_MAIN_GROUP    SECONDGROUP
-$ALIAS   This is a test alias for the second group
-CHANNEL  SECONDGROUP  jba:Example9 -----
-CHANNEL  SECONDGROUP  jba:Example10 -----
+CHANNEL  Group1.SubGroup2  jba:Example7 -----
+CHANNEL  Group1.SubGroup2  jba:Example8 -----
+GROUP JBATestMainGroup  Group2
+$ALIAS   AliasForGroup2
+CHANNEL  Group2  jba:Example9 -----
+CHANNEL  Group2  jba:Example10 -----
+GROUP  JBATestMainGroup EvansGroup
+CHANNEL  EvansGroup  evans:calc
+CHANNEL  EvansGroup  evans:bo01
+CHANNEL  EvansGroup  Xorbit:S1A:H1:CurrentAO
