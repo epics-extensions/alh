@@ -294,6 +294,8 @@ modify children:
 	/* copy sevr commands */
 	copySevrCommandList(&gdata->sevrCommandList,&gdataNew->sevrCommandList);
 
+	gdataNew->beepSevr = gdata->beepSevr;
+
 	/* copy sevrPV info */
 	buff = gdata->sevrPVName;
 	if (buff){
@@ -436,8 +438,8 @@ modify children:
 		strcpy(cdataNew->sevrPVName,buff);
 	}
 	cdataNew->PVValue = cdata->PVValue;
-	;
 
+	cdataNew->beepSevr = cdata->beepSevr;
 
 	/* copy name */
 	if (cdataNew->name) free(cdataNew->name);
@@ -742,6 +744,7 @@ CLINK *clink,time_t timeofday)
 	if (stat >= ALH_ALARM_NSTATUS) stat = ALH_ALARM_NSTATUS-1;
 	mask = cdata->curMask;
 	strncpy(cdata->value,value,MAX_STRING_SIZE-1);
+	psetup.newUnackBeepSevr=0;
 
 	if (_global_flag) {
 		if (cdata->unackSevr != acks && cdata->curMask.Disable == 0 &&
@@ -868,9 +871,9 @@ CLINK *clink,time_t timeofday)
 
 	/*
 	 * reset silenceCurrent state to FALSE
-	 */
-	if (psetup.silenceCurrent && sev >= psetup.beepSevr)
-		silenceCurrentReset(clink->pmainGroup->area);
+ 	 */
+	if (psetup.silenceCurrent && psetup.newUnackBeepSevr >= psetup.beepSevr ) 
+		silenceCurrentReset(glink->pmainGroup->area);
 
 	cdata->unackStat = stat;
 }
@@ -882,6 +885,7 @@ void alHighestSystemSeverity(GLINK *glink)
 {
 	psetup.highestSevr = alHighestSeverity(glink->pgroupData->curSev);
 	psetup.highestUnackSevr = alHighestSeverity(glink->pgroupData->unackSev);
+	psetup.highestUnackBeepSevr = alHighestSeverity(glink->pgroupData->unackBeepSev);
 }
 
 /******************************************************************
@@ -1315,7 +1319,7 @@ int alProcessExists(GCLINK *link)
 }
 
 /***************************************************
-  alSetUnackSev
+  alSetUnackSevGroup
 ****************************************************/
 static void alSetUnackSevGroup(GLINK *glink,int newSevr,int oldSevr)
 {
@@ -1330,18 +1334,116 @@ static void alSetUnackSevGroup(GLINK *glink,int newSevr,int oldSevr)
 }
 
 /***************************************************
-  alSetUnackSev
+  alSetUnackBeepSevGroup
+****************************************************/
+static void alSetUnackBeepSevGroup(GLINK *glink,int newSevr,int oldSevr)
+{
+	struct groupData * gdata;
+	int osev=0;
+	int nsev=0;
+
+	gdata = (struct groupData *)glink->pgroupData;
+	gdata->unackBeepSev[oldSevr]--;
+	gdata->unackBeepSev[newSevr]++;
+	gdata->unackBeepSevr = alHighestSeverity(gdata->unackBeepSev);
+	if (oldSevr >= gdata->beepSevr) osev=oldSevr; 
+	if (newSevr >= gdata->beepSevr) nsev=newSevr;
+	if (glink->parent) alSetUnackBeepSevGroup(glink->parent,nsev,osev);
+	else psetup.newUnackBeepSevr=nsev;
+}
+
+/***************************************************
+  alSetUnackSevChan
 ****************************************************/
 void alSetUnackSevChan(CLINK *clink,int newSevr)
 {
 	int oldSevr;
+	int osev=0;
+	int nsev=0;
 
 	oldSevr = clink->pchanData->unackSevr;
 	if (oldSevr == newSevr) return;
 	clink->pchanData->unackSevr = newSevr;
 	clink->modified = 1;
 	clink->pmainGroup->modified = TRUE;
+	clink->pchanData->unackBeepSevr = newSevr;
 	if (clink->parent) alSetUnackSevGroup(clink->parent,newSevr,oldSevr);
+	if (oldSevr >= clink->pchanData->beepSevr) osev=oldSevr; 
+	if (newSevr >= clink->pchanData->beepSevr) nsev=newSevr;
+	if (clink->parent) alSetUnackBeepSevGroup(clink->parent,nsev,osev);
+}
+
+
+/***************************************************
+  alSetBeepSevrChan
+****************************************************/
+void alSetBeepSevrChan(CLINK *clink,int beepSevr)
+{
+	int oldBeepSevr;
+	int sev=0;
+	int osev=0;
+	int nsev=0;
+
+	oldBeepSevr = clink->pchanData->beepSevr;
+	clink->pchanData->beepSevr = beepSevr;
+	sev = clink->pchanData->unackSevr;
+	if (sev >= oldBeepSevr) osev=sev; 
+	if (sev >= beepSevr) nsev=sev;
+	if (osev == nsev) return;
+	clink->modified = 1;
+	clink->pmainGroup->modified = TRUE;
+	if (clink->parent) alSetUnackBeepSevGroup(clink->parent,nsev,osev);
+}
+
+
+/***************************************************
+  alSetUnackBeepSevCountGroup
+****************************************************/
+static void alSetUnackBeepSevCountGroup(GLINK *glink,int newSevr,int oldSevr,int count)
+{
+	struct groupData * gdata;
+	int osev=0;
+	int nsev=0;
+	int j;
+
+	gdata = (struct groupData *)glink->pgroupData;
+	gdata->unackBeepSev[oldSevr]=gdata->unackBeepSev[oldSevr] - count;
+	gdata->unackBeepSev[newSevr]=gdata->unackBeepSev[newSevr] + count;
+
+	gdata->unackBeepSevr = alHighestSeverity(gdata->unackBeepSev);
+	if (oldSevr >= gdata->beepSevr) osev=oldSevr; 
+	if (newSevr >= gdata->beepSevr) nsev=newSevr;
+	if (glink->parent) alSetUnackBeepSevCountGroup(glink->parent,nsev,osev,count);
+	else psetup.newUnackBeepSevr=nsev;
+}
+
+/***************************************************
+  alSetBeepSevrGroup
+****************************************************/
+void alSetBeepSevrGroup(GLINK *glink,int beepSevr)
+{
+	struct groupData * gdata;
+	int oldBeepSevr;
+	int i, count;
+	int osev, nsev;
+	int start, end;
+
+	gdata = (struct groupData *)glink->pgroupData;
+	oldBeepSevr = gdata->beepSevr;
+	if (oldBeepSevr == beepSevr) return;
+	gdata->beepSevr = beepSevr;
+	glink->modified = 1;
+	glink->pmainGroup->modified = TRUE;
+	if ( oldBeepSevr < beepSevr) { start=oldBeepSevr; end=beepSevr; }
+	else { start=beepSevr; end=oldBeepSevr; }
+	for (i=start; i<end; i++) {
+		count = gdata->unackSev[i];
+		osev=0;
+		nsev=0;
+		if (i >= oldBeepSevr) osev=i; 
+		if (i >= beepSevr) nsev=i;
+		if (glink->parent && osev != nsev ) alSetUnackBeepSevCountGroup(glink->parent,nsev,osev,count);
+	}
 }
 
 
