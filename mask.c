@@ -129,8 +129,7 @@ static void maskUpdateDialogWidgets(struct maskWindow *maskWindow)
 	int linkType;
 	XmString string;
 
-	if (! maskWindow || !maskWindow->maskDialog ||
-	    !XtIsManaged(maskWindow->maskDialog)) return;
+	if (! maskWindow || !maskWindow->maskDialog ) return;
 
 	link =getSelectionLinkArea(maskWindow->area);
 

@@ -132,8 +132,7 @@ struct forceMaskWindow *forceMaskWindow;
 	XmString string;
 	char buff[MAX_STRING_LENGTH];
 
-	if (! forceMaskWindow || !forceMaskWindow->maskDialog ||
-	    !XtIsManaged(forceMaskWindow->maskDialog)) return;
+	if (! forceMaskWindow || !forceMaskWindow->maskDialog  ) return;
 
 	link = (GCLINK *)getSelectionLinkArea(forceMaskWindow->area);
 

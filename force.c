@@ -134,8 +134,7 @@ static void forcePVUpdateDialogWidgets(struct forcePVWindow *forcePVWindow)
 	char buff[MAX_STRING_LENGTH];
 	MASK mask;
 
-	if (! forcePVWindow || !forcePVWindow->forcePVDialog || 
-	    !XtIsManaged(forcePVWindow->forcePVDialog)) return;
+	if (! forcePVWindow || !forcePVWindow->forcePVDialog ) return;
 
 	link =getSelectionLinkArea(forcePVWindow->area);
 
