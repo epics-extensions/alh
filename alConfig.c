@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.14  1997/09/12 21:23:53  jba
+ Bufg fix for beep severity line placement.
+
  Revision 1.13  1997/09/12 19:28:03  jba
  Fixed calloc for SEVRCOMMAND string.
 
@@ -571,6 +574,26 @@ static void GetOptionalLine(fp,buf,gclink,context,caConnect)
     char *str;
     int i;
 
+    /* config optional lines */
+    if(buf[1]=='B') { /*BEEPSEVERITY*/
+        int len;
+
+        sscanf(buf,"%20s",command);
+        len = strlen(command);
+        while( buf[len] == ' ' || buf[len] == '\t') len++;
+        for (i=1; i<ALARM_NSEV; i++) {
+            if (strncmp(&buf[len],alarmSeverityString[i],
+                 strlen(alarmSeverityString[i]))==0){
+                 psetup.beepSevr = i;
+             }
+        }
+        return;
+    }
+
+
+
+    /* group/channel optional lines */
+
 	if(gclink==NULL) {
 	    print_error(buf,"Logic error: glink is NULL");
 	    return;
@@ -625,22 +648,6 @@ static void GetOptionalLine(fp,buf,gclink,context,caConnect)
          gcdata->command[strlen(gcdata->command)-1] = '\0'; 
 	return;
     }
-
-    if(buf[1]=='B') { /*BEEPSEVERITY*/
-        int len;
-
-        sscanf(buf,"%20s",command);
-        len = strlen(command);
-        while( buf[len] == ' ' || buf[len] == '\t') len++;
-        for (i=1; i<ALARM_NSEV; i++) {
-            if (strncmp(&buf[len],alarmSeverityString[i],
-                 strlen(alarmSeverityString[i]))==0){
-                 psetup.beepSevr = i;
-             }
-        }
-        return;
-    }
-
 
     if(buf[1]=='S' && buf[2]=='E' && buf[5]=='C') { /*SEVRCOMMAND*/
        int len;
