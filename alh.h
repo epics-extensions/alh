@@ -1,5 +1,11 @@
 /*
  $Log$
+ Revision 1.10  1998/08/05 18:20:05  jba
+ Added silenceOneHour button.
+ Moved silenceForever button to Setup menu.
+ Added logging for operator silence changes.
+
+
  Revision 1.9  1998/08/03 14:33:20  jba
  Changed MAX_STRING_LENGTH to 500
 
@@ -192,8 +198,9 @@ static char *alhhSccsId = "@(#)alh.h	1.10\t10/8/93";
 #define MENU_SETUP_FILTER_NONE	10503
 #define MENU_SETUP_FILTER_ACTIVE	10504
 #define MENU_SETUP_FILTER_UNACK 	10505
-#define	MENU_SETUP_ALARMLOG		10506
-#define	MENU_SETUP_OPMOD		10507
+#define MENU_SETUP_SILENCE_FOREVER	10506
+#define MENU_SETUP_ALARMLOG		10507
+#define MENU_SETUP_OPMOD		10508
 
 #define MENU_EDIT_UNDO			10600
 #define MENU_EDIT_CUT			10601
@@ -280,8 +287,9 @@ struct setup {
      char logFile[NAMEDEFAULT_SIZE];         /* alarm log file name */
      char opModFile[NAMEDEFAULT_SIZE];       /* opMod log file name */
      char saveFile[NAMEDEFAULT_SIZE];        /* save config file name */
-     short nobeep;                   /* 1 - beepoff forever is true */
-     short beep;                     /* 1 - beep on  0 - off */
+     short silenceForever;                   /* 1 - beepoff forever is true */
+     short silenceOneHour;                   /* 1 - beepoff one hour is true */
+     short silenceCurrent;                     /* 1 - current beep on  0 - off */
      short beepSevr;                 /* 1,2,3,4,5 */
      short highestSevr;              /* system highest  sevr */
      short highestUnackSevr;         /* system highest unack sevr */
@@ -296,9 +304,6 @@ struct mainGroup {
 };
 
 extern struct setup psetup;
-
-/* GLOBAL WIDGET VARIABLES */
-Widget toggle_button,toggle_button1;
 
 
 /*************************************************************************/

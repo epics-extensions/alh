@@ -1,5 +1,10 @@
 /*
  $Log$
+ Revision 1.8  1998/08/05 18:20:11  jba
+ Added silenceOneHour button.
+ Moved silenceForever button to Setup menu.
+ Added logging for operator silence changes.
+
  Revision 1.7  1998/05/13 19:29:51  evans
  More WIN32 changes.
 
@@ -431,7 +436,7 @@ static void maskActivateCallback(Widget widget,XtPointer calldata,XtPointer cbs)
                alForceChanMask(link,maskid,maskno);
                alLogChanChangeMasks(link,maskno,maskid);
           }
-          resetBeep();
+          silenceCurrentReset(area);
      } else {
           createDialog(widget,XmDIALOG_WARNING,
                "Please select an alarm group or channel first."," ");

@@ -1,5 +1,10 @@
 /*
  $Log$
+ Revision 1.18  1998/08/05 18:20:07  jba
+ Added silenceOneHour button.
+ Moved silenceForever button to Setup menu.
+ Added logging for operator silence changes.
+
  Revision 1.17  1998/07/29 17:27:37  jba
  Added "Unacknowledged Alarms Only" display filter.
 
@@ -153,9 +158,10 @@ void createRuntimeWindow( ALINK *area);
 void createMainWindow_callback( Widget w, ALINK *area, XmAnyCallbackStruct *call_data);
 void unmapwindow_callback( Widget w, Widget main, XmAnyCallbackStruct *call_data);
 void remapwindow_callback( Widget w, Widget main, XmAnyCallbackStruct *call_data);
-void resetBeep(void);
-void beep_callback( Widget w, int beep, XmAnyCallbackStruct *call_data);
-void silenceForever_callback( Widget w, Widget toggleB, XmAnyCallbackStruct *call_data);
+void silenceCurrentReset(void *area);
+void silenceCurrent_callback( Widget w, int notUsed, XmAnyCallbackStruct *call_data);
+void silenceForeverChangeState();
+void silenceOneHour_callback( Widget w, void * area, XmAnyCallbackStruct *call_data);
 
 
 /********************************************************************
@@ -322,6 +328,7 @@ void alLogForcePVGroup( GLINK *glink, int ind);
 void alLogResetPVGroup( GLINK *glink, int ind);
 void alLogForcePVChan( CLINK *clink, int ind);
 void alLogResetPVChan( CLINK *clink, int ind);
+void alLogOpMod(char *);
 void alLogExit(void);
 void alLogChangeGroupMasks( GLINK *glink, int maskno, int maskid);
 void alLogSetupConfigFile( char *filename);
@@ -558,9 +565,10 @@ void createRuntimeWindow();
 void createMainWindow_callback();
 void unmapwindow_callback();
 void remapwindow_callback();
-void resetBeep();
-void beep_callback();
-void silenceForever_callback();
+void silenceCurrentReset();
+void silenceCurrent_callback();
+void silenceForeverChangeState();
+void silenceOneHour_callback();
 
 /********************************************************************
   axSubW.c   function prototypes
@@ -702,6 +710,7 @@ void alLogForcePVGroup();
 void alLogResetPVGroup();
 void alLogForcePVChan();
 void alLogResetPVChan();
+void alLogOpMod();
 void alLogExit();
 void alLogChangeGroupMasks();
 void alLogSetupConfigFile();

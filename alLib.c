@@ -1,5 +1,10 @@
 /*
  $Log$
+ Revision 1.21  1998/08/05 18:20:03  jba
+ Added silenceOneHour button.
+ Moved silenceForever button to Setup menu.
+ Added logging for operator silence changes.
+
  Revision 1.20  1998/07/07 20:49:02  jba
  Removed unused variable timeout.
 
@@ -1211,10 +1216,11 @@ int prevViewCount=0;
                 }
  
 /*
- * ring beep
+ * reset silenceCurrent state to FALSE
  */
- 	if (psetup.nobeep == FALSE && sev >= psetup.beepSevr) 
-		resetBeep();
+
+ 	if (psetup.silenceCurrent && sev >= psetup.beepSevr) 
+		silenceCurrentReset(clink->pmainGroup->area);
 
 /*
  * update unackSev[] of all parent groups and log it

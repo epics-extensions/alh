@@ -1,5 +1,10 @@
 /*
  $Log$
+ Revision 1.7  1998/08/05 18:20:09  jba
+ Added silenceOneHour button.
+ Moved silenceForever button to Setup menu.
+ Added logging for operator silence changes.
+
  Revision 1.6  1998/05/13 19:29:49  evans
  More WIN32 changes.
 
@@ -91,7 +96,7 @@ typedef struct  areaLink{
      Widget           label_groupAlarm;
      Widget           label_channelAlarm;
      Widget           label_mask;
-     Widget           silenceForever;
+     Widget           silenceOneHour;
      Widget           silenceCurrent;
      Widget           beepSeverity;
      Widget           beepSeverityLabel;

@@ -132,3 +132,8 @@ Wed Jul 29 12:27:09 CDT 1998
 
 Mon Aug  3 13:04:40 CDT 1998
 	Increased config file max line size to 500 chars.
+
+Wed Aug  5 13:10:12 CDT 1998
+	Added silenceOneHour button.
+	Moved silenceForever button to Setup menu.
+	Added logging for operator silence changes.

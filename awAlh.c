@@ -1,5 +1,10 @@
 /*
  $Log$
+ Revision 1.14  1998/08/05 18:20:06  jba
+ Added silenceOneHour button.
+ Moved silenceForever button to Setup menu.
+ Added logging for operator silence changes.
+
  Revision 1.13  1998/07/29 17:27:36  jba
  Added "Unacknowledged Alarms Only" display filter.
 
@@ -279,6 +284,8 @@ Widget alhCreateMenu(parent, user_data)
                                       0, 0,    (MenuItem *)setup_filter_menu },
          { "Beep Severity...",       &xmPushButtonGadgetClass, 'B', NULL, NULL,
                                       0, 0,    (MenuItem *)setup_beep_menu },
+         { "Silence Forever",  &xmToggleButtonGadgetClass, 'S', NULL, NULL,
+             alhSetupCallback, (XtPointer)MENU_SETUP_SILENCE_FOREVER,(MenuItem *)NULL },
          { "New Alarm Log File Name...",  &xmPushButtonGadgetClass, 'L', NULL, NULL,
              alhSetupCallback, (XtPointer)MENU_SETUP_ALARMLOG,     (MenuItem *)NULL },
          { "New Oper. Log File Name...",  &xmPushButtonGadgetClass, 'O', NULL, NULL,
@@ -706,6 +713,11 @@ static void alhSetupCallback( Widget widget, XtPointer calldata, XtPointer cbs)
 
              psetup.beepSevr = INVALID_ALARM;
              changeBeepSeverityText(area);
+             break;
+
+        case MENU_SETUP_SILENCE_FOREVER:
+
+             silenceForeverChangeState();
              break;
 
         case MENU_SETUP_ALARMLOG:

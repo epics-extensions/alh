@@ -1,5 +1,10 @@
 /*
  $Log$
+ Revision 1.13  1998/08/05 18:20:04  jba
+ Added silenceOneHour button.
+ Moved silenceForever button to Setup menu.
+ Added logging for operator silence changes.
+
  Revision 1.12  1998/07/23 18:22:34  jba
  Log the connection and access rights changes to alarm log file
 
@@ -128,17 +133,18 @@ static char *masksdata[] = {
 
 
 struct setup psetup = {         /* initial files & beeping setup */
-    "",
-    "",
-    "",
-    "",
-    0,
-    1,
-    1,
-    0,
-    0,
-    0,
-    0};
+    "",    /* config file name */
+    "",    /* alarm log file name */
+    "",    /* opMod log file name */
+    "",    /* save config file name */
+    0,     /* silenceForever */
+    0,     /* silenceOneHour */
+    0,     /* silenceCurrent */
+    1,     /* 1,2,3,4,5 */
+    0,     /* system highest  sevr */
+    0,     /* system highest unack sevr */
+    0,     /* config files directory */
+    0};    /* log files directory */
 
 
 int alarmLogFileMaxRecords = 2000;   /* alarm log file maximum # records */
@@ -671,6 +677,20 @@ char *filename;
 	   	str,filename);
 	   fprintf(fo,"%s",buff);        /* update the file */
   fflush(fo);
+	   updateLog(OPMOD_FILE,buff);   /* update the text widget */
+}
+
+/***********************************************************************
+ * log operator modifications 
+ ***********************************************************************/
+void alLogOpMod(char *text)
+{
+	   timeofday = time(0L);
+	   str = ctime(&timeofday);
+	   *(str + strlen(str)-1) = '\0';
+	   sprintf(buff,"%-26s %s\n", str,text);
+	   fprintf(fo,"%s",buff);        /* update the file */
+	   fflush(fo);
 	   updateLog(OPMOD_FILE,buff);   /* update the text widget */
 }
 

@@ -1,5 +1,10 @@
 /*
  $Log$
+ Revision 1.14  1998/08/05 18:20:09  jba
+ Added silenceOneHour button.
+ Moved silenceForever button to Setup menu.
+ Added logging for operator silence changes.
+
  Revision 1.13  1998/06/02 19:40:50  evans
  Changed from using Fgmgr to using X to manage events and file
  descriptors.  (Fdmgr didn't work on WIN32.)  Uses XtAppMainLoop,
@@ -116,17 +121,15 @@ void createRuntimeWindow(area)                       Create iconlike runtimeW
 *
 void blinking()                                      Initiate runtimeW blinking 
 *
-void resetBeep()                                     Turn on beep option
+void silenceCurrentReset(ALINK *area)                Turn on beep option
 *
-void silenceForever_callback(w,toggleB,call_data)       Silence beep forever toggle
-	Widget w;
-    Widget toggleB;
-	XmAnyCallbackStruct *call_data;
+void silenceCurrent_callback(                        Toggle current beep
+     Widget w,int userdata,XmAnyCallbackStruct *call_data)
 *
-void beep_callback(w,beep,call_data)                 Silence current beep toggle
-	Widget w;
-	int beep;
-	XmAnyCallbackStruct *call_data;
+void silenceForeverChangeState()                     Silence beep forever toggle
+*
+void silenceOneHourReset(area)                       Silence one hour turn on beep 
+     ALINK *area;
 *
 void createMainWindow_callback(w,area,call_data)     Create MainW widgets callback
      Widget w;
@@ -201,6 +204,7 @@ static void okCallback( Widget widget, void * area, XmAnyCallbackStruct *cbs);
 static void axExit_callback( Widget w, ALINK *area, XmAnyCallbackStruct *call_data);
 static void axExitArea_callback( Widget w, ALINK *area, XmAnyCallbackStruct *call_data);
 static void blinking(XtPointer cd, XtIntervalId *id);
+void silenceOneHourReset(void *area);
 
 #else
 static void alChangeOpenCloseButtonToRemap();
@@ -211,6 +215,7 @@ static void okCallback();
 static void axExit_callback();
 static void axExitArea_callback();
 static void blinking();
+void silenceOneHourReset();
 
 #endif /*__STDC__*/
 
@@ -218,7 +223,6 @@ static void blinking();
 XmStringCharSet charset = (XmStringCharSet) XmSTRING_DEFAULT_CHARSET;
 char *fontname = "fixed";
 extern struct setup psetup;
-extern Widget toggle_button,toggle_button1;
 extern int DEBUG;
 
 extern char * alarmSeverityString[];
@@ -528,7 +532,6 @@ void createRuntimeWindow(area)
                (XtCallbackProc)createMainWindow_callback, area);
 
           blinkButton = area->blinkButton;
-          resetBeep();
 
           alLoadFont(fontname,&font_info);
      
@@ -549,18 +552,13 @@ void createRuntimeWindow(area)
      XmStringFree(str);
 
      /* reinitialize silence beep */
-     if (area->silenceForever) {
-          psetup.nobeep = FALSE;
-          psetup.beep = TRUE;
-          XmToggleButtonGadgetSetState(area->silenceForever,FALSE,FALSE);
-          XmToggleButtonGadgetSetState(area->silenceCurrent,FALSE,FALSE);
-      }
+     silenceCurrentReset(area);
+     silenceOneHourReset(area);
+     psetup.silenceForever = FALSE;
 
      changeBeepSeverityText(area);
 
      icon_update();
-
-
 }
 
 /******************************************************
@@ -616,10 +614,10 @@ static void blinking(XtPointer cd, XtIntervalId *id)
     {
 	static int n=0;
 
-	printf("blinking: n=%d blinking2State=%d psetup.nobeep=%d psetup.beep=%d\n"
+	printf("blinking: n=%d blinking2State=%d psetup.silenceForever=%d psetup.silenceCurrent=%d\n"
 	  " psetup.highestSev=%d blinkPixel=%d bg_pixel[0]=%d\n"
 	  " psetup.highestUnackSevr=%d psetup.beepSevr=%d\n",
-	  n++,blinking2State,psetup.nobeep,psetup.beep,
+	  n++,blinking2State,psetup.silenceForever,psetup.silenceCurrent,
 	  psetup.highestSevr,blinkPixel,bg_pixel[0],
 	  psetup.highestUnackSevr,psetup.beepSevr);
     }
@@ -643,7 +641,9 @@ static void blinking(XtPointer cd, XtIntervalId *id)
 #endif
 	       restart=1;
           }
-          if (psetup.nobeep == FALSE && psetup.beep == TRUE && 
+          if (!psetup.silenceForever &&
+              !psetup.silenceOneHour && 
+              !psetup.silenceCurrent && 
                (psetup.highestUnackSevr >= psetup.beepSevr)) {
                XBell(displayBB,0);
                XRaiseWindow(displayBB,XtWindow(XtParent(XtParent(blinkButton))));
@@ -768,53 +768,78 @@ void remapwindow_callback(w,main,call_data)
 }
 
 /***********************************************
- turn on beep option 
+ reset silenceCurrent
 ************************************************/
-void resetBeep()
+void silenceCurrentReset(void *area)
 {
-/*   reset beep option if nobeep = false */
+ if (psetup.silenceCurrent) { 
+    psetup.silenceCurrent = FALSE; 
+    if (((ALINK*)area)->silenceCurrent)
+        XmToggleButtonGadgetSetState(((ALINK*)area)->silenceCurrent,FALSE,FALSE);
+  }
+}
 
-  if (psetup.beep == FALSE) { 
-	psetup.beep = TRUE; 
-
-	XmToggleButtonGadgetSetState(toggle_button,FALSE,FALSE);
-
-	}
+/***********************************************
+ reset silenceOneHour
+************************************************/
+void silenceOneHourReset(void *area)
+{
+ if (psetup.silenceOneHour) { 
+    XmToggleButtonGadgetSetState(((ALINK*)area)->silenceOneHour,FALSE,FALSE);
+    silenceOneHour_callback(((ALINK*)area)->silenceOneHour,area,NULL);
+  }
 }
 
 /***************************************************
- silence button call back
+ silenceCurrent button toggle callback
 ****************************************************/
 
-void beep_callback(w,beep,call_data)
-     Widget w;
-     int beep;
-     XmAnyCallbackStruct *call_data;
+void silenceCurrent_callback( Widget w,int userdata,XmAnyCallbackStruct *call_data)
 {
-	psetup.beep = psetup.beep ^ TRUE;
+	psetup.silenceCurrent = psetup.silenceCurrent?FALSE:TRUE;
+	if (psetup.silenceCurrent)
+            alLogOpMod("Silence Current set to TRUE");
+        else
+            alLogOpMod("Silence Current set to FALSE");
 }
 
 /***************************************************
- silenceForever_callback 
+ silenceOneHour button toggle callback
 ****************************************************/
 
-void silenceForever_callback(w,toggleB,call_data)
-     Widget w;
-     Widget toggleB;
-     XmAnyCallbackStruct *call_data;
+void silenceOneHour_callback( Widget w, void * area,XmAnyCallbackStruct *call_data)
 {
-    psetup.nobeep = psetup.nobeep ^ TRUE;
-    if (psetup.nobeep == TRUE)  {
-	psetup.beep = TRUE;
-	XmToggleButtonGadgetSetState(toggleB,FALSE,FALSE);
-    }
-    
-    if (psetup.nobeep == FALSE)  {
-	if (XmToggleButtonGadgetGetState(toggleB)) 
-	  psetup.beep = FALSE;
-	else
-	  psetup.beep = TRUE; 
-    }
+	static XtIntervalId intervalId = NULL;
+	int seconds = 3600;
+
+	psetup.silenceOneHour = psetup.silenceOneHour?FALSE:TRUE;
+	if (psetup.silenceOneHour) {
+		intervalId = XtAppAddTimeOut(appContext,
+		(unsigned long)(1000*seconds),
+		(XtTimerCallbackProc)silenceOneHourReset,
+		(XtPointer)area);
+                alLogOpMod("Silence One Hour set to TRUE");
+	} else {
+		if (intervalId) {
+                      XtRemoveTimeOut(intervalId);
+                      intervalId = NULL;
+                }
+                alLogOpMod("Silence One Hour set to FALSE");
+        }
+
+}
+
+/***************************************************
+ silenceForeverChangeState
+****************************************************/
+
+void silenceForeverChangeState()
+{
+	psetup.silenceForever = psetup.silenceForever?FALSE:TRUE;
+	if (psetup.silenceForever)
+            alLogOpMod("Silence Forever set to TRUE");
+        else
+            alLogOpMod("Silence Forever set to FALSE");
 }
 
 /***************************************************

@@ -1,5 +1,10 @@
 /*
  $Log$
+ Revision 1.9  1998/08/05 18:20:12  jba
+ Added silenceOneHour button.
+ Moved silenceForever button to Setup menu.
+ Added logging for operator silence changes.
+
  Revision 1.8  1998/06/02 19:40:52  evans
  Changed from using Fgmgr to using X to manage events and file
  descriptors.  (Fdmgr didn't work on WIN32.)  Uses XtAppMainLoop,
@@ -609,7 +614,7 @@ static void forceMaskApplyCallback(Widget widget,XtPointer calldata,XtPointer cb
           alLogForcePVGroup((GLINK *)link,OPERATOR);
      }
 
-     resetBeep();
+     silenceCurrentReset(forceMaskWindow->area);
      link->pmainGroup->modified = 1;
 
      /* ---------------------------------
@@ -652,7 +657,7 @@ static void forceMaskResetCallback(Widget widget,XtPointer calldata,XtPointer cb
           alLogResetPVGroup((GLINK *)link,OPERATOR);
      }
 
-     resetBeep();
+     silenceCurrentReset(forceMaskWindow->area);
      link->pmainGroup->modified = 1;
 
      /* ---------------------------------

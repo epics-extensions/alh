@@ -1,5 +1,10 @@
 /*
  $Log$
+ Revision 1.12  1998/08/05 18:20:08  jba
+ Added silenceOneHour button.
+ Moved silenceForever button to Setup menu.
+ Added logging for operator silence changes.
+
  Revision 1.11  1997/02/28 23:29:22  jba
  Fixed INCLUDE file bug which caused counts and alarms to be incorrect.
 
@@ -160,7 +165,6 @@ void changeBeepSeverityText(area)
 /* global variables */
 extern int DEBUG;
 extern SLIST *areaList;
-extern Widget toggle_button,toggle_button1;
 extern struct setup psetup;
 extern Display *display;
 extern char *alarmSeverityString[];
@@ -680,8 +684,8 @@ void createMainWindowWidgets(area)
      XmStringFree(str);
 
 
-     /* Create a Silence Forever Toggle Button in the messageArea */
-     area->silenceForever = XtVaCreateManagedWidget("SilenceForever",
+     /* Create a Silence One Hour Toggle Button in the messageArea */
+     area->silenceOneHour = XtVaCreateManagedWidget("SilenceOneHour",
           xmToggleButtonGadgetClass, area->messageArea,
           XmNtopAttachment,          XmATTACH_WIDGET,
           XmNtopWidget,              area->scale,
@@ -689,15 +693,11 @@ void createMainWindowWidgets(area)
           XmNuserData,               (XtPointer)area,
           NULL);
 
-     /* Set global variable */
-     toggle_button1 = area->silenceForever;
-
-
      /* Create a Silence Current Toggle Button in the messageArea */
      area->silenceCurrent = XtVaCreateManagedWidget("SilenceCurrent",
           xmToggleButtonGadgetClass, area->messageArea,
           XmNtopAttachment,          XmATTACH_WIDGET,
-          XmNtopWidget,              area->silenceForever,
+          XmNtopWidget,              area->silenceOneHour,
           XmNrightAttachment,        XmATTACH_FORM,
           XmNuserData,               (XtPointer)area,
           NULL);
@@ -744,14 +744,11 @@ void createMainWindowWidgets(area)
 
      }
 
-     /* Set global variable */
-     toggle_button = area->silenceCurrent;
+     XtAddCallback(area->silenceOneHour, XmNvalueChangedCallback,
+          (XtCallbackProc)silenceOneHour_callback,area);
 
-     /* NOTE silenceForever callback needs silenceCurrent widget id */
-     XtAddCallback(area->silenceForever, XmNvalueChangedCallback,
-          (XtCallbackProc)silenceForever_callback, area->silenceCurrent);
-
-     XtAddCallback(area->silenceCurrent, XmNvalueChangedCallback, (XtCallbackProc)beep_callback, 0);
+     XtAddCallback(area->silenceCurrent, XmNvalueChangedCallback,
+          (XtCallbackProc)silenceCurrent_callback,0);
 
      /* manage the message area */
      XtManageChild(area->messageArea);

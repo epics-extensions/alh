@@ -1,5 +1,10 @@
 /*
  $Log$
+ Revision 1.19  1998/08/05 18:20:10  jba
+ Added silenceOneHour button.
+ Moved silenceForever button to Setup menu.
+ Added logging for operator silence changes.
+
  Revision 1.18  1998/07/23 18:06:43  jba
  Exit routine changes.
 
@@ -220,6 +225,7 @@ void exit_quit(w, area, call_data)
      }
 
      if (programId==ACT) editClipboardSet(0,0);
+     free(area->pmainGroup);
      free(area);
      XtDestroyWidget(topLevelShell);
      exit(0);
