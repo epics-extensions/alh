@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.3  1997/09/12 19:28:35  jba
+ Removed comments.
+
  Revision 1.2  1994/06/22 21:16:30  jba
  Added cvs Log keyword
 
@@ -80,11 +83,4 @@ int alFilterAlarmsOnly(gclink)
      if ( gclink->pgcData->curSevr || gclink->pgcData->unackSevr ) return(TRUE);
      return(FALSE);
 }
-
-/*
-printf ("alFilterAlarmsOnly:  gclink->pgcData->name=%s curSevr=%d \n",
-gclink->pgcData->name,gclink->pgcData->curSevr);
-printf ("alFilterAlarmsOnly:  gclink->pgcData->name=%s unackSevr=%d \n",
-gclink->pgcData->name,gclink->pgcData->unackSevr);
-*/
 
