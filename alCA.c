@@ -1,4 +1,4 @@
-static char *sccsId = "@(#)alCA.c	1.17\t10/8/93";
+static char *sccsId = "%W%\t%G%";
 
 /*  alCA.c 
  *
@@ -104,7 +104,7 @@ static void ForceGroupChangeConnectionEvent( struct connection_handler_args args
 static void ForceChannelChangeConnectionEvent( struct connection_handler_args args);
 static void SevrGroupChangeConnectionEvent( struct connection_handler_args args);
 static void SevrChannelChangeConnectionEvent( struct connection_handler_args args);
-static void al_ca_error_code(int status,char *buff);
+static void al_ca_error_code(char *alhName,char *caName,int status,char *PVname);
 static void registerCA(void *pfdctx, int fd, int condition);
 void alCaPendEvent(void);
 
@@ -413,17 +413,20 @@ CLINK *clink;
 {
 struct chanData *cdata;
 void NewAlarmEvent();
+int status;
 
 
         cdata = clink->pchanData;
 
-	SEVCHK(ca_add_masked_array_event(DBR_STS_STRING, 1,
+    status=ca_add_masked_array_event(DBR_STS_STRING, 1,
 		cdata->chid, 
 		NewAlarmEvent,
 		clink, 
-		(float)0, (float)0, (float)0, &(cdata->evid), DBE_ALARM),
-		"  alCaAddEvent:  error in ca_add_masked_array_event");
+		(float)0, (float)0, (float)0, &(cdata->evid), DBE_ALARM);
+	al_ca_error_code("alCaAddEvent","ca_add_masked_array_event",status,cdata->name);
 
+if (DEBUG == 1) 
+printf("*** ca_field_type(cdata->chid)=%d TYPENOTCONN=%d\n",ca_field_type(cdata->chid),TYPENOTCONN);
         if (ca_field_type(cdata->chid) == TYPENOTCONN) 
                 alNewAlarm(COMM_ALARM, INVALID_ALARM, cdata->value, clink);  
         
@@ -445,8 +448,7 @@ int status;
 	if (cdata->evid) {
 	status = ca_clear_event(cdata->evid);
 	if (status != ECA_NORMAL) 
-	al_ca_error_code(status,
-	" alCaClearEvent:  error in ca_clear_event on newAlarm channel");
+	al_ca_error_code("alCaClearEvent","ca_clear_event",status,cdata->name);
 	cdata->evid = NULL;
 	}
 }
@@ -464,6 +466,7 @@ GLINK *glink;
 struct chanData *cdata;
 struct groupData *gdata;
 short  sevr;
+int status;
 
 /*
  *      update the channel's value if sevrPVName is defined
@@ -475,8 +478,10 @@ short  sevr;
         if (cdata->sevrchid && 
 		ca_field_type(cdata->sevrchid) != TYPENOTCONN) {  
                 sevr = cdata->curSevr;
-                SEVCHK(ca_put(DBR_SHORT,cdata->sevrchid,&sevr),
-                        "alCaPutSevr : error in ca_put");
+                status=ca_put(DBR_SHORT,cdata->sevrchid,&sevr);
+                if (status!=ECA_NORMAL) 
+	            al_ca_error_code("alCaPutSevr","ca_put",status,cdata->sevrPVName);
+
 if (DEBUG == 1) 
 printf("alCaPutSevr :Chann %s, %s, %d, type=%d\n",
 cdata->name,cdata->sevrPVName,cdata->curSevr,
@@ -499,8 +504,9 @@ ca_field_type(cdata->sevrchid));
                 if (gdata->sevrchid && 
 			ca_field_type(gdata->sevrchid) != TYPENOTCONN) {
                         sevr = alHighestSeverity(gdata->curSev);
-                        SEVCHK(ca_put(DBR_SHORT,gdata->sevrchid,&sevr),
-                                "alCaPutSevr : error in ca_put");
+                        status=ca_put(DBR_SHORT,gdata->sevrchid,&sevr);
+                        if (status!=ECA_NORMAL) 
+	                    al_ca_error_code("alCaPutSevr","ca_put",status,gdata->sevrPVName);
 if (DEBUG == 1) 
 printf("alCaPutSevr :Group %s,  %s, %d, type=%d\n",
 gdata->name,gdata->sevrPVName,alHighestSeverity(gdata->curSev),
@@ -551,8 +557,7 @@ int status;
 
 		status = ca_search(gdata->forcePVName,&(gdata->forcechid));
                 if (status!=ECA_NORMAL) 
-			printf("ca_search failed on group forcepVName :[%s]\n",
-				gdata->forcePVName);
+	            al_ca_error_code("alCaSearch","ca_search",status,gdata->forcePVName);
 
 
 			}
@@ -562,9 +567,7 @@ int status;
 		if ( strlen(gdata->sevrPVName) > 1) {
 		status = ca_search(gdata->sevrPVName,&(gdata->sevrchid));
                 if (status!=ECA_NORMAL) 
-			printf("ca_search failed on group sevrPVName :[%s]\n",
-				gdata->sevrPVName);
-
+	            al_ca_error_code("alCaSearch","ca_search",status,gdata->sevrPVName);
  			}
 
 /* for each channel in chanList */
@@ -580,8 +583,7 @@ int status;
 
 		status = ca_search(cdata->name,&(cdata->chid));
                 if (status!=ECA_NORMAL) 
-			printf("ca_search failed on channel name :[%s]\n",
-				cdata->name);
+	            al_ca_error_code("alCaSearch","ca_search",status,cdata->name);
 	
 
 
@@ -591,8 +593,7 @@ int status;
 
 		status = ca_search(cdata->forcePVName,&(cdata->forcechid));
                 if (status!=ECA_NORMAL) 
-			printf("ca_search failed on channel forcePVName :[%s]\n",
-				cdata->forcePVName);
+	            al_ca_error_code("alCaSearch","ca_search",status,cdata->forcePVName);
     
   			}
 
@@ -603,10 +604,7 @@ int status;
 
 		status = ca_search(cdata->sevrPVName,&(cdata->sevrchid));
                 if (status!=ECA_NORMAL) 
-			printf("ca_search failed on channel sevrPVName :[%s]\n",
-				cdata->sevrPVName);
-
-
+	            al_ca_error_code("alCaSearch","ca_search",status,cdata->sevrPVName);
  
 			}
 
@@ -636,8 +634,7 @@ void alCaSearchName(name, pchid)
 
 	status = ca_search(name,pchid);
     if (status!=ECA_NORMAL) 
-		printf("ca_search failed on channel:[%s]\n",
-			name);
+	            al_ca_error_code("alCaSearchName","ca_search",status,name);
 /*
     ca_flush_io();
 */
@@ -674,8 +671,7 @@ int status;
 	if (gdata->forceevid != NULL) {
 		status = ca_clear_event(gdata->forceevid);
 		if (status != ECA_NORMAL) 
-		al_ca_error_code(status,
-	" ClearChannelAccessEvents:  error in ca_clear_event on forceGroup");
+	            al_ca_error_code("ClearChannelAccessEvents","ca_clear_event",status,gdata->forcePVName);
 		gdata->forceevid = NULL;
 
 		}
@@ -692,16 +688,14 @@ int status;
 			if (mask.Cancel == 0 && cdata->evid != NULL) {
 			status = ca_clear_event(cdata->evid);
 			if (status != ECA_NORMAL) 
-			al_ca_error_code(status,
-	" ClearChannelAccessEvents:  error in ca_clear_event on newAlarm channel");
+	        al_ca_error_code("ClearChannelAccessEvents","ca_clear_event",status,cdata->name);
 			cdata->evid = NULL;
 				}
 
 			if (cdata->forceevid != NULL) {
 			status = ca_clear_event(cdata->forceevid);
 			if (status != ECA_NORMAL) 
-			al_ca_error_code(status,
-	" ClearChannelAccessEvents:  error in ca_clear_event on forceChan");
+	        al_ca_error_code("ClearChannelAccessEvents","ca_clear_event",status,cdata->forcePVName);
 			cdata->forceevid = NULL;
 				}
 
@@ -748,8 +742,7 @@ int status;
         if ( gdata->forcechid) {
 		status = ca_clear_channel(gdata->forcechid);
         	if (status!=ECA_NORMAL)  
-         	printf("ClearChannelAccessChids: ca_clear_channel failed on group forcepVName :[%s]\n",
-         		gdata->forcePVName);
+	        al_ca_error_code("ClearChannelAccessChids","ca_clear_channel",status,gdata->forcePVName);
                 }
 
        /* cancel group sevr channel */
@@ -757,8 +750,7 @@ int status;
         if ( gdata->sevrchid ) {
                 status = ca_clear_channel(gdata->sevrchid);
                 if (status!=ECA_NORMAL) 
-                printf("ClearChannelAccessChids: ca_clear_channel failed on group sevrPVName :[%s]\n",
-                         gdata->sevrPVName);
+	            al_ca_error_code("ClearChannelAccessChids","ca_clear_channel",status,gdata->sevrPVName);
                 }
 
 /* for each channel in chanList */
@@ -775,8 +767,7 @@ int status;
 	   if (cdata->chid) {
 		status = ca_clear_channel(cdata->chid);
                 if (status!=ECA_NORMAL) 
-                printf("ClearChannelAccessChids: ca_clear_channel failed on channel name :[%s]\n",
-                        cdata->name);
+	            al_ca_error_code("ClearChannelAccessChids","ca_clear_channel",status,cdata->name);
         
 		}
 
@@ -786,8 +777,7 @@ int status;
            if (cdata->forcechid) {
                 status = ca_clear_channel(cdata->forcechid);
                 if (status!=ECA_NORMAL) 
-                printf("ClearChannelAccessChids: ca_clear_channel failed on channel forcePVName :[%s]\n",
-                        cdata->forcePVName);
+	            al_ca_error_code("ClearChannelAccessChids","ca_clear_channel",status,cdata->forcePVName);
     
                         }
 
@@ -797,8 +787,7 @@ int status;
             if (cdata->sevrchid) {
                 status = ca_clear_channel(cdata->sevrchid);
                 if (status!=ECA_NORMAL) 
-                printf("ClearChannelAccessChids: ca_clear_channel failed on channel sevrPVName :[%s]\n",
-                         cdata->sevrPVName);
+	            al_ca_error_code("ClearChannelAccessChids","ca_clear_channel",status,cdata->sevrPVName);
                         }
 
                 pt = sllNext(pt);
@@ -852,8 +841,7 @@ MASK mask;
 				&(gdata->forceevid),
 				DBE_VALUE);
 		if (status != ECA_NORMAL) 
-				printf("connection failed on group forcepVName :[%s]\n",
-				gdata->forcePVName);
+	            al_ca_error_code("alCaAddEvents","ca_add_masked_array_event",status,gdata->forcePVName);
 
 		/* add change connection event for forcePV */
 
@@ -895,8 +883,7 @@ MASK mask;
 				&(cdata->evid),
 				DBE_ALARM);
 		if (status != ECA_NORMAL) 
-			printf("ca_add_masked_array_event:[%s] failed.\n",
-				cdata->name);
+	        al_ca_error_code("alCaAddEvents","ca_add_masked_array_event",status,cdata->name);
 
 
 		/* set new comm alarm if it is not connected */
@@ -905,8 +892,6 @@ MASK mask;
 
         	if (ca_field_type(cdata->chid) == TYPENOTCONN) {
         		alNewAlarm(COMM_ALARM, INVALID_ALARM, cdata->value, clink);
-printf("alCaAddEvents:[%-30s] not connected\n",
-cdata->name);
 			}
 		}
 
@@ -932,8 +917,7 @@ cdata->name);
 				&(cdata->forceevid),
 				DBE_VALUE);
 		if (status != ECA_NORMAL) 
-			printf("connection failed on channel forcePVName :[%s]\n",
-				cdata->forcePVName);
+	        al_ca_error_code("alCaAddEvents","ca_add_masked_array_event",status,cdata->forcePVName);
 
 		/* add change connection event for forcePV */
 
@@ -979,31 +963,49 @@ cdata->name);
 static void NewAlarmEvent(args)
 struct event_handler_args args;
 {
-/*
 CLINK *clink;
 struct chanData *cdata;
+/*
 int stat,sevr;
 char value[MAX_STRING_SIZE];
 
-        clink = (CLINK *)args.usr;
-        cdata = clink->pchanData;
 	cdata->type = args.chid->type;
 
 	
 
 	strcpy(value,((struct dbr_sts_string *)args.dbr)->value);
-printf("value=%s\n",((struct dbr_sts_string *)args.dbr)->value);
 
         stat = ((struct dbr_sts_string *)args.dbr)->status;
         sevr = ((struct dbr_sts_string *)args.dbr)->severity;
 
         	alNewAlarm(stat,sevr,value,clink);
 */
+        clink = (CLINK *)args.usr;
+        cdata = clink->pchanData;
+
+		if (args.status != ECA_NORMAL) {
+			if (args.status == ECA_NORDACCESS) 
+        		alNewAlarm(READ_ACCESS_ALARM,INVALID_ALARM,
+					((struct dbr_sts_string *)args.dbr)->value,
+					args.usr);
+			else if (args.status == ECA_NOWTACCESS)   
+        		alNewAlarm(WRITE_ACCESS_ALARM,INVALID_ALARM,
+					((struct dbr_sts_string *)args.dbr)->value,
+					args.usr);
+			else {
+	       		al_ca_error_code("NewAlarmEvent","args.status",args.status,cdata->name);
+        		alNewAlarm(COMM_ALARM,INVALID_ALARM,
+					((struct dbr_sts_string *)args.dbr)->value,
+					args.usr);
+			}
+        } else {
+
         	alNewAlarm(
                    ((struct dbr_sts_string *)args.dbr)->status,
                    ((struct dbr_sts_string *)args.dbr)->severity,
 	           ((struct dbr_sts_string *)args.dbr)->value,
                    args.usr);
+        }
 
 }
 
@@ -1023,6 +1025,9 @@ short *p;
 	glink = (GLINK *)args.usr;
 	gdata = glink->pgroupData;
 	if (strlen(gdata->forcePVName) > 1) {
+
+    if (args.status != ECA_NORMAL) 
+        al_ca_error_code("GroupForceEvent","args.status",args.status,gdata->forcePVName);
 	
 	p = (short *)args.dbr;
 
@@ -1082,6 +1087,11 @@ short *p;
 	clink = (CLINK *)args.usr;
 	cdata = clink->pchanData;
 	if (strlen(cdata->forcePVName) > 1) {
+
+    if (args.status != ECA_NORMAL) {
+        al_ca_error_code("ChannelForceEvent","args.status",args.status,cdata->forcePVName);
+        return;
+    }
 	
 	p = (short *)args.dbr;
 
@@ -1272,33 +1282,31 @@ struct chanData *cdata;
 
 
 
-static void al_ca_error_code(status,buff)
+static void al_ca_error_code(alhName,caName,status,PVname)
+char *alhName;
+char *caName;
 int status;
-char *buff;
+char *PVname;
 {
 if (status == ECA_NORMAL) 
-	printf("ECA_NORMAL: %d\n",status);
+     printf("CA success in %s called from %s for %s\nMessage: [%s]\n",
+      caName,
+      alhName,
+      PVname,
+      ca_message_text[CA_EXTRACT_MSG_NO(status)]);
 
-else if (status == ECA_BADCHID) 
-	printf("ECA_BADCHID: %d, [%s]\n",status,buff);
-
-else if (status == ECA_BADCOUNT) 
-	printf("ECA_BADCOUNT: %d, [%s]\n",status,buff);
-
-else if (status == ECA_BADTYPE) 
-	printf("ECA_BADTYPE: %d, [%s]\n",status,buff);
-
-else if (status == ECA_GETFAIL) 
-	printf("ECA_GETFAIL: %d, [%s]\n",status,buff);
-
-else if (status == ECA_TIMEOUT) 
-	printf("ECA_TIMEOUT: %d, [%s]\n",status,buff);
-
-else if (status == ECA_EVDISALLOW) 
-	printf("ECA_EVDISALLOW: %d, [%s]\n",status,buff);
-
-else
-	printf("ECA_UNKNOWN: %d, [%s]\n",status,buff);
+else {
+/*
+     printf(" %s: [%s]\n",
+      PVname,
+      ca_message_text[CA_EXTRACT_MSG_NO(status)]);
+*/
+     printf("CA failure in %s called from %s for %s\nMessage: [%s]\n",
+      caName,
+      alhName,
+      PVname,
+      ca_message_text[CA_EXTRACT_MSG_NO(status)]);
+}
 }
 
 
@@ -1321,8 +1329,7 @@ struct groupData *gdata;
 	if (gdata->forceevid) {
 	status = ca_clear_event(gdata->forceevid);
 	if (status != ECA_NORMAL)
-		al_ca_error_code(status,
-		"alReplaceGroupFroceEvent: error in ca_clear_event");
+	    al_ca_error_code("alReplaceGroupForceEvent","ca_clear_event",status,gdata->forcePVName);
 	gdata->forceevid = NULL;
 		}
 
@@ -1336,8 +1343,7 @@ struct groupData *gdata;
 
 	status = ca_search(gdata->forcePVName,&(gdata->forcechid));
 	if (status != ECA_NORMAL) {
-		sprintf(buff, "alReplaceGroupFroceEvent: error in ca_search %s",			str);
-		al_ca_error_code(status,buff);
+	    al_ca_error_code("alReplaceGroupForceEvent","ca_search",status,gdata->forcePVName);
 		}
 
 
@@ -1351,9 +1357,7 @@ struct groupData *gdata;
 			&(gdata->forceevid),
 			DBE_VALUE);
 	if (status != ECA_NORMAL) { 
-		sprintf(buff,"connection failed on group forcepVName :[%s]",
-			gdata->forcePVName);
-		al_ca_error_code(status,buff);
+	    al_ca_error_code("alReplaceGroupForceEvent","ca_add_masked_array_event",status,gdata->forcePVName);
 		}
 
 	/* add change connection event for forcePV */
@@ -1385,8 +1389,7 @@ struct chanData *cdata;
 	if (cdata->forceevid) {
 	status = ca_clear_event(cdata->forceevid);
 	if (status != ECA_NORMAL)
-		al_ca_error_code(status,
-		"alReplaceGroupFroceEvent: error in ca_clear_event");
+	    al_ca_error_code("alReplaceChanForceEvent","ca_clear_event",status,cdata->forcePVName);
 	cdata->forceevid = NULL;
 		}
 
@@ -1400,8 +1403,7 @@ struct chanData *cdata;
 
 	status = ca_search(cdata->forcePVName,&(cdata->forcechid));
 	if (status != ECA_NORMAL) {
-		sprintf(buff, "alReplaceChanFroceEvent: error in ca_search %s",			str);
-		al_ca_error_code(status,buff);
+	    al_ca_error_code("alReplaceChanForceEvent","ca_search",status,cdata->forcePVName);
 		}
 
 
@@ -1415,9 +1417,7 @@ struct chanData *cdata;
 			&(cdata->forceevid),
 			DBE_VALUE);
 	if (status != ECA_NORMAL) { 
-		sprintf(buff,"connection failed on channel forcePVName :[%s]",
-			cdata->forcePVName);
-		al_ca_error_code(status,buff);
+	    al_ca_error_code("alReplaceChanForceEvent","ca_add_masked_array_event",status,cdata->forcePVName);
 		}
 
 	/* add change connection event for forcePV */

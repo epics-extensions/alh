@@ -1,47 +1,45 @@
 ADD_ON = ../..
 
-include $(ADD_ON)/src/admin/CONFIG
+include $(ADD_ON)/src/config/CONFIG
 
 USR_CFLAGS = $(MOTIF_CFLAGS) $(X11_CFLAGS)
 USR_LDFLAGS = $(MOTIF_LDFLAGS) $(X11_LDFLAGS) -lm
 
-SRC = .
- 
 CC = acc
 GCC = acc
 
-   SRCS =  $(SRC)/acknowledge.c  \
-		$(SRC)/alCA.c \
-		$(SRC)/alConfig.c \
-		$(SRC)/alDebug.c \
-		$(SRC)/alFilter.c \
-		$(SRC)/alInitialize.c \
-		$(SRC)/alLib.c \
-		$(SRC)/alLog.c \
-		$(SRC)/alView.c  \
-		$(SRC)/alh.c \
-		$(SRC)/awAct.c \
-		$(SRC)/awAlh.c \
-		$(SRC)/awEdit.c \
-		$(SRC)/awView.c \
-		$(SRC)/axArea.c \
-		$(SRC)/axRunW.c \
-		$(SRC)/axSubW.c \
-		$(SRC)/clipboardOps.c \
-		$(SRC)/current.c \
-		$(SRC)/dialog.c \
-		$(SRC)/file.c \
-		$(SRC)/force.c \
-		$(SRC)/guidance.c \
-		$(SRC)/help.c \
-		$(SRC)/line.c \
-		$(SRC)/mask.c \
-		$(SRC)/process.c \
-		$(SRC)/property.c \
-		$(SRC)/scroll.c \
-		$(SRC)/showmask.c \
-		$(SRC)/sllLib.c \
-		$(SRC)/testalarm.c
+   SRCS =  acknowledge.c  \
+		alCA.c \
+		alConfig.c \
+		alDebug.c \
+		alFilter.c \
+		alInitialize.c \
+		alLib.c \
+		alLog.c \
+		alView.c  \
+		alh.c \
+		awAct.c \
+		awAlh.c \
+		awEdit.c \
+		awView.c \
+		axArea.c \
+		axRunW.c \
+		axSubW.c \
+		clipboardOps.c \
+		current.c \
+		dialog.c \
+		file.c \
+		force.c \
+		guidance.c \
+		help.c \
+		line.c \
+		mask.c \
+		process.c \
+		property.c \
+		scroll.c \
+		showmask.c \
+		sllLib.c \
+		testalarm.c
 
 OBJS =  acknowledge.o  \
 		alCA.o \
@@ -79,7 +77,7 @@ OBJS =  acknowledge.o  \
 PROD = alh
 PROD_VERSION = $Version$
 
-include $(ADD_ON)/src/admin/RULES
+include $(ADD_ON)/src/config/RULES
 
 alh: $(OBJS) $(DEP_LIBS)
 	$(CC) -o $@ $(OBJS) $(LDFLAGS)
