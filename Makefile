@@ -7,8 +7,7 @@ EPICS_LIBS = $(EPICS_BASE_BIN/libca.a $(EPICS_BASE_BIN/libCom.a $(EPICS_BASE_BIN
 USR_CFLAGS = -DACCESS_SECURITY $(MOTIF_CFLAGS) $(X11_CFLAGS)
 USR_LDFLAGS = $(MOTIF_LDFLAGS) $(X11_LDFLAGS) -lm
 
-CC = acc
-GCC = acc
+GCC = $(CC)
 
    SRCS =  acknowledge.c  \
 		alCA.c \
