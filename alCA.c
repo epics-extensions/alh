@@ -1,8 +1,11 @@
 /*
  $Log$
- Revision 1.5  1995/02/28 16:43:25  jba
- ansi c changes
+ Revision 1.6  1995/05/30 16:06:07  jba
+ Add unused parm to alCaPendEvent and alProcessX for fdmgr_add_timeout prototype.
 
+ * Revision 1.5  1995/02/28  16:43:25  jba
+ * ansi c changes
+ *
  * Revision 1.4  1994/06/22  21:16:23  jba
  * Added cvs Log keyword
  *
@@ -116,7 +119,8 @@ static void SevrGroupChangeConnectionEvent( struct connection_handler_args args)
 static void SevrChannelChangeConnectionEvent( struct connection_handler_args args);
 static void al_ca_error_code(char *alhName,char *caName,int status,char *PVname);
 static void registerCA(void *pfdctx, int fd, int condition);
-void alCaPendEvent(void);
+static void alCaPendEvent(void *unused);
+static void alProcessX(void *unused);
 
 #else
 
@@ -130,7 +134,8 @@ static void SevrGroupChangeConnectionEvent();
 static void SevrChannelChangeConnectionEvent();
 static void al_ca_error_code();
 static void registerCA();
-void alCaPendEvent();
+static void alCaPendEvent();
+static void alProcessX();
 
 #endif /*__STDC__*/
 
@@ -236,7 +241,8 @@ Display *display;
 /*****************************************************
  alCaPendEvent
 ****************************************************/
-void alCaPendEvent()
+static void alCaPendEvent(unused)
+     void *unused;
 {
 
      ca_pend_event(.00001);
@@ -274,7 +280,8 @@ void alProcessCA()
   ca_pend_event(CA_PEND_EVENT_TIME);
 }
 
-void alProcessX()
+static void alProcessX(unused)
+  void *unused; 
 {
 XEvent event;
 
