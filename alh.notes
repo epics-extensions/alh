@@ -9,3 +9,9 @@ Thu Aug 22 14:59:41 CDT 1996
 Bug fix:
      "Save as" now writes out ALARMCOUNTFILTER data
 
+Thu Jan  9 08:36:21 CST 1997
+
+Added alarmLog circular file facility.
+
+
+

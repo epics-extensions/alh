@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.6  1997/01/09 14:38:13  jba
+ Added alarmLog circular file facility.
+
  Revision 1.5  1996/06/07 15:46:43  jba
  Added global alarm acknowledgement.
  Simplified log output.
@@ -85,6 +88,7 @@ alLogSetupSaveConfigFile(filename)			Log setup save config file
 
 #include <stdio.h>
 #include <time.h>
+#include <unistd.h>
 
 #include <alh.h>
 #include <alLib.h>
@@ -117,7 +121,10 @@ struct setup psetup = {         /* initial files & beeping setup */
     0};
 
 
-
+int alarmLogFileMaxRecords = 2000;   /* alarm log file maximum # records */
+int alarmLogFileOffsetBytes = 0;  /* alarm log file current offset in bytes */
+char alarmLogFileEndString[] = "           ";  /* alarm log file end of data string */
+int alarmLogFileStringLength = 158;  /* alarm log file record length*/
 
 FILE *fo;       /* write opmod file pointer */
 FILE *fl;       /* write alarm log file pointer */
@@ -138,22 +145,43 @@ time_t *ptimeofdayAlarm;
 int stat,sev,h_unackStat,h_unackSevr;
 struct chanData *cdata;
 {
-		str = ctime(ptimeofdayAlarm);
+	int status=0;
+	/* 158 chars put into buff */
+
+	str = ctime(ptimeofdayAlarm);
 		*(str + strlen(str)-1) = '\0';
 
-		sprintf(buff,
-			"%-24s :  %-28s %-12s %-16s %-12s %-16s %s\n",
-			str,cdata->name,
-			alarmStatusString[stat],alarmSeverityString[sev],
-			alarmStatusString[h_unackStat],
-			alarmSeverityString[h_unackSevr],
-			cdata->value);	
+	sprintf(buff,
+		"%-24s :  %-28s %-12s %-16s %-12s %-16s %-40.40s\n",
+		str,cdata->name,
+		alarmStatusString[stat],alarmSeverityString[sev],
+		alarmStatusString[h_unackStat],
+		alarmSeverityString[h_unackSevr],
+		cdata->value);	
 
-    /* update file and Alarm Log text window */
+	/* update file and Alarm Log text window */
+	if (alarmLogFileMaxRecords) {
+		if (alarmLogFileOffsetBytes != ftell(fl))
+        		fseek(fl,alarmLogFileOffsetBytes,SEEK_SET);
+		if (alarmLogFileOffsetBytes >= alarmLogFileStringLength*alarmLogFileMaxRecords) {
+			rewind(fl);
+			status=ftruncate(fileno(fl),alarmLogFileOffsetBytes);
+			alarmLogFileOffsetBytes = 0;
+		}
 		(void)fprintf(fl,"%s",buff);
+/*---------------
+	        (void)fprintf(fl,"%-157s\n",alarmLogFileEndString);
+                fseek(fl,-alarmLogFileStringLength,SEEK_CUR);
+		"%-24s :  %-28s %-12s %-16s %-12s %-16s %s\n",
+------------------*/
+		alarmLogFileOffsetBytes = ftell(fl);
 		fflush(fl);
-		updateLog(ALARM_FILE,buff);         
+	} else {
+	    (void)fprintf(fl,"%s",buff);
+	    fflush(fl);
+    }
 
+	updateAlarmLog(ALARM_FILE,buff);         
 }
 
 

@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.8  1997/01/09 14:38:19  jba
+ Added alarmLog circular file facility.
+
  Revision 1.7  1996/08/19 13:53:39  jba
  Minor usage and mask printed output changes.
 
@@ -83,6 +86,11 @@ extern int DEBUG;
 extern int getopt();
 extern char *optarg; /* needed for getopt() */
 extern int optind;   /* needed for getopt() */
+
+extern int alarmLogFileMaxRecords;  /* alarm log file maximum # records */
+extern int alarmLogFileOffsetBytes; /* alarm log file current offset in bytes */
+extern char alarmLogFileEndString[]; /* alarm log file end of data string */
+extern int alarmLogFileEndStringLength; /* alarm log file end data string len*/
 
 extern FILE *fl;		/* alarm log pointer */
 extern FILE *fo;		/* opmod log pointer */
@@ -255,7 +263,6 @@ int checkFilename(filename,fileType)
                if (!tt){
                     return 4;
                }
-               fclose(tt);
                break;
 
           case FILE_OPMOD:
@@ -421,10 +428,27 @@ void fileSetup(filename,area,fileType,programId, widget)
                     break;
 
                case FILE_ALARMLOG:
-                    if (fl) alLogSetupAlarmFile(filename);
+                    if (fo) alLogSetupAlarmFile(filename);
                     strcpy(psetup.logFile,filename);
                     if (fl) fclose(fl);
-                    fl = fopen(psetup.logFile,"a");
+                    fl = fopen(psetup.logFile,"r+");
+/*---------------- 
+                    if (alarmLogFileMaxRecords && alarmLogFileEndStringLength) {
+                        fseek(fl,0,SEEK_SET);
+                        while (fgets(str,sizeof(str),fl)) {
+printf ("reading file: %s",str);
+                            if(strncmp(alarmLogFileEndString,str,
+                                     alarmLogFileEndStringLength)==0){
+                                fseek(fl,-strlen(str),SEEK_CUR);
+                                break;
+                            }
+                        }
+                        alarmLogFileOffsetBytes = ftell(fl);
+printf ("alarmLogFileOffsetBytes=%d\n",ftell(fl));
+                    } else {
+                         fseek(fl,0,SEEK_END);
+                    }
+----------------*/
                     break;
 
                case FILE_OPMOD:
@@ -513,7 +537,7 @@ void fileSetupInit( widget, argc, argv)
 
      /* get optional command line parameters */
      input_error = FALSE;
-     while (!input_error && (c = getopt(argc, argv, "vcf:l:a:o:")) != -1)
+     while (!input_error && (c = getopt(argc, argv, "vcf:l:a:o:m:")) != -1)
      {
          switch (c) {
              case 'v': DEBUG = TRUE; break;
@@ -554,6 +578,9 @@ void fileSetupInit( widget, argc, argv)
              case 'o':
                   strncpy(opModFile,optarg,NAMEDEFAULT_SIZE);
                   break;
+             case 'm':
+                  sscanf(optarg,"%u",&alarmLogFileMaxRecords);
+                  break;
              default: input_error = 1; break;
          }
      }
@@ -568,14 +595,15 @@ void fileSetupInit( widget, argc, argv)
 
      if (input_error) {
           fprintf(stderr,
-          "\nusage: %s [-c] [-f filedir] [-l logdir] [-a alarmlogfile] [-o opmodlogfile] [Xoptions] [configfile] \n",
+          "\nusage: %s [-c] [-f filedir] [-l logdir] [-a alarmlogfile] [-o opmodlogfile] [-m alarmlogmaxrecords [Xoptions] [configfile] \n",
                argv[0]);
           fprintf(stderr,"\n\tconfigfile\tAlarm configuration filename\n");
-          fprintf(stderr,"\n\t-c\tAlarm Configuration Tool mode\n");
+          fprintf(stderr,"\n\t-c\t\tAlarm Configuration Tool mode\n");
           fprintf(stderr,"\n\t-f filedir\tDirectory for all files\n");
           fprintf(stderr,"\n\t-l logdir\tDirectory for log files\n");
           fprintf(stderr,"\n\t-a alarmlogfile\tAlarm log filename\n");
           fprintf(stderr,"\n\t-o opmodlogfile\tOpMod log filename\n");
+          fprintf(stderr,"\n\t-m maxrecords\talarm log file max records (default 2000)\n");
           exit(1);
      }
  
