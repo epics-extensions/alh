@@ -69,9 +69,11 @@ struct gcData {
 	ELLLIST sevrCommandList;	/* alarm severity command list */
 	short curSevr;		/* current severity */
 	short unackSevr;	/* highest unack severity */
+	short unackBeepSevr;  	/* highest unack severity for beeping */
 	chid forcechid;			/* forcePV channel id */
 	evid forceevid;			/* forcePV channel evid */
 	chid sevrchid;			/* group sevrPV channel id */
+	short beepSevr;		/* beep severity */
 };
 
 /* group data structure */
@@ -90,13 +92,16 @@ struct groupData {
 	ELLLIST sevrCommandList;	/* severity command list */
 	short curSevr;			/* current highestseverity from CA */
 	short unackSevr;		/* highest unack severity */
+	short unackBeepSevr;  	/* highest unack severity for beeping */
 	chid forcechid;			/* forcePV channel id */
 	evid forceevid;			/* forcePV channel evid */
 	chid sevrchid;			/* group sevrPV channel id */
+	short beepSevr;		/* beep severity */
 	char *treeSym;                  /* tree symbols for treeWindow display */
 	int mask[ALARM_NMASK];	/* no. of channels of masked types*/
 	int curSev[ALH_ALARM_NSEV];  	/* channels of different severity */
-	int unackSev[ALH_ALARM_NSEV];  	/* channels of unacknowledged sev */
+	int unackSev[ALH_ALARM_NSEV];  	/* channels of unacknowledged sevr */
+	int unackBeepSev[ALH_ALARM_NSEV];  	/* channels of unacknowledged sev >= beep sevr */
 };
 
 /* channel data structure */
@@ -115,9 +120,11 @@ struct chanData {
 	ELLLIST sevrCommandList;	/* severity command list */
 	short curSevr;			/* channel severity from CA */
 	short unackSevr;		/* highest unack severity */
+	short unackBeepSevr;  	/* highest unack severity for beeping */
 	chid forcechid;		 	/* forcePV channel id */
 	evid forceevid;			/* forcePV channel evid */
 	chid sevrchid;		 	/* sevrPV channel id */
+	short beepSevr;		/* beep severity */
 	ELLLIST statCommandList;	/* alarm status command list */
 	COUNTFILTER *countFilter;	/* alarm count filter */
 	MASK curMask;			/* current mask setting */

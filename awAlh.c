@@ -92,6 +92,7 @@ void awUpdateRowWidgets(line)                 Update line widgets
 #define MENU_ACTION_FORCEPV		10303
 #define MENU_ACTION_FORCE_MASK	10304
 #define MENU_ACTION_MODIFY_MASK	10305
+#define MENU_ACTION_BEEPSEVR	10306
 
 
 #define	MENU_VIEW_CONFIG		10400
@@ -109,6 +110,10 @@ void awUpdateRowWidgets(line)                 Update line widgets
 #define MENU_SETUP_SILENCE_FOREVER	10506
 #define MENU_SETUP_ALARMLOG		10507
 #define MENU_SETUP_OPMOD		10508
+
+#define MENU_ACTION_BEEP_MINOR	10500
+#define MENU_ACTION_BEEP_MAJOR	10501
+#define MENU_ACTION_BEEP_INVALID	10502
 
 #define MENU_HELP_HELP	10900
 #define MENU_HELP_ABOUT	10906
@@ -194,6 +199,8 @@ Widget alhCreateMenu(Widget parent,XtPointer user_data)
 		             alhActionCallback, (XtPointer)MENU_ACTION_FORCE_MASK, (MenuItem *)NULL, 0 },
 		         { "Modify Mask Settings ...",  ToggleButtonGadgetClass, 'S', "Ctrl<Key>S", "Ctrl+S",
 		             alhActionCallback, (XtPointer)MENU_ACTION_MODIFY_MASK, (MenuItem *)NULL, 0 },
+		         { "Beep Severity ...",  ToggleButtonGadgetClass, 'B', "Ctrl<Key>B", "Ctrl+B",
+		             alhActionCallback, (XtPointer)MENU_ACTION_BEEPSEVR, (MenuItem *)NULL, 0 },
 		         {NULL},
 		     	};
 /* ******************************************** Albert1 : ************************************ */
@@ -210,6 +217,8 @@ static MenuItem action_menuNew[] = {
 		             alhActionCallback, (XtPointer)MENU_ACTION_FORCE_MASK, (MenuItem *)NULL, 0 },
 		         { "Modify Mask Settings ...",  ToggleButtonGadgetClass, 'S', "Ctrl<Key>S", "Ctrl+S",
 		             alhActionCallback, (XtPointer)MENU_ACTION_MODIFY_MASK, (MenuItem *)NULL, 0 },
+		         { "Beep Severity ...",  ToggleButtonGadgetClass, 'B', "Ctrl<Key>B", "Ctrl+B",
+		             alhActionCallback, (XtPointer)MENU_ACTION_BEEPSEVR, (MenuItem *)NULL, 0 },
 			 /* Albert1 For MESSAGE BROADCAST: */
 #ifndef WIN32
 		         { "Send Message ...",  ToggleButtonGadgetClass, 'B', "Ctrl<Key>B", "Ctrl+B",
@@ -515,6 +524,17 @@ static void alhActionCallback(Widget widget,XtPointer calldata,XtPointer cbs)
 		}
 		break;
 
+	case MENU_ACTION_BEEPSEVR:
+
+		if (area->selectionLink) {
+			beepSevrShowDialog(area, widget);
+		} else {
+			parent = area->form_main;
+			createDialog(parent,XmDIALOG_WARNING,
+			    "Please select an alarm group or channel first."," ");
+		}
+		break;
+
 	}
 }
 
@@ -791,7 +811,7 @@ ALINK   *ar;
       }
 
     fprintf(fp,"%ld\n%s",timeID,buff);
-    createDialog(ar->form_main,XmDIALOG_MESSAGE,"For all people we send: \n""\n""\n",buff);
+    createDialog(ar->form_main,XmDIALOG_MESSAGE,"Broadcast Message: \n""\n""\n",buff);
 
     fclose(fp);	    
     XtFree(string);

@@ -879,6 +879,9 @@ void axUpdateDialogs(ALINK *area)
 	/* update force mask window if it is displayed */
 	maskUpdateDialog(area);
 
+	/* update force mask window if it is displayed */
+	beepSevrUpdateDialog(area);
+
 }
 
 /***************************************************

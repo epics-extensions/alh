@@ -383,6 +383,7 @@ int caConnect,struct mainGroup *pmainGroup)
 	while(parent_link!=NULL) {
 		parent_link->pgroupData->curSev[cdata->curSevr] ++;
 		parent_link->pgroupData->unackSev[NO_ALARM] ++;
+		parent_link->pgroupData->unackBeepSev[NO_ALARM] ++;
 		parent_link = parent_link->parent;
 	}
 
@@ -421,7 +422,7 @@ int context,int caConnect)
 		for (i=1; i<ALH_ALARM_NSEV; i++) {
 			if (strncmp(&buf[len],alhAlarmSeverityString[i],
 			    strlen(alhAlarmSeverityString[i]))==0){
-				psetup.beepSevr = i;
+                psetup.beepSevr = i;
 			}
 		}
 		return;
@@ -434,8 +435,23 @@ int context,int caConnect)
 		return;
 	}
 	gcdata = gclink->pgcData;
-	if(gclink==NULL) {
-		print_error(buf,"Logic error: gclink is NULL");
+	if(gcdata==NULL) {
+		print_error(buf,"Logic error: gcdata is NULL");
+		return;
+	}
+
+	if (strncmp(&buf[1],"BEEPSEVR",8)==0) { /*BEEPSEVR*/
+		int len;
+
+		sscanf(buf,"%20s",command);
+		len = strlen(command);
+		while( buf[len] == ' ' || buf[len] == '\t') len++;
+		for (i=1; i<ALH_ALARM_NSEV; i++) {
+			if (strncmp(&buf[len],alhAlarmSeverityString[i],
+			    strlen(alhAlarmSeverityString[i]))==0){
+				gcdata->beepSevr = i;
+			}
+		}
 		return;
 	}
 
@@ -620,7 +636,7 @@ void alWriteConfig(char *filename,struct mainGroup *pmainGroup)
 	FILE *fw;
 	fw = fopen(filename,"w");
 	if (!fw) return;
-	if (psetup.beepSevr != 1)
+	if (psetup.beepSevr > 1)
 		fprintf(fw,"$BEEPSEVERITY  %s\n",alhAlarmSeverityString[psetup.beepSevr]);
 	alWriteGroupConfig(fw,(SLIST *)&(pmainGroup->p1stgroup));
 	fclose(fw);
@@ -658,6 +674,9 @@ static void alWriteGroupConfig(FILE * fw,SLIST *pgroup)
 			    parent->pgroupData->name,
 			    gdata->name);
 		}
+
+		if (gdata->beepSevr > 1)
+			fprintf(fw,"$BEEPSEVR  %s\n",alhAlarmSeverityString[gdata->beepSevr]);
 
 		if(strcmp(gdata->forcePVName,"-") != 0)
 			fprintf(fw,"$FORCEPV  %-28s %6s %3d %3d\n",
@@ -712,6 +731,9 @@ static void alWriteGroupConfig(FILE * fw,SLIST *pgroup)
 				fprintf(fw,"CHANNEL  %-28s %-28s\n",
 				    glink->pgroupData->name,
 				    cdata->name);
+
+			if (cdata->beepSevr > 1)
+				fprintf(fw,"$BEEPSEVR  %s\n",alhAlarmSeverityString[cdata->beepSevr]);
 
 			if(strcmp(cdata->forcePVName,"-") != 0)
 				fprintf(fw,"$FORCEPV  %-28s %6s %3d %3d\n",

@@ -139,6 +139,7 @@ alh_SRCS += property.c
 alh_SRCS += scroll.c
 alh_SRCS += showmask.c
 alh_SRCS += sllLib.c
+alh_SRCS += beepSevr.c
 
 alh_DB_SRCS = alh_DB.c  
 

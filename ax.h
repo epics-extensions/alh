@@ -214,6 +214,8 @@ char *alAlarmGroupName( GLINK *link);
 int alProcessExists( GCLINK *link);
 void alSetUnackSevChan(CLINK *clink,int newSevr);
 void alSetCurChanMask(CLINK *clink,MASK mask);
+extern void alSetBeepSevrChan(CLINK *link,int sevr);
+extern void alSetBeepSevrGroup(GLINK *link,int sevr);
 
 
 /********************************************************************
@@ -225,6 +227,7 @@ int sev, int acks, int ackt);
 void alLogConnection(const char *pvname,const char *ind);
 void alLogAckChan( struct anyLine *line);
 void alLogAckGroup( struct anyLine *line);
+void alLogSetBeepSevr(char *name,const char *value);
 void alLogChangeChanMasks( CLINK *clink, int maskno, int maskid);
 void alLogChangeGroupMasks( GLINK *glink, int maskno, int maskid);
 void alLogForcePVGroup( GLINK *glink, int ind);
@@ -412,6 +415,13 @@ void maskUpdateDialog(ALINK *area);
 
 void     xs_help_callback( Widget w, char *str[], void *call_data);
 void     helpCallback( Widget w, int item, XmAnyCallbackStruct *cbs);
+
+/********************************************************************
+  beepSevr.c   function prototypes
+*********************************************************************/
+
+void beepSevrUpdateDialog(ALINK *area);
+void beepSevrShowDialog(ALINK *area, Widget widget);
 
 /********************************************************************
   property.c   function prototypes

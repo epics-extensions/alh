@@ -363,3 +363,5 @@ Wed Sep 11 10:20:10 CDT 2002
 	Added missing notes to alh.notes file.
 	Initialized FILE fl and fo to zero to avoid compiler warnings.
 
+Mon Jan 20 09:18:18 CST 2003
+	Add ability to set and change beep severity for channels and groups.

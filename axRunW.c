@@ -247,7 +247,7 @@ static void blinking(XtPointer pointer, XtIntervalId *id)
 		if (!psetup.silenceForever &&
 		    !psetup.silenceOneHour && 
 		    !psetup.silenceCurrent && 
-		    (psetup.highestUnackSevr >= psetup.beepSevr)) {
+		    (psetup.highestUnackBeepSevr >= psetup.beepSevr)) {
 
 			alBeep(displayBB);
 

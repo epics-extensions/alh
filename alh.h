@@ -30,6 +30,7 @@ static char *alhhsccsId = "@(#) $Id$";
 
 #include "alarm.h"
 
+#ifdef EXCEED
 /* WIN32 differences */
 #ifdef WIN32
 /* Hummingbird extra functions including lprintf
@@ -47,6 +48,7 @@ static char *alhhsccsId = "@(#) $Id$";
 #  endif
 # endif
 #endif /* #ifdef WIN32 */
+#endif
 
 #include "sllLib.h"
 #include "dbDefs.h"
@@ -175,6 +177,8 @@ struct setup {
 	short beepSevr;                 /* 1,2,3,4,5 */
 	short highestSevr;              /* system highest  sevr */
 	short highestUnackSevr;         /* system highest unack sevr */
+	short highestUnackBeepSevr;     /* system highest unack sevr >= beep sevr */
+	short newUnackBeepSevr;         /* new unack sevr after beep sevr tests */
 	char *configDir;                /* config files directory */
 	char *logDir;                   /* log files directory */
 };
