@@ -106,7 +106,7 @@ struct gcData {
 	short unackSevr;	/* highest unack severity */
 	short unackBeepSevr;  	/* highest unack severity for beeping */
 	short highestBeepSevr;  /* highest beep severity */
-	chid sevrchid;			/* group sevrPV channel id */
+	chid sevrchid;			/* sevrPV channel id */
 	short beepSevr;		/* beep severity */
 	XtIntervalId noAckTimerId;
 };
