@@ -284,3 +284,7 @@ Tue Oct 26 09:14:53 CDT 1999
 	Run window now displays color of highest unack alarm.
 	Process initial alarm event for ALARMCOUNTFILTER channels.
 
+Tue Nov  2 14:10:45 CST 1999
+	Don't do caput for acknowledgment if channel is not connected.
+	Wait for a 1 second period with no connections before writing
+	config file ackt settings.
