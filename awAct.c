@@ -1,8 +1,16 @@
 /*
  $Log$
- Revision 1.2  1994/06/22 21:16:50  jba
- Added cvs Log keyword
+ Revision 1.3  1995/10/20 16:50:09  jba
+ Modified Action menus and Action windows
+ Renamed ALARMCOMMAND to SEVRCOMMAND
+ Added STATCOMMAND facility
+ Added ALIAS facility
+ Added ALARMCOUNTFILTER facility
+ Make a few bug fixes.
 
+ * Revision 1.2  1994/06/22  21:16:50  jba
+ * Added cvs Log keyword
+ *
  */
 
 static char *sccsId = "@(#)awAct.c	1.16\t12/15/93";
@@ -60,6 +68,7 @@ static char *sccsId = "@(#)awAct.c	1.16\t12/15/93";
 #include <alarm.h>
 
 #include <alh.h>
+#include <ax.h>
 #include <line.h>
 #include <axSubW.h>
 #include <sllLib.h>
@@ -278,10 +287,7 @@ static void actFileCallback(widget, item, cbs)
      int item;
      XmAnyCallbackStruct *cbs;
 {
-     FILE *fw;
-     ALINK                            *area;
-     int                               status;
-     GLINK                            *glinkTop;
+     ALINK  *area;
 
      XtVaGetValues(widget, XmNuserData, &area, NULL);
 
@@ -423,7 +429,7 @@ static void actEditCallback(widget, item, cbs)
              area->managed = FALSE;
              area->pmainGroup->p1stgroup = NULL;
              setupConfig("",ACT,area);
-             propShowDialog(area, (GCLINK *)area->selectionLink, area->selectionType);
+             propShowDialog(area,0);
              break;
 
         case MENU_EDIT_CUT:
@@ -519,8 +525,8 @@ static void actEditCallback(widget, item, cbs)
                           markSelection( area->treeWindow, treeLine);
                      }
 
-                     /* update property window */
-                     propUpdateDialog(area, area->selectionLink, area->selectionType);
+                     /* update dialog windows */
+                     axUpdateDialogs(area);
 
                      /* update undo values */
                      editUndoSet(NULL, linkType, link, MENU_EDIT_UNDO_CUT, KEEP);
@@ -533,8 +539,8 @@ static void actEditCallback(widget, item, cbs)
                  
                      editPasteLink(area,link,linkType);
 
-                     /* update property window */
-                     propUpdateDialog(area, area->selectionLink, area->selectionType);
+                     /* update dialog windows */
+                     axUpdateDialogs(area);
 
                      /* update undo values */
                      editUndoSet(NULL, linkType, link, MENU_EDIT_UNDO_CUT_NOSELECT, KEEP);
@@ -566,8 +572,8 @@ static void actEditCallback(widget, item, cbs)
 
                      editUndoSet(link, linkType, NULL, MENU_EDIT_UNDO_PASTE_NOSELECT, KEEP);
 
-                     /* update property window */
-                     propUpdateDialog(area, area->selectionLink, area->selectionType);
+                     /* update dialog windows */
+                     axUpdateDialogs(area);
 
                      break;
 
@@ -592,11 +598,12 @@ static void actEditCallback(widget, item, cbs)
                      ((struct subWindow *)area->treeWindow)->viewOffset = 0;
                      setViewConfigCount(area->treeWindow,area->pmainGroup->p1stgroup->viewCount);
 
-                     /* redraw  windows */
+                     /* redraw main windows */
                      redraw(area->treeWindow,0);
                      defaultTreeSelection(area);
 
-                     propUpdateDialog(area, area->selectionLink, area->selectionType);
+                     /* update dialog windows */
+                     axUpdateDialogs(area);
 
                      break;
 
@@ -626,10 +633,7 @@ static void actInsertCallback(widget, item, cbs)
 {
      ALINK   *area;
      GCLINK   *link;
-     struct groupData *gdata;
-     struct chanData *cdata;
      int linkType;
-     int status;
 
 
      XtVaGetValues(widget, XmNuserData, &area, NULL);
@@ -647,7 +651,7 @@ static void actInsertCallback(widget, item, cbs)
 
              editPasteLink(area,link,linkType);
 
-             propShowDialog(area,link,linkType);
+             propShowDialog(area,0);
 
              break;
 
@@ -661,7 +665,7 @@ static void actInsertCallback(widget, item, cbs)
 
              editPasteLink(area, link, linkType);
 
-             propShowDialog(area,link,linkType);
+             propShowDialog(area,0);
 
              break;
 
@@ -733,7 +737,7 @@ static void actViewCallback(widget, item, cbs)
 
         case MENU_VIEW_PROPERTIES:
 
-             propShowDialog(area, (GCLINK *)area->selectionLink, area->selectionType);
+             propShowDialog(area, widget);
              break;
 
         default:

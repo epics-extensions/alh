@@ -1,8 +1,16 @@
 /*
  $Log$
- Revision 1.4  1995/06/22 19:48:48  jba
- Added $ALIAS facility.
+ Revision 1.5  1995/10/20 16:49:57  jba
+ Modified Action menus and Action windows
+ Renamed ALARMCOMMAND to SEVRCOMMAND
+ Added STATCOMMAND facility
+ Added ALIAS facility
+ Added ALARMCOUNTFILTER facility
+ Make a few bug fixes.
 
+ * Revision 1.4  1995/06/22  19:48:48  jba
+ * Added $ALIAS facility.
+ *
  * Revision 1.3  1995/05/30  15:51:07  jba
  * Added ALARMCOMMAND facility
  *
@@ -82,6 +90,18 @@ typedef struct mask {			/* mask bit setting */
         unsigned Log	   : 1;
         unsigned Unused    : 11;
         } MASK;
+
+typedef struct countFilter {
+        int    inputCount;
+        int    inputSeconds;
+        short  stat;        /* channel status from CA */
+        short  sev;         /* current severity */
+	    char   value[MAX_STRING_SIZE];	/* channel value from CA */
+        int    curCount;
+        int    alarmTime;
+        void  *clink;
+        void  *timeoutId;
+        } COUNTFILTER;
  
 /* group/channel data structure */
 struct gcData {
@@ -94,7 +114,7 @@ struct gcData {
 	MASK forcePVMask;	/* force Mask */
 	char *alias;	 	/* alias text */
 	char *command;	 	/* command text */
-	ELLLIST alarmCommandList;	/* alarm command list */
+	ELLLIST sevrCommandList;	/* alarm severity command list */
 	short curSevr;		/* current severity */
 	short unackSevr;	/* highest unack severity */
 	chid forcechid;			/* forcePV channel id */
@@ -113,7 +133,7 @@ struct groupData {
 	MASK forcePVMask;		/* force Mask */
 	char *alias;	 	/* alias text */
 	char *command;	 		/* command text */
-	ELLLIST alarmCommandList;	/* alarm command list */
+	ELLLIST sevrCommandList;	/* severity command list */
 	short curSevr;			/* current highestseverity from CA */
 	short unackSevr;		/* highest unack severity */
 	chid forcechid;			/* forcePV channel id */
@@ -136,13 +156,14 @@ struct chanData {
 	MASK forcePVMask;		/* forced mask setting */
 	char *alias;	 	/* alias text */
 	char *command;			/* command text */	
-	ELLLIST alarmCommandList;	/* alarm command list */
+	ELLLIST sevrCommandList;	/* severity command list */
 	short curSevr;			/* channel severity from CA */
 	short unackSevr;		/* highest unack severity */
 	chid forcechid;		 	/* forcePV channel id */
 	evid forceevid;			/* forcePV channel evid */
 	chid sevrchid;		 	/* sevrPV channel id */
-	short type;			/* channel type */
+	ELLLIST statCommandList;	/* alarm status command list */
+    COUNTFILTER *countFilter;	/* alarm count filter */
 	MASK curMask;			/* current mask setting */
 	MASK defaultMask;		/* default mask setting */
 	char value[MAX_STRING_SIZE];	/* channel value from CA */
@@ -222,6 +243,8 @@ GLINK *alAllocGroup()                   	Allocate space for group link
 CLINK *alAllocChan()                    	Allocate space for channel link
 void alAddGroup(parent,glink)            	Append a group link to a parent's 
 void alAddChan(parent,clink)             	Append a channel link to a parent's 
+void alPrecedeGroup(parent,sibling,glink)   Preceed a group before another group in subgrouplist
+void alPrecedeChan(parent,sibling,clink)    Preceed a chan before another chan in the subgrouplist
 void alDeleteChan(clink)                 	Delete a clink from channel list
 void alDeleteChan(clink)                 	Delete a clink from channel list
 void alDeleteChan(clink)                 	Delete a clink from channel list
@@ -258,6 +281,8 @@ alChangeChanMask(clink,mask)            		Change channel mask & adjust CA
 alChangeGroupMask(glink,mask)           		Change group mask 
 alForcePVChanEvent(clink,value)         		Force / reset channel mask
 alForcePVGroupEvent(glink,value)        		Force / reset group mask
+alResetGroupMask(glink)                         Reset all channel masks for a group 
+
 
 --------------------------------------------------------------------------------------------
 		Debugging routines: defined in alDebug.c

@@ -1,8 +1,16 @@
 /*
  $Log$
- Revision 1.2  1994/06/22 21:16:48  jba
- Added cvs Log keyword
+ Revision 1.3  1995/10/20 16:50:07  jba
+ Modified Action menus and Action windows
+ Renamed ALARMCOMMAND to SEVRCOMMAND
+ Added STATCOMMAND facility
+ Added ALIAS facility
+ Added ALARMCOUNTFILTER facility
+ Make a few bug fixes.
 
+ * Revision 1.2  1994/06/22  21:16:48  jba
+ * Added cvs Log keyword
+ *
  */
 
 /* alh.h */
@@ -121,31 +129,10 @@ static char *alhhSccsId = "@(#)alh.h	1.10\t10/8/93";
 #define	MENU_ACTION_ACK			10300
 #define	MENU_ACTION_GUIDANCE	10301
 #define	MENU_ACTION_PROCESS		10302
-#define	MENU_ACTION_SETTINGS	10303
+#define MENU_ACTION_FORCEPV		10303
+#define MENU_ACTION_FORCE_MASK	10304
+#define MENU_ACTION_MODIFY_MASK	10305
 
-#define MENU_ACTION_SUMMARY		10310
-#define MENU_ACTION_FORCEPV		10311
-#define MENU_ACTION_FORCEPV_MASK	10312
-
-#define MENU_ACTION_ADD_ADD		10320
-#define MENU_ACTION_ADD_CANCEL	10321
-#define MENU_ACTION_ADD_RESET	10322
-
-#define MENU_ACTION_ENABLE_ENABLE	10330
-#define MENU_ACTION_ENABLE_DISABLE	10331
-#define MENU_ACTION_ENABLE_RESET	10332
-
-#define MENU_ACTION_ACK_ACK		10340
-#define MENU_ACTION_ACK_NOACK	10341
-#define MENU_ACTION_ACK_RESET	10342
-
-#define MENU_ACTION_ACKT_ACK	10350
-#define MENU_ACTION_ACKT_NOACK	10351
-#define MENU_ACTION_ACKT_RESET	10352
-
-#define MENU_ACTION_LOG_LOG		10360
-#define MENU_ACTION_LOG_NOLOG	10361
-#define MENU_ACTION_LOG_RESET	10362
 
 #define	MENU_VIEW_CONFIG		10400
 #define	MENU_VIEW_OPMOD			10401
@@ -200,6 +187,8 @@ typedef  void (*FUNPTR)();      /* define void function pointer */
 #define Mmax(a,b) ((int)(a)>(int)(b)?(int)(a):(int)(b))
 #define Mmin(a,b) ((int)(a)<(int)(b)?(int)(a):(int)(b))
 
+#define AUTOMATIC   0
+#define OPERATOR    1
 
 #define GROUP     1
 #define CHANNEL   2
@@ -223,7 +212,13 @@ typedef  void (*FUNPTR)();      /* define void function pointer */
 #define ALARMLOG_PATTERN "*.alhAlarm"
 #define TREEREPORT_PATTERN "*.alhReport"
 
+typedef struct {
+    char *label;
+    void (*callback)();
+    XtPointer data;
+} ActionAreaItem;
 
+#define TIGHTNESS  30
 
 /* ------- start of defines for global variables    */
 char               *programName;

@@ -1,8 +1,16 @@
 /*
  $Log$
- Revision 1.2  1994/06/22 21:18:02  jba
- Added cvs Log keyword
+ Revision 1.3  1995/10/20 16:51:00  jba
+ Modified Action menus and Action windows
+ Renamed ALARMCOMMAND to SEVRCOMMAND
+ Added STATCOMMAND facility
+ Added ALIAS facility
+ Added ALARMCOUNTFILTER facility
+ Make a few bug fixes.
 
+ * Revision 1.2  1994/06/22  21:18:02  jba
+ * Added cvs Log keyword
+ *
  */
 
 #ifndef INCsllLibh
@@ -51,6 +59,7 @@ SNODE *sllNth();
 int sllAdd( SLIST *list, SNODE *new);
 SNODE *sllNth( SLIST *list, int n);
 void sllInsert( SLIST *list, SNODE *prev,SNODE *new);
+int sllPrecede( SLIST *list, SNODE *next,SNODE *new);
 void sllRemove( SLIST *list, SNODE *node);
 int sllFind( SLIST *plist, SNODE *pnode);
 
@@ -59,6 +68,7 @@ int sllFind( SLIST *plist, SNODE *pnode);
 int sllAdd();
 SNODE *sllNth();
 void sllInsert();
+int sllPrecede();
 void sllRemove();
 int sllFind();
 

@@ -1,8 +1,16 @@
 /*
  $Log$
- Revision 1.8  1995/06/22 19:48:52  jba
- Added $ALIAS facility.
+ Revision 1.9  1995/10/20 16:50:18  jba
+ Modified Action menus and Action windows
+ Renamed ALARMCOMMAND to SEVRCOMMAND
+ Added STATCOMMAND facility
+ Added ALIAS facility
+ Added ALARMCOUNTFILTER facility
+ Make a few bug fixes.
 
+ * Revision 1.8  1995/06/22  19:48:52  jba
+ * Added $ALIAS facility.
+ *
  * Revision 1.7  1995/06/09  16:25:08  jba
  * Fixed arrow click and double click in group window
  *
@@ -59,7 +67,7 @@ static char *sccsId = "@(#)awView.c	1.14\t10/22/93";
  *      ...
  */
 
-#include <sys/time.h>
+#include <time.h>
 
 #include <Xm/Xm.h>
 
@@ -85,10 +93,12 @@ struct timeoutData {
 #ifdef __STDC__
 
 static void singleClickTreeW_callback( struct timeoutData *pdata);
+static void singleClickGroupW_callback(struct timeoutData *pdata);
 
 #else
 
 static void singleClickTreeW_callback();
+static void singleClickGroupW_callback();
 
 #endif /*__STDC__*/
 
@@ -119,8 +129,14 @@ nameTreeW_callback(pushButton, line, cbs)  Tree Window name button callback
      struct anyLine   *line;
      XmPushButtonCallbackStruct *cbs;
 *
-void 
-arrow_callback(pushButton,glink,cbs)       Arrow button callback
+void
+arrowTreeW_callback(pushButton, glink, cbs)
+     Widget     pushButton;
+     void     *glink;
+     XmPushButtonCallbackStruct *cbs;
+*
+void
+arrowGroupW_callback(pushButton, glink, cbs)
      Widget     pushButton;
      void     *glink;
      XmPushButtonCallbackStruct *cbs;
@@ -157,6 +173,8 @@ void awViewNewChan(area, link)
      ALINK *area;
      GCLINK *link;
 *
+int awViewViewCount(gclink)
+     GCLINK *gclink;
 ******************************************************************
 -------------
 |  PRIVATE  |
@@ -164,6 +182,10 @@ void awViewNewChan(area, link)
 *
 static void 
 singleClickTreeW_callback(pdata)       Single click timeout callback
+     struct timeoutData *pdata;
+*
+static void 
+singleClickGroupW_callback(pdata)      Single click timeout callback
      struct timeoutData *pdata;
 
 ******************************************************************
@@ -189,10 +211,9 @@ void nameGroupW_callback(pushButton, line, cbs)
 
 
      XtVaGetValues(pushButton, XmNuserData, &groupWindow, NULL);
+     area = groupWindow->area;
 
      if (line->linkType == GROUP ) {
-
-          area = groupWindow->area;
 
           link = line->link;
           parent = link->parent;
@@ -212,9 +233,6 @@ void nameGroupW_callback(pushButton, line, cbs)
                }
           }
 
-          /* update property sheet window if it is displayed */
-          propUpdateDialog(area, (GCLINK *)link, GROUP);
-
           /* groupWindow must now display contents of new treeWindow selection */
           markSelectedWidget(groupWindow,NULL);
           markSelection(groupWindow, NULL);
@@ -229,6 +247,9 @@ void nameGroupW_callback(pushButton, line, cbs)
           area->selectionWindow = treeWindow;
           treeWindow->selectionLink = link;
 
+          /* update dialog windows */
+          axUpdateDialogs(area);
+
           /* markSelectedWidget */
           if (link->lineTreeW) {
                wline = ((struct anyLine *)link->lineTreeW)->wline;
@@ -242,7 +263,8 @@ void nameGroupW_callback(pushButton, line, cbs)
           markSelectedWidget(groupWindow,pushButton);
           markSelection(groupWindow, line);
 
-          propUpdateDialog(groupWindow->area, line->link,line->linkType);
+          /* update dialog windows if displayed */
+          axUpdateDialogs(area);
 
      }
 }
@@ -274,8 +296,8 @@ void nameTreeW_callback(pushButton, line, cbs)
      markSelectedWidget(subWindow,pushButton);
      markSelection(subWindow, line);
 
-     /* update property sheet window if it is displayed */
-     propUpdateDialog(subWindow->area, line->link,line->linkType);
+     /* update dialog windows */
+     axUpdateDialogs(subWindow->area);
 
 }
 
@@ -319,7 +341,7 @@ void arrowTreeW_callback(pushButton, glink, cbs)
           data.glink = (void *)glink;
           if ( data.timeoutId== 0 ) {
                data.timeoutId= (void *)fdmgr_add_timeout(pfdctx,
-                    &timeout,singleClickTreeW_callback,&data);
+                    &timeout,(void (*)(void *))singleClickTreeW_callback,&data);
           }
 
      }
@@ -341,11 +363,9 @@ static void singleClickGroupW_callback(pdata)
      struct timeoutData *pdata;
 {
      ALINK  *area;
-     WLINE     *wline;
      GCLINK     *link;
      GLINK     *parent;
      GLINK     *glinkTemp;
-     struct subWindow  *groupWindow;
      struct subWindow  *treeWindow;
      int grandparentsOpen;
 
@@ -377,14 +397,15 @@ static void singleClickGroupW_callback(pdata)
           }
 */
      }
-
-     /* update property sheet window if it is displayed */
+     /* update dialog windows */
 /*
-     propUpdateDialog(area, (GCLINK *)link, GROUP);
+     axUpdateDialogs(area);
 */
 
      /* groupWindow must now display contents of new treeWindow selection */
 /*
+     struct subWindow  *groupWindow;
+
      groupWindow = area->groupWindow;
      markSelectedWidget(groupWindow,NULL);
      markSelection(groupWindow, NULL);
@@ -404,6 +425,8 @@ static void singleClickGroupW_callback(pdata)
 
      /* markSelectedWidget */
 /*
+     WLINE     *wline;
+
      if (link->lineTreeW) {
           wline = ((struct anyLine *)link->lineTreeW)->wline;
           markSelectedWidget(treeWindow,wline->name);
@@ -437,7 +460,7 @@ void arrowGroupW_callback(pushButton, glink, cbs)
           data.glink = (void *)glink;
           if ( data.timeoutId== 0 ) {
                data.timeoutId= (void *)fdmgr_add_timeout(pfdctx,
-                    &timeout,singleClickGroupW_callback,&data);
+                    &timeout,(void (*)(void *))singleClickGroupW_callback,&data);
           }
 
      }
@@ -447,7 +470,7 @@ void arrowGroupW_callback(pushButton, glink, cbs)
 
           XtVaGetValues(pushButton, XmNuserData, &area, NULL);
 
-          singleClickGroupW_callback(data);
+          singleClickGroupW_callback(&data);
           displayNewViewTree(area,glink,EXPAND);
      }
 }
@@ -553,6 +576,7 @@ void redraw(subWindow,rowNumber)
 
      row = rowNumber;
 
+
      /* adjust view offset if more groups will fit on display */
      if (subWindow->viewOffset && subWindow->viewRowCount &&
           subWindow->viewOffset + subWindow->viewRowCount  > subWindow->viewConfigCount ){
@@ -578,6 +602,7 @@ void redraw(subWindow,rowNumber)
 
      link = (GCLINK *)(subWindow->alViewNth)(subWindow->parentLink,
                   &linkType,subWindow->viewOffset+row);
+
 
      while ( link ){
 
@@ -791,6 +816,7 @@ void awViewAddNewAlarm (clink,prevCount,count)
           prevViewCount = glink->viewCount;
           if (newLineTree) glink->viewCount++;
           glink = glink->parent;
+
      }
 
      subWindowTree = (struct subWindow *)area->treeWindow;
@@ -806,7 +832,7 @@ void awViewAddNewAlarm (clink,prevCount,count)
           subWindowTree->modified = 1;
           clink->pmainGroup->modified = 1;
           subWindowTree->viewConfigCount++;
-          addViewLink->viewCount=1;
+          if (addViewLink) addViewLink->viewCount=1;
           if (viewParent){
                if (newLineTree) alViewAdjustTreeW(viewParent,NOCHANGE,area->viewFilter);
           }
@@ -816,15 +842,10 @@ void awViewAddNewAlarm (clink,prevCount,count)
           subWindowGroup->modified =1;
           clink->pmainGroup->modified = 1;
           subWindowGroup->viewConfigCount++;
-          addViewLink->viewCount=1;
+          if (addViewLink) addViewLink->viewCount=1;
      }
 }
 
-/*
-printf (" awViewAddNewAlarm:area=%d prevCount=%d count=%d \n",area,prevCount,count);
-printf (" awViewAddNewAlarm:tree: viewParent->pgroupData->name=%s\n",viewParent->pgroupData->name);
-printf (" awViewAddNewAlarm:group: viewParent->pgroupData->name=%s\n",viewParent->pgroupData->name);
-*/
 
 /******************************************************
   awViewNewGroup
@@ -928,3 +949,16 @@ int awViewViewCount(gclink)
      return(viewCount);
 }
 
+/******************************************************
+  invokeDialogUpdate
+******************************************************/
+
+void invokeDialogUpdate(area)
+     ALINK *area;
+{
+     GCLINK *gclink;
+
+     gclink = area->selectionLink;
+     if (gclink->modified) axUpdateDialogs(area);
+
+}

@@ -1,8 +1,16 @@
 /*
  $Log$
- Revision 1.4  1995/06/22 19:48:53  jba
- Added $ALIAS facility.
+ Revision 1.5  1995/10/20 16:50:45  jba
+ Modified Action menus and Action windows
+ Renamed ALARMCOMMAND to SEVRCOMMAND
+ Added STATCOMMAND facility
+ Added ALIAS facility
+ Added ALARMCOUNTFILTER facility
+ Make a few bug fixes.
 
+ * Revision 1.4  1995/06/22  19:48:53  jba
+ * Added $ALIAS facility.
+ *
  * Revision 1.3  1995/04/13  19:20:25  jba
  * Fixed bug in line mask size and initialization.
  *
@@ -111,8 +119,8 @@ void awGetMaskString(mask,s)		Get group mask string
 #include <axArea.h>
 #include <ax.h>
 
-extern char *alarmSeverityString[];
-extern char *alarmStatusString[];
+extern char * alarmSeverityString[];
+extern char * alarmStatusString[];
 
 static char buff[LINEMESSAGE_SIZE];
 

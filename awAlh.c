@@ -1,7 +1,12 @@
 /*
  $Log$
- Revision 1.5  1995/10/05 22:26:34  jba
- bug fix for alias.
+ Revision 1.6  1995/10/20 16:50:12  jba
+ Modified Action menus and Action windows
+ Renamed ALARMCOMMAND to SEVRCOMMAND
+ Added STATCOMMAND facility
+ Added ALIAS facility
+ Added ALARMCOUNTFILTER facility
+ Make a few bug fixes.
 
  * Revision 1.4  1995/06/22  19:48:50  jba
  * Added $ALIAS facility.
@@ -174,80 +179,6 @@ Widget alhCreateMenu(parent, user_data)
              alhFileCallback, (XtPointer)MENU_FILE_CLOSE,  (MenuItem *)NULL },
          { "",           &xmSeparatorGadgetClass, '\0', NULL, NULL,
              NULL,    NULL,   (MenuItem *)NULL },
-/*
-         { "Exit ",      &xmPushButtonGadgetClass, 'x', "Ctrl<Key>X", "Ctrl+X",
-             alhFileCallback, (XtPointer)MENU_FILE_QUIT,   (MenuItem *)NULL },
-*/
-         {NULL},
-     };
-     
-     static MenuItem add_menu[] = {
-         { "Add",     &xmPushButtonGadgetClass, 'A', NULL, NULL,
-             alhActionCallback, (XtPointer)MENU_ACTION_ADD_ADD,     (MenuItem *)NULL },
-         { "Cancel",  &xmPushButtonGadgetClass, 'C', NULL, NULL, 
-             alhActionCallback, (XtPointer)MENU_ACTION_ADD_CANCEL,  (MenuItem *)NULL },
-         { "Reset",   &xmPushButtonGadgetClass, 'R', NULL, NULL,
-             alhActionCallback, (XtPointer)MENU_ACTION_ADD_RESET,   (MenuItem *)NULL },
-         {NULL},
-     };
-     
-     static MenuItem enable_menu[] = {
-         { "Enable",   &xmPushButtonGadgetClass, '\0', NULL, NULL,
-             alhActionCallback, (XtPointer)MENU_ACTION_ENABLE_ENABLE,   (MenuItem *)NULL },
-         { "Disable",  &xmPushButtonGadgetClass, '\0', NULL, NULL, 
-             alhActionCallback, (XtPointer)MENU_ACTION_ENABLE_DISABLE,  (MenuItem *)NULL },
-         { "Reset",    &xmPushButtonGadgetClass, '\0', NULL, NULL,
-             alhActionCallback, (XtPointer)MENU_ACTION_ENABLE_RESET,    (MenuItem *)NULL },
-         {NULL},
-     };
-     
-     static MenuItem ack_menu[] = {
-         { "Ack",     &xmPushButtonGadgetClass, '\0', NULL, NULL,
-             alhActionCallback, (XtPointer)MENU_ACTION_ACK_ACK,   (MenuItem *)NULL },
-         { "NoAck",   &xmPushButtonGadgetClass, '\0', NULL, NULL, 
-             alhActionCallback, (XtPointer)MENU_ACTION_ACK_NOACK,  (MenuItem *)NULL },
-         { "Reset",   &xmPushButtonGadgetClass, '\0', NULL, NULL,
-             alhActionCallback, (XtPointer)MENU_ACTION_ACK_RESET,    (MenuItem *)NULL },
-         {NULL},
-     };
-     
-     static MenuItem ackt_menu[] = {
-         { "Ack Transient",     &xmPushButtonGadgetClass, '\0', NULL, NULL,
-             alhActionCallback, (XtPointer)MENU_ACTION_ACKT_ACK,   (MenuItem *)NULL },
-         { "NoAck Transient",   &xmPushButtonGadgetClass, '\0', NULL, NULL, 
-             alhActionCallback, (XtPointer)MENU_ACTION_ACKT_NOACK,  (MenuItem *)NULL },
-         { "Reset",             &xmPushButtonGadgetClass, '\0', NULL, NULL,
-             alhActionCallback, (XtPointer)MENU_ACTION_ACKT_RESET,    (MenuItem *)NULL },
-         {NULL},
-     };
-     
-     static MenuItem log_menu[] = {
-         { "Log",     &xmPushButtonGadgetClass, '\0', NULL, NULL,
-             alhActionCallback, (XtPointer)MENU_ACTION_LOG_LOG,   (MenuItem *)NULL },
-         { "NoLog",   &xmPushButtonGadgetClass, '\0', NULL, NULL, 
-             alhActionCallback, (XtPointer)MENU_ACTION_LOG_NOLOG,  (MenuItem *)NULL },
-         { "Reset",   &xmPushButtonGadgetClass, '\0', NULL, NULL,
-             alhActionCallback, (XtPointer)MENU_ACTION_LOG_RESET,    (MenuItem *)NULL },
-         {NULL},
-     };
-     
-     static MenuItem props_menu[] = {
-         { "Summary ...",             &xmPushButtonGadgetClass, '\0', NULL, NULL,
-             alhActionCallback, (XtPointer)MENU_ACTION_SUMMARY, (MenuItem *)NULL },
-         { "Force Process Variable ...", &xmPushButtonGadgetClass, '\0', NULL, NULL,
-             alhActionCallback, (XtPointer)MENU_ACTION_FORCEPV, (MenuItem *)NULL },
-         { "Force Mask ...",          &xmPushButtonGadgetClass, '\0', NULL, NULL,
-             alhActionCallback, (XtPointer)MENU_ACTION_FORCEPV_MASK, (MenuItem *)NULL },
-         { "Add/Cancel Alarms",       &xmCascadeButtonGadgetClass, '\0', NULL, NULL,
-             0, 0, add_menu },
-         { "Enable/Disable Alarms",   &xmCascadeButtonGadgetClass, '\0', NULL, NULL,
-             0, 0, enable_menu },
-         { "Ack/NoAck Alarms",        &xmCascadeButtonGadgetClass, '\0', NULL, NULL,
-             0, 0, ack_menu },
-         { "Ack/NoAck Transient Alarms", &xmCascadeButtonGadgetClass, '\0', NULL, NULL,
-             0, 0, ackt_menu },
-         { "Log/NoLog Alarms",        &xmCascadeButtonGadgetClass, '\0', NULL, NULL,
-             0, 0, log_menu },
          {NULL},
      };
      
@@ -258,8 +189,12 @@ Widget alhCreateMenu(parent, user_data)
              alhActionCallback, (XtPointer)MENU_ACTION_GUIDANCE, (MenuItem *)NULL },
          { "Start Related Process",  &xmPushButtonGadgetClass, 'P', "Ctrl<Key>P", "Ctrl+P",
              alhActionCallback, (XtPointer)MENU_ACTION_PROCESS,  (MenuItem *)NULL },
-         { "Modify Alarm Settings",  &xmPushButtonGadgetClass, 'S', NULL, NULL,
-             0, 0, props_menu },
+         { "Force Process Variable ...", &xmToggleButtonGadgetClass, 'V', "Ctrl<Key>V", "Ctrl+V",
+             alhActionCallback, (XtPointer)MENU_ACTION_FORCEPV, (MenuItem *)NULL },
+         { "Force Mask ...",          &xmToggleButtonGadgetClass, 'M',"Ctrl<Key>M", "Ctrl+M",
+             alhActionCallback, (XtPointer)MENU_ACTION_FORCE_MASK, (MenuItem *)NULL },
+         { "Modify Mask Settings ...",  &xmToggleButtonGadgetClass, 'S', "Ctrl<Key>S", "Ctrl+S",
+             alhActionCallback, (XtPointer)MENU_ACTION_MODIFY_MASK, (MenuItem *)NULL },
          {NULL},
      };
      
@@ -282,6 +217,9 @@ Widget alhCreateMenu(parent, user_data)
              alhViewCallback, (XtPointer)MENU_VIEW_ALARMLOG,         (MenuItem *)NULL },
          { "Operation Log File Window",     &xmToggleButtonGadgetClass, 'O', NULL, NULL,
              alhViewCallback, (XtPointer)MENU_VIEW_OPMOD,         (MenuItem *)NULL },
+         { "Group/Channel Properties Window", &xmToggleButtonGadgetClass, 'W', NULL, NULL,
+             alhViewCallback, (XtPointer)MENU_VIEW_PROPERTIES,    (MenuItem *)NULL },
+
          {NULL},
      };
      
@@ -329,38 +267,9 @@ Widget alhCreateMenu(parent, user_data)
          {NULL},
      };
      
-/*
-     static MenuItem bar_menu[] = {
-           { "File",     &xmCascadeButtonGadgetClass, 'F', NULL, NULL,
-               0, 0, file_menu },
-           { "Action",   &xmCascadeButtonGadgetClass, 'A', NULL, NULL,
-               0, 0, action_menu },
-           { "View",     &xmCascadeButtonGadgetClass, 'V', NULL, NULL,
-               0, 0, view_menu },
-           { "Setup",    &xmCascadeButtonGadgetClass, 'S', NULL, NULL,
-               0, 0, setup_menu },
-           { "Help",     &xmCascadeButtonGadgetClass, 'H', NULL, NULL,
-               0, 0, help_menu },
-         {NULL},
-     };
-
-*/
      Widget menubar,widget;
 
      menubar = XmCreateMenuBar(parent, "menubar",   NULL, 0);
-/*
-          XmNtearOffModel,             XmTEAR_OFF_ENABLED,
-     XtVaSetValues(menubar, XmNtearOffModel, XmTEAR_OFF_ENABLED, NULL);
-     menubar = XtVaCreateWidget("menubar",
-          xmRowColumnWidgetClass,      parent,
-          XmNrowColumnType,            XmMENU_BAR,
-          XmNorientation,              XmHORIZONTAL,
-          XmNshadowThickness,          2,
-          XmNtopAttachment,            XmATTACH_FORM,
-          XmNrightAttachment,          XmATTACH_FORM,
-          XmNleftAttachment,           XmATTACH_FORM,
-          NULL);
-*/
 
      widget = buildPulldownMenu(menubar, "File",     'F', TRUE, file_menu, user_data);
      widget = buildPulldownMenu(menubar, "Action",   'A', TRUE, action_menu, user_data);
@@ -392,8 +301,6 @@ static void alhFileCallback(widget, item, cbs)
      XmAnyCallbackStruct *cbs;
 {
      ALINK      *area;
-     int         status;
-
 
      XtVaGetValues(widget, XmNuserData, &area, NULL);
 
@@ -465,11 +372,9 @@ static void alhActionCallback(widget, item, cbs)
      XmAnyCallbackStruct *cbs;
 {
      ALINK               *area;
-     Widget               dialog;
      Widget               parent;
      GCLINK              *link;
      struct anyLine      *line;
-     struct gcData       *gcdata;
      WLINE               *wline;
 
      XtVaGetValues(widget, XmNuserData, &area, NULL);
@@ -511,12 +416,12 @@ static void alhActionCallback(widget, item, cbs)
                        guidance_callback(wline->guidance,(GCLINK *)link, cbs);
                   }
                   else {
-                       if (link->pgcData->alias){
+                       if (((GCLINK *)link)->pgcData->alias){
                             createDialog(area->form_main,XmDIALOG_WARNING,"No guidance for ",
-                            link->pgcData->alias);
+                                 link->pgcData->alias);
                        } else {
                             createDialog(area->form_main,XmDIALOG_WARNING,"No guidance for ",
-                            link->pgcData->name);
+                                 link->pgcData->name);
                        }
                   }
              }
@@ -534,15 +439,14 @@ static void alhActionCallback(widget, item, cbs)
                   if (alProcessExists(link)){
                        relatedProcess_callback(widget,link, cbs);
                   } else {
-                       if (link->pgcData->alias){
+                       if (((GCLINK *)link)->pgcData->alias){
                             createDialog(area->form_main,XmDIALOG_WARNING,"No related process for ",
-                            link->pgcData->alias );
+                                 link->pgcData->alias);
                        } else {
                             createDialog(area->form_main,XmDIALOG_WARNING,"No related process for ",
-                            link->pgcData->name );
+                                 link->pgcData->name);
                        }
                   }
-
              } else {
                   createDialog(area->form_main,XmDIALOG_WARNING,
                        "Please select an alarm group or channel first."," ");
@@ -550,107 +454,38 @@ static void alhActionCallback(widget, item, cbs)
              break;
 
 
-          case MENU_ACTION_SUMMARY:
-
-               parent = area->form_main;
-               link = (GCLINK *)area->selectionLink;
-               gcdata = link->pgcData;
-               if (area->selectionType == GROUP){
-                    dialog = createShowGroupMasksDialog(parent,(struct groupData *)gcdata);
-                    XtManageChild(dialog);
-                    break;
-               }
-               if (area->selectionType == CHANNEL){
-                    dialog = createShowChanMasksDialog(parent,(struct chanData *)link->pgcData);
-                    XtManageChild(dialog);
-                    break;
-               }
-               createDialog(area->form_main,XmDIALOG_WARNING,
-                    "Please select an alarm group or channel first."," ");
-               break;
-
           case MENU_ACTION_FORCEPV:
 
-               parent = area->form_main;
-               link = (GCLINK *)area->selectionLink;
-               if (area->selectionType == GROUP){
-                    dialog = createForcePVGroupDialog(parent,(GLINK *)link);
-                    XtManageChild(dialog);
-                    break;
+               if (area->selectionLink) {
+                    forcePVShowDialog(area, widget);
+               } else {
+                    parent = area->form_main;
+                    createDialog(parent,XmDIALOG_WARNING,
+                         "Please select an alarm group or channel first."," ");
                }
-               if (area->selectionType == CHANNEL){
-                    dialog = createForcePVChanDialog(parent,(CLINK *)link);
-                    XtManageChild(dialog);
-                    break;
-               }
-               createDialog(area->form_main,XmDIALOG_WARNING,
-                    "Please select an alarm group or channel first."," ");
                break;
 
-          case MENU_ACTION_FORCEPV_MASK:
+          case MENU_ACTION_FORCE_MASK:
 
-               parent = area->form_main;
-               link = (GCLINK *)area->selectionLink;
-               if (area->selectionType == GROUP){
-                    dialog = createForceGMaskDialog(parent,(GLINK *)link);
-                    XtManageChild(dialog);
-                    break;
+               if (area->selectionLink) {
+                    forceMaskShowDialog(area, widget);
+               } else {
+                    parent = area->form_main;
+                    createDialog(parent,XmDIALOG_WARNING,
+                         "Please select an alarm group or channel first."," ");
                }
-               if (area->selectionType == CHANNEL){
-                    dialog = createForceCMaskDialog(parent,(CLINK *)link);
-                    XtManageChild(dialog);
-                    break;
+               break;
+
+          case MENU_ACTION_MODIFY_MASK:
+
+               if (area->selectionLink) {
+                    maskShowDialog(area, widget);
+               } else {
+                    parent = area->form_main;
+                    createDialog(parent,XmDIALOG_WARNING,
+                         "Please select an alarm group or channel first."," ");
                }
-               createDialog(parent,XmDIALOG_WARNING,
-                    "Please select an alarm group or channel first."," ");
                break;
-
-          case MENU_ACTION_ADD_ADD:
-               changeMasks_callback(area,0);
-               break;
-          case MENU_ACTION_ADD_CANCEL:
-               changeMasks_callback(area,1);
-               break;
-          case MENU_ACTION_ADD_RESET:
-               changeMasks_callback(area,2);
-               break;
-          case MENU_ACTION_ENABLE_ENABLE:
-               changeMasks_callback(area,10);
-               break;
-          case MENU_ACTION_ENABLE_DISABLE:
-               changeMasks_callback(area,11);
-               break;
-          case MENU_ACTION_ENABLE_RESET:
-               changeMasks_callback(area,12);
-               break;
-          case MENU_ACTION_ACK_ACK:
-               changeMasks_callback(area,20);
-               break;
-          case MENU_ACTION_ACK_NOACK:
-               changeMasks_callback(area,21);
-               break;
-          case MENU_ACTION_ACK_RESET:
-               changeMasks_callback(area,22);
-               break;
-          case MENU_ACTION_ACKT_ACK:
-               changeMasks_callback(area,30);
-               break;
-          case MENU_ACTION_ACKT_NOACK:
-               changeMasks_callback(area,31);
-               break;
-          case MENU_ACTION_ACKT_RESET:
-               changeMasks_callback(area,32);
-               break;
-          case MENU_ACTION_LOG_LOG:
-               changeMasks_callback(area,40);
-               break;
-          case MENU_ACTION_LOG_NOLOG:
-               changeMasks_callback(area,41);
-               break;
-          case MENU_ACTION_LOG_RESET:
-               changeMasks_callback(area,42);
-               break;
-
 
      }
 }
@@ -726,6 +561,12 @@ static void alhViewCallback(widget, item, cbs)
 
              /* Display Operation Log File */
              fileViewWindow(area->form_main,OPMOD_FILE,widget);
+             break;
+
+        case MENU_VIEW_PROPERTIES:
+
+             /* Display Group/Chan Properties */
+             propShowDialog(area, widget);
              break;
 
      }

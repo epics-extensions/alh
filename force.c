@@ -1,1268 +1,711 @@
 /*
  $Log$
- Revision 1.3  1995/02/28 16:43:47  jba
- ansi c changes
+ Revision 1.4  1995/10/20 16:50:40  jba
+ Modified Action menus and Action windows
+ Renamed ALARMCOMMAND to SEVRCOMMAND
+ Added STATCOMMAND facility
+ Added ALIAS facility
+ Added ALARMCOUNTFILTER facility
+ Make a few bug fixes.
 
- * Revision 1.2  1994/06/22  21:17:31  jba
+ * Revision 1.2  1994/06/22  21:17:57  jba
  * Added cvs Log keyword
  *
  */
 
-static char *sccsId = "@(#)force.c	1.7\t10/1/93";
+static char *sccsId = "@(#)forcePV.c	1.12\t9/15/93";
 
-/* force.c */
-/* 
- *      Author: Ben-chin Cha
- *      Date:   12-20-90
- *
- *      Experimental Physics and Industrial Control System (EPICS)
- *
- *      Copyright 1991, the Regents of the University of California,
- *      and the University of Chicago Board of Governors.
- *
- *      This software was produced under  U.S. Government contracts:
- *      (W-7405-ENG-36) at the Los Alamos National Laboratory,
- *      and (W-31-109-ENG-38) at Argonne National Laboratory.
- *
- *      Initial development by:
- *              The Controls and Automation Group (AT-8)
- *              Ground Test Accelerator
- *              Accelerator Technology Division
- *              Los Alamos National Laboratory
- *
- *      Co-developed with
- *              The Controls and Computing Group
- *              Accelerator Systems Division
- *              Advanced Photon Source
- *              Argonne National Laboratory
- *
- * Modification Log:
- * -----------------
- * .01  07-18-91        bkc     Change forcePVValue & resetPVValue to short 
- *                               
- * .02  mm-dd-yy        iii     Comment
- *      ...
- */
 /*******************************************************
- * force.c: create a popup dialog widget 
+ * force.c: a popup dialog  window
 *
-*Routines defined in this file provide the functions of reset 
-*or force group/channel masks.  Each dialog box consists a set 
-*of label and text widgets, and four push buttons: 'Force', 
-*'Reset', 'Cancel', and 'Help'.  All the callbacks for 'Force' 
-*and 'Reset' buttons are provided here , except the callbacks 
-*for 'Cancel' and 'Help' buttons are defined in the file 'help.c'.
+*This file contains routines for modifing the forcePV.
 *
-*It consists two sets of routines, one corresponding to group
-*PV mask change and one corresponding to channel PV mask change.
+------------
+|  PUBLIC  |
+------------
 *
+void forcePVUpdateDialog(area)   Update mask dialog widow
+     ALINK *area;
 *
-*
-*
-*	LIST OF ROUTINES
-*
-*
--------------
-|   PUBLIC  |
--------------
-Widget 					Creat force group mask dialog
-createForceGMaskDialog(parent,glink)
-	Widget parent;
-	GLINK *glink;
-*
-Widget 					Create group PV dialog
-createForcePVGroupDialog(parent,glink)
-	Widget parent;
-	GLINK *glink;	
-	return:  a bulletin board dialog widget
+void forcePVShowDialog(area)          Create/show mask dialog 
+     ALINK *area;
 
-*
-Widget 					Create channel PV dialog
-createForcePVChanDialog(parent,clink)
-	Widget parent;
-	CLINK *clink;
-	return:  a bulletin board dialog widget
-*
-Widget 					Creat force chann mask dialog
-createForceCMaskDialog(parent,glink)
-	Widget parent;
-	GLINK *glink;
-*
--------------
-|  PRIVATE  |
--------------
-*
-void 					Force group mask callback
-acceptForcePVGroupData_callback(w,glink, call_value)
-	Widget  w;
-	GLINK *glink;
-	XmAnyCallbackStruct *call_value;
-*
-void 					Force group PV callback
-okForcePVGroupData_callback(w,glink, call_value)
-	Widget  w;
-	GLINK *glink;
-	XmAnyCallbackStruct *call_value;
-
-*
-void 					Display update callback(Force/Reset)
-okForcePVUpdate_callback(w,ind,call_value)		     
-	Widget  w;
-	GCLINK *clink;
-	XmAnyCallbackStruct *call_value;
-
-*
-void 					Reset group PV callback
-okResetPVGroupData_callback(w,glink, call_value)
-	Widget  w;
-	GLINK *glink;
-	XmAnyCallbackStruct *call_value;
-
-*
-void 					Force channel PV callback
-acceptForcePVChanData_callback(w,clink, call_value)
-	Widget  w;
-	CLINK *clink;
-	XEvent *call_value;
-
-*
-void 					Reset channel PV callback
-okResetPVChanData_callback(w,clink, call_value)
-	Widget  w;
-	CLINK *clink;
-	XEvent *call_value;
-*
-void
-alOperatorForcePVChanEvent(clink,pvMask)
-	CLINK *clink;
-	MASK pvMask;
-*
-void
-alOperatorForcePVGroupEvent(glink,mask)  
-	GLINK *glink;
-	MASK mask;
-*
-void
-alOperatorResetPVGroupEvent(glink)  
-	GLINK *glink;
-*
-void
-alOperatorResetPVGroupEvent(glink)  
-	GLINK *glink;
-
-*************************************************************
+******************************************************************
+******************************************************************
 */
+#include <stdlib.h>
 
-#include <stdio.h>
-
-#include <X11/StringDefs.h>
-#include <X11/Intrinsic.h>
-#include <X11/Shell.h>
 #include <Xm/Xm.h>
-#include <Xm/PushB.h>
-#include <Xm/PushBG.h>
-#include <Xm/Text.h>
-#include <Xm/Label.h>
+#include <Xm/AtomMgr.h>
+#include <Xm/DialogS.h>
+#include <Xm/Form.h>
+#include <Xm/Frame.h>
 #include <Xm/LabelG.h>
-#include <Xm/BulletinB.h>
+#include <Xm/PushB.h>
+#include <Xm/ToggleB.h>
+#include <Xm/PanedW.h>
+#include <Xm/Protocols.h>
+#include <Xm/RowColumn.h>
+#include <Xm/ScrolledW.h>
+#include <Xm/Text.h>
+#include <Xm/TextF.h>
+#include <Xm/ToggleBG.h>
 
-#include <sllLib.h>
+#include <axArea.h>
 #include <alLib.h>
 #include <ax.h>
 
-#define OPERATOR 	1
+extern Pixel bg_pixel[ALARM_NSEV];
 
-extern struct setup psetup;
-extern Dimension char_width;
+struct forcePVWindow {
+    void *area;
+    Widget menuButton;
+    Widget forcePVDialog;
+    Widget nameLabelW;
+    Widget nameTextW;
+    Widget forcePVnameTextW;
+    Widget forcePVmaskStringLabelW;
+    Widget forceMaskToggleButtonW[ALARM_NMASK];
+    Widget forcePVforceValueTextW;
+    Widget forcePVresetValueTextW;
+};
 
-extern XmStringCharSet charset;
 
+/* prototypes for static routines */
 #ifdef __STDC__
 
-static void acceptForcePVGroupData_callback( Widget w, GLINK *glink,
-      XmAnyCallbackStruct *call_value);
-static void okForcePVGroupData_callback( Widget w, GLINK *glink, XmAnyCallbackStruct *call_value);
-static void okForcePVUpdate_callback( Widget w, GCLINK *gclink, XmAnyCallbackStruct *call_value);
-static void okResetPVGroupData_callback( Widget w, GLINK *glink, XmAnyCallbackStruct *call_value);
-static void acceptForcePVChanData_callback( Widget w, CLINK *clink, XEvent *call_value);
-static void okForcePVChanData_callback( Widget w, CLINK *clink, XEvent *call_value);
-static void okResetPVChanData_callback( Widget w, CLINK *clink, XEvent *call_value);
+static void forcePVApplyCallback(Widget widget,struct forcePVWindow *forcePVWindow,XmAnyCallbackStruct *cbs);
+static void forcePVCancelCallback(Widget widget,struct forcePVWindow *forcePVWindow,XmAnyCallbackStruct *cbs);
+static void forcePVDismissCallback(Widget widget,struct forcePVWindow *forcePVWindow,XmAnyCallbackStruct *cbs);
+static void forcePVHelpCallback(Widget widget,struct forcePVWindow *forcePVWindow,XmAnyCallbackStruct *cbs);
+static void forcePVCreateDialog(ALINK*area);
+static void forcePVUpdateDialogWidgets(struct forcePVWindow *forcePVWindow);
+static void forcePVMaskChangeCallback( Widget widget, int index, XmAnyCallbackStruct *cbs);
 
 #else
 
-static void acceptForcePVGroupData_callback();
-static void okForcePVGroupData_callback();
-static void okForcePVUpdate_callback();
-static void okResetPVGroupData_callback();
-static void acceptForcePVChanData_callback();
-static void okForcePVChanData_callback();
-static void okResetPVChanData_callback();
+static void forcePVApplyCallback();
+static void forcePVCancelCallback();
+static void forcePVDismissCallback();
+static void forcePVHelpCallback();
+static void forcePVCreateDialog();
+static void forcePVUpdateDialogWidgets();
+static void forcePVMaskChangeCallback();
 
 #endif /*__STDC__*/
 
+/******************************************************
+  forcePVUpdateDialog
+******************************************************/
 
-
-
-char  editors_forcePVG[5][36];
-Widget label_forcePVG[5],edit_forcePVG[5];
-char  *labels_forcePVG[] = { 
-	"Group Name",
-	"Force Process Variable : name",
-	"Force Process Variable : force value",
-	"Force Process Variable : reset value",
-	"Force Process Variable : force mask"
-	};
-	
-char  editors_forceGMask[2][36];
-Widget label_forceGMask[2],edit_forceGMask[2];
-char *labels_forceGMask[] = {
-	"Group Name ",
-	"Mask <CDATL>" };
-
-
-
-
-char *help_str_forcePVG[] = {
-        "This dialog window allows an operator to specify force and reset",
-	"mask variables for a given group.",
-        " ",
-	"The PV force value must be set to a value different from",
-	"the PV reset value.",
-        " ",
-	"Press the Accept button to accept the change.",
-	"Press the Cancel button to abort current change.",
-	"Press the Help   button to get this help description.",
-	"","" };
-
-char *help_str_forceGMask[] = {
-        "This dialog window allows an operator to set the current",
-	"mask for the whole group.",
-	" ",
-	"Press the Force  button to force the group channel masks.",
-	"Press the Reset  button to reset group channel masks to default.",
-        "Press the Cancel button to abort this dialog .",
-	"Press the Help   button to get this help description.",
-        "","" };
-
-char  editors_forcePVC[6][36];
-Widget label_forcePVC[6],edit_forcePVC[6];
-char  *labels_forcePVC[] = { 
-	"Channel Name",
-	"Force Process Variable : name",
-	"Force Process Variable : force value",
-	"Force Process Variable : reset value",
-	"Force Process Variable : force mask",
-	"Force Process Variable : reset mask"
-	};
-	
-char  editors_forceCMask[3][36];
-Widget label_forceCMask[3],edit_forceCMask[3];
-char *labels_forceCMask[] = {
-	"Channel Name ",
-	"Current Mask ",
-	"Mask <CDATL>" };
-
-
-
-
-char *help_str_forcePVC[] = {
-        "This dialog window allows an operator to specify force and reset",
-	"mask variables for a given channel.",
-        " ",
-	"The PV force value must be set to a value different from",
-	"the PV reset value.",
-        " ",
-	"Press the Accept button to accept the change.",
-	"Press the Cancel button to abort current change.",
-	"Press the Help   button to get this help description.",
-	"","" };
-
-char *help_str_forceCMask[] = {
-        "This dialog window allows an operator to set the current",
-	"mask for the considered channel.",
-	" ",
-	"Press the Force  button to force the channel masks.",
-	"Press the Reset  button to reset channel masks to default.",
-        "Press the Cancel button to abort this dialog .",
-	"Press the Help   button to get this help description.",
-        "","" };
-
-
-/************************************************************************
-	create force PV dialog box
-************************************************************************/
-Widget createForcePVGroupDialog(parent,glink)
-Widget parent;
-GLINK *glink;
+void forcePVUpdateDialog(area)
+     ALINK  *area;
 {
-Widget bb, done_button, ok_button,  help_button;
-Arg     wargs[10];
-int     i, n=0,xloc,yloc;
-size_t     len=0;
-struct groupData *gdata;
+     struct forcePVWindow *forcePVWindow;
 
-	gdata = glink->pgroupData;
-	
-	strcpy(editors_forcePVG[0],gdata->name);
-	strcpy(editors_forcePVG[1],gdata->forcePVName);
-	sprintf(editors_forcePVG[2],"%d",gdata->forcePVValue);
-	sprintf(editors_forcePVG[3],"%d",gdata->resetPVValue);
-  	alGetMaskString(gdata->forcePVMask,editors_forcePVG[4]);
-	n =0;
-        XtSetArg(wargs[n], XmNautoUnmanage, FALSE); n++;
-        XtSetArg(wargs[n], XmNdialogTitle,
-		XmStringLtoRCreate("Force Process Vaiable",
-		XmSTRING_DEFAULT_CHARSET)); n++;
-        XtSetArg(wargs[n], XmNallowShellResize, FALSE); n++;
-        bb = XmCreateBulletinBoardDialog(parent, 
-			"PVG", wargs, n);
+     forcePVWindow = (struct forcePVWindow *)area->forcePVWindow;
 
+     if (!forcePVWindow)  return;
 
-        for (i=0; i<XtNumber(labels_forcePVG); i++) {
-        n = 0;
-	if (len < strlen(labels_forcePVG[i]))
-		len = strlen(labels_forcePVG[i]);
-        XtSetArg(wargs[n], XmNlabelString, 
-                XmStringCreateLtoR(labels_forcePVG[i],charset)); n++;
-        XtSetArg(wargs[n], XmNx, 10); n++;
-        XtSetArg(wargs[n], XmNy, 10+30*i); n++;
+     if (!forcePVWindow->forcePVDialog || !XtIsManaged(forcePVWindow->forcePVDialog)) return;
 
-         label_forcePVG[i] = XtCreateManagedWidget(labels_forcePVG[i],
-                 xmLabelGadgetClass, bb,
-                 wargs, n);
-         }
-
-        i++;
-        yloc = 10+30*i;
-
-
-/*
- * get string width in pixel
- */
-  xloc = 10 + len * char_width;
-
-        for (i=0; i<XtNumber(editors_forcePVG); i++) {
-        n = 0;
-        XtSetArg(wargs[n], XmNx, xloc + 10); n++;
-        XtSetArg(wargs[n], XmNy, 10+30*i); n++;
-        XtSetArg(wargs[n], XmNwidth, char_width * 30); n++;
-	if (i < 1) { 
-                XtSetArg(wargs[n],XmNcursorPositionVisible,FALSE); n++;
-		XtSetArg(wargs[n],XmNeditable,FALSE); n++;
-		}
-
-        edit_forcePVG[i] = XtCreateManagedWidget(editors_forcePVG[i], 
-			xmTextWidgetClass, bb, wargs, n);
-        XmTextSetString(edit_forcePVG[i],editors_forcePVG[i]);
-        }
-
-        /*
-         * add a Accept  button to accept text and to pop down the widget.
- 	 */
-       
-        n = 0;
-        xloc = 10;
-        XtSetArg(wargs[n], XmNx, xloc); n++;
-        XtSetArg(wargs[n], XmNy, yloc); n++;
-        ok_button = XtCreateManagedWidget("Accept", xmPushButtonGadgetClass,
-                                bb, wargs, n);
-        XtAddCallback(ok_button, XmNactivateCallback, 
-                                (XtCallbackProc)acceptForcePVGroupData_callback, glink);
-        XtAddCallback(ok_button, XmNactivateCallback, 
-                                (XtCallbackProc)done_dialog, bb);
-/*
-        XtAddCallback(ok_button, XmNactivateCallback,
-                                (XtCallbackProc)okForcePVUpdate_callback, glink);
- */
-
-
-        /*
-         * add a button to pop down the widget.
-         */
-
-        n = 0;
-        xloc = xloc + 10 * char_width ;
-        XtSetArg(wargs[n], XmNx, xloc); n++;
-        XtSetArg(wargs[n], XmNy, yloc); n++;
-        done_button = XtCreateManagedWidget("Cancel", 
-                                xmPushButtonGadgetClass, bb, wargs, n);
-        XtAddCallback(done_button, XmNactivateCallback,
-                                (XtCallbackProc)done_dialog, bb);
-
-        /*
-         * add a button for asking for help.
-         */
-
-
-        n = 0;
-        xloc = xloc + 10 * char_width ;
-        XtSetArg(wargs[n], XmNx, xloc); n++;
-        XtSetArg(wargs[n], XmNy, yloc); n++;
-        help_button = XtCreateManagedWidget(" Help ", 
-                                xmPushButtonWidgetClass, bb, wargs, n);
-
-        XtAddCallback(help_button, XmNactivateCallback, 
-                                (XtCallbackProc)xs_help_callback,
-                                 help_str_forcePVG);
-
-
-        return bb;
-
-}
-
-/************************************************************************
-	create force PV dialog box
-************************************************************************/
-Widget createForceGMaskDialog(parent,glink)
-Widget parent;
-GLINK *glink;
-{
-Widget bb, done_button, ok_button, reset_button, help_button;
-Widget label;
-Arg     wargs[10];
-int     i, n=0,xloc,yloc;
-size_t  len=0;
-struct groupData *gdata;
-
-	gdata = glink->pgroupData;
-	
-	strcpy(editors_forceGMask[0],gdata->name);
-  	alGetMaskString(gdata->forcePVMask,editors_forceGMask[1]);
-	n =0;
-        XtSetArg(wargs[n], XmNautoUnmanage, FALSE); n++;
-        XtSetArg(wargs[n], XmNdialogTitle,
-		XmStringLtoRCreate("Force Mask",
-		XmSTRING_DEFAULT_CHARSET)); n++;
-        XtSetArg(wargs[n], XmNallowShellResize, FALSE); n++;
-        bb = XmCreateBulletinBoardDialog(parent, 
-			"FG", wargs, n);
-
-
-        for (i=0; i<XtNumber(labels_forceGMask); i++) {
-        n = 0;
-        if (len < strlen(labels_forceGMask[i]))
-                len = strlen(labels_forceGMask[i]);
-        XtSetArg(wargs[n], XmNlabelString,
-                XmStringCreateLtoR(labels_forceGMask[i],charset)); n++;
-        XtSetArg(wargs[n], XmNx, 10); n++;
-        XtSetArg(wargs[n], XmNy, 10+30*i); n++;
-        label_forceGMask[i] = XtCreateManagedWidget(labels_forceGMask[i],
-                 xmLabelGadgetClass, bb,
-                 wargs, n);
-        }
-
-	n = 0;
-        XtSetArg(wargs[n], XmNx, 10); n++;
-        XtSetArg(wargs[n], XmNy, 10+30*i); n++;
-         label = XtCreateManagedWidget("C (Cancel)",
-                 xmLabelGadgetClass, bb,
-                 wargs, n);
-	i++;
-	n = 0;
-        XtSetArg(wargs[n], XmNx, 10); n++;
-        XtSetArg(wargs[n], XmNy, 10+30*i); n++;
-         label = XtCreateManagedWidget("D (Disable)",
-                 xmLabelGadgetClass, bb,
-                 wargs, n);
-	i++;
-	n = 0;
-        XtSetArg(wargs[n], XmNx, 10); n++;
-        XtSetArg(wargs[n], XmNy, 10+30*i); n++;
-         label = XtCreateManagedWidget("A (NoAck)",
-                 xmLabelGadgetClass, bb,
-                 wargs, n);
-	i++;
-	n = 0;
-        XtSetArg(wargs[n], XmNx, 10); n++;
-        XtSetArg(wargs[n], XmNy, 10+30*i); n++;
-         label = XtCreateManagedWidget("T (NoAck Transient)",
-                 xmLabelGadgetClass, bb,
-                 wargs, n);
-	i++;
-	n = 0;
-        XtSetArg(wargs[n], XmNx, 10); n++;
-        XtSetArg(wargs[n], XmNy, 10+30*i); n++;
-         label = XtCreateManagedWidget("L (NoLog)",
-                 xmLabelGadgetClass, bb,
-                 wargs, n);
-
-	i++;
-        yloc = 10+30*i;
-
-/*
- * get string width in pixel
- */
-  xloc = 10 + len * char_width;
-
-        for (i=0; i<XtNumber(editors_forceGMask); i++) {
-        n = 0;
-        XtSetArg(wargs[n], XmNx, xloc + 10); n++;
-        XtSetArg(wargs[n], XmNy, 10+30*i); n++;
-        XtSetArg(wargs[n], XmNwidth, char_width * 30); n++;
-	if (i < 1) { 
-                XtSetArg(wargs[n],XmNcursorPositionVisible,FALSE); n++;
-		XtSetArg(wargs[n],XmNeditable,FALSE); n++;
-		}
-
-        edit_forceGMask[i] = XtCreateManagedWidget(editors_forceGMask[i], 
-			xmTextWidgetClass, bb, wargs, n);
-        XmTextSetString(edit_forceGMask[i],editors_forceGMask[i]);
-        }
-
-        /*
-         * add a FORCE  button to accept text and to pop down the widget.
-	 */
-        
-        n = 0;
-        xloc = 10;
-        XtSetArg(wargs[n], XmNx, xloc); n++;
-        XtSetArg(wargs[n], XmNy, yloc); n++;
-        ok_button = XtCreateManagedWidget("Force ", xmPushButtonGadgetClass,
-                                bb, wargs, n);
-        XtAddCallback(ok_button, XmNactivateCallback, 
-                                (XtCallbackProc)okForcePVGroupData_callback, glink);
-        XtAddCallback(ok_button, XmNactivateCallback, 
-                                (XtCallbackProc)done_dialog, bb);
-        XtAddCallback(ok_button, XmNactivateCallback,
-                                (XtCallbackProc)okForcePVUpdate_callback, glink);
-
-
-        /*
-         * add a reset button to accept text and to pop down the widget.
-         */
-
-        n = 0;
-        xloc = xloc + 10 * char_width;
-        XtSetArg(wargs[n], XmNx, xloc); n++;
-        XtSetArg(wargs[n], XmNy, yloc); n++;
-        reset_button = XtCreateManagedWidget("Reset ", 
-                                xmPushButtonGadgetClass, bb, wargs, n);
-        XtAddCallback(reset_button, XmNactivateCallback, 
-                                (XtCallbackProc)okResetPVGroupData_callback, glink);
-        XtAddCallback(reset_button, XmNactivateCallback,
-                                (XtCallbackProc)done_dialog, bb);
-        XtAddCallback(reset_button, XmNactivateCallback, 
-				(XtCallbackProc)okForcePVUpdate_callback, glink);
-	
-
-
-        /*
-         * add a button to pop down the widget.
-         */
-
-        n = 0;
-        xloc = xloc + 10 * char_width;
-        XtSetArg(wargs[n], XmNx, xloc); n++;
-        XtSetArg(wargs[n], XmNy, yloc); n++;
-        done_button = XtCreateManagedWidget("Cancel", 
-                                xmPushButtonGadgetClass, bb, wargs, n);
-        XtAddCallback(done_button, XmNactivateCallback,
-                                  (XtCallbackProc)done_dialog, bb);
-
-        /*
-         * add a button for asking for help.
-         */
-
-
-        n = 0;
-        xloc = xloc + 10 * char_width;
-        XtSetArg(wargs[n], XmNx, xloc); n++;
-        XtSetArg(wargs[n], XmNy, yloc); n++;
-        help_button = XtCreateManagedWidget(" Help  ", 
-                                xmPushButtonWidgetClass, bb, wargs, n);
-
-        XtAddCallback(help_button, XmNactivateCallback, 
-                                (XtCallbackProc)xs_help_callback,
-                                help_str_forceGMask);
-
-
-        return bb;
+     forcePVUpdateDialogWidgets(forcePVWindow);
 
 }
 
 
-/************************************************************************
-	accept  data from  force PV dialog box
-************************************************************************/
-static void acceptForcePVGroupData_callback(w,glink, call_value)
-Widget  w;
-GLINK *glink;
-XmAnyCallbackStruct *call_value;
+/******************************************************
+  forcePVShowDialog
+******************************************************/
+
+void forcePVShowDialog(area, menuButton)
+     ALINK    *area;
+     Widget   menuButton;
 {
-short value;
-char * str,buff1[6];
-MASK mask;
-struct groupData *gdata;
+     struct forcePVWindow *forcePVWindow;
 
-	gdata = glink->pgroupData;
+     forcePVWindow = (struct forcePVWindow *)area->forcePVWindow;
 
-        str = ( char *)XmTextGetString(edit_forcePVG[2]);
-        value = atoi(str);
-	gdata->forcePVValue = value;
+     /* dismiss Dialog */
+     if (forcePVWindow && forcePVWindow->forcePVDialog && 
+                        XtIsManaged(forcePVWindow->forcePVDialog)) {
+          forcePVDismissCallback(NULL, forcePVWindow, NULL);
+          return;
+     }
 
-        str = ( char *)XmTextGetString(edit_forcePVG[3]);
-        value = atoi(str);
-	gdata->resetPVValue = value;
+     /* create forcePVWindow and Dialog Widgets if necessary */
+     if (!forcePVWindow)  forcePVCreateDialog(area);
 
-        str =( char *)XmTextGetString(edit_forcePVG[4]);
-	strcpy(buff1,str);
-	alSetMask(buff1,&mask);
-	gdata->forcePVMask = mask;
+     /* update forcePVWindow link info */
+     forcePVWindow = (struct forcePVWindow *)area->forcePVWindow;
+     forcePVWindow->menuButton = menuButton;
 
-/* New forcePVName replace CA search and event */
+     /* update Dialog Widgets */
+     forcePVUpdateDialogWidgets(forcePVWindow);
 
-        str = ( char *)XmTextGetString(edit_forcePVG[1]);
-	if (strlen(str) > (size_t)1 && strcmp(str,gdata->forcePVName) != 0) {
-		alReplaceGroupForceEvent(glink,str);
-		}
-        XtFree(str);
-
-
-	alProcessCA();
-
-/*  log on operation file */
-
-	alLogForcePVGroup(glink,OPERATOR);
+     /* show Dialog */
+     if (!forcePVWindow->forcePVDialog) return;
+     if (!XtIsManaged(forcePVWindow->forcePVDialog)) {
+          XtManageChild(forcePVWindow->forcePVDialog);
+     }
+     XMapWindow(XtDisplay(forcePVWindow->forcePVDialog),
+          XtWindow(XtParent(forcePVWindow->forcePVDialog)));
+     if (menuButton) XtVaSetValues(menuButton, XmNset, TRUE, NULL);
 
 }
 
+/******************************************************
+  forcePVUpdateDialogWidgets
+******************************************************/
 
-
-
-
-/************************************************************************
-	Get data from  force PV dialog box
-************************************************************************/
-static void okForcePVGroupData_callback(w,glink, call_value)
-Widget  w;
-GLINK *glink;
-XmAnyCallbackStruct *call_value;
+static void forcePVUpdateDialogWidgets(forcePVWindow)
+     struct forcePVWindow *forcePVWindow;
 {
-char * str,buff1[6];
-MASK mask;
-struct groupData *gdata;
+     struct gcData *pgcData;
+     struct chanData *pcData;
+     GCLINK *link;
+     int linkType;
+     XmString string;
+     char buff[MAX_STRING_LENGTH];
+     MASK mask;
 
+     if (! forcePVWindow || !forcePVWindow->forcePVDialog || 
+           !XtIsManaged(forcePVWindow->forcePVDialog)) return;
 
-	gdata = glink->pgroupData;
+     link =getSelectionLinkArea(forcePVWindow->area);
 
-        str =( char *)XmTextGetString(edit_forceGMask[1]);
-	strcpy(buff1,str);
-	alSetMask(buff1,&mask);
+     if (!link) {
+          string = XmStringCreateSimple("");
+          XtVaSetValues(forcePVWindow->nameTextW,XmNlabelString, string, NULL);
+          XmStringFree(string);
+          return;
+     }
 
-/*	gdata->forcePVMask = mask; */
+     pgcData = link->pgcData;
+     linkType =getSelectionLinkTypeArea(forcePVWindow->area);
 
-        XtFree(str);
+     /* ---------------------------------
+     Group/Channel Name 
+     --------------------------------- */
+     if (linkType == GROUP) string = XmStringCreateSimple("Group Name:");
+     else string = XmStringCreateSimple("Channel Name:");
+     XtVaSetValues(forcePVWindow->nameLabelW, XmNlabelString, string, NULL);
+     XmStringFree(string);
 
-	alOperatorForcePVGroupEvent(glink,mask);
+     if (pgcData->alias){
+          string = XmStringCreateSimple(pgcData->alias);
+     } else {
+          string = XmStringCreateSimple(pgcData->name);
+     }
+     XtVaSetValues(forcePVWindow->nameTextW, XmNlabelString, string, NULL);
+     XmStringFree(string);
 
-	alProcessCA();
+     if (!link) {
+          XmTextFieldSetString(forcePVWindow->forcePVnameTextW,"");
+          string = XmStringCreateSimple("-----");
+          XtVaSetValues(forcePVWindow->forcePVmaskStringLabelW, XmNlabelString, string, NULL);
+          XmStringFree(string);
+          XmToggleButtonSetState(forcePVWindow->forceMaskToggleButtonW[0],FALSE,TRUE);
+          XmToggleButtonSetState(forcePVWindow->forceMaskToggleButtonW[1],FALSE,TRUE);
+          XmToggleButtonSetState(forcePVWindow->forceMaskToggleButtonW[2],FALSE,TRUE);
+          XmToggleButtonSetState(forcePVWindow->forceMaskToggleButtonW[3],FALSE,TRUE);
+          XmToggleButtonSetState(forcePVWindow->forceMaskToggleButtonW[4],FALSE,TRUE);
 
-/*  log on operation file */
+          XmTextFieldSetString(forcePVWindow->forcePVforceValueTextW,"");
+          XmTextFieldSetString(forcePVWindow->forcePVresetValueTextW,"");
+          return;
+     }
 
-	alLogForcePVGroup(glink,OPERATOR);
+     pgcData = link->pgcData;
+     linkType =getSelectionLinkTypeArea(forcePVWindow->area);
+     if (linkType == CHANNEL) pcData = (struct chanData *)pgcData;
+
+     /* ---------------------------------
+     Force Process Variable
+     --------------------------------- */
+     if(strcmp(pgcData->forcePVName,"-") != 0)
+          XmTextFieldSetString(forcePVWindow->forcePVnameTextW,pgcData->forcePVName);
+     else XmTextFieldSetString(forcePVWindow->forcePVnameTextW,"");
+
+     alGetMaskString(pgcData->forcePVMask,buff);
+     string = XmStringCreateSimple(buff);
+     XtVaSetValues(forcePVWindow->forcePVmaskStringLabelW, XmNlabelString, string, NULL);
+     XmStringFree(string);
+
+     mask = pgcData->forcePVMask;
+     if (mask.Cancel == 1 )
+          XmToggleButtonSetState(forcePVWindow->forceMaskToggleButtonW[0],TRUE,TRUE);
+     else XmToggleButtonSetState(forcePVWindow->forceMaskToggleButtonW[0],FALSE,TRUE);
+     if (mask.Disable == 1 )
+          XmToggleButtonSetState(forcePVWindow->forceMaskToggleButtonW[1],TRUE,TRUE);
+     else XmToggleButtonSetState(forcePVWindow->forceMaskToggleButtonW[1],FALSE,TRUE);
+     if (mask.Ack == 1 )
+          XmToggleButtonSetState(forcePVWindow->forceMaskToggleButtonW[2],TRUE,TRUE);
+     else XmToggleButtonSetState(forcePVWindow->forceMaskToggleButtonW[2],FALSE,TRUE);
+     if (mask.AckT == 1 )
+          XmToggleButtonSetState(forcePVWindow->forceMaskToggleButtonW[3],TRUE,TRUE);
+     else XmToggleButtonSetState(forcePVWindow->forceMaskToggleButtonW[3],FALSE,TRUE);
+     if (mask.Log == 1 )
+          XmToggleButtonSetState(forcePVWindow->forceMaskToggleButtonW[4],TRUE,TRUE);
+     else XmToggleButtonSetState(forcePVWindow->forceMaskToggleButtonW[4],FALSE,TRUE);
+
+     sprintf(buff,"%d",pgcData->forcePVValue);
+     XmTextFieldSetString(forcePVWindow->forcePVforceValueTextW,buff);
+
+     sprintf(buff,"%d",pgcData->resetPVValue);
+     XmTextFieldSetString(forcePVWindow->forcePVresetValueTextW,buff);
 
 }
 
+/******************************************************
+  forcePVCreateDialog
+******************************************************/
 
-
-/************************************************************************
-	Update display window after force PV dialog
-************************************************************************/
-static void okForcePVUpdate_callback(w,gclink,call_value)
-Widget  w;
-GCLINK *gclink;
-XmAnyCallbackStruct *call_value;
+static void forcePVCreateDialog(area)
+     ALINK    *area;
 {
-/*
- * if alarm change states due to force  reset silenceCurrent button
-if (psetup.nobeep == FALSE && psetup.beep == FALSE) {
-	XmToggleButtonGadgetSetState(((ALINK *)gclink->pmainGroup->area)->silenceCurrent,FALSE,FALSE);
-	psetup.beep = TRUE;
-	}
- */
-	resetBeep();
-
-/*      awInvokeCallback();  */
-	gclink->pmainGroup->modified = 1;
-
- }
-
-
-/************************************************************************
-	reset group mask callback for PV dialog
-************************************************************************/
-static void okResetPVGroupData_callback(w,glink, call_value)
-Widget  w;
-GLINK *glink;
-XmAnyCallbackStruct *call_value;
-{
-char * str,buff1[6];
-MASK mask;
-struct groupData *gdata;
-
-
-	gdata = glink->pgroupData;
-
-
-        str =( char *)XmTextGetString(edit_forceGMask[1]);
-	strcpy(buff1,str);
-	alSetMask(buff1,&mask);
-
-/*	gdata->resetPVMask = mask; */
-
-        XtFree(str);
-
-	alOperatorResetPVGroupEvent(glink);
-
-	alProcessCA();
-
-/*
-log reset PV group masks on operation log file
-*/
-	alLogResetPVGroup(glink,OPERATOR);
-
-}
- 
-
-
-
-
-/************************************************************************
-	create force channel PV dialog
-************************************************************************/
-Widget createForcePVChanDialog(parent,clink)
-Widget parent;
-CLINK *clink;
-{
-Widget bb, done_button, ok_button,  help_button;
-Arg     wargs[10];
-int     i, n=0,xloc,yloc;
-size_t  len=0;
-struct chanData *cdata;
-
-	cdata = clink->pchanData;
-	
-	strcpy(editors_forcePVC[0],cdata->name);
-	strcpy(editors_forcePVC[1],cdata->forcePVName);
-	sprintf(editors_forcePVC[2],"%d",cdata->forcePVValue);
-	sprintf(editors_forcePVC[3],"%d",cdata->resetPVValue);
- 	alGetMaskString(cdata->forcePVMask,editors_forcePVC[4]);
- 	alGetMaskString(cdata->defaultMask,editors_forcePVC[5]);
-
-
-	n =0;
-        XtSetArg(wargs[n], XmNautoUnmanage, FALSE); n++;
-        XtSetArg(wargs[n], XmNdialogTitle,
-		XmStringLtoRCreate("Force Process Variable",
-		XmSTRING_DEFAULT_CHARSET)); n++;
-        XtSetArg(wargs[n], XmNallowShellResize, FALSE); n++;
-        bb = XmCreateBulletinBoardDialog(parent,"PVC", wargs, n);
-
-
-        for (i=0; i<XtNumber(labels_forcePVC); i++) {
-        n = 0;
-	if (len < strlen(labels_forcePVC[i]))
-		len = strlen(labels_forcePVC[i]);
-        XtSetArg(wargs[n], XmNlabelString, 
-                XmStringCreateLtoR(labels_forcePVC[i],charset)); n++;
-        XtSetArg(wargs[n], XmNx, 10); n++;
-        XtSetArg(wargs[n], XmNy, 10+30*i); n++;
-
-         label_forcePVC[i] = XtCreateManagedWidget(labels_forcePVC[i],
-                 xmLabelGadgetClass, bb,
-                 wargs, n);
-         }
-
-        i++;
-        yloc = 10+30*i;
-
-
-/*
- * get string width in pixel
- */
-  xloc = 10 + len * char_width;
-
-        for (i=0; i<XtNumber(editors_forcePVC); i++) {
-        n = 0;
-        XtSetArg(wargs[n], XmNx, xloc + 10); n++;
-        XtSetArg(wargs[n], XmNy, 10+30*i); n++;
-        XtSetArg(wargs[n], XmNwidth, char_width * 30); n++;
-	if ( i < 1) {
-            XtSetArg(wargs[n],XmNcursorPositionVisible,FALSE); n++;
-	    XtSetArg(wargs[n], XmNeditable, FALSE); n++;
-	}
-
-        edit_forcePVC[i] = XtCreateManagedWidget(editors_forcePVC[i], 
-			xmTextWidgetClass, bb, wargs, n);
-        XmTextSetString(edit_forcePVC[i],editors_forcePVC[i]);
-        }
-
-        /*
-         * add a Accept  button to accept text and to pop down the widget.
-         */
-
-        n = 0;
-        xloc = 10;
-        XtSetArg(wargs[n], XmNx, xloc); n++;
-        XtSetArg(wargs[n], XmNy, yloc); n++;
-        ok_button = XtCreateManagedWidget("Accept", 
-			xmPushButtonGadgetClass, bb, wargs, n);
-        XtAddCallback(ok_button, XmNactivateCallback, 
-			(XtCallbackProc)acceptForcePVChanData_callback, clink);
-        XtAddCallback(ok_button, XmNactivateCallback,
-                                (XtCallbackProc)done_dialog, bb);
-/*
-        XtAddCallback(ok_button, XmNactivateCallback, 
-			okForcePVUpdate_callback, clink);
- */	
-
-
-        /*
-         * add a button to pop down the widget.
-         */
-
-        n = 0;
-        xloc = xloc + 10 * char_width;
-        XtSetArg(wargs[n], XmNx, xloc); n++;
-        XtSetArg(wargs[n], XmNy, yloc); n++;
-        done_button = XtCreateManagedWidget("Cancel", 
-                                xmPushButtonGadgetClass, bb, wargs, n);
-        XtAddCallback(done_button, XmNactivateCallback,
-                                (XtCallbackProc)done_dialog, bb);
-
-        /*
-         * add a button for asking for help.
-         */
-
-        n = 0;
-        xloc = xloc + 10 * char_width;
-        XtSetArg(wargs[n], XmNx, xloc); n++;
-        XtSetArg(wargs[n], XmNy, yloc); n++;
-        help_button = XtCreateManagedWidget(" Help ", 
-			xmPushButtonWidgetClass, bb, wargs, n);
-        XtAddCallback(help_button, XmNactivateCallback, 
-			(XtCallbackProc)xs_help_callback, help_str_forcePVC);
-
-
-        return bb;
-
-
-
-}
-
-
-
-/************************************************************************
-	create force PV dialog box
-************************************************************************/
-Widget createForceCMaskDialog(parent,clink)
-Widget parent;
-CLINK *clink;
-{
-Widget bb, done_button, ok_button, reset_button, help_button;
-Widget label;
-Arg     wargs[10];
-int     i, n=0,xloc,yloc;
-size_t  len=0;
-struct chanData *cdata;
-
-	cdata = clink->pchanData;
-	
-	strcpy(editors_forceCMask[0],cdata->name);
-  	alGetMaskString(cdata->curMask,editors_forceCMask[1]);
-  	alGetMaskString(cdata->forcePVMask,editors_forceCMask[2]);
-	n =0;
-        XtSetArg(wargs[n], XmNautoUnmanage, FALSE); n++;
-        XtSetArg(wargs[n], XmNdialogTitle,
-		XmStringLtoRCreate("Force Mask",
-		XmSTRING_DEFAULT_CHARSET)); n++;
-        XtSetArg(wargs[n], XmNallowShellResize, FALSE); n++;
-        bb = XmCreateBulletinBoardDialog(parent, 
-			"FC", wargs, n);
-
-
-        for (i=0; i<XtNumber(labels_forceCMask); i++) {
-        n = 0;
-	if (len < strlen(labels_forceCMask[i]))
-		len = strlen(labels_forceCMask[i]);
-        XtSetArg(wargs[n], XmNlabelString, 
-                XmStringCreateLtoR(labels_forceCMask[i],charset)); n++;
-        XtSetArg(wargs[n], XmNx, 10); n++;
-        XtSetArg(wargs[n], XmNy, 10+30*i); n++;
-
-         label_forceCMask[i] = XtCreateManagedWidget(labels_forceCMask[i],
-                 xmLabelGadgetClass, bb,
-                 wargs, n);
-         }
-
-	n = 0;
-        XtSetArg(wargs[n], XmNx, 10); n++;
-        XtSetArg(wargs[n], XmNy, 10+30*i); n++;
-         label = XtCreateManagedWidget("C (Cancel)",
-                 xmLabelGadgetClass, bb,
-                 wargs, n);
-	i++;
-	n = 0;
-        XtSetArg(wargs[n], XmNx, 10); n++;
-        XtSetArg(wargs[n], XmNy, 10+30*i); n++;
-         label = XtCreateManagedWidget("D (Disable)",
-                 xmLabelGadgetClass, bb,
-                 wargs, n);
-	i++;
-	n = 0;
-        XtSetArg(wargs[n], XmNx, 10); n++;
-        XtSetArg(wargs[n], XmNy, 10+30*i); n++;
-         label = XtCreateManagedWidget("A (NoAck)",
-                 xmLabelGadgetClass, bb,
-                 wargs, n);
-	i++;
-	n = 0;
-        XtSetArg(wargs[n], XmNx, 10); n++;
-        XtSetArg(wargs[n], XmNy, 10+30*i); n++;
-         label = XtCreateManagedWidget("T (NoAck Transient)",
-                 xmLabelGadgetClass, bb,
-                 wargs, n);
-	i++;
-	n = 0;
-        XtSetArg(wargs[n], XmNx, 10); n++;
-        XtSetArg(wargs[n], XmNy, 10+30*i); n++;
-         label = XtCreateManagedWidget("L (NoLog)",
-                 xmLabelGadgetClass, bb,
-                 wargs, n);
-
-        i++;
-        yloc = 10+30*i;
-
-/*
- * get string width in pixel
- */
-  xloc = 10 + len * char_width;
-
-        for (i=0; i<XtNumber(editors_forceCMask); i++) {
-        n = 0;
-        XtSetArg(wargs[n], XmNx, xloc + 10); n++;
-        XtSetArg(wargs[n], XmNy, 10+30*i); n++;
-        XtSetArg(wargs[n], XmNwidth, char_width * 30); n++;
-	if (i < 2) { 
-                XtSetArg(wargs[n],XmNcursorPositionVisible,FALSE); n++;
-		XtSetArg(wargs[n],XmNeditable,FALSE); n++;
-		}
-
-        edit_forceCMask[i] = XtCreateManagedWidget(editors_forceCMask[i], 
-			xmTextWidgetClass, bb, wargs, n);
-        XmTextSetString(edit_forceCMask[i],editors_forceCMask[i]);
-        }
-
-        /*
-         * add a FORCE  button to accept text and to pop down the widget.
-	 */
-        
-        n = 0;
-        xloc = 10;
-        XtSetArg(wargs[n], XmNx, xloc); n++;
-        XtSetArg(wargs[n], XmNy, yloc); n++;
-        ok_button = XtCreateManagedWidget("Force ", xmPushButtonGadgetClass,
-                                bb, wargs, n);
-        XtAddCallback(ok_button, XmNactivateCallback, 
-                                (XtCallbackProc)okForcePVChanData_callback, clink);
-        XtAddCallback(ok_button, XmNactivateCallback, 
-                                (XtCallbackProc)done_dialog, bb);
-        XtAddCallback(ok_button, XmNactivateCallback,
-                                (XtCallbackProc)okForcePVUpdate_callback, clink);
-
-
-        /*
-         * add a reset button to accept text and to pop down the widget.
-         */
-
-        n = 0;
-        xloc = xloc + 10 * char_width;
-        XtSetArg(wargs[n], XmNx, xloc); n++;
-        XtSetArg(wargs[n], XmNy, yloc); n++;
-        reset_button = XtCreateManagedWidget("Reset ", 
-                                xmPushButtonGadgetClass, bb, wargs, n);
-        XtAddCallback(reset_button, XmNactivateCallback, 
-                                (XtCallbackProc)okResetPVChanData_callback, clink);
-        XtAddCallback(reset_button, XmNactivateCallback, (XtCallbackProc)done_dialog, bb);
-        XtAddCallback(reset_button, XmNactivateCallback, 
-				(XtCallbackProc)okForcePVUpdate_callback, clink);
-	
-
-
-        /*
-         * add a button to pop down the widget.
-         */
-
-        n = 0;
-        xloc = xloc + 10 * char_width;
-        XtSetArg(wargs[n], XmNx, xloc); n++;
-        XtSetArg(wargs[n], XmNy, yloc); n++;
-        done_button = XtCreateManagedWidget("Cancel", 
-                                xmPushButtonGadgetClass, bb, wargs, n);
-        XtAddCallback(done_button, XmNactivateCallback, 
-                                (XtCallbackProc)done_dialog, bb);
-
-        /*
-         * add a button for asking for help.
-         */
-
-
-        n = 0;
-        xloc = xloc + 10 * char_width;
-        XtSetArg(wargs[n], XmNx, xloc); n++;
-        XtSetArg(wargs[n], XmNy, yloc); n++;
-        help_button = XtCreateManagedWidget(" Help ", 
-                                xmPushButtonWidgetClass, bb, wargs, n);
-
-        XtAddCallback(help_button, XmNactivateCallback, 
-                                (XtCallbackProc)xs_help_callback,
-                                help_str_forceCMask);
-
-
-        return bb;
+     struct forcePVWindow *forcePVWindow;
+
+     Widget forcePVDialogShell, forcePVDialog;
+     Widget form;
+     Widget nameLabelW, nameTextW;
+     Widget forceMaskToggleButtonW[ALARM_NMASK];
+     Widget forcePVforceValueLabel,forcePVnameTextW, forcePVforceValueTextW,
+            forcePVresetValueTextW, forcePVresetValueLabel;
+     Widget forcePVmaskStringLabelW, frame2, rowcol2, frame3,
+            rowcol3;
+     Widget forceMaskLabel, forcePVnameLabel;
+     Widget prev;
+     int i;
+     Pixel textBackground;
+     XmString string;
+     static ActionAreaItem forcePV_items[] = {
+         { "Apply",   forcePVApplyCallback,   NULL    },
+         { "Cancel",  forcePVCancelCallback,  NULL    },
+         { "Dismiss", forcePVDismissCallback, NULL    },
+         { "Help",    forcePVHelpCallback,    "Help Button" },
+     };
+     static String maskFields[] = {
+         "Cancel Alarm", 
+         "Disable Alarm",
+         "NoAck Alarm",
+         "NoAck Transient Alarm",
+         "NoLog Alarm"
+     };
+
+     if (!area) return;
+
+     forcePVWindow = (struct forcePVWindow *)area->forcePVWindow;
+
+     if (forcePVWindow && forcePVWindow->forcePVDialog){
+          if (XtIsManaged(forcePVWindow->forcePVDialog)) return;
+          else XtManageChild(forcePVWindow->forcePVDialog);
+     }
+
+     textBackground = bg_pixel[3];
+
+     forcePVWindow = (struct forcePVWindow *)calloc(1,sizeof(struct forcePVWindow)); 
+     area->forcePVWindow = (void *)forcePVWindow;
+     forcePVWindow->area = (void *)area;
+
+     forcePVDialogShell = XtVaCreatePopupShell("Force Process Variable",
+         transientShellWidgetClass, area->toplevel, NULL, 0);
+
+     forcePVDialog = XtVaCreateWidget("forcePVDialog",
+         xmPanedWindowWidgetClass, forcePVDialogShell,
+         XmNsashWidth,  1,
+         XmNsashHeight, 1,
+         XmNuserData,   area,
+         NULL);
+
+     form = XtVaCreateWidget("control_area", 
+          xmFormWidgetClass, forcePVDialog,
+          NULL);
+
+     /* ---------------------------------
+     Group/Channel Name 
+     --------------------------------- */
+     nameLabelW = XtVaCreateManagedWidget("nameLabelW",
+          xmLabelGadgetClass, form,
+          XmNalignment,       XmALIGNMENT_END,
+          XmNtopAttachment,   XmATTACH_FORM,
+          XmNrightAttachment, XmATTACH_POSITION,
+          XmNrightPosition,   50,
+          XmNrecomputeSize,   True,
+          NULL);
+
+     nameTextW = XtVaCreateManagedWidget("nameTextW",
+          xmLabelGadgetClass, form,
+          XmNalignment,       XmALIGNMENT_BEGINNING,
+          XmNtopAttachment,   XmATTACH_FORM,
+          XmNleftAttachment,  XmATTACH_POSITION,
+          XmNleftPosition,    50,
+          XmNrecomputeSize,   True,
+          NULL);
+
+
+     /* ---------------------------------
+     Force Process Variable
+     --------------------------------- */
+     frame2 = XtVaCreateManagedWidget("frame2",
+          xmFrameWidgetClass, form,
+          XmNtopAttachment,   XmATTACH_WIDGET,
+          XmNtopWidget,       nameLabelW,
+          XmNleftAttachment,  XmATTACH_FORM,
+          XmNrightAttachment,  XmATTACH_FORM,
+          XmNbottomAttachment,  XmATTACH_FORM,
+          NULL);
+
+     rowcol2 = XtVaCreateWidget("rowcol2",
+          xmFormWidgetClass, frame2,
+          XmNspacing,          0,
+          XmNmarginHeight,     0,
+          NULL);
+
+     string = XmStringCreateSimple("Force Process Variable Name    ");
+     forcePVnameLabel = XtVaCreateManagedWidget("forcePVnameLabel",
+          xmLabelGadgetClass, rowcol2,
+          XmNlabelString,            string,
+          XmNtopAttachment,          XmATTACH_FORM,
+          XmNleftAttachment,         XmATTACH_FORM,
+          NULL);
+     XmStringFree(string);
+
+     forcePVnameTextW = XtVaCreateManagedWidget("forcePVnameTextW",
+          xmTextFieldWidgetClass, rowcol2,
+          XmNspacing,                0,
+          XmNmarginHeight,           0,
+          XmNcolumns,                30,
+          XmNmaxLength,              PVNAME_SIZE,
+          XmNbackground,             textBackground,
+          XmNtopAttachment,          XmATTACH_WIDGET,
+          XmNtopWidget,              forcePVnameLabel,
+          XmNleftAttachment,         XmATTACH_FORM,
+          NULL);
+
+     XtAddCallback(forcePVnameTextW, XmNactivateCallback,
+          (XtCallbackProc)XmProcessTraversal, (XtPointer)XmTRAVERSE_NEXT_TAB_GROUP);
+
+     string = XmStringCreateSimple("Force Mask:  ");
+     forceMaskLabel = XtVaCreateManagedWidget("forceMaskLabel",
+          xmLabelGadgetClass, rowcol2,
+          XmNlabelString,            string,
+          XmNtopAttachment,          XmATTACH_WIDGET,
+          XmNtopWidget,              forcePVnameTextW,
+          XmNleftAttachment,         XmATTACH_FORM,
+          NULL);
+     XmStringFree(string);
+     prev = forceMaskLabel;
+
+     string = XmStringCreateSimple("-----");
+     forcePVmaskStringLabelW = XtVaCreateManagedWidget("forcePVmaskStringLabelW",
+          xmLabelGadgetClass, rowcol2,
+          XmNlabelString,            string,
+          XmNtopAttachment,          XmATTACH_WIDGET,
+          XmNtopWidget,              forcePVnameTextW,
+          XmNleftAttachment,         XmATTACH_WIDGET,
+          XmNleftWidget,             forceMaskLabel,
+          NULL);
+     XmStringFree(string);
+
+     frame3 = XtVaCreateManagedWidget("frame3",
+          xmFrameWidgetClass, rowcol2,
+          XmNtopAttachment,          XmATTACH_WIDGET,
+          XmNtopWidget,              prev,
+          XmNleftAttachment,         XmATTACH_FORM,
+          NULL);
+     prev = frame3;
+
+     rowcol3 = XtVaCreateWidget("rowcol3",
+         xmRowColumnWidgetClass, frame3,
+         XmNspacing,          0,
+         XmNmarginHeight,     0,
+         NULL);
+
+     for (i = 0; i < ALARM_NMASK; i++){
+          forceMaskToggleButtonW[i] = XtVaCreateManagedWidget(maskFields[i],
+             xmToggleButtonGadgetClass, rowcol3,
+             XmNmarginHeight,     0,
+             XmNuserData,         (XtPointer)forcePVmaskStringLabelW,
+             NULL);
+          XtAddCallback(forceMaskToggleButtonW[i], XmNvalueChangedCallback,
+               (XtCallbackProc)forcePVMaskChangeCallback, (XtPointer)i);
+     }
+
+     XtManageChild(rowcol3);
+
+     string = XmStringCreateSimple("Force Value: ");
+     forcePVforceValueLabel = XtVaCreateManagedWidget("forcePVvalue",
+          xmLabelGadgetClass, rowcol2,
+          XmNlabelString,            string,
+          XmNtopAttachment,          XmATTACH_WIDGET,
+          XmNtopWidget,              prev,
+          XmNleftAttachment,         XmATTACH_FORM,
+          NULL);
+     XmStringFree(string);
+
+     forcePVforceValueTextW = XtVaCreateManagedWidget("forcePVforceValueTextW",
+          xmTextFieldWidgetClass, rowcol2,
+          XmNspacing,                0,
+          XmNmarginHeight,           0,
+          XmNcolumns,                5,
+          XmNmaxLength,              5,
+          XmNbackground,             textBackground,
+          XmNtopAttachment,          XmATTACH_WIDGET,
+          XmNtopWidget,              prev,
+          XmNleftAttachment,         XmATTACH_WIDGET,
+          XmNleftWidget,             forcePVforceValueLabel,
+          NULL);
+
+     XtAddCallback(forcePVforceValueTextW, XmNactivateCallback,
+          (XtCallbackProc)XmProcessTraversal, (XtPointer)XmTRAVERSE_NEXT_TAB_GROUP);
+
+     string = XmStringCreateSimple("Reset Value: ");
+     forcePVresetValueLabel = XtVaCreateManagedWidget("forcePVresetValueLabel",
+          xmLabelGadgetClass, rowcol2,
+          XmNlabelString,            string,
+          XmNtopAttachment,          XmATTACH_WIDGET,
+          XmNtopWidget,              forcePVforceValueLabel,
+          XmNleftAttachment,         XmATTACH_FORM,
+          NULL);
+     XmStringFree(string);
+
+     forcePVresetValueTextW = XtVaCreateManagedWidget("forcePVresetValueTextW",
+          xmTextFieldWidgetClass, rowcol2,
+          XmNspacing,                0,
+          XmNmarginHeight,           0,
+          XmNcolumns,                5,
+          XmNmaxLength,              5,
+          XmNbackground,             textBackground,
+          XmNtopAttachment,          XmATTACH_WIDGET,
+          XmNtopWidget,              forcePVforceValueTextW,
+          XmNleftAttachment,         XmATTACH_WIDGET,
+          XmNleftWidget,             forcePVresetValueLabel,
+          NULL);
+
+     XtAddCallback(forcePVresetValueTextW, XmNactivateCallback,
+          (XtCallbackProc)XmProcessTraversal, (XtPointer)XmTRAVERSE_NEXT_TAB_GROUP);
+
+     /* RowColumn is full -- now manage */
+     XtManageChild(rowcol2);
+
+     /* form is full -- now manage */
+     XtManageChild(form);
+
+     /* Set the client data "Apply", "Cancel", "Dismiss" and "Help" button's callbacks. */
+     forcePV_items[0].data = (XtPointer)forcePVWindow;
+     forcePV_items[1].data = (XtPointer)forcePVWindow;
+     forcePV_items[2].data = (XtPointer)forcePVWindow;
+     forcePV_items[3].data = (XtPointer)forcePVWindow;
+
+     (void)createActionButtons(forcePVDialog, forcePV_items, XtNumber(forcePV_items));
+
+     XtManageChild(forcePVDialog);
+
+     forcePVWindow->forcePVDialog = forcePVDialog;
+     forcePVWindow->nameLabelW = nameLabelW;
+     forcePVWindow->nameTextW = nameTextW;
+     forcePVWindow->forcePVnameTextW = forcePVnameTextW;
+     forcePVWindow->forcePVmaskStringLabelW = forcePVmaskStringLabelW;
+     forcePVWindow->forcePVforceValueTextW = forcePVforceValueTextW;
+     forcePVWindow->forcePVresetValueTextW = forcePVresetValueTextW;
+     for (i = 0; i < ALARM_NMASK; i++){
+          forcePVWindow->forceMaskToggleButtonW[i] = forceMaskToggleButtonW[i];
+     }
+
+     /* update forcePVWindow link info */
+     forcePVUpdateDialogWidgets(forcePVWindow);
+
+     XtRealizeWidget(forcePVDialogShell);
 
 }
 
+/******************************************************
+  forcePVMaskChangeCallback
+******************************************************/
 
-
-
-/************************************************************************
-	getdata from the  force channel PV dialog
-************************************************************************/
-static void acceptForcePVChanData_callback(w,clink, call_value)
-Widget  w;
-CLINK *clink;
-XEvent *call_value;
+static void forcePVMaskChangeCallback(widget, index, cbs)
+     Widget widget;
+     int index;
+     XmAnyCallbackStruct *cbs;
 {
-short value;
-char * str,buff1[6];
-MASK mask;
-struct chanData *cdata;
+     char *mask;
+     Widget maskWidget;
+     XmString string;
 
-	cdata = clink->pchanData;
- 
-        str = ( char *)XmTextGetString(edit_forcePVC[2]);
-        value = atoi(str);
-	cdata->forcePVValue = value;
+     XtVaGetValues(widget, XmNuserData, &maskWidget, NULL);
 
-        str = ( char *)XmTextGetString(edit_forcePVC[3]);
-        value = atoi(str);
-	cdata->resetPVValue = value;
+     XtVaGetValues(maskWidget, XmNlabelString, &string, NULL);
+     XmStringGetLtoR(string, XmFONTLIST_DEFAULT_TAG, &mask);
+     XmStringFree(string);
 
-        str =( char *)XmTextGetString(edit_forcePVC[4]);
-	strcpy(buff1,str);
-	alSetMask(buff1,&mask);
-	cdata->forcePVMask = mask;
+     if (!XmToggleButtonGadgetGetState(widget)) {
+          mask[index] = '-';
+     }
+     else {
+          switch (index) {
+               case ALARMCANCEL:
+                    mask[index] = 'C';
+                    break;
+               case ALARMDISABLE:
+                    mask[index] = 'D';
+                    break;
+               case ALARMACK:
+                    mask[index] = 'A';
+                    break;
+               case ALARMACKT:
+                    mask[index] = 'T';
+                    break;
+               case ALARMLOG:
+                    mask[index] = 'L';
+                    break;
+          }
+     }
 
-        str =( char *)XmTextGetString(edit_forcePVC[5]);
-	strcpy(buff1,str);
-	alSetMask(buff1,&mask);
-	cdata->defaultMask = mask;
+     string = XmStringCreateSimple(mask);
+     XtVaSetValues(maskWidget, XmNlabelString, string, NULL);
+     XmStringFree(string);
+}
 
-/* New forcePVName replace CA search and event */
+/******************************************************
+  forcePVApplyCallback
+******************************************************/
 
-        str = ( char *)XmTextGetString(edit_forcePVC[1]);
-	if (strlen(str) > (size_t)1 && strcmp(str,cdata->forcePVName) != 0) {
-		alReplaceChanForceEvent(clink,str);
-		}
+static void forcePVApplyCallback(widget, forcePVWindow, cbs)
+     Widget widget;
+     struct forcePVWindow *forcePVWindow;
+     XmAnyCallbackStruct *cbs;
+{
+     short f1;
+     int rtn;
+     XmString string;
+     char *buff;
+     struct gcData *pgcData;
+     GCLINK *link;
+     int linkType;
 
-        XtFree(str);
+     link =getSelectionLinkArea(forcePVWindow->area);
+     if (!link) return;
+     linkType =getSelectionLinkTypeArea(forcePVWindow->area);
+     pgcData = link->pgcData;
 
-/*	alOperatorForcePVChanEvent(clink,cdata->forcePVMask); */
+     /* ---------------------------------
+     Force Process Variable
+     --------------------------------- */
+     /*  update link field  - forcePVMask */
+     XtVaGetValues(forcePVWindow->forcePVmaskStringLabelW, XmNlabelString, &string, NULL);
+     XmStringGetLtoR(string,XmFONTLIST_DEFAULT_TAG,&buff);
+     XmStringFree(string);
+     alSetMask(buff,&(pgcData->forcePVMask));
 
-	alProcessCA();
+     /*  update link field  - forcePVValue */
+     buff = XmTextFieldGetString(forcePVWindow->forcePVforceValueTextW);
+     rtn = sscanf(buff,"%hd",&f1);
+     if (rtn == 1) pgcData->forcePVValue = f1;
+     else pgcData->forcePVValue = 1;
 
-/*  log force PV chan on operation file */
+     /*  update link field  - resetPVValue */
+     buff = XmTextFieldGetString(forcePVWindow->forcePVresetValueTextW);
+     rtn = sscanf(buff,"%hd",&f1);
+     if (rtn == 1) pgcData->resetPVValue = f1;
+     else pgcData->resetPVValue = 0;
 
-	alLogForcePVChan(clink,OPERATOR);
+     /*  update link field  - forcePVName */
+     buff = XmTextFieldGetString(forcePVWindow->forcePVnameTextW);
+     if (strlen(buff) > (size_t)1 && strcmp(buff,pgcData->forcePVName) != 0) {
+          if (linkType == GROUP) alReplaceGroupForceEvent((GLINK *)link,buff);
+          else alReplaceChanForceEvent((CLINK *)link,buff);
+     }
+
+     /*  log on operation file */
+     if (linkType == GROUP) alLogForcePVGroup((GLINK *)link,OPERATOR);
+     else alLogForcePVChan((CLINK *)link,OPERATOR);
+
+
+     /* ---------------------------------
+     Update dialog windows
+     --------------------------------- */
+     /*  update forcePVerties dialog window field */
+     axUpdateDialogs(forcePVWindow->area);
+
+}
+
+/******************************************************
+  forcePVHelpCallback
+******************************************************/
+
+static void forcePVHelpCallback(widget, forcePVWindow, cbs)
+     Widget widget;
+     struct forcePVWindow *forcePVWindow;
+     XmAnyCallbackStruct *cbs;
+{
+     char *message1 =
+         "This dialog window allows an operator to specify or modify the forcePV\n"
+         "values for a selected group or channel.\n"
+         "  \n"
+	     "NOTE: The force value must be set to a value different from the reset value.\n"
+         "  \n"
+         "Press the Apply   button to change the forcePV values for the group or channel.\n"
+	     "Press the Cancel button to abort current change.\n"
+         "Press the Dismiss button to close the modify Force PV dialog window.\n"
+         "Press the Help    button to get this help description window.\n"
+            ;
+     char *message2 = "  ";
+
+     createDialog(widget,XmDIALOG_INFORMATION, message1,message2);
+}
+
+/******************************************************
+  forcePVDismissCallback
+******************************************************/
+
+static void forcePVDismissCallback(widget, forcePVWindow, cbs)
+     Widget widget;
+     struct forcePVWindow *forcePVWindow;
+     XmAnyCallbackStruct *cbs;
+{
+     Widget forcePVDialog;
+
+     forcePVDialog = forcePVWindow->forcePVDialog;
+     XtUnmanageChild(forcePVDialog);
+     XUnmapWindow(XtDisplay(forcePVDialog), XtWindow(XtParent(forcePVDialog)));
+     if (forcePVWindow->menuButton)
+          XtVaSetValues(forcePVWindow->menuButton, XmNset, FALSE, NULL);
+}
+
+/******************************************************
+  forcePVCancelCallback
+******************************************************/
+
+static void forcePVCancelCallback(widget, forcePVWindow, cbs)
+     Widget widget;
+     struct forcePVWindow *forcePVWindow;
+     XmAnyCallbackStruct *cbs;
+{
+     forcePVUpdateDialog((ALINK *)(forcePVWindow->area));
 }
 
 
-/************************************************************************
-	 force channel PV mask
-************************************************************************/
-static void okForcePVChanData_callback(w,clink, call_value)
-Widget  w;
-CLINK *clink;
-XEvent *call_value;
-{
-char * str,buff1[6];
-MASK mask;
-struct chanData *cdata;
+/******************************************************
+  alOperatorForcePVChanEvent
+******************************************************/
 
-	cdata = clink->pchanData;
-
-        str =( char *)XmTextGetString(edit_forceCMask[2]);
-	strcpy(buff1,str);
-	alSetMask(buff1,&mask);
-
-/*	cdata->forcePVMask = mask; */
- 
-	XtFree(str);
-
-	alOperatorForcePVChanEvent(clink,mask);
-
-	alProcessCA();
-
-/* log reset PV chan on operation file */
-
-	alLogResetPVChan(clink,OPERATOR);
-
-}
- 
-
-
-
-
-/************************************************************************
-	get reset data from the  force channel PV dialog
-************************************************************************/
-static void okResetPVChanData_callback(w,clink, call_value)
-Widget  w;
-CLINK *clink;
-XEvent *call_value;
-{
-struct chanData *cdata;
-
-	cdata = clink->pchanData;
-
-/*
-        str =( char *)XmTextGetString(edit_forceCMask[2]);
-	strcpy(buff1,str);
-	alSetMask(buff1,&mask);
-	cdata->forcePVMask = mask; 
-	XtFree(str);
- */
-
-	alOperatorForcePVChanEvent(clink,cdata->defaultMask);
-
-	alProcessCA();
-
-/* log reset PV chan on operation file */
-
-	alLogResetPVChan(clink,OPERATOR);
-
-}
- 
-
-
-
-/*********************************************************************** *
- * This function forces / resets channel mask and updates all 
- * the parent groups mask values.
- ***********************************************************************/
 void alOperatorForcePVChanEvent(clink,pvMask)
-CLINK *clink;
-MASK pvMask;
+     CLINK *clink;
+     MASK pvMask;
 {
-struct chanData *cdata;
-char s1[6],s2[6];
+     struct chanData *cdata;
+     char s1[6],s2[6];
  
-        cdata = clink->pchanData;
+     cdata = clink->pchanData;
 
-	alGetMaskString(cdata->curMask,s1);
-	alGetMaskString(pvMask,s2);
-/* 
- * if value = cdata->forcePVValue  force channel mask
- */
+     alGetMaskString(cdata->curMask,s1);
+     alGetMaskString(pvMask,s2);
 
-        if (strcmp(s1,s2) != 0)  {
-                
-                /*alOrMask(&cdata->curMask,&mask);
-                */
-
-                alChangeChanMask(clink,pvMask);
-
-                }
-}
-
-
-/*********************************************************************** 
- * This function   forces the masks of  all the channels in
- * the glink.  This function will loop through all the channels belonging 
- * to this group and update all the group mask according to input mask.
- ***********************************************************************/
-void alOperatorForcePVGroupEvent(glink,mask)  
-GLINK *glink;
-MASK mask;
-{
-struct groupData *gdata;
-GLINK *subgroup;
-SNODE *pt;
-
-        if (glink == NULL) return;
-
-        gdata = glink->pgroupData;
-
-        pt = sllFirst(&glink->chanList);
-
-/*
- * for each channel force to group mask
- */
- 
-              alChangeGroupMask(glink,mask);
-
-
-
-/*
- * for each subgroup in this group
- */
-
-        pt = sllFirst(&glink->subGroupList);
-
-        while (pt) {                /* force all the subgroup mask */
-                subgroup = (GLINK *)pt;
-                alOperatorForcePVGroupEvent(subgroup,mask);
-                pt = sllNext(pt);
-                }
-
+     if (strcmp(s1,s2) != 0) {
+          alChangeChanMask(clink,pvMask);
+     }
 
 }
 
 
-/*********************************************************************** 
- * This function   resets the masks of  all the channels in
- * the glink.  This function will loop through all the channels belonging 
- * to this group and update all the group mask according to input mask.
- ***********************************************************************/
-void alOperatorResetPVGroupEvent(glink)  
-GLINK *glink;
-{
-struct groupData *gdata;
-GLINK *subgroup;
-CLINK *clink;
-SNODE *pt;
-MASK mask;
- 
-        if (glink == NULL) return;
-
-        gdata = glink->pgroupData;
-
-        pt = sllFirst(&glink->chanList);
-
-/*
- * for each channel reset to default mask
- */
-	while (pt) {
-		clink = (CLINK *)pt;
-		mask = clink->pchanData->defaultMask;
-		alChangeChanMask(clink,mask);
-		pt = sllNext(pt);
-		}
-               
-
-
-/*
- * for each subgroup in this group
- */
-
-        pt = sllFirst(&glink->subGroupList);
-
-        while (pt) {                /* force all the subgroup mask */
-                subgroup = (GLINK *)pt;
-                alOperatorResetPVGroupEvent(subgroup);
-                pt = sllNext(pt);
-                }
-
-
-}

@@ -1,8 +1,16 @@
 /*
  $Log$
- Revision 1.4  1995/05/30 16:04:02  jba
- Removed references to ? as a valid input param since they do NOT work.
+ Revision 1.5  1995/10/20 16:50:38  jba
+ Modified Action menus and Action windows
+ Renamed ALARMCOMMAND to SEVRCOMMAND
+ Added STATCOMMAND facility
+ Added ALIAS facility
+ Added ALARMCOUNTFILTER facility
+ Make a few bug fixes.
 
+ * Revision 1.4  1995/05/30  16:04:02  jba
+ * Removed references to ? as a valid input param since they do NOT work.
+ *
  * Revision 1.3  1995/01/09  19:38:29  jba
  * For loop changed to while loop wo HP compile would work.
  *
@@ -50,8 +58,10 @@ static char *sccsId = "@(#)file.c	1.14\t2/3/94";
 
 #define INCerrMdefh
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <dirent.h>
+#include <ctype.h>
 
 #include <Xm/Xm.h>
 
@@ -179,7 +189,7 @@ void exit_quit(w, area, call_data)
 char *shortfile(name)
 char *name;
 {
-int len,i;
+int len;
 char *shortname;
 
 	len = strlen(name);
@@ -191,6 +201,7 @@ char *shortname;
         }
         len--;
     }
+    return shortname;
 }
 
 /******************************************************
@@ -204,7 +215,7 @@ int checkFilename(filename,fileType)
      FILE *tt;
      DIR *directory;
 
-     if ( filename[0] == '\0') return 5;
+     if ( filename[0] == '\0') return 2;
 
      if ( DEBUG == 1 )
           printf("\nFilename is %s \n", filename);
@@ -220,36 +231,33 @@ int checkFilename(filename,fileType)
           case FILE_CONFIG_INSERT:
                tt = fopen(filename,"r");
                if (!tt){
-                    fclose(tt);
                     return 2;
                }
                break;
 
           case FILE_SAVEAS:
                tt = fopen(filename,"r");
-               if (!tt){
-                    fclose(tt);
+               if (tt){
                     return 3;
                }
-               fclose(tt);
 
           case FILE_SAVE:
           case FILE_SAVEAS_OK:
           case FILE_PRINT:
                tt = fopen(filename,"w");
                if (!tt){
-                    fclose(tt);
                     return 4;
                }
+               fclose(tt);
                break;
 
           case FILE_OPMOD:
           case FILE_ALARMLOG:
                tt = fopen(filename,"a");
                if (!tt){
-                    fclose(tt);
                     return 4;
                }
+               break;
         }
 
         fclose(tt);
@@ -279,10 +287,7 @@ void fileSetupCallback(widget, client_data, cbs)
      XmFileSelectionBoxCallbackStruct *cbs;
 {
      char *filename;
-     DIR *dirp;
-     FILE *tt;
      ALINK *area;
-     char str[NAMEDEFAULT_SIZE+ 50];
      int pgm;
 
 
@@ -314,8 +319,8 @@ void fileSetup(filename,area,fileType,programId, widget)
      int    error;
      char   fileTypeString[NAMEDEFAULT_SIZE];
      char   str[MAX_STRING_LENGTH];
-     char  *dir;
-     char  *pattern;
+     char  *dir=0;
+     char  *pattern=0;
      FILE  *tt;
      Widget fileSelectionBox;
 
@@ -394,10 +399,8 @@ void fileSetup(filename,area,fileType,programId, widget)
                     break;
 
                case 4: 
-               case 5: 
-                    createDialog(fileSelectionBox,XmDIALOG_ERROR,filename," open error.");
+                    createDialog(fileSelectionBox,XmDIALOG_ERROR,filename," write error.");
                     break;
-     
           }
      } else {
           /* unmanage the fileSelection dialog */
@@ -479,14 +482,16 @@ void fileSetupInit( widget, argc, argv)
 {
      int    input_error;
      int    c, len;
-     char   configFile[NAMEDEFAULT_SIZE] = "\0";
-     char   logFile[NAMEDEFAULT_SIZE]= DEFAULT_ALARM;
-     char   opModFile[NAMEDEFAULT_SIZE] = DEFAULT_OPMOD;
-     char   *configDir = NULL;
-     char   *logDir = NULL;
+     char   configFile[NAMEDEFAULT_SIZE];
+     char   logFile[NAMEDEFAULT_SIZE];
+     char   opModFile[NAMEDEFAULT_SIZE];
      char   *name = NULL;
      static struct timeval timeout = {
           FDMGR_SEC_TIMEOUT, FDMGR_USEC_TIMEOUT};
+
+     strcpy(configFile,"");
+     strcpy(logFile,DEFAULT_ALARM);
+     strcpy(opModFile,DEFAULT_OPMOD);
 
      programId = ALH;
      programName = (char *)calloc(1,4);
@@ -497,7 +502,6 @@ void fileSetupInit( widget, argc, argv)
      if (psetup.configDir && !opendir(psetup.configDir)){
           createDialog(widget,XmDIALOG_WARNING,psetup.configDir,
                ": ALARMHANDLER directory not found");
-          configDir = NULL;
      }
 
      /* get optional command line parameters */
@@ -515,7 +519,6 @@ void fileSetupInit( widget, argc, argv)
                   if (psetup.configDir && !opendir(psetup.configDir)){
                        createDialog(widget,XmDIALOG_WARNING,psetup.configDir,
                             ": Config directory not found");
-                       configDir = NULL;
                   }
                   strncpy(psetup.configFile,psetup.configDir,NAMEDEFAULT_SIZE);
                   strcat(psetup.configFile,"/");
@@ -532,7 +535,6 @@ void fileSetupInit( widget, argc, argv)
                   if (psetup.logDir && !opendir(psetup.logDir)){
                        createDialog(widget,XmDIALOG_WARNING,psetup.logDir,
                             ": Config directory not found");
-                       logDir = NULL;
                   }
                   strncpy(psetup.logFile,psetup.logDir,NAMEDEFAULT_SIZE-1);
                   strcat(psetup.logFile,"/");

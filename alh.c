@@ -1,8 +1,16 @@
 /*
  $Log$
- Revision 1.3  1994/09/14 21:11:13  jba
- Modified  to work with new CONFIG files
+ Revision 1.4  1995/10/20 16:50:05  jba
+ Modified Action menus and Action windows
+ Renamed ALARMCOMMAND to SEVRCOMMAND
+ Added STATCOMMAND facility
+ Added ALIAS facility
+ Added ALARMCOUNTFILTER facility
+ Make a few bug fixes.
 
+ * Revision 1.3  1994/09/14  21:11:13  jba
+ * Modified  to work with new CONFIG files
+ *
  * Revision 1.2  1994/06/22  21:16:45  jba
  * Added cvs Log keyword
  *
@@ -139,6 +147,7 @@ void main(argc, argv)
 
                     if ( area->pmainGroup->modified ){
                          if ( area->mapped && area->managed){
+                               invokeDialogUpdate(area);
                                invokeSubWindowUpdate(area->treeWindow);
                                invokeSubWindowUpdate(area->groupWindow);
                          }

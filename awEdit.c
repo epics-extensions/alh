@@ -1,8 +1,16 @@
 /*
  $Log$
- Revision 1.3  1995/05/31 20:34:08  jba
- Added name selection and arrow functions to Group window
+ Revision 1.4  1995/10/20 16:50:15  jba
+ Modified Action menus and Action windows
+ Renamed ALARMCOMMAND to SEVRCOMMAND
+ Added STATCOMMAND facility
+ Added ALIAS facility
+ Added ALARMCOUNTFILTER facility
+ Make a few bug fixes.
 
+ * Revision 1.3  1995/05/31  20:34:08  jba
+ * Added name selection and arrow functions to Group window
+ *
  * Revision 1.2  1994/06/22  21:16:56  jba
  * Added cvs Log keyword
  *
@@ -214,8 +222,8 @@ void editCutLink( area, link, linkType)
           markSelectedWidget(groupWindow,0);
           markSelection(groupWindow, 0);
 
-          /* update property window */
-          propUpdateDialog(area, 0, 0);
+          /* update dialog windows */
+          axUpdateDialogs(area);
 
           /* adjust lines of treeWindow*/
           line= treeLine;
@@ -283,8 +291,8 @@ void editCutLink( area, link, linkType)
           area->selectionLink = treeWindow->selectionLink;
           area->selectionType = GROUP;
 
-          /* update property window */
-          propUpdateDialog(area, area->selectionLink, area->selectionType);
+          /* update dialog windows */
+          axUpdateDialogs(area);
 
           /*  adjust treeWindow  */
           if (treeLine) {
@@ -410,14 +418,8 @@ void editInsertFile(filename,area)
      char *filename;
      ALINK *area;
 {
-     void   *selectLink;
-     struct subWindow *treeWindow;
      GCLINK *newLink;
      GLINK *linkHold;
-     GCLINK *parentLink;
-     GCLINK *priorLink;
-     SNODE *pt;
-
 
      linkHold = (GLINK *)sllFirst(area->pmainGroup);
      alGetConfig(area->pmainGroup,filename,CA_CONNECT_NO);
@@ -443,19 +445,14 @@ void editPasteLink(area, newLink, linkType)
      int linkType;
 {
      struct subWindow  *treeWindow;
-     struct subWindow  *groupWindow;
      GCLINK *parentLink;
-     GCLINK *priorLink;
      GCLINK *selectLink;
      int    selectType;
-     SNODE *pt;
-     SNODE *firstLink;
 
      selectLink = (GCLINK *)area->selectionLink;
      selectType = area->selectionType;
 
      treeWindow = area->treeWindow;
-     groupWindow = area->groupWindow;
 
      editUndoSet( NULL, linkType, (GCLINK *)newLink, MENU_EDIT_UNDO_CUT_NOSELECT, DELETE);
 
@@ -478,7 +475,7 @@ void editPasteLink(area, newLink, linkType)
           if ( selectLink == parentLink || selectLink == NULL  || selectType == GROUP){
                alPrecedeChan((GLINK *)parentLink, NULL, (CLINK *)newLink);
           } else {
-               alPrecedeChan((GLINK *)parentLink, (GLINK *)selectLink, (GLINK *)newLink);
+               alPrecedeChan((GLINK *)parentLink, (CLINK *)selectLink, (CLINK *)newLink);
           }
 
           awViewNewChan(area, (GCLINK *)newLink);
@@ -492,34 +489,3 @@ void editPasteLink(area, newLink, linkType)
           awRowWidgets(newLink->parent->lineGroupW,area);
 
 }
-/*
-printf("editCutLink entered: link=%d linkType=%d\n",link,linkType);
-printf("editCutLink treeWindow selection: link=%d linkType=%d\n",link,linkType);
-printf("editCutLink groupWindow selection: link=%d linkType=%d\n",link,linkType);
-printf("editCutLink not a selection: link=%d linkType=%d\n",link,linkType);
-printf("************** editCutCallback:  link->pgcData->name=%s \n", link->pgcData->name);
-printf ("treeLine = %d \n",treeLine);
-printf ("groupLine = %d \n",groupLine);
-printf ("treeWindow selection \n");
-printf ("groupWindow selection \n");
-printf ("adjusting lines of treeWindow:  count = %d \n", count);
-printf ("adjusting lines of treeWindow:  line->link = %d \n",line->link);
-if (line->link) printf ("------------------ line->link name = %s \n",((GCLINK *)line->link)->pgcData->name);
-printf ("adjusting lines of treeWindow:  count = %d \n", count);
-printf ("adjusting lines of treeWindow:  line->link = %d \n",line->link);
-if (line->link) printf ("------------------ line->link name = %s \n",((GCLINK *)line->link)->pgcData->name);
-printf("editCutCallback:  area->selectionLink=%d \n",area->selectionLink);
-printf("editCutCallback:  treeWindow->selectionLink=%d \n",treeWindow->selectionLink);
-printf("editCutCallback:  groupWindow->selectionLink=%d \n",groupWindow->selectionLink);
-if (area->selectionLink)
-printf("editCutCallback:treeSelection:  area->selectionLink->pgcData->name=%s linkType=%d\n",
- ((GCLINK *)area->selectionLink)->pgcData->name,area->selectionType);
-printf("groupSelection:  area->selectionLink->pgcData->name=%s linkType=%d\n",
-((GCLINK *)area->selectionLink)->pgcData->name,area->selectionType);
-printf ("line = %d \n",line);
-printf ("linkType = %d  GROUP=%d \n",line->linkType,GROUP);
-printf (" after alRemoveGroup   link = %d \n",link);
-printf ("linkType = %d  CHANNEL=%d \n",line->linkType,CHANNEL);
-printf (" after alRemoveChan   link = %d \n",link);
-*/
-

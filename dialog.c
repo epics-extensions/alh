@@ -1,8 +1,16 @@
 /*
  $Log$
- Revision 1.4  1995/06/22 19:40:23  jba
- Started cleanup of file.
+ Revision 1.5  1995/10/20 16:50:33  jba
+ Modified Action menus and Action windows
+ Renamed ALARMCOMMAND to SEVRCOMMAND
+ Added STATCOMMAND facility
+ Added ALIAS facility
+ Added ALARMCOUNTFILTER facility
+ Make a few bug fixes.
 
+ * Revision 1.4  1995/06/22  19:40:23  jba
+ * Started cleanup of file.
+ *
  * Revision 1.3  1995/02/28  16:43:43  jba
  * ansi c changes
  *
@@ -119,6 +127,7 @@ Widget createFileDialog(parent,okCallback,okParm,cancelCallback,cancelParm,userP
      XmString        Xtitle;
      XmString        Xpattern;
      XmString        Xdirectory;
+     XmString        Xcurrentdir=0;
      static Widget   fileselectdialog = 0; /* make it static for reuse */
      static void *oldOk= NULL;
      static void *oldCancel=NULL;
@@ -149,6 +158,7 @@ Widget createFileDialog(parent,okCallback,okParm,cancelCallback,cancelParm,userP
                NULL);
           XtAddCallback(fileselectdialog,XmNhelpCallback,(XtCallbackProc)helpCallback,(XtPointer)NULL);
      } else {
+          XtVaGetValues(fileselectdialog, XmNdirectory, &Xcurrentdir, NULL);
           if (oldOk)     XtRemoveCallback(fileselectdialog,XmNokCallback,
                               (XtCallbackProc)oldOk     ,(XtPointer)oldOkParm);
           if (oldCancel) XtRemoveCallback(fileselectdialog,XmNcancelCallback,
@@ -157,7 +167,8 @@ Widget createFileDialog(parent,okCallback,okParm,cancelCallback,cancelParm,userP
 
      Xtitle = XmStringCreateSimple(title);
      Xpattern = XmStringCreateSimple(pattern);
-     Xdirectory = XmStringCreateSimple(directory);
+     if ( !directory  && Xcurrentdir ) Xdirectory = Xcurrentdir;
+     else Xdirectory = XmStringCreateSimple(directory);
 
      XtVaSetValues(fileselectdialog,
           XmNuserData,      userParm,
@@ -196,11 +207,7 @@ void createDialog(parent,dialogType,message1,message2)
      char           *message2;
 {
      static Widget   dialog = 0; /* make it static for reuse */
-     XmString        str;
-     XmString        str2;
-     char            buff[MAX_STRING_LENGTH];
-     int             n;
-
+     XmString        str,str1,str2,string;
 
      if (dialog) XtUnmanageChild(dialog);
      if (!dialogType ) return;
@@ -216,6 +223,7 @@ void createDialog(parent,dialogType,message1,message2)
      if (!dialog) {
           dialog = XmCreateMessageDialog(parent, "Dialog", NULL, 0);
           XtUnmanageChild(XmMessageBoxGetChild(dialog,XmDIALOG_CANCEL_BUTTON));
+          XtUnmanageChild(XmMessageBoxGetChild(dialog,XmDIALOG_HELP_BUTTON));
           XtSetSensitive(XmMessageBoxGetChild(dialog,XmDIALOG_HELP_BUTTON),FALSE);
           XtAddCallback(dialog,XmNokCallback, (XtCallbackProc)XtUnmanageChild,NULL);
      }
@@ -244,18 +252,19 @@ void createDialog(parent,dialogType,message1,message2)
                break;
      }
      
-     strcpy(buff,message1);
-     n=strlen(message1);
-     strncat(buff,message2,MAX_STRING_LENGTH-n);
-     str2 = XmStringCreateSimple(buff);
+     str1 = XmStringCreateLtoR(message1,XmFONTLIST_DEFAULT_TAG);
+     str2 = XmStringCreateLtoR(message2,XmFONTLIST_DEFAULT_TAG);
+     string = XmStringConcat(str1,str2);
 
      XtVaSetValues(dialog,
           XmNdialogType,  dialogType,
           XmNdialogTitle, str,
-          XmNmessageString, str2,
+          XmNmessageString, string,
           NULL);
      XmStringFree(str);
+     XmStringFree(str1);
      XmStringFree(str2);
+     XmStringFree(string);
 
      XtManageChild(dialog);
      XFlush(display);

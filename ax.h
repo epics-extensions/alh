@@ -1,8 +1,16 @@
 /*
  $Log$
- Revision 1.6  1995/06/22 19:40:20  jba
- Started cleanup of file.
+ Revision 1.7  1995/10/20 16:50:20  jba
+ Modified Action menus and Action windows
+ Renamed ALARMCOMMAND to SEVRCOMMAND
+ Added STATCOMMAND facility
+ Added ALIAS facility
+ Added ALARMCOUNTFILTER facility
+ Make a few bug fixes.
 
+ * Revision 1.6  1995/06/22  19:40:20  jba
+ * Started cleanup of file.
+ *
  * Revision 1.5  1995/05/31  20:34:13  jba
  * Added name selection and arrow functions to Group window
  *
@@ -90,6 +98,10 @@ void   scale_callback( Widget widget, ALINK *area, XmScaleCallbackStruct *cbs);
 void   markSelectionArea( ALINK *area, struct anyLine *line);
 void   unmapArea_callback( Widget main, Widget w, XmAnyCallbackStruct *cbs);
 void   axMakePixmap( Widget w);
+void   axUpdateDialogs(ALINK *area);
+void   *getSelectionLinkArea(ALINK *area);
+int    getSelectionLinkTypeArea(ALINK *area);
+Widget createActionButtons(Widget parent,ActionAreaItem *actions,int num_buttons);
 
 
 /********************************************************************
@@ -183,8 +195,8 @@ void awViewAddNewAlarm(CLINK *clink,int prevViewCount,int viewCount);
 void awViewNewGroup( ALINK *area, GCLINK *link);
 void awViewNewChan( ALINK *area, GCLINK *link);
 int awViewViewCount( GCLINK *link);
-void awRowWidgets( struct anyLine *gline, void *area);
-void awUpdateRowWidgets( struct anyLine  *line);
+void invokeDialogUpdate( ALINK *area);
+
 
 /********************************************************************
   guidance.c   function prototypes
@@ -218,6 +230,8 @@ GLINK *alAllocGroup(void);
 CLINK *alAllocChan(void);
 void alAddGroup( GLINK *parent, GLINK *glink);
 void alAddChan( GLINK *parent, CLINK *clink);
+void alPrecedeGroup( GLINK *parent, GLINK *sibling, GLINK *glink);
+void alPrecedeChan( GLINK *parent, CLINK *sibling, CLINK*clink);
 void alDeleteChan( CLINK *clink);
 void alDeleteGroup( GLINK *glink);
 CLINK *alFindChannel( SLIST *pgroup, char *channame);
@@ -227,10 +241,11 @@ void alInsertGroup( GLINK *sibling, GLINK *glink);
 void alMoveGroup( GLINK *sibling, GLINK *glink);
 void alRemoveGroup( GLINK *glink);
 void alRemoveChan( CLINK *clink);
+void alSetPmainGroup( GLINK *glink, struct mainGroup *pmainGroup);
 GLINK *alCopyGroup(GLINK *glink);
 CLINK *alCopyChan(CLINK *clink);
 GLINK *alCreateGroup();
-CLINK *alCreateChanel();
+CLINK *alCreateChannel();
 void alSetMask( char *s4, MASK *mask);
 void alGetMaskString( MASK mask, char *s);
 void alOrMask( MASK *m1,MASK *m2);
@@ -244,6 +259,7 @@ void alForceGroupMask( GLINK *glink, int index, int op);
 void alUpdateGroupMask( CLINK *clink, int index, int op);
 void alChangeChanMask( CLINK *clink, MASK mask);
 void alChangeGroupMask( GLINK *glink, MASK mask);
+void alResetGroupMask( GLINK *glink);
 void alForcePVChanEvent( CLINK *clink, int value);
 void alForcePVGroupEvent( GLINK *glink, int value);
 char *alAlarmGroupName( GLINK *link);
@@ -314,6 +330,8 @@ void editPasteLink( ALINK *area, GCLINK *newLink, int linkType);
 *********************************************************************/
 
 Widget alhCreateMenu( Widget parent, XtPointer user_data);
+void awRowWidgets( struct anyLine *gline, void *area);
+void awUpdateRowWidgets( struct anyLine  *line);
 
 /********************************************************************
   line.c   function prototypes
@@ -345,21 +363,16 @@ void resetCurrentAlarmWindow();
   showmask.c   function prototypes
 *********************************************************************/
 
-Widget createShowGroupMasksDialog( Widget parent, struct groupData *cdata);
-Widget createShowChanMasksDialog( Widget parent, struct chanData *cdata);
-
+void forceMaskShowDialog(ALINK *area,Widget menuButton);
+void forceMaskUpdateDialog(ALINK *area);
 
 /********************************************************************
   force.c   function prototypes
 *********************************************************************/
 
-Widget createForcePVGroupDialog( Widget parent, GLINK *glink);
-Widget createForceGMaskDialog( Widget parent, GLINK *glink);
-Widget createForcePVChanDialog( Widget parent, CLINK *clink);
-Widget createForceCMaskDialog( Widget parent, CLINK *clink);
+void forcePVShowDialog(ALINK *area,Widget menuButton);
+void forcePVUpdateDialog(ALINK *area);
 void alOperatorForcePVChanEvent( CLINK *clink, MASK pvMask);
-void alOperatorForcePVGroupEvent( GLINK *glink, MASK mask);
-void alOperatorResetPVGroupEvent( GLINK *glink);
 
 
 /********************************************************************
@@ -389,10 +402,19 @@ void alProcessCA(void);         /* process CA events */
 *********************************************************************/
 
 void alGetConfig( struct mainGroup * pmainGroup, char *filename, int caConnect);
-void alWriteGroupConfig( FILE *fp, SLIST *pgroup);
-void alWriteConfig( char *filename, struct mainGroup *pmainGroup);
 void alCreateConfig( struct mainGroup * pmainGroup);
-
+void alPrintConfig(FILE *fw,struct mainGroup *pmainGroup);
+void alWriteConfig( char *filename, struct mainGroup *pmainGroup);
+void addNewSevrCommand(ELLLIST *pList,char *str);
+void addNewStatCommand(ELLLIST *pList,char *str);
+void removeSevrCommandList(ELLLIST *pList);
+void removeStatCommandList(ELLLIST *pList);
+void copySevrCommandList(ELLLIST *pListOld,ELLLIST *pListNew);
+void copyStatCommandList(ELLLIST *pListOld,ELLLIST *pListNew);
+void spawnSevrCommandList(ELLLIST *pList,int sev,int sevr_prev);
+void spawnStatCommandList(ELLLIST *pList,int sev,int sevr_prev);
+void getStringSevrCommandList(ELLLIST *pList,char **pstr);
+void getStringStatCommandList(ELLLIST *pList,char **pstr);
 
 /********************************************************************
   scroll.c   function prototypes
@@ -416,9 +438,8 @@ void show_dialog( Widget  w, Widget  dialog, XmAnyCallbackStruct *call_data);
   mask.c   function prototypes
 *********************************************************************/
 
-void changeMasks_callback( ALINK *area, int index);
-void chanChangeMasks_callback( void *link, int index);
-void groupChangeMasks_callback( void *link, int index);
+void maskShowDialog(ALINK *area,Widget menuButton);
+void maskUpdateDialog(ALINK *area);
 
 
 /********************************************************************
@@ -448,12 +469,11 @@ void printConfig( struct mainGroup *pmainGroup);
   property.c   function prototypes
 *********************************************************************/
 
-void propUpdateDialog(ALINK *area, GCLINK *link, int linktype);
-void propShowDialog(ALINK *area, GCLINK *link, int linktype);
+void propUpdateDialog(ALINK *area);
+void propShowDialog(ALINK *area, Widget widget);
 void propUndo(void *area, GCLINK *link, int linktype, GCLINK *newLink);
  
  
-
 #else
 
 /********************************************************************
@@ -478,6 +498,10 @@ void   scale_callback();
 void   markSelectionArea();
 void   unmapArea_callback();
 void   axMakePixmap();
+void   axUpdateDialogs();
+void   *getSelectionLinkArea();
+int    getSelectionLinkTypeArea();
+Widget createActionButtons();
 
 /********************************************************************
   axRunW.c   function prototypes
@@ -543,7 +567,7 @@ void ack_callback();
 void nameTreeW_callback();
 void nameGroupW_callback();
 void arrowTreeW_callback();
-void arrow_GroupWcallback();
+void arrowGroupW_callback();
 void createConfigDisplay();
 void displayNewViewTree();
 void redraw();
@@ -553,8 +577,7 @@ void awViewAddNewAlarm();
 void awViewNewGroup();
 void awViewNewChan();
 int awViewViewCount();
-void awRowWidgets();
-void awUpdateRowWidgets();
+void invokeDialogUpdate();
 
 
 /********************************************************************
@@ -586,6 +609,8 @@ GLINK *alAllocGroup();
 CLINK *alAllocChan();
 void alAddGroup();
 void alAddChan();
+void alPrecedeGroup();
+void alPrecedeChan();
 void alDeleteChan();
 void alDeleteGroup();
 CLINK *alFindChannel();
@@ -595,10 +620,11 @@ void alInsertGroup();
 void alMoveGroup();
 void alRemoveGroup();
 void alRemoveChan();
+void alSetPmainGroup();
 GLINK *alCopyGroup();
 CLINK *alCopyChan();
 GLINK *alCreateGroup();
-CLINK *alCreateChanel();
+CLINK *alCreateChannel();
 void alSetMask();
 void alGetMaskString();
 void alOrMask();
@@ -612,6 +638,7 @@ void alForceGroupMask();
 void alUpdateGroupMask();
 void alChangeChanMask();
 void alChangeGroupMask();
+void alResetGroupMask();
 void alForcePVChanEvent();
 void alForcePVGroupEvent();
 char *alAlarmGroupName();
@@ -679,6 +706,8 @@ void editPasteLink();
 *********************************************************************/
 
 Widget alhCreateMenu();
+void awRowWidgets();
+void awUpdateRowWidgets();
 
 /********************************************************************
   line.c   function prototypes
@@ -707,20 +736,16 @@ void resetCurrentAlarmWindow();
   showmask.c   function prototypes
 *********************************************************************/
 
-Widget createShowGroupMasksDialog();
-Widget createShowChanMasksDialog();
+void forceMaskShowDialog();
+void forceMaskUpdateDialog();
 
 /********************************************************************
   force.c   function prototypes
 *********************************************************************/
 
-Widget createForcePVGroupDialog();
-Widget createForceGMaskDialog();
-Widget createForcePVChanDialog();
-Widget createForceCMaskDialog();
+void forcePVShowDialog();
+void forcePVUpdateDialog();
 void alOperatorForcePVChanEvent();
-void alOperatorForcePVGroupEvent();
-void alOperatorResetPVGroupEvent();
 
 /********************************************************************
   alCA.c   function prototypes
@@ -749,9 +774,19 @@ void alProcessCA();         /* process CA events */
 *********************************************************************/
 
 void alGetConfig();
-void alWriteGroupConfig();
-void alWriteConfig();
 void alCreateConfig();
+void alPrintConfig();
+void alWriteConfig();
+void addNewSevrCommand();
+void addNewStatCommand();
+void removeSevrCommandList();
+void removeStatCommandList();
+void copySevrCommandList();
+void copyStatCommandList();
+void spawnSevrCommandList();
+void spawnStatCommandList();
+void getStringSevrCommandList();
+void getStringStatCommandList();
 
 /********************************************************************
   scroll.c   function prototypes
@@ -773,9 +808,8 @@ void show_dialog();
   mask.c   function prototypes
 *********************************************************************/
 
-void changeMasks_callback();
-void chanChangeMasks_callback();
-void groupChangeMasks_callback();
+void maskShowDialog();
+void maskUpdateDialog();
 
 /********************************************************************
   help.c   function prototypes
@@ -807,7 +841,6 @@ void propUpdateDialog();
 void propShowDialog();
 void propUndo();
  
-
 
 #endif /*__STDC__*/
 

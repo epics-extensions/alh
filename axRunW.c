@@ -1,8 +1,16 @@
 /*
  $Log$
- Revision 1.4  1995/06/01 19:47:08  jba
- Configuration mode bug fix
+ Revision 1.5  1995/10/20 16:50:28  jba
+ Modified Action menus and Action windows
+ Renamed ALARMCOMMAND to SEVRCOMMAND
+ Added STATCOMMAND facility
+ Added ALIAS facility
+ Added ALARMCOUNTFILTER facility
+ Make a few bug fixes.
 
+ * Revision 1.4  1995/06/01  19:47:08  jba
+ * Configuration mode bug fix
+ *
  * Revision 1.3  1995/05/30  16:01:52  jba
  * Changed blinking to static.
  * Print blinkCOUNT only if DEBUG is 1.
@@ -157,7 +165,6 @@ static void okCallback(widget,area,cbs)
 #include <axArea.h>
 #include <ax.h>
 
-#include <alarm.h>
 #include <fdmgr.h>
 
 #ifdef __STDC__
@@ -192,8 +199,9 @@ char *fontname = "fixed";
 extern struct setup psetup;
 extern Widget toggle_button,toggle_button1;
 extern int DEBUG;
-extern char *alarmSeverityString[];
 
+extern char * alarmSeverityString[];
+extern char * alarmStatusString[];
 
 /*** define some globals for blink Data ***/
 extern Display *display;

@@ -1,8 +1,16 @@
 /*
  $Log$
- Revision 1.4  1995/05/30 15:58:03  jba
- Added ALARMCOMMAND facility
+ Revision 1.5  1995/10/20 16:50:36  jba
+ Modified Action menus and Action windows
+ Renamed ALARMCOMMAND to SEVRCOMMAND
+ Added STATCOMMAND facility
+ Added ALIAS facility
+ Added ALARMCOUNTFILTER facility
+ Make a few bug fixes.
 
+ * Revision 1.4  1995/05/30  15:58:03  jba
+ * Added ALARMCOMMAND facility
+ *
  * Revision 1.3  1995/02/28  16:43:46  jba
  * ansi c changes
  *
@@ -56,13 +64,7 @@ static char *fallbackhsccsId = "@(#)fallback.h	1.5\t12/15/93";
 
 static String fallbackResources[] = {
          "*initialResourcesPersistent: False",
-         "*nameTextW.background: white",
-         "*severityPVnameTextW.background: white",
-         "*forcePVnameTextW.background: white",
-         "*forcePVvalueTextW.background: white",
-         "*forcePVresetValueTextW.background: white",
-         "*processTextW.background: white",
-         "*guidanceTextW.background: white",
+         "*nameTextW.background: green",
          "*alh*foreground: black",
          "*alh*background: #b0c3ca",
          "*act*foreground: black",

@@ -1,8 +1,16 @@
 /*
  $Log$
- Revision 1.3  1995/05/30 16:04:36  jba
- Renamed guidance_spawn_callback to processSpawn_callback
+ Revision 1.4  1995/10/20 16:50:50  jba
+ Modified Action menus and Action windows
+ Renamed ALARMCOMMAND to SEVRCOMMAND
+ Added STATCOMMAND facility
+ Added ALIAS facility
+ Added ALARMCOUNTFILTER facility
+ Make a few bug fixes.
 
+ * Revision 1.3  1995/05/30  16:04:36  jba
+ * Renamed guidance_spawn_callback to processSpawn_callback
+ *
  * Revision 1.2  1994/06/22  21:17:47  jba
  * Added cvs Log keyword
  *
@@ -48,6 +56,7 @@ static char *sccsId = "@(#)process.c	1.4\t8/12/93";
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <Xm/Xm.h>
 #include <alLib.h>
 #include <ax.h>

@@ -1,8 +1,16 @@
 /*
  $Log$
- Revision 1.8  1995/06/22 19:48:46  jba
- Added $ALIAS facility.
+ Revision 1.9  1995/10/20 16:49:54  jba
+ Modified Action menus and Action windows
+ Renamed ALARMCOMMAND to SEVRCOMMAND
+ Added STATCOMMAND facility
+ Added ALIAS facility
+ Added ALARMCOUNTFILTER facility
+ Make a few bug fixes.
 
+ * Revision 1.8  1995/06/22  19:48:46  jba
+ * Added $ALIAS facility.
+ *
  * Revision 1.7  1995/06/01  15:15:18  jba
  * Removed some comments
  *
@@ -62,7 +70,9 @@ static char *sccsId = "@(#)alLib.c	1.14\t10/15/93";
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 
+#include <fdmgr.h>
 #include <sllLib.h>
 #include <alLib.h>
 #include <ax.h>
@@ -72,12 +82,20 @@ static char *sccsId = "@(#)alLib.c	1.14\t10/15/93";
 extern int DEBUG;
 extern int ALARM_COUNTER;
 extern struct setup psetup;
+extern fdctx *pfdctx;
 
 /* external routines
 extern   alCaAddEvent();
 extern void updateLog();
 extern processSpawn_callback();
 */
+
+#ifdef __STDC__
+     static void alNewAlarmProcess(int stat,int sev,char value[],
+     CLINK *clink,time_t timeofday);
+#else
+     static void alNewAlarmProcess();
+#endif /*__STDC__*/
 
 /*
 **************************************************************
@@ -149,7 +167,9 @@ GLINK *alCopyGroup(glink)          Make a copy of a group
 GLINK *alCreateGroup()          Create a new group
 *
 CLINK *alCreateChannel()          Create a new channel
-
+*
+void alSetPmainGroup(glink, pmainGroup) Set pmainGroup in subgroups and channels
+*
 
 *-----------------------------------------------------------------
 *    operation related routines after completion of configuration
@@ -337,9 +357,11 @@ CLINK *clink;
         if (strcmp(cdata->forcePVName,"-") != 0) free(cdata->forcePVName);
         if (strcmp(cdata->sevrPVName,"-") != 0) free(cdata->sevrPVName);
         if (cdata->command) free(cdata->command);
+        if (cdata->countFilter) free(cdata->countFilter);
         if (cdata->alias) free(cdata->alias);
 
-        removeAlarmCommandList(&cdata->alarmCommandList);
+        removeSevrCommandList(&cdata->sevrCommandList);
+        removeStatCommandList(&cdata->statCommandList);
 
         pt = sllFirst(&clink->GuideList);
         while (pt) {
@@ -349,6 +371,7 @@ CLINK *clink;
               free(guidelist);
               pt = next;
         }
+		free(cdata);
 		free(clink);
 	}
 }
@@ -391,8 +414,9 @@ struct groupData *gdata;
         if (strcmp(gdata->sevrPVName,"-") != 0) free(gdata->sevrPVName);
         if (gdata->command) free(gdata->command);
         if (gdata->alias) free(gdata->alias);
+        if (gdata->treeSym) free(gdata->treeSym);
 
-        removeAlarmCommandList(&gdata->alarmCommandList);
+        removeSevrCommandList(&gdata->sevrCommandList);
 
         snode = sllFirst(&glink->GuideList);
         while (snode) {
@@ -402,6 +426,7 @@ struct groupData *gdata;
               free(guidelist);
               snode = next;
         }
+        free(gdata);
         free(glink);
 }
 
@@ -523,14 +548,14 @@ CLINK *clink;
 /*******************************************************************
 	set pmainGroup
 *******************************************************************/
-GLINK *alSetPmainGroup(glink, pmainGroup)
+void alSetPmainGroup(glink, pmainGroup)
 	GLINK *glink;
     struct mainGroup *pmainGroup;
 {
 	CLINK *clink;
 	SNODE *node;
 
-    if (!glink) return 0;
+    if (!glink) return;
 
 	glink->pmainGroup = pmainGroup;
 
@@ -579,7 +604,6 @@ GLINK *alCopyGroup(glink)
     if (!glink) return 0;
 
 	glinkNew = alAllocGroup();
-    glinkNew->pgroupData = (struct groupData *)calloc(1,sizeof(struct groupData));
 	gdataNew = glinkNew->pgroupData;
 	gdata = glink->pgroupData;
 
@@ -601,8 +625,8 @@ GLINK *alCopyGroup(glink)
 		strcpy(gdataNew->alias,buff);
 	}
 
-	/* copy alarm commands */
-    copyAlarmCommandList(&gdata->alarmCommandList,&gdataNew->alarmCommandList);
+	/* copy sevr commands */
+    copySevrCommandList(&gdata->sevrCommandList,&gdataNew->sevrCommandList);
 
 	/* copy sevrPV info */
 	buff = gdata->sevrPVName;
@@ -678,10 +702,8 @@ CLINK *alCopyChan(clink)
 {
 	CLINK *clinkNew;
 	char *buff;
-	struct groupData *gdata;
 	struct chanData *cdataNew;
 	struct chanData *cdata;
-	char pvmask[6],curmask[6];
 	struct guideLink *guideLink;
 	SNODE *node;
 
@@ -713,6 +735,14 @@ CLINK *alCopyChan(clink)
 		strcpy(cdataNew->command,buff);
 	}
 
+	/* copy countFilter */
+	if (cdata->countFilter){
+		cdataNew->countFilter = (COUNTFILTER *)calloc(1,sizeof(COUNTFILTER));
+		cdataNew->countFilter->inputCount=cdata->countFilter->inputCount;
+		cdataNew->countFilter->inputSeconds=cdata->countFilter->inputSeconds;
+		cdataNew->countFilter->clink=cdata->countFilter->clink;
+	}
+
 	/* copy alias */
 	buff = cdata->alias;
 	if (buff){
@@ -720,8 +750,11 @@ CLINK *alCopyChan(clink)
 		strcpy(cdataNew->alias,buff);
 	}
 
-	/* copy alarm commands */
-    copyAlarmCommandList(&cdata->alarmCommandList,&cdataNew->alarmCommandList);
+	/* copy sevr commands */
+    copySevrCommandList(&cdata->sevrCommandList,&cdataNew->sevrCommandList);
+
+	/* copy stat commands */
+    copyStatCommandList(&cdata->statCommandList,&cdataNew->statCommandList);
 
 	/* copy sevrPV info */
 	buff = cdata->sevrPVName;
@@ -882,24 +915,106 @@ x2.Cancel = x1.Cancel | x2.Cancel;
 }
 
 
+/******************************************************
+  alarmCountFilter_callback
+******************************************************/
+
+static void alarmCountFilter_callback(pdata)
+     void *pdata;
+{
+     COUNTFILTER *countFilter=pdata;
+
+     countFilter->timeoutId=0;
+     countFilter->curCount=0;
+     alNewAlarmProcess(countFilter->stat,countFilter->sev,
+          countFilter->value,countFilter->clink,countFilter->alarmTime);
+}
+
 
 /*********************************************************** 
      alNewAlarm
 ************************************************************/
 void alNewAlarm(stat,sev,value,clink)
+     int stat,sev;
+     char value[MAX_STRING_SIZE];	
+     CLINK *clink;
+{
+     struct chanData *cdata;
+     int sevr_prev;
+     time_t alarmTime,alarmTime_prev;
+     COUNTFILTER *countFilter;
+     static struct timeval timeout;
+
+     if (clink == NULL ) return;
+     cdata = clink->pchanData;
+     if (cdata == NULL ) return;
+     countFilter = cdata->countFilter;
+
+     /* set time of alarm */
+     alarmTime = time(0L);
+
+     if (!countFilter) {
+          alNewAlarmProcess(stat,sev,value,clink,alarmTime);
+          return;
+     }
+
+     sevr_prev = countFilter->sev;
+     countFilter->stat = stat;
+     countFilter->sev = sev;
+	 strcpy(countFilter->value,value);
+
+     if ((cdata->curSevr==0 && sevr_prev==0) || (cdata->curSevr!=0 && sev==0)){
+          alarmTime_prev=countFilter->alarmTime;
+          if (!alarmTime_prev || ((alarmTime-alarmTime_prev)>countFilter->inputSeconds)){
+               if ( countFilter->timeoutId == 0 ) {
+                    timeout.tv_sec = countFilter->inputSeconds;
+                    timeout.tv_usec = 0;
+                    countFilter->timeoutId= (void *)fdmgr_add_timeout(pfdctx,
+                         &timeout,alarmCountFilter_callback,countFilter);
+               }
+               countFilter->curCount=1;
+               countFilter->alarmTime=alarmTime;
+          } else {
+               countFilter->curCount++;
+               if (countFilter->curCount >= countFilter->inputCount) {
+                    if (countFilter->timeoutId)
+                         fdmgr_clear_timeout(pfdctx,countFilter->timeoutId);
+                    countFilter->timeoutId=0;
+                    countFilter->curCount=0;
+                    countFilter->alarmTime=0;
+                    alNewAlarmProcess(stat,sev,value,clink,alarmTime);
+               }
+          }
+     } else if ((cdata->curSevr==0 && sev==0) || (cdata->curSevr!=0 && sevr_prev==0)){
+          if (countFilter->timeoutId){
+               fdmgr_clear_timeout(pfdctx,countFilter->timeoutId);
+          }
+          countFilter->timeoutId=0;
+          if (cdata->curSevr) alNewAlarmProcess(stat,sev,value,clink,alarmTime);
+
+     } else { /* change in alarm state */
+          if (cdata->curSevr) alNewAlarmProcess(stat,sev,value,clink,alarmTime);
+     }
+}
+
+
+
+/*********************************************************** 
+     alNewAlarmProcess
+************************************************************/
+static void alNewAlarmProcess(stat,sev,value,clink,timeofday)
 int stat,sev;
 char value[MAX_STRING_SIZE];	
 CLINK *clink;
+time_t timeofday;
 {
 struct chanData *cdata;
 struct groupData *gdata;
 GLINK *glink;
 MASK mask;
 int stat_prev,sevr_prev,h_unackSevr,h_unackStat,sevrHold;
-time_t timeofday;
 int viewCount=0;
 int prevViewCount=0;
-int direction;
 
         if (clink == NULL ) return;
         if (sev >= ALARM_NSEV) sev = ALARM_NSEV-1;
@@ -917,6 +1032,7 @@ int direction;
 	strcpy(cdata->value,value);
 
         viewCount = awViewViewCount((void *)clink);
+        clink->viewCount = viewCount;
 
 	if (sev > cdata->unackSevr) {
 		h_unackSevr = sev;
@@ -930,17 +1046,18 @@ int direction;
 	if (DEBUG >=3) ALARM_COUNTER++;
 	
 /*
- * set time of alarm
- */
-        timeofday = time(0L);
-
-/*
- * spawn ALARMCOMMAND for the channel
+ * spawn SEVRCOMMAND for the channel
  */
 
        if ( sev != sevr_prev )
-        spawnAlarmCommandList(&cdata->alarmCommandList,sev,sevr_prev);
+        spawnSevrCommandList(&cdata->sevrCommandList,sev,sevr_prev);
 
+/*
+ * spawn STATCOMMAND for the channel
+ */
+
+       if ( stat != stat_prev )
+        spawnStatCommandList(&cdata->statCommandList,stat,stat_prev);
 
 /*
  * log the channel alarm at the alarm logfile
@@ -966,7 +1083,7 @@ int direction;
 
 
 /*
- * spawn ALARMCOMMAND for all the parent groups
+ * spawn SEVRCOMMAND for all the parent groups
  * update curSev[] of all the parent groups
  */
     glink = clink->parent;
@@ -978,7 +1095,7 @@ int direction;
         gdata->curSevr=alHighestSeverity(gdata->curSev);
 
         if ( sevrHold != gdata->curSevr ) {
-            spawnAlarmCommandList(&gdata->alarmCommandList,gdata->curSevr,sevrHold);
+            spawnSevrCommandList(&gdata->sevrCommandList,gdata->curSevr,sevrHold);
         }
 
         glink->modified = 1;
@@ -1315,11 +1432,9 @@ void alUpdateGroupMask(clink,index,op)
 int index,op;
 CLINK *clink;
 {
-struct chanData *cdata;
 struct groupData *gdata;
 GLINK *parent;
 
-cdata = clink->pchanData;
 
 parent = clink->parent;
 
@@ -1547,6 +1662,42 @@ SNODE *pt;
 }
 
 
+/*********************************************************************** 
+ * This function changes the mask of all the channels in a group to new mask.
+ ***********************************************************************/
+void alResetGroupMask(glink)
+GLINK *glink;
+{
+CLINK *clink;
+GLINK *subgroup;
+SNODE *pt;
+MASK mask;
+
+	if (glink == NULL) return;
+/*
+ * change each channel's mask  to the reset mask
+ */
+
+	pt = sllFirst(&glink->chanList);
+	while (pt) {
+		clink = (CLINK *)pt;
+        mask = clink->pchanData->defaultMask;
+		alChangeChanMask(clink,mask);
+		pt = sllNext(pt);
+		}
+
+/*
+ * change each subgroup's mask to new mask
+ */
+
+	pt = sllFirst(&glink->subGroupList);
+	while (pt) {
+		subgroup = (GLINK *)pt;
+		alResetGroupMask(subgroup);
+		pt = sllNext(pt);
+		}
+
+}
 
 
 /***********************************************************************

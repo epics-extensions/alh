@@ -1,8 +1,16 @@
 /*
  $Log$
- Revision 1.3  1995/06/22 19:46:22  jba
- Put group/channel alias in guidance window title bar.
+ Revision 1.4  1995/10/20 16:50:43  jba
+ Modified Action menus and Action windows
+ Renamed ALARMCOMMAND to SEVRCOMMAND
+ Added STATCOMMAND facility
+ Added ALIAS facility
+ Added ALARMCOUNTFILTER facility
+ Make a few bug fixes.
 
+ * Revision 1.3  1995/06/22  19:46:22  jba
+ * Put group/channel alias in guidance window title bar.
+ *
  * Revision 1.2  1994/06/22  21:17:36  jba
  * Added cvs Log keyword
  *
@@ -24,7 +32,7 @@ static char *sccsId = "@(#)help.c	1.12\t10/1/93";
 *consecutive null strings indicates the end of help text.  
 *
 ********************************************************/
-#include <ax.h>
+#include <stdlib.h>
 
 #include <X11/StringDefs.h>
 #include <X11/Intrinsic.h>
@@ -33,6 +41,8 @@ static char *sccsId = "@(#)help.c	1.12\t10/1/93";
 #include <Xm/PushB.h>
 #include <Xm/CascadeB.h>
 #include <Xm/RowColumn.h>
+
+#include <ax.h>
 
 static char *setuphelpdata[] = { 
         "Setup...",
@@ -243,7 +253,6 @@ void *call_data;
 {
 	int 	i,n;
 	Widget  dialog;
-	Widget  label;
 	XmString xmstr;
 	Arg	wargs[5];
     char *title=NULL;
@@ -264,7 +273,9 @@ void *call_data;
  * Create the message dialog to display the help.
  */
 	n=0;
-    if (buff) XtSetArg(wargs[n], XmNtitle, buff); n++;
+    if (buff){
+         XtSetArg(wargs[n], XmNtitle, buff); n++;
+    }
 	XtSetArg(wargs[n], XmNautoUnmanage, FALSE); n++;
 	XtSetArg(wargs[n], XmNallowShellResize, FALSE); n++;
 	dialog = XmCreateMessageDialog(w, "Help", wargs, n);

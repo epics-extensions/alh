@@ -1,8 +1,16 @@
 /*
  $Log$
- Revision 1.6  1995/06/01 19:47:06  jba
- Configuration mode bug fix
+ Revision 1.7  1995/10/20 16:50:23  jba
+ Modified Action menus and Action windows
+ Renamed ALARMCOMMAND to SEVRCOMMAND
+ Added STATCOMMAND facility
+ Added ALIAS facility
+ Added ALARMCOUNTFILTER facility
+ Make a few bug fixes.
 
+ * Revision 1.6  1995/06/01  19:47:06  jba
+ * Configuration mode bug fix
+ *
  * Revision 1.5  1995/05/31  20:29:55  jba
  * fixed comment
  *
@@ -359,9 +367,9 @@ void setupConfig(filename, program, areaOld)
                XmStringFree(str);
           }
 
-          /* update property window */
-          propUpdateDialog(area, area->selectionLink, area->selectionType);
-
+      
+          /* update dialog windows */
+          axUpdateDialogs(area);
 
           /* unmap dialog */
           createDialog(0,0," "," ");
@@ -839,3 +847,105 @@ void axMakePixmap(w)
      }
      return;
 }
+
+/******************************************************
+  axUpdateDialogs
+******************************************************/
+
+void axUpdateDialogs(area)
+     ALINK *area;
+{
+     /* update property sheet window if it is displayed */
+     propUpdateDialog(area);
+
+     /* update force mask window if it is displayed */
+     forceMaskUpdateDialog(area);
+
+     /* update forcePV window if it is displayed */
+     forcePVUpdateDialog(area);
+
+     /* update force mask window if it is displayed */
+     maskUpdateDialog(area);
+
+}
+
+/***************************************************
+  getSelectionLinkArea
+****************************************************/
+
+void *getSelectionLinkArea(area)
+     ALINK *area;
+{
+     return area->selectionLink;
+}
+
+/***************************************************
+  getSelectionLinkTypeArea
+****************************************************/
+
+int getSelectionLinkTypeArea(area)
+     ALINK *area;
+{
+     return area->selectionType;
+}
+
+
+/******************************************************
+  CreateActionButtons
+******************************************************/
+
+Widget createActionButtons(parent, actions, num_buttons)
+     Widget parent;
+     ActionAreaItem *actions;
+     int num_buttons;
+{
+    Widget mask_sheet, widget;
+    int i;
+
+    mask_sheet = XtVaCreateWidget("mask_sheet", xmFormWidgetClass, parent,
+        XmNfractionBase, TIGHTNESS*num_buttons - 1,
+        XmNleftOffset,   10,
+        XmNrightOffset,  10,
+        NULL);
+
+    for (i = 0; i < num_buttons; i++) {
+        widget = XtVaCreateManagedWidget(actions[i].label,
+            xmPushButtonWidgetClass, mask_sheet,
+            XmNmarginHeight,         0,
+            XmNleftAttachment,       i? XmATTACH_POSITION : XmATTACH_FORM,
+            XmNleftPosition,         TIGHTNESS*i,
+            XmNtopAttachment,        XmATTACH_FORM,
+            XmNbottomAttachment,     XmATTACH_FORM,
+            XmNrightAttachment,
+                    i != num_buttons-1? XmATTACH_POSITION : XmATTACH_FORM,
+            XmNrightPosition,        TIGHTNESS*i + (TIGHTNESS-1),
+            XmNshowAsDefault,        i == 2,
+            XmNdefaultButtonShadowThickness, 1,
+            NULL);
+        if (actions[i].callback)
+            XtAddCallback(widget, XmNactivateCallback,
+                actions[i].callback, actions[i].data);
+        if (i == 2) {
+            /* Set the mask_sheet's default button to the third widget
+             * created (or, make the index a parameter to the function
+             * or have it be part of the data structure). Also, set the
+             * pane window constraint for max and min heights so this
+             * particular pane in the PanedWindow is not resizable.
+             */
+            Dimension height, h;
+            XtVaGetValues(mask_sheet, XmNmarginHeight, &h, NULL);
+            XtVaGetValues(widget, XmNheight, &height, NULL);
+            height += 2 * h;
+            XtVaSetValues(mask_sheet,
+                XmNdefaultButton, widget,
+                XmNpaneMaximum,   height,
+                XmNpaneMinimum,   height,
+                NULL);
+        }
+    }
+
+    XtManageChild(mask_sheet);
+
+    return mask_sheet;
+}
+

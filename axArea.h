@@ -1,8 +1,16 @@
 /*
  $Log$
- Revision 1.2  1994/06/22 21:17:07  jba
- Added cvs Log keyword
+ Revision 1.3  1995/10/20 16:50:25  jba
+ Modified Action menus and Action windows
+ Renamed ALARMCOMMAND to SEVRCOMMAND
+ Added STATCOMMAND facility
+ Added ALIAS facility
+ Added ALARMCOUNTFILTER facility
+ Make a few bug fixes.
 
+ * Revision 1.2  1994/06/22  21:17:07  jba
+ * Added cvs Log keyword
+ *
  */
 
 /* axArea.h */
@@ -94,6 +102,9 @@ typedef struct  areaLink{
      void             *treeWindow;
      void             *groupWindow;
      void             *propWindow;
+     void             *forceMaskWindow;
+     void             *forcePVWindow;
+     void             *maskWindow;
 /* ----- Current Selection groupLine info ----- */
      void             *selectionWindow;
      void             *selectionLink;

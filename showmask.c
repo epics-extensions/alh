@@ -1,8 +1,16 @@
 /*
  $Log$
- Revision 1.2  1994/06/22 21:17:57  jba
- Added cvs Log keyword
+ Revision 1.3  1995/10/20 16:50:58  jba
+ Modified Action menus and Action windows
+ Renamed ALARMCOMMAND to SEVRCOMMAND
+ Added STATCOMMAND facility
+ Added ALIAS facility
+ Added ALARMCOUNTFILTER facility
+ Make a few bug fixes.
 
+ * Revision 1.2  1994/06/22  21:17:57  jba
+ * Added cvs Log keyword
+ *
  */
 
 static char *sccsId = "@(#)showmask.c	1.12\t9/15/93";
@@ -11,377 +19,654 @@ static char *sccsId = "@(#)showmask.c	1.12\t9/15/93";
  *
  *      Author: Ben-chin Cha
  *      Date:   12-20-90
- * Modification Log:
- * -----------------
- * .01  07-22-91        bkc     Correct show group mask dialog 
- *                              
- * .02  mm-dd-yy        iii     Comment
- *      ...
  */
-#include <X11/StringDefs.h>
-#include <X11/Intrinsic.h>
-#include <X11/Shell.h>
-#include <Xm/Xm.h>
-#include <Xm/PushB.h>
-#include <Xm/PushBG.h>
-#include <Xm/Text.h>
-#include <Xm/LabelG.h>
-#include <Xm/BulletinB.h>
-
-#include <sllLib.h>
-#include <alLib.h>
-#include <ax.h>
-
-extern Dimension char_width;
-extern XmStringCharSet charset;
-
-extern void done_dialog();
-extern void xs_help_callback();
 
 /*******************************************************
- * showmask.c: a popup dialog widget 
+ * showmask.c: a popup dialog  window
 *
-*This file contains routines for creating show masks 
-*dialog.  One for group masks.  One for channel masks.
+*This file contains routines for creating force mask dialog.
 *
  
 Routines defined in showmask.c:
 ------------
 |  PUBLIC  |
 ------------
-Widget createShowGroupMasksDialog(parent,cdata)        	Show group masks dialog
-Widget createShowChanMasksDialog(parent,cdata)          Show channel masks dialog
+*
+void forceMaskUpdateDialog(area)   Update mask dialog widow
+     ALINK *area;
+*
+void forceMaskShowDialog(area)          Create/show mask dialog 
+     ALINK *area;
 
- ******************************************************/
+******************************************************************
+******************************************************************
+*/
+
+#include <stdlib.h>
 
+#include <Xm/Xm.h>
+#include <Xm/Form.h>
+#include <Xm/Frame.h>
+#include <Xm/LabelG.h>
+#include <Xm/ToggleB.h>
+#include <Xm/PanedW.h>
+#include <Xm/RowColumn.h>
+#include <Xm/ToggleBG.h>
 
-char  editors_groupmasks[19][80];
-Widget label_groupmasks[19],edit_groupmasks[19];
-
-char  *labels_groupmasks[] = { 
-	"Group Name", 
-	"Current Masks",
-	"No. of channels in following states : Valid Alarms",  
-	"                                      Major Alarms",
-	"                                      Minor Alarms", 
-	"                                      NoAlarms", 
-	"                                      Canceled", 
-	"                                      Disabled", 
-	"                                      NoAck", 
-	"                                      NoAck Transient",
-	"                                      NoLog",
-	"Total no. of channels in group ",
-	"Force Process Variable : name",
-	"Force Process Variable : current value ",
-	"Force Process Variable : force value ",
-	"Force Process Variable : reset value",
-	"Force Process Variable : force mask",
-	"Sevrerity Process Variable : name",
-	"Related display Command Line:"	};
+#include <axArea.h>
+#include <alLib.h>
+#include <alh.h>
+#include <ax.h>
 
 
-char *help_str_showGroupMasks[] = {
-        "This dialog window displays the summary info for the",
-	"specified group.",
-        " ",
-        "Use the Ok button to close the dialog.",
-        " ",
-        "","" };
-
-char  editors_chanmasks[11][80];
-Widget label_chanmasks[11],edit_chanmasks[11];
-char  *labels_chanmasks[] = { 	
-	"Channel Name", 
-	"Current Value",
-	"Current Mask",
-	"Reset Mask",
-	"Force Process Variable : name",
-	"Force Process Variable : curent value",
-	"Force Process Variable : force value ",
-	"Force Process Variable : reset value",
-	"Force Process Variable : force mask",
-	"Severity Process Variable : name",
-	"Related display Command Line:  "	};
+struct forceMaskWindow {
+    void   *area;
+    Widget menuButton;
+    Widget maskDialog;
+    Widget nameLabelW;
+    Widget nameTextW;
+    Widget currentMaskLabel;
+    Widget currentMaskStringLabelW;
+    Widget resetMaskStringLabelW;
+    Widget alarmMaskStringLabelW;
+    Widget alarmMaskToggleButtonW[ALARM_NMASK];
+    Widget maskFrameW;
+};
 
 
-char *help_str_showChanMasks[] = {
-        "This dialog window displays the summary info for the",
-	"specified channel.",
-        " ",
-        "Use the Ok button to close the dialog.",
-        " ",
-        "","" };
+/* prototypes for static routines */
+#ifdef __STDC__
 
+static void forceMaskApplyCallback(Widget widget,struct forceMaskWindow *forceMaskWindow,XmAnyCallbackStruct *cbs);
+static void forceMaskResetCallback(Widget widget,struct forceMaskWindow *forceMaskWindow,XmAnyCallbackStruct *cbs);
+static void forceMaskDismissCallback(Widget widget,struct forceMaskWindow *forceMaskWindow,XmAnyCallbackStruct *cbs);
+static void forceMaskHelpCallback(Widget widget,struct forceMaskWindow *forceMaskWindow,XmAnyCallbackStruct *cbs);
+static void forceMaskCreateDialog(ALINK*area);
+static void forceMaskUpdateDialogWidgets(struct forceMaskWindow *forceMaskWindow);
+static void forceMaskChangeCallback( Widget widget, int index, XmAnyCallbackStruct *cbs);
 
+#else
 
-/****************************************************************************
-	create show group mask dialog
-*****************************************************************************/
-Widget createShowGroupMasksDialog(parent,cdata)
-Widget parent;
-struct groupData *cdata;
+static void forceMaskApplyCallback();
+static void forceMaskResetCallback();
+static void forceMaskDismissCallback();
+static void forceMaskHelpCallback();
+static void forceMaskCreateDialog();
+static void forceMaskUpdateDialogWidgets();
+static void forceMaskChangeCallback();
+
+#endif /*__STDC__*/
+
+/******************************************************
+  forceMaskUpdateDialog
+******************************************************/
+
+void forceMaskUpdateDialog(area)
+     ALINK  *area;
 {
-Widget bb, ok_button, help_button;
-Arg     wargs[10];
-int     i, n=0,len=0,xloc,tot_chan=0;
- XmString str=NULL;
-Dimension width,maxWidth;
+     struct forceMaskWindow *forceMaskWindow;
 
+     if (!area->forceMaskWindow)  return;
 
-	strcpy(editors_groupmasks[0],cdata->name);
- 	 awGetMaskString(cdata->mask,editors_groupmasks[1]);
+     forceMaskWindow = (struct forceMaskWindow *)area->forceMaskWindow;
 
-	for (i=0;i<ALARM_NSEV;i++) {
-		tot_chan += cdata->curSev[i]; 
-		sprintf(editors_groupmasks[2+i],"%d",
-			cdata->curSev[ALARM_NSEV-1-i]);
-		}
-	for (i=0;i<ALARM_NMASK;i++) 
-		sprintf(editors_groupmasks[2+ALARM_NSEV+i],"%d",cdata->mask[i]);
+     if (!forceMaskWindow->maskDialog || !XtIsManaged(forceMaskWindow->maskDialog)) return;
 
-	i = 2 + ALARM_NSEV + ALARM_NMASK; 
-		sprintf(editors_groupmasks[i],"%d",tot_chan);
-
-	i++; 	strcpy(editors_groupmasks[i],cdata->forcePVName);
-
-	/* find pvforce value */
-	i++; 
-	strcpy(editors_groupmasks[i],"");
-	if (cdata->forcechid != NULL) { 
-		sprintf(editors_groupmasks[i],"%d",cdata->PVValue);
-		}
-
-	i++;    sprintf(editors_groupmasks[i],"%d",cdata->forcePVValue); 
-	i++; 	sprintf(editors_groupmasks[i],"%d",cdata->resetPVValue); 
-	i++; 	alGetMaskString(cdata->forcePVMask,editors_groupmasks[i]);
-	i++; 	strcpy(editors_groupmasks[i],cdata->sevrPVName);
-	i++; 	if (cdata->command == NULL) 
-			strcpy(editors_groupmasks[i],""); 
-		else
-			strcpy(editors_groupmasks[i],cdata->command); 
-
-        n =0;
-        XtSetArg(wargs[n], XmNautoUnmanage, FALSE); n++;
-        XtSetArg(wargs[n], XmNdialogTitle,
-                XmStringLtoRCreate("Group  Masks",
-                XmSTRING_DEFAULT_CHARSET)); n++;
-        XtSetArg(wargs[n], XmNallowShellResize, FALSE); n++;
-        bb = XmCreateBulletinBoardDialog(parent, "Group Summary", wargs, n);
-
-
-        /* create text widget and label widget */
-
-        maxWidth = 0;
-        for (i=0; i<XtNumber(labels_groupmasks); i++) {
-            str = XmStringCreateLtoR(labels_groupmasks[i],charset);
-       		n = 0;
-            XtSetArg(wargs[n], XmNlabelString, str); n++;
-       		XtSetArg(wargs[n], XmNx, 10); n++;
-       		XtSetArg(wargs[n], XmNy, 10 + 30*i); n++;
-
-            label_groupmasks[i] = XtCreateManagedWidget(labels_groupmasks[i],
-                 xmLabelGadgetClass, bb,
-                 wargs, n);
-            XmStringFree(str);
-            XtVaGetValues(label_groupmasks[i],XmNwidth,&width,NULL);
-            if (width > maxWidth) maxWidth = width;
-         }
-        
-        for (i=0; i<XtNumber(labels_groupmasks); i++) {
-       		n = 0;
-	        XtSetArg(wargs[n], XmNwidth, maxWidth); n++;
-       		XtSetArg(wargs[n], XmNalignment, XmALIGNMENT_END ); n++;
-            XtSetValues(label_groupmasks[i],wargs,n);
-        }
-/*
- * get string width in pixel
- */
-  xloc = 10 + maxWidth;
-
-
-        for (i=0; i<XtNumber(editors_groupmasks); i++) {
-        n = 0;
-        XtSetArg(wargs[n], XmNx, 10 +xloc); n++;
-        XtSetArg(wargs[n], XmNy, 10 + 30*i); n++;
-if (i==18) XtSetArg(wargs[n], XmNwidth, 80*char_width);
-        else
-	   XtSetArg(wargs[n], XmNwidth, 30 * char_width); n++;
-        XtSetArg(wargs[n],XmNcursorPositionVisible,FALSE);  n++;
-        XtSetArg(wargs[n], XmNeditable, FALSE); n++;
-	
-        edit_groupmasks[i] = XtCreateManagedWidget(editors_groupmasks[i], xmTextWidgetClass, bb,
-                wargs, n);
-        XmTextSetString(edit_groupmasks[i],editors_groupmasks[i]);
-        }
-
-
-
-        /*
-         * add a OK button to accept text and to pop down the widget.
-         */
-
-        n = 0;
-        XtSetArg(wargs[n], XmNx, 150); n++;
-        XtSetArg(wargs[n], XmNy, 10+30*i + 2); n++;
-
-        ok_button = XtCreateManagedWidget(" Ok ", 
-                                xmPushButtonGadgetClass,
-                                bb, wargs, n);
-
-
-        XtAddCallback(ok_button, XmNactivateCallback, 
-                                (XtCallbackProc)done_dialog, bb);
-
-
-        /*
-         * add a button for asking for help.
-        */
-
-
-        n = 0;
-        XtSetArg(wargs[n], XmNx, 300); n++;
-        XtSetArg(wargs[n], XmNy, 10+30*i + 2); n++;
-
-        help_button = XtCreateManagedWidget("Help", 
-                                xmPushButtonWidgetClass,
-                                bb, wargs, n);
-
-        XtAddCallback(help_button, XmNactivateCallback, 
-                                (XtCallbackProc)xs_help_callback,
-                                help_str_showGroupMasks);
-
-return bb;
+     forceMaskUpdateDialogWidgets(forceMaskWindow);
 }
 
 
+/******************************************************
+  forceMaskShowDialog
+******************************************************/
 
-
-
-
-
-/****************************************************************************
-	create show channel mask dialog
-*****************************************************************************/
-Widget createShowChanMasksDialog(parent,cdata)
-Widget parent;
-struct chanData *cdata;
+void forceMaskShowDialog(area, menuButton)
+     ALINK    *area;
+     Widget   menuButton;
 {
-Widget bb, ok_button, help_button;
-Arg     wargs[10];
-int     i, n=0,len=0,xloc;
+     struct forceMaskWindow *forceMaskWindow;
 
-	strcpy(editors_chanmasks[0],cdata->name);
-	strcpy(editors_chanmasks[1],cdata->value);
- 	 alGetMaskString(cdata->curMask,editors_chanmasks[2]);
- 	 alGetMaskString(cdata->defaultMask,editors_chanmasks[3]);
+     forceMaskWindow = (struct forceMaskWindow *)area->forceMaskWindow;
 
-	i=4; 	strcpy(editors_chanmasks[i],cdata->forcePVName);
+     /* dismiss Dialog */
+     if (forceMaskWindow && forceMaskWindow->maskDialog && 
+                        XtIsManaged(forceMaskWindow->maskDialog)) {
+          forceMaskDismissCallback(NULL, forceMaskWindow, NULL);
+          return;
+     }
 
-	/* find pvforce value */
-	i++;  
-	strcpy(editors_groupmasks[i],"");
-	strcpy(editors_groupmasks[i],"");
-	if (cdata->forcechid != NULL) { 
-		sprintf(editors_chanmasks[i],"%d",cdata->PVValue);
-		}
+     /* create forceMaskWindow and Dialog Widgets if necessary */
+     if (!forceMaskWindow)  forceMaskCreateDialog(area);
 
-	i++;    sprintf(editors_chanmasks[i],"%d",cdata->forcePVValue); 
-	i++; 	sprintf(editors_chanmasks[i],"%d",cdata->resetPVValue); 
-	i++; 	alGetMaskString(cdata->forcePVMask,editors_chanmasks[i]);
-	i++; 	strcpy(editors_chanmasks[i],cdata->sevrPVName);
-	i++; 	if (cdata->command == NULL) 
-			strcpy(editors_chanmasks[i],""); 
-		else
-			strcpy(editors_chanmasks[i],cdata->command); 
+     /* update forceMaskWindow */
+     forceMaskWindow = (struct forceMaskWindow *)area->forceMaskWindow;
+     forceMaskWindow->menuButton = menuButton;
 
-        
-        n =0;
-        XtSetArg(wargs[n], XmNautoUnmanage, FALSE); n++;
-        XtSetArg(wargs[n], XmNdialogTitle,
-                XmStringLtoRCreate("Channel  Summary",
-                XmSTRING_DEFAULT_CHARSET)); n++;
-        XtSetArg(wargs[n], XmNallowShellResize, FALSE); n++;
-        bb = XmCreateBulletinBoardDialog(parent, "Channel Summary", wargs, n);
+     /* update Dialog Widgets */
+     forceMaskUpdateDialogWidgets(forceMaskWindow);
 
+     /* show Dialog */
+     if (!forceMaskWindow->maskDialog) return;
+     if (!XtIsManaged(forceMaskWindow->maskDialog)) {
+          XtManageChild(forceMaskWindow->maskDialog);
+     }
+     XMapWindow(XtDisplay(forceMaskWindow->maskDialog),
+          XtWindow(XtParent(forceMaskWindow->maskDialog)));
+     if (menuButton) XtVaSetValues(menuButton, XmNset, TRUE, NULL);
 
-        /* create text widget and label widget */
+}
 
-        for (i=0; i<XtNumber(labels_chanmasks); i++) {
-        n = 0;
-	if (len < strlen(labels_chanmasks[i]))
-		len = strlen(labels_chanmasks[i]);
-        XtSetArg(wargs[n], XmNlabelString, 
-                XmStringCreateLtoR(labels_chanmasks[i],charset)); n++;
-        XtSetArg(wargs[n], XmNx, 10); n++;
-        XtSetArg(wargs[n], XmNy, 10 + 30*i); n++;
+/******************************************************
+  forceMaskUpdateDialogWidgets
+******************************************************/
 
-         label_chanmasks[i] = XtCreateManagedWidget(labels_chanmasks[i],
-                 xmLabelGadgetClass, bb,
-                 wargs, n);
-         }
+static void forceMaskUpdateDialogWidgets(forceMaskWindow)
+     struct forceMaskWindow *forceMaskWindow;
+{
+     struct gcData *pgcData;
+     GCLINK *link;
+     int linkType;
+     XmString string;
+     char buff[MAX_STRING_LENGTH];
+
+     if (! forceMaskWindow || !forceMaskWindow->maskDialog ||
+           !XtIsManaged(forceMaskWindow->maskDialog)) return;
+
+     link = (GCLINK *)getSelectionLinkArea(forceMaskWindow->area);
+
+     if (!link) {
+
+          string = XmStringCreateSimple("");
+          XtVaSetValues(forceMaskWindow->nameTextW,XmNlabelString, string, NULL);
+          XmStringFree(string);
+          string = XmStringCreateSimple("-----");
+          XtVaSetValues(forceMaskWindow->currentMaskStringLabelW, XmNlabelString, string, NULL);
+          XtVaSetValues(forceMaskWindow->resetMaskStringLabelW, XmNlabelString, string, NULL);
+          XtVaSetValues(forceMaskWindow->alarmMaskStringLabelW, XmNlabelString, string, NULL);
+          XmStringFree(string);
+          XmToggleButtonSetState(forceMaskWindow->alarmMaskToggleButtonW[0],FALSE,TRUE);
+          XmToggleButtonSetState(forceMaskWindow->alarmMaskToggleButtonW[1],FALSE,TRUE);
+          XmToggleButtonSetState(forceMaskWindow->alarmMaskToggleButtonW[2],FALSE,TRUE);
+          XmToggleButtonSetState(forceMaskWindow->alarmMaskToggleButtonW[3],FALSE,TRUE);
+          XmToggleButtonSetState(forceMaskWindow->alarmMaskToggleButtonW[4],FALSE,TRUE);
+          return;
+     }
+
+     linkType = getSelectionLinkTypeArea(forceMaskWindow->area);
+
+     pgcData = link->pgcData;
+
+     /* ---------------------------------
+     Group/Channel Name 
+     --------------------------------- */
+     if (linkType == GROUP) string = XmStringCreateSimple("Group Name:");
+     else string = XmStringCreateSimple("Channel Name:");
+     XtVaSetValues(forceMaskWindow->nameLabelW, XmNlabelString, string, NULL);
+     XmStringFree(string);
+
+     if (pgcData->alias){
+          string = XmStringCreateSimple(pgcData->alias);
+     } else {
+          string = XmStringCreateSimple(pgcData->name);
+     }
+     XtVaSetValues(forceMaskWindow->nameTextW, XmNlabelString, string, NULL);
+     XmStringFree(string);
+
+     /* ---------------------------------
+     Current Mask 
+     --------------------------------- */
+     if (linkType == GROUP) string = XmStringCreateSimple("Current Mask Summary:");
+     else string = XmStringCreateSimple("Current Mask:");
+     XtVaSetValues(forceMaskWindow->currentMaskLabel, XmNlabelString, string, NULL);
+     XmStringFree(string);
+
+     if (linkType == GROUP) awGetMaskString(((struct groupData *)pgcData)->mask,buff);
+     else  alGetMaskString(((struct chanData *)pgcData)->curMask,buff);
+     string = XmStringCreateSimple(buff);
+     XtVaSetValues(forceMaskWindow->currentMaskStringLabelW, XmNlabelString, string, NULL);
 
 /*
- * get string width in pixel
- */
-  xloc = 10 + len * char_width;
+     XtVaSetValues(forceMaskWindow->alarmMaskStringLabelW, XmNlabelString, string, NULL);
+     alSetMask(buff,&mask);
+     if (mask.Cancel == 1 )
+          XmToggleButtonSetState(forceMaskWindow->alarmMaskToggleButtonW[0],TRUE,TRUE);
+     else XmToggleButtonSetState(forceMaskWindow->alarmMaskToggleButtonW[0],FALSE,TRUE);
+     if (mask.Disable == 1 )
+          XmToggleButtonSetState(forceMaskWindow->alarmMaskToggleButtonW[1],TRUE,TRUE);
+     else XmToggleButtonSetState(forceMaskWindow->alarmMaskToggleButtonW[1],FALSE,TRUE);
+     if (mask.Ack == 1 )
+          XmToggleButtonSetState(forceMaskWindow->alarmMaskToggleButtonW[2],TRUE,TRUE);
+     else XmToggleButtonSetState(forceMaskWindow->alarmMaskToggleButtonW[2],FALSE,TRUE);
+     if (mask.AckT == 1 )
+          XmToggleButtonSetState(forceMaskWindow->alarmMaskToggleButtonW[3],TRUE,TRUE);
+     else XmToggleButtonSetState(forceMaskWindow->alarmMaskToggleButtonW[3],FALSE,TRUE);
+     if (mask.Log == 1 )
+          XmToggleButtonSetState(forceMaskWindow->alarmMaskToggleButtonW[4],TRUE,TRUE);
+     else XmToggleButtonSetState(forceMaskWindow->alarmMaskToggleButtonW[4],FALSE,TRUE);
+*/
 
-        for (i=0; i<XtNumber(editors_chanmasks); i++) {
-        n = 0;
-        XtSetArg(wargs[n], XmNx, 10+xloc); n++;
-        XtSetArg(wargs[n], XmNy, 10 + 30*i); n++;	
-if (i==10) XtSetArg(wargs[n], XmNwidth, 80*char_width);
-        else
-	   XtSetArg(wargs[n], XmNwidth, 30 * char_width); n++;
+     XmStringFree(string);
 
-        XtSetArg(wargs[n], XmNeditable, FALSE); n++;
-        XtSetArg(wargs[n],XmNcursorPositionVisible,FALSE);  n++;
-	edit_chanmasks[i] = XtCreateManagedWidget(editors_chanmasks[i], xmTextWidgetClass, bb,
-                wargs, n);
-        XmTextSetString(edit_chanmasks[i],editors_chanmasks[i]);
-        }
+     /* ---------------------------------
+     Reset Mask 
+     --------------------------------- */
+     if (linkType == GROUP) string = XmStringCreateSimple("   ");
+     else {
+          alGetMaskString(((struct chanData *)pgcData)->defaultMask,buff);
+          string = XmStringCreateSimple(buff);
+     }
+     XtVaSetValues(forceMaskWindow->resetMaskStringLabelW, XmNlabelString, string, NULL);
+     XmStringFree(string);
+
+}
+
+/******************************************************
+  forceMaskCreateDialog
+******************************************************/
+
+static void forceMaskCreateDialog(area)
+     ALINK    *area;
+{
+     struct forceMaskWindow *forceMaskWindow;
+
+     Widget maskDialogShell, maskDialog;
+     Widget rowcol, form, maskFrameW;
+     Widget nameLabelW, nameTextW;
+     Widget alarmMaskToggleButtonW[ALARM_NMASK];
+     Widget alarmMaskLabel, alarmMaskStringLabelW;
+     Widget currentMaskLabel, currentMaskStringLabelW;
+     Widget resetMaskLabel, resetMaskStringLabelW;
+     int i;
+     XmString string;
+     static ActionAreaItem mask_items[] = {
+         { "Apply",   forceMaskApplyCallback,   NULL    },
+         { "Reset",   forceMaskResetCallback,   NULL    },
+         { "Dismiss", forceMaskDismissCallback, NULL    },
+         { "Help",    forceMaskHelpCallback,    "Help Button" },
+     };
+     static String maskFields[] = {
+         "Cancel Alarm", 
+         "Disable Alarm",
+         "NoAck Alarm",
+         "NoAck Transient Alarm",
+         "NoLog Alarm"
+     };
+
+     if (!area) return;
+
+     forceMaskWindow = (struct forceMaskWindow *)area->forceMaskWindow;
+
+     if (forceMaskWindow && forceMaskWindow->maskDialog){
+          if (XtIsManaged(forceMaskWindow->maskDialog)) return;
+          else XtManageChild(forceMaskWindow->maskDialog);
+     }
 
 
+     forceMaskWindow = (struct forceMaskWindow *)calloc(1,sizeof(struct forceMaskWindow)); 
+     area->forceMaskWindow = (void *)forceMaskWindow;
+     forceMaskWindow->area = (void *)area;
 
-        /*
-         * add a OK button to accept text and to pop down the widget.
-         */
+     maskDialogShell = XtVaCreatePopupShell("Force Mask",
+         transientShellWidgetClass, area->toplevel, 
+         XmNallowShellResize, TRUE,
+         NULL);
 
-        n = 0;
-        XtSetArg(wargs[n], XmNx, 100); n++;
-        XtSetArg(wargs[n], XmNy, 10+30*i+2); n++;
+     maskDialog = XtVaCreateWidget("maskDialog",
+         xmPanedWindowWidgetClass, maskDialogShell,
+         XmNallowResize, TRUE,
+         XmNsashWidth,  1,
+         XmNsashHeight, 1,
+         XmNuserData,   area,
+         NULL);
 
-        ok_button = XtCreateManagedWidget(" Ok ", 
-                                xmPushButtonGadgetClass,
-                                bb, wargs, n);
+     form = XtVaCreateWidget("control_area",
+          xmFormWidgetClass, maskDialog,
+          XmNallowResize,    TRUE,
+          NULL);
 
+     /* ---------------------------------
+     Group/Channel Name 
+     --------------------------------- */
+     nameLabelW = XtVaCreateManagedWidget("nameLabelW",
+          xmLabelGadgetClass, form,
+          XmNalignment,       XmALIGNMENT_END,
+          XmNtopAttachment,   XmATTACH_FORM,
+          XmNrightAttachment, XmATTACH_POSITION,
+          XmNrightPosition,   50,
+          XmNrecomputeSize,   True,
+          NULL);
 
-        XtAddCallback(ok_button, XmNactivateCallback, 
-                                (XtCallbackProc)done_dialog, bb);
+     nameTextW = XtVaCreateManagedWidget("nameTextW",
+          xmLabelGadgetClass, form,
+          XmNalignment,       XmALIGNMENT_BEGINNING,
+          XmNleftAttachment,  XmATTACH_WIDGET,
+          XmNleftWidget,      nameLabelW,
+          XmNrightAttachment,  XmATTACH_NONE,
+          XmNrecomputeSize,   True,
+          NULL);
 
+     /* ---------------------------------
+     Alarm Mask 
+     --------------------------------- */
+     string = XmStringCreateSimple("Current Mask:");
+     currentMaskLabel = XtVaCreateManagedWidget("currentMaskLabel",
+          xmLabelGadgetClass, form,
+          XmNlabelString,     string,
+          XmNalignment,       XmALIGNMENT_END,
+          XmNtopAttachment,   XmATTACH_WIDGET,
+          XmNtopWidget,       nameTextW,
+          XmNtopOffset,       5,
+          XmNrightAttachment, XmATTACH_POSITION,
+          XmNrightPosition,   50,
+          NULL);
+     XmStringFree(string);
 
-        /*
-         * add a button for asking for help.
-         */
+     string = XmStringCreateSimple("-----");
+     currentMaskStringLabelW = XtVaCreateManagedWidget("currentMaskStringLabelW",
+          xmLabelGadgetClass, form,
+          XmNlabelString,     string,
+          XmNbackground,      0,
+          XmNtopAttachment,   XmATTACH_WIDGET,
+          XmNtopWidget,       nameTextW,
+          XmNtopOffset,       5,
+          XmNleftAttachment,  XmATTACH_WIDGET,
+          XmNleftWidget,      currentMaskLabel,
+          NULL);
+     XmStringFree(string);
 
+     string = XmStringCreateSimple("Reset Mask:");
+     resetMaskLabel = XtVaCreateManagedWidget("resetMaskLabel",
+          xmLabelGadgetClass, form,
+          XmNlabelString,     string,
+          XmNalignment,       XmALIGNMENT_END,
+          XmNtopAttachment,   XmATTACH_WIDGET,
+          XmNtopWidget,       currentMaskLabel,
+          XmNtopOffset,       5,
+          XmNrightAttachment, XmATTACH_POSITION,
+          XmNrightPosition,   50,
+          NULL);
+     XmStringFree(string);
 
-        n = 0;
-        XtSetArg(wargs[n], XmNx, 250); n++;
-        XtSetArg(wargs[n], XmNy, 10+30*i+2); n++;
+     string = XmStringCreateSimple("-----");
+     resetMaskStringLabelW = XtVaCreateManagedWidget("resetMaskStringLabelW",
+          xmLabelGadgetClass, form,
+          XmNlabelString,     string,
+          XmNtopAttachment,   XmATTACH_WIDGET,
+          XmNtopWidget,       currentMaskStringLabelW,
+          XmNtopOffset,       5,
+          XmNleftAttachment,  XmATTACH_WIDGET,
+          XmNleftWidget,      resetMaskLabel,
+          NULL);
+     XmStringFree(string);
 
-        help_button = XtCreateManagedWidget("Help", 
-                                xmPushButtonWidgetClass,
-                                bb, wargs, n);
+     string = XmStringCreateSimple("Mask:");
+     alarmMaskLabel = XtVaCreateManagedWidget("alarmMaskLabel",
+          xmLabelGadgetClass, form,
+          XmNlabelString,     string,
+          XmNalignment,       XmALIGNMENT_END,
+          XmNtopAttachment,   XmATTACH_WIDGET,
+          XmNtopWidget,       resetMaskLabel,
+          XmNtopOffset,       5,
+          XmNrightAttachment, XmATTACH_POSITION,
+          XmNrightPosition,   50,
+          NULL);
+     XmStringFree(string);
 
-        XtAddCallback(help_button, XmNactivateCallback, 
-                                (XtCallbackProc)xs_help_callback,
-                                help_str_showChanMasks);
+     string = XmStringCreateSimple("-----");
+     alarmMaskStringLabelW = XtVaCreateManagedWidget("alarmMaskStringLabelW",
+          xmLabelGadgetClass, form,
+          XmNlabelString,     string,
+          XmNtopAttachment,   XmATTACH_WIDGET,
+          XmNtopWidget,       resetMaskStringLabelW,
+          XmNtopOffset,       5,
+          XmNleftAttachment,  XmATTACH_WIDGET,
+          XmNleftWidget,      alarmMaskLabel,
+          NULL);
+     XmStringFree(string);
 
+     maskFrameW = XtVaCreateManagedWidget("maskFrameW",
+          xmFrameWidgetClass, form,
+          XmNtopAttachment,   XmATTACH_WIDGET,
+          XmNtopWidget,       alarmMaskStringLabelW,
+          XmNtopOffset,       5,
+          XmNleftAttachment, XmATTACH_POSITION,
+          XmNleftPosition,   25,
+          NULL);
 
-        return bb;
+     rowcol = XtVaCreateWidget("rowcol",
+          xmRowColumnWidgetClass, maskFrameW,
+          XmNspacing,          0,
+          XmNmarginHeight,     0,
+          NULL);
+
+     for (i = 0; i < ALARM_NMASK; i++){
+          alarmMaskToggleButtonW[i] = XtVaCreateManagedWidget(maskFields[i],
+               xmToggleButtonGadgetClass, rowcol,
+               XmNmarginHeight,     0,
+               XmNuserData,         (XtPointer)alarmMaskStringLabelW,
+               NULL);
+          XtAddCallback(alarmMaskToggleButtonW[i], XmNvalueChangedCallback,
+               (XtCallbackProc)forceMaskChangeCallback, (XtPointer)i);
+     }
+
+     XtManageChild(rowcol);
+
+     XtManageChild(form);
+
+     /* Set the client data "Apply", "Reset", "Dismiss", and "Help" button's callbacks. */
+     mask_items[0].data = (XtPointer)forceMaskWindow;
+     mask_items[1].data = (XtPointer)forceMaskWindow;
+     mask_items[2].data = (XtPointer)forceMaskWindow;
+     mask_items[3].data = (XtPointer)forceMaskWindow;
+
+     (void)createActionButtons(maskDialog, mask_items, XtNumber(mask_items));
+
+     XtManageChild(maskDialog);
+
+     forceMaskWindow->maskDialog = maskDialog;
+     forceMaskWindow->nameLabelW = nameLabelW;
+     forceMaskWindow->nameTextW = nameTextW;
+     forceMaskWindow->currentMaskLabel = currentMaskLabel;
+     forceMaskWindow->currentMaskStringLabelW = currentMaskStringLabelW;
+     forceMaskWindow->resetMaskStringLabelW = resetMaskStringLabelW;
+     forceMaskWindow->alarmMaskStringLabelW = alarmMaskStringLabelW;
+     forceMaskWindow->maskFrameW = maskFrameW;
+     for (i = 0; i < ALARM_NMASK; i++){
+          forceMaskWindow->alarmMaskToggleButtonW[i] = alarmMaskToggleButtonW[i];
+     }
+
+     XtRealizeWidget(maskDialogShell);
+
+}
+
+/******************************************************
+  forceMaskChangeCallback
+******************************************************/
+
+static void forceMaskChangeCallback(widget, index, cbs)
+     Widget widget;
+     int index;
+     XmAnyCallbackStruct *cbs;
+{
+     char *mask;
+     Widget maskWidget;
+     XmString string;
+
+     XtVaGetValues(widget, XmNuserData, &maskWidget, NULL);
+
+     XtVaGetValues(maskWidget, XmNlabelString, &string, NULL);
+     XmStringGetLtoR(string, XmFONTLIST_DEFAULT_TAG, &mask);
+     XmStringFree(string);
+
+     if (!XmToggleButtonGadgetGetState(widget)) {
+          mask[index] = '-';
+     }
+     else {
+          switch (index) {
+               case ALARMCANCEL:
+                    mask[index] = 'C';
+                    break;
+               case ALARMDISABLE:
+                    mask[index] = 'D';
+                    break;
+               case ALARMACK:
+                    mask[index] = 'A';
+                    break;
+               case ALARMACKT:
+                    mask[index] = 'T';
+                    break;
+               case ALARMLOG:
+                    mask[index] = 'L';
+                    break;
+          }
+     }
+
+     string = XmStringCreateSimple(mask);
+     XtVaSetValues(maskWidget, XmNlabelString, string, NULL);
+     XmStringFree(string);
+}
+
+/******************************************************
+  forceMaskHelpCallback
+******************************************************/
+
+static void forceMaskHelpCallback(widget, forceMaskWindow, cbs)
+     Widget widget;
+     struct forceMaskWindow *forceMaskWindow;
+     XmAnyCallbackStruct *cbs;
+{
+
+     char *message1 = 
+         "This dialog window allows an operator to set the current mask for a group or channel.\n"
+         "  \n"
+         "Setting the mask for a group means setting the mask for all channels in the group.\n"
+         "  \n"
+         "Press the Apply   button to force the mask on the selected channel or on\n"
+         "                  all channels in the selected group.\n"
+         "Press the Reset   button to reset channel mask(s) to their initial values.\n"
+         "Press the Dismiss button to close the Force Mask dialog window.\n"
+         "Press the Help    button to get this help description window.\n"
+            ;
+     char * message2 = "  ";
+
+     createDialog(widget,XmDIALOG_INFORMATION, message1,message2);
+
+}
+
+/******************************************************
+  forceMaskApplyCallback
+******************************************************/
+
+static void forceMaskApplyCallback(widget, forceMaskWindow, cbs)
+     Widget widget;
+     struct forceMaskWindow *forceMaskWindow;
+     XmAnyCallbackStruct *cbs;
+{
+     struct chanData *cdata;
+     XmString string;
+     char *buff;
+     struct gcData *pgcData;
+     GCLINK *link;
+     int linkType;
+     MASK mask;
+
+     link =getSelectionLinkArea(forceMaskWindow->area);
+     if (!link) return;
+     pgcData = link->pgcData;
+     linkType =getSelectionLinkTypeArea(forceMaskWindow->area);
+
+     /* ---------------------------------
+     Update alarm Mask 
+     --------------------------------- */
+     XtVaGetValues(forceMaskWindow->alarmMaskStringLabelW, XmNlabelString, &string, NULL);
+     XmStringGetLtoR(string,XmFONTLIST_DEFAULT_TAG,&buff);
+     XmStringFree(string);
+     alSetMask(buff,&mask);
+     if (linkType == CHANNEL) {
+          alOperatorForcePVChanEvent((CLINK *)link,mask);
+          alProcessCA();
+          alLogForcePVChan((CLINK *)link,OPERATOR);
+          cdata = (struct chanData *)pgcData;
+          if (programId != ALH) cdata->defaultMask = cdata->curMask;
+     }
+     if (linkType == GROUP) {
+          alChangeGroupMask((GLINK *)link,mask);
+          alProcessCA();
+          alLogForcePVGroup((GLINK *)link,OPERATOR);
+     }
+
+     resetBeep();
+     link->pmainGroup->modified = 1;
+
+     /* ---------------------------------
+     Update all dialog Windows
+     --------------------------------- */
+/*
+     axUpdateDialogs(forceMaskWindow->area);
+*/
+
+}
+
+/******************************************************
+  forceMaskResetCallback
+******************************************************/
+
+static void forceMaskResetCallback(widget, forceMaskWindow, cbs)
+     Widget widget;
+     struct forceMaskWindow *forceMaskWindow;
+     XmAnyCallbackStruct *cbs;
+{
+     struct chanData *cdata;
+     struct gcData *pgcData;
+     GCLINK *link;
+     int linkType;
+
+     link =getSelectionLinkArea(forceMaskWindow->area);
+     if (!link) return;
+     pgcData = link->pgcData;
+     linkType =getSelectionLinkTypeArea(forceMaskWindow->area);
+
+     if (linkType == CHANNEL) {
+          cdata = (struct chanData *)link->pgcData;
+          alOperatorForcePVChanEvent((CLINK *)link,cdata->defaultMask);
+          alProcessCA();
+          alLogResetPVChan((CLINK *)link,OPERATOR);
+          cdata = (struct chanData *)pgcData;
+          if (programId != ALH) cdata->defaultMask = cdata->curMask;
+     }
+     if (linkType == GROUP) {
+          alResetGroupMask((GLINK *)link);
+          alProcessCA();
+          alLogResetPVGroup((GLINK *)link,OPERATOR);
+     }
+
+     resetBeep();
+     link->pmainGroup->modified = 1;
+
+     /* ---------------------------------
+     Update all dialog Windows
+     --------------------------------- */
+     axUpdateDialogs(forceMaskWindow->area);
 
 }
 
 
+/******************************************************
+  forceMaskDismissCallback
+******************************************************/
 
+static void forceMaskDismissCallback(widget, forceMaskWindow, cbs)
+     Widget widget;
+     struct forceMaskWindow *forceMaskWindow;
+     XmAnyCallbackStruct *cbs;
+{
+     Widget maskDialog;
 
+     maskDialog = forceMaskWindow->maskDialog;
+     XtUnmanageChild(maskDialog);
+     XUnmapWindow(XtDisplay(maskDialog), XtWindow(XtParent(maskDialog)));
+     if (forceMaskWindow->menuButton)
+          XtVaSetValues(forceMaskWindow->menuButton, XmNset, FALSE, NULL);
+
+}
 

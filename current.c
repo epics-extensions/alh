@@ -1,8 +1,16 @@
 /*
  $Log$
- Revision 1.2  1994/06/22 21:17:21  jba
- Added cvs Log keyword
+ Revision 1.3  1995/10/20 16:50:31  jba
+ Modified Action menus and Action windows
+ Renamed ALARMCOMMAND to SEVRCOMMAND
+ Added STATCOMMAND facility
+ Added ALIAS facility
+ Added ALARMCOUNTFILTER facility
+ Make a few bug fixes.
 
+ * Revision 1.2  1994/06/22  21:17:21  jba
+ * Added cvs Log keyword
+ *
  */
 
 static char *sccsId = "@(#)current.c	1.8\t9/14/93";
@@ -59,7 +67,7 @@ void closeCurrent_callback(w,popup_shell,call_data)  Close current alarm window
 *
 **********************************************************/
 #include <stdio.h>
-#include <malloc.h>
+#include <stdlib.h>
 
 #include <Xm/Xm.h>
 #include <Xm/AtomMgr.h>
@@ -77,6 +85,9 @@ void closeCurrent_callback(w,popup_shell,call_data)  Close current alarm window
 #include <cadef.h>
 #include <ax.h>
  
+extern char * alarmSeverityString[];
+extern char * alarmStatusString[];
+
 /* global variables */
 struct currentData {
      time_t timeofday;
@@ -88,8 +99,6 @@ struct currentData {
 struct currentData currentAlarm[10];
 int currentAlarmIndex;
 
-extern char *alarmSeverityString[];
-extern char *alarmStatusString[];
 
 #ifdef __STDC__
 
@@ -305,9 +314,6 @@ void updateCurrentAlarmWindow(area)
 void resetCurrentAlarmWindow()
 {
      int i,j=0;
-     XmString xstr;
-     char *str;
-     char buff[100];
      
      for (i=0;i<10;i++){
           currentAlarm[j].name = NULL;

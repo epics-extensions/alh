@@ -1,8 +1,16 @@
 /*
  $Log$
- Revision 1.6  1995/05/30 16:06:07  jba
- Add unused parm to alCaPendEvent and alProcessX for fdmgr_add_timeout prototype.
+ Revision 1.7  1995/10/20 16:49:47  jba
+ Modified Action menus and Action windows
+ Renamed ALARMCOMMAND to SEVRCOMMAND
+ Added STATCOMMAND facility
+ Added ALIAS facility
+ Added ALARMCOUNTFILTER facility
+ Make a few bug fixes.
 
+ * Revision 1.6  1995/05/30  16:06:07  jba
+ * Add unused parm to alCaPendEvent and alProcessX for fdmgr_add_timeout prototype.
+ *
  * Revision 1.5  1995/02/28  16:43:25  jba
  * ansi c changes
  *
@@ -95,9 +103,9 @@ extern XtAppContext appContext;
 extern alLogConnection();
 extern alForcePVChanEvent();
 extern alForcePVGroupEvent();
-extern void alOperatorForcePVGroupEvent();
+extern void alChangeGroupMask();
 extern void alOperatorForcePVChanEvent();
-extern void alOperatorResetPVGroupEvent();
+extern void alResetGroupMask();
 extern void alLogForcePVGroup();
 extern void alLogForcePVChan();
 extern void alLogResetPVGroup();	
@@ -300,7 +308,7 @@ static void registerCA(pfdctx,fd,condition)
 
 
 	if (condition) {
-		fdmgr_add_fd(pfdctx,fd,alProcessCA,NULL);
+		fdmgr_add_fd(pfdctx,fd,(void (*)(void *))alProcessCA,NULL);
 		}
 	else {
 		fdmgr_clear_fd(pfdctx,fd);
@@ -440,7 +448,9 @@ int status;
 		NewAlarmEvent,
 		clink, 
 		(float)0, (float)0, (float)0, &(cdata->evid), DBE_ALARM);
-	al_ca_error_code("alCaAddEvent","ca_add_masked_array_event",status,cdata->name);
+		if (status != ECA_NORMAL) 
+             al_ca_error_code("alCaAddEvent","ca_add_masked_array_event",
+                  status,cdata->name);
 
 if (DEBUG == 1) 
 printf("*** ca_field_type(cdata->chid)=%d TYPENOTCONN=%d\n",ca_field_type(cdata->chid),TYPENOTCONN);
@@ -1066,7 +1076,7 @@ short *p;
 
     		/*alForcePVGroupEvent(glink,gdata->forcePVValue); */
 		
-		alOperatorForcePVGroupEvent(glink,gdata->forcePVMask);
+		alChangeGroupMask(glink,gdata->forcePVMask);
 
 		alProcessCA();
 
@@ -1083,7 +1093,7 @@ short *p;
 
 		/* alForcePVGroupEvent(glink,gdata->resetPVValue); */
 
-		alOperatorResetPVGroupEvent(glink);
+		alResetGroupMask(glink);
 
 		alProcessCA();
 
@@ -1130,8 +1140,6 @@ short *p;
 
 	/* change   channel mask to force mask  */
 
-		/* alForcePVChanEvent(clink,cdata->forcePVValue); */
-
        		alOperatorForcePVChanEvent(clink,cdata->forcePVMask);
 
 		alProcessCA();
@@ -1145,9 +1153,7 @@ short *p;
 
 	if (value == cdata->resetPVValue) {
 
-	/* change every channel in the group to default mask  */
-
-		/* alForcePVChanEvent(clink,cdata->resetPVValue); */
+	/* change channel mask to default mask  */
 
        		alOperatorForcePVChanEvent(clink,cdata->defaultMask);
 

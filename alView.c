@@ -1,8 +1,16 @@
 /*
  $Log$
- Revision 1.2  1994/06/22 21:16:43  jba
- Added cvs Log keyword
+ Revision 1.3  1995/10/20 16:50:02  jba
+ Modified Action menus and Action windows
+ Renamed ALARMCOMMAND to SEVRCOMMAND
+ Added STATCOMMAND facility
+ Added ALIAS facility
+ Added ALARMCOUNTFILTER facility
+ Make a few bug fixes.
 
+ * Revision 1.2  1994/06/22  21:16:43  jba
+ * Added cvs Log keyword
+ *
  */
 
 static char *sccsId = "@(#)alView.c	1.6\t9/20/93";
@@ -42,6 +50,7 @@ static char *sccsId = "@(#)alView.c	1.6\t9/20/93";
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "sllLib.h"
 #include "alLib.h"

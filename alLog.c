@@ -1,11 +1,19 @@
 /*
  $Log$
- Revision 1.2  1994/06/22 21:16:40  jba
- Added cvs Log keyword
+ Revision 1.3  1995/10/20 16:50:00  jba
+ Modified Action menus and Action windows
+ Renamed ALARMCOMMAND to SEVRCOMMAND
+ Added STATCOMMAND facility
+ Added ALIAS facility
+ Added ALARMCOUNTFILTER facility
+ Make a few bug fixes.
 
+ * Revision 1.2  1994/06/22  21:16:40  jba
+ * Added cvs Log keyword
+ *
  */
 
-static char *sccsId = "@(#)alLog.c	1.12\t12/15/93";
+static char *sccsId = "@@(#)alLog.c	1.12\t12/15/93";
 
 /*  alLog.c    */
 /*
@@ -74,14 +82,7 @@ alLogSetupSaveConfigFile(filename)			Log setup save config file
 #include <alh.h>
 #include <alLib.h>
 #include <line.h>
-#include <alarmString.h>
 #include <ax.h>
-
-extern char *alarmStatusString[];
-extern char *alarmSeverityString[];
-
-#define OPERATOR 	1
-#define AUTOMATIC 	0
 
 #define  LOG_UNCONN_ALARM 		1
 #define  LOG_UNCONN_FORCE_GROUP 	2
@@ -122,6 +123,10 @@ FILE *fl;       /* write alarm log file pointer */
 
 time_t timeofday;
 char buff[260],*str;
+
+extern char * alarmSeverityString[];
+extern char * alarmStatusString[];
+
 
 
 /***********************************************************************
@@ -178,7 +183,7 @@ struct chanData *cdata;
 			cdata->value);	
 
 /* update file and Alarm Log text window */
-		(void *)fprintf(fl,"%s",buff);
+		(void)fprintf(fl,"%s",buff);
 		fflush(fl);
 		updateLog(ALARM_FILE,buff);         
 

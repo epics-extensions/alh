@@ -1,8 +1,16 @@
 /*
  $Log$
- Revision 1.7  1995/06/22 20:27:00  jba
- Fixed alias overwriting Related process label.
+ Revision 1.8  1995/10/20 16:50:52  jba
+ Modified Action menus and Action windows
+ Renamed ALARMCOMMAND to SEVRCOMMAND
+ Added STATCOMMAND facility
+ Added ALIAS facility
+ Added ALARMCOUNTFILTER facility
+ Make a few bug fixes.
 
+ * Revision 1.7  1995/06/22  20:27:00  jba
+ * Fixed alias overwriting Related process label.
+ *
  * Revision 1.6  1995/06/22  19:48:57  jba
  * Added $ALIAS facility.
  *
@@ -56,6 +64,9 @@ static char *sccsId = "@(#)property.c	1.9\t2/18/94";
  *      ...
  */
 
+#include <stdlib.h>
+#include <stdio.h>
+
 #include <Xm/Xm.h>
 #include <Xm/AtomMgr.h>
 #include <Xm/DialogS.h>
@@ -63,13 +74,14 @@ static char *sccsId = "@(#)property.c	1.9\t2/18/94";
 #include <Xm/Frame.h>
 #include <Xm/LabelG.h>
 #include <Xm/PushB.h>
-#include <Xm/ToggleBG.h>
+#include <Xm/ToggleB.h>
 #include <Xm/PanedW.h>
 #include <Xm/Protocols.h>
 #include <Xm/RowColumn.h>
 #include <Xm/ScrolledW.h>
 #include <Xm/Text.h>
 #include <Xm/TextF.h>
+#include <Xm/ToggleBG.h>
 
 #include <axArea.h>
 #include <alLib.h>
@@ -77,31 +89,33 @@ static char *sccsId = "@(#)property.c	1.9\t2/18/94";
 
 extern Pixel bg_pixel[ALARM_NSEV];
 
-typedef struct {
-    char *label;
-    void (*callback)();
-    XtPointer data;
-} ActionAreaItem;
+GCLINK *undoLink;
+GCLINK *holdLink;
 
 struct propWindow {
     void *area;
-    int linkType;
-    GCLINK *link;
+    Widget menuButton;
     Widget propDialog;
     Widget nameLabelW;
     Widget nameTextW;
     Widget alarmMaskStringLabelW;
     Widget alarmMaskToggleButtonW[ALARM_NMASK];
+    Widget resetMaskStringLabelW;
     Widget maskFrameW;
     Widget severityPVnameTextW;
+    Widget countFilterFrame;
+    Widget countFilterCountTextW;
+    Widget countFilterSecondsTextW;
     Widget forcePVnameTextW;
     Widget forcePVmaskStringLabelW;
     Widget forceMaskToggleButtonW[ALARM_NMASK];
-    Widget forcePVvalueTextW;
+    Widget forcePVcurrentValueTextW;
+    Widget forcePVforceValueTextW;
     Widget forcePVresetValueTextW;
     Widget aliasTextW;
     Widget processTextW;
-    Widget alarmProcessTextW;
+    Widget statProcessTextW;
+    Widget sevrProcessTextW;
     Widget guidanceTextW;
 
 };
@@ -113,56 +127,41 @@ struct propWindow {
 static void propApplyCallback(Widget widget,struct propWindow *propWindow,XmAnyCallbackStruct *cbs);
 static void propCancelCallback(Widget widget,struct propWindow *propWindow,XmAnyCallbackStruct *cbs);
 static void propDismissCallback(Widget widget,struct propWindow *propWindow,XmAnyCallbackStruct *cbs);
-static void propCreateDialog(ALINK*area,GCLINK *link,int linkType);
-static Widget createActionButtons(Widget parent, ActionAreaItem *actions,int num_properties);
-static void propUpdateDialogData(struct propWindow *propWindow, GCLINK *link,int linkType);
+static void propHelpCallback(Widget widget,struct propWindow *propWindow,XmAnyCallbackStruct *cbs);
+static void propCreateDialog(ALINK*area);
 static void propUpdateDialogWidgets(struct propWindow *propWindow);
-
-static GLINK *propCopyGroup(GLINK *glink);
-static CLINK *propCopyChannel(CLINK *clink);
-static void propFreeGroup( GLINK *glink);
-static void propFreeChannel( CLINK *clink);
-static void propMaskChange( Widget widget, int index, XmAnyCallbackStruct *cbs);
-
+static void propMaskChangeCallback( Widget widget, int index, XmAnyCallbackStruct *cbs);
+static void propMoveData(GCLINK *fromLink,GCLINK *toLink,int linkType);
+static void propEditableDialogWidgets(ALINK *area);
 
 #else
 
 static void propApplyCallback();
 static void propCancelCallback();
 static void propDismissCallback();
+static void propHelpCallback();
 static void propCreateDialog();
-static Widget createActionButtons();
-static void propUpdateDialogData();
 static void propUpdateDialogWidgets();
-static GLINK *propCopyGroup();
-static CLINK *propCopyChannel();
-static void propFreeGroup();
-static void propFreeChannel();
-static void propMaskChange();
+static void propMaskChangeCallback();
+static void propMoveData();
+static void propEditableDialogWidgets();
 
 #endif /*__STDC__*/
-
-
 
 /******************************************************
   propUpdateDialog
 ******************************************************/
 
-void propUpdateDialog(area, link, linkType)
+void propUpdateDialog(area)
      ALINK  *area;
-     GCLINK   *link;
-     int      linkType;
 {
      struct propWindow *propWindow;
 
-     propWindow = area->propWindow;
+     propWindow = (struct propWindow *)area->propWindow;
 
      if (!propWindow)  return;
 
      if (!propWindow->propDialog || !XtIsManaged(propWindow->propDialog)) return;
-
-     propWindow->link = link;
-     propWindow->linkType = linkType;
 
      propUpdateDialogWidgets(propWindow);
 
@@ -173,21 +172,27 @@ void propUpdateDialog(area, link, linkType)
   propShowDialog
 ******************************************************/
 
-void propShowDialog(area, link, linkType)
+void propShowDialog(area, menuButton)
      ALINK    *area;
-     GCLINK   *link;
-     int      linkType;
+     Widget   menuButton;
 {
      struct propWindow *propWindow;
 
-     /* create propWindow and Dialog Widgets if necessary */
-     if (!area->propWindow)  propCreateDialog(area, link, linkType);
-
      propWindow = (struct propWindow *)area->propWindow;
 
+     /* dismiss Dialog */
+     if (propWindow && propWindow->propDialog && 
+                        XtIsManaged(propWindow->propDialog)) {
+          propDismissCallback(NULL, propWindow, NULL);
+          return;
+     }
+
+     /* create propWindow and Dialog Widgets if necessary */
+     if (!propWindow)  propCreateDialog(area);
+
      /* update propWindow link info */
-     propWindow->link = link; 
-     propWindow->linkType = linkType;
+     propWindow = (struct propWindow *)area->propWindow;
+     propWindow->menuButton = menuButton;
 
      /* update Dialog Widgets */
      propUpdateDialogWidgets(propWindow);
@@ -198,35 +203,8 @@ void propShowDialog(area, link, linkType)
           XtManageChild(propWindow->propDialog);
      }
      XMapWindow(XtDisplay(propWindow->propDialog),
-                  XtWindow(XtParent(propWindow->propDialog)));
-
-}
-
-/******************************************************
-  propUpdateDialogData
-******************************************************/
-
-static void propUpdateDialogData(propWindow, link, linkType)
-     struct propWindow *propWindow;
-     GCLINK   *link;
-     int      linkType;
-{
-
-     if (propWindow->linkType == GROUP){
-          propFreeGroup((GLINK *)propWindow->link); 
-     }
-     else if (propWindow->linkType == CHANNEL){
-          propFreeChannel((CLINK *)propWindow->link); 
-     }
-
-     if (linkType == GROUP){
-          propWindow->link = (GCLINK *)propCopyGroup((GLINK *)link); 
-          propWindow->linkType = GROUP;
-     }
-     else if (linkType == CHANNEL){
-          propWindow->link = (GCLINK *)propCopyChannel((CLINK *)link); 
-          propWindow->linkType = CHANNEL;
-     }
+          XtWindow(XtParent(propWindow->propDialog)));
+     if (menuButton) XtVaSetValues(menuButton, XmNset, TRUE, NULL);
 
 }
 
@@ -238,6 +216,7 @@ static void propUpdateDialogWidgets(propWindow)
      struct propWindow *propWindow;
 {
      struct gcData *pgcData;
+     struct chanData *pcData;
      GCLINK *link;
      int linkType;
      XmString string;
@@ -248,34 +227,55 @@ static void propUpdateDialogWidgets(propWindow)
      struct guideLink *guideLink;
      MASK mask;
 
-     link = propWindow->link;
+     link =getSelectionLinkArea(propWindow->area);
+
+     if (! propWindow || !propWindow->propDialog ||
+           !XtIsManaged(propWindow->propDialog)) return;
 
      if (!link) {
 
-          XmTextFieldSetString(propWindow->nameTextW, '\0');
+          XmTextFieldSetString(propWindow->nameTextW, "");
           string = XmStringCreateSimple("-----");
           XtVaSetValues(propWindow->alarmMaskStringLabelW, XmNlabelString, string, NULL);
-          XmToggleButtonSetState(propWindow->alarmMaskToggleButtonW[0],FALSE);
-          XmToggleButtonSetState(propWindow->alarmMaskToggleButtonW[1],FALSE);
-          XmToggleButtonSetState(propWindow->alarmMaskToggleButtonW[2],FALSE);
-          XmToggleButtonSetState(propWindow->alarmMaskToggleButtonW[3],FALSE);
-          XmToggleButtonSetState(propWindow->alarmMaskToggleButtonW[4],FALSE);
-          XmTextFieldSetString(propWindow->severityPVnameTextW,'\0');
-          XmTextFieldSetString(propWindow->forcePVnameTextW,'\0');
+          XmStringFree(string);
+          if (programId == ALH) {
+               string = XmStringCreateSimple("-");
+               XtVaSetValues(propWindow->resetMaskStringLabelW, XmNlabelString, string, NULL);
+               XmStringFree(string);
+          }
+          if (programId != ALH) {
+               XmToggleButtonSetState(propWindow->alarmMaskToggleButtonW[0],FALSE,TRUE);
+               XmToggleButtonSetState(propWindow->alarmMaskToggleButtonW[1],FALSE,TRUE);
+               XmToggleButtonSetState(propWindow->alarmMaskToggleButtonW[2],FALSE,TRUE);
+               XmToggleButtonSetState(propWindow->alarmMaskToggleButtonW[3],FALSE,TRUE);
+               XmToggleButtonSetState(propWindow->alarmMaskToggleButtonW[4],FALSE,TRUE);
+          }
+          XmTextFieldSetString(propWindow->severityPVnameTextW,"");
+          XmTextFieldSetString(propWindow->countFilterCountTextW,"");
+          XmTextFieldSetString(propWindow->countFilterSecondsTextW,"");
+          XmTextFieldSetString(propWindow->forcePVnameTextW,"");
           string = XmStringCreateSimple("-----");
           XtVaSetValues(propWindow->forcePVmaskStringLabelW, XmNlabelString, string, NULL);
-          XmTextFieldSetString(propWindow->forcePVvalueTextW,'\0');
-          XmTextFieldSetString(propWindow->forcePVresetValueTextW,'\0');
-          XmTextFieldSetString(propWindow->aliasTextW,'\0');
-          XmTextFieldSetString(propWindow->processTextW,'\0');
-          XmTextFieldSetString(propWindow->alarmProcessTextW,'\0');
-          XmTextSetString(propWindow->guidanceTextW, '\0');
+          XmStringFree(string);
+          if (programId == ALH) {
+               string = XmStringCreateSimple("");
+               XtVaSetValues(propWindow->forcePVcurrentValueTextW, XmNlabelString, string, NULL);
+               XmStringFree(string);
+          }
+          XmTextFieldSetString(propWindow->forcePVforceValueTextW,"");
+          XmTextFieldSetString(propWindow->forcePVresetValueTextW,"");
+          XmTextFieldSetString(propWindow->aliasTextW,"");
+          XmTextFieldSetString(propWindow->processTextW,"");
+          XmTextFieldSetString(propWindow->sevrProcessTextW,"");
+          XmTextFieldSetString(propWindow->statProcessTextW,"");
+          XmTextSetString(propWindow->guidanceTextW, "");
          
           return;
      }
 
      pgcData = link->pgcData;
-     linkType = propWindow->linkType;
+     linkType =getSelectionLinkTypeArea(propWindow->area);
+     if (linkType == CHANNEL) pcData = (struct chanData *)pgcData;
 
      /* ---------------------------------
      Group/Channel Name 
@@ -294,70 +294,112 @@ static void propUpdateDialogWidgets(propWindow)
 */
 
      /* ---------------------------------
-     Alarm Mask 
+     Current Alarm Mask 
      --------------------------------- */
-     if (linkType == GROUP) XtSetSensitive(propWindow->maskFrameW, FALSE);
-     else XtSetSensitive(propWindow->maskFrameW, TRUE);
-
      if (linkType == GROUP) awGetMaskString(((struct groupData *)pgcData)->mask,buff);
-     else  alGetMaskString(((struct chanData *)pgcData)->defaultMask,buff);
+     else  alGetMaskString(pcData->curMask,buff);
      string = XmStringCreateSimple(buff);
      XtVaSetValues(propWindow->alarmMaskStringLabelW, XmNlabelString, string, NULL);
      XmStringFree(string);
-     alSetMask(buff,&mask);
-     if (mask.Cancel == 1 )
-          XmToggleButtonSetState(propWindow->alarmMaskToggleButtonW[0],TRUE);
-     else XmToggleButtonSetState(propWindow->alarmMaskToggleButtonW[0],FALSE);
-     if (mask.Disable == 1 )
-          XmToggleButtonSetState(propWindow->alarmMaskToggleButtonW[1],TRUE);
-     else XmToggleButtonSetState(propWindow->alarmMaskToggleButtonW[1],FALSE);
-     if (mask.Ack == 1 )
-          XmToggleButtonSetState(propWindow->alarmMaskToggleButtonW[2],TRUE);
-     else XmToggleButtonSetState(propWindow->alarmMaskToggleButtonW[2],FALSE);
-     if (mask.AckT == 1 )
-          XmToggleButtonSetState(propWindow->alarmMaskToggleButtonW[3],TRUE);
-     else XmToggleButtonSetState(propWindow->alarmMaskToggleButtonW[3],FALSE);
-     if (mask.Log == 1 )
-          XmToggleButtonSetState(propWindow->alarmMaskToggleButtonW[4],TRUE);
-     else XmToggleButtonSetState(propWindow->alarmMaskToggleButtonW[4],FALSE);
+
+     if (programId != ALH) {
+          if (linkType == GROUP) XtSetSensitive(propWindow->maskFrameW, FALSE);
+          else XtSetSensitive(propWindow->maskFrameW, TRUE);
+
+          alSetMask(buff,&mask);
+          if (mask.Cancel == 1 )
+               XmToggleButtonSetState(propWindow->alarmMaskToggleButtonW[0],TRUE,TRUE);
+          else XmToggleButtonSetState(propWindow->alarmMaskToggleButtonW[0],FALSE,TRUE);
+          if (mask.Disable == 1 )
+               XmToggleButtonSetState(propWindow->alarmMaskToggleButtonW[1],TRUE,TRUE);
+          else XmToggleButtonSetState(propWindow->alarmMaskToggleButtonW[1],FALSE,TRUE);
+          if (mask.Ack == 1 )
+               XmToggleButtonSetState(propWindow->alarmMaskToggleButtonW[2],TRUE,TRUE);
+          else XmToggleButtonSetState(propWindow->alarmMaskToggleButtonW[2],FALSE,TRUE);
+          if (mask.AckT == 1 )
+               XmToggleButtonSetState(propWindow->alarmMaskToggleButtonW[3],TRUE,TRUE);
+          else XmToggleButtonSetState(propWindow->alarmMaskToggleButtonW[3],FALSE,TRUE);
+          if (mask.Log == 1 )
+               XmToggleButtonSetState(propWindow->alarmMaskToggleButtonW[4],TRUE,TRUE);
+          else XmToggleButtonSetState(propWindow->alarmMaskToggleButtonW[4],FALSE,TRUE);
+     }
+
+     /* ---------------------------------
+     Reset Mask 
+     --------------------------------- */
+     if (programId == ALH ) {
+          if ( linkType == CHANNEL) {
+               alGetMaskString(pcData->defaultMask,buff);
+               string = XmStringCreateSimple(buff);
+          } else {
+               string = XmStringCreateSimple("");
+          }
+          XtVaSetValues(propWindow->resetMaskStringLabelW, XmNlabelString, string, NULL);
+          XmStringFree(string);
+     }
 
      /* ---------------------------------
      Severity Process Variable
      --------------------------------- */
      if(strcmp(pgcData->sevrPVName,"-") != 0)
           XmTextFieldSetString(propWindow->severityPVnameTextW,pgcData->sevrPVName);
-     else XmTextFieldSetString(propWindow->severityPVnameTextW,'\0');
+     else XmTextFieldSetString(propWindow->severityPVnameTextW,"");
+
+     /* ---------------------------------
+     Alarm Count Filter 
+     --------------------------------- */
+     if (linkType == GROUP) XtSetSensitive(propWindow->countFilterFrame, FALSE);
+     else {
+          XtSetSensitive(propWindow->countFilterFrame, TRUE);
+          if(pcData->countFilter) {
+               sprintf(buff,"%d",pcData->countFilter->inputCount);
+               XmTextFieldSetString(propWindow->countFilterCountTextW,buff);
+               sprintf(buff,"%d",pcData->countFilter->inputSeconds);
+               XmTextFieldSetString(propWindow->countFilterSecondsTextW,buff);
+          }
+     }
 
      /* ---------------------------------
      Force Process Variable
      --------------------------------- */
      if(strcmp(pgcData->forcePVName,"-") != 0)
           XmTextFieldSetString(propWindow->forcePVnameTextW,pgcData->forcePVName);
-     else XmTextFieldSetString(propWindow->forcePVnameTextW,'\0');
+     else XmTextFieldSetString(propWindow->forcePVnameTextW,"");
 
      alGetMaskString(pgcData->forcePVMask,buff);
      string = XmStringCreateSimple(buff);
      XtVaSetValues(propWindow->forcePVmaskStringLabelW, XmNlabelString, string, NULL);
      XmStringFree(string);
-     mask = pgcData->forcePVMask;
-     if (mask.Cancel == 1 )
-          XmToggleButtonSetState(propWindow->forceMaskToggleButtonW[0],TRUE);
-     else XmToggleButtonSetState(propWindow->forceMaskToggleButtonW[0],FALSE);
-     if (mask.Disable == 1 )
-          XmToggleButtonSetState(propWindow->forceMaskToggleButtonW[1],TRUE);
-     else XmToggleButtonSetState(propWindow->forceMaskToggleButtonW[1],FALSE);
-     if (mask.Ack == 1 )
-          XmToggleButtonSetState(propWindow->forceMaskToggleButtonW[2],TRUE);
-     else XmToggleButtonSetState(propWindow->forceMaskToggleButtonW[2],FALSE);
-     if (mask.AckT == 1 )
-          XmToggleButtonSetState(propWindow->forceMaskToggleButtonW[3],TRUE);
-     else XmToggleButtonSetState(propWindow->forceMaskToggleButtonW[3],FALSE);
-     if (mask.Log == 1 )
-          XmToggleButtonSetState(propWindow->forceMaskToggleButtonW[4],TRUE);
-     else XmToggleButtonSetState(propWindow->forceMaskToggleButtonW[4],FALSE);
+     if (programId != ALH) {
+          mask = pgcData->forcePVMask;
+          if (mask.Cancel == 1 )
+               XmToggleButtonSetState(propWindow->forceMaskToggleButtonW[0],TRUE,TRUE);
+          else XmToggleButtonSetState(propWindow->forceMaskToggleButtonW[0],FALSE,TRUE);
+          if (mask.Disable == 1 )
+               XmToggleButtonSetState(propWindow->forceMaskToggleButtonW[1],TRUE,TRUE);
+          else XmToggleButtonSetState(propWindow->forceMaskToggleButtonW[1],FALSE,TRUE);
+          if (mask.Ack == 1 )
+               XmToggleButtonSetState(propWindow->forceMaskToggleButtonW[2],TRUE,TRUE);
+          else XmToggleButtonSetState(propWindow->forceMaskToggleButtonW[2],FALSE,TRUE);
+          if (mask.AckT == 1 )
+               XmToggleButtonSetState(propWindow->forceMaskToggleButtonW[3],TRUE,TRUE);
+          else XmToggleButtonSetState(propWindow->forceMaskToggleButtonW[3],FALSE,TRUE);
+          if (mask.Log == 1 )
+               XmToggleButtonSetState(propWindow->forceMaskToggleButtonW[4],TRUE,TRUE);
+          else XmToggleButtonSetState(propWindow->forceMaskToggleButtonW[4],FALSE,TRUE);
+     }
+
+/*
+     if (programId == ALH) {
+          sprintf(buff,"%d",pgcData->PVValue);
+          string = XmStringCreateSimple(buff);
+          XtVaSetValues(propWindow->forcePVcurrentValueTextW, XmNlabelString, string, NULL);
+          XmStringFree(string);
+     }
+*/
 
      sprintf(buff,"%d",pgcData->forcePVValue);
-     XmTextFieldSetString(propWindow->forcePVvalueTextW,buff);
+     XmTextFieldSetString(propWindow->forcePVforceValueTextW,buff);
 
      sprintf(buff,"%d",pgcData->resetPVValue);
      XmTextFieldSetString(propWindow->forcePVresetValueTextW,buff);
@@ -373,10 +415,21 @@ static void propUpdateDialogWidgets(propWindow)
      XmTextFieldSetString(propWindow->processTextW,pgcData->command);
 
      /* ---------------------------------
-     Alarm Process Command
+     Sevr Command
      --------------------------------- */
-     getStringAlarmCommandList(&pgcData->alarmCommandList,&str);
-     XmTextSetString(propWindow->alarmProcessTextW,str);
+     getStringSevrCommandList(&pgcData->sevrCommandList,&str);
+     XmTextSetString(propWindow->sevrProcessTextW,str);
+
+     /* ---------------------------------
+     Stat Command
+     --------------------------------- */
+     if (linkType == GROUP) XtSetSensitive(propWindow->statProcessTextW, FALSE);
+     else {
+          XtSetSensitive(propWindow->statProcessTextW, TRUE);
+          getStringStatCommandList(&pcData->statCommandList,&str);
+          XmTextSetString(propWindow->statProcessTextW,str);
+     }
+
 
      /* ---------------------------------
      Guidance Text
@@ -389,15 +442,13 @@ static void propUpdateDialogWidgets(propWindow)
            i += 1;
            pt = sllNext(pt);
      }
-     str = (char*)calloc(1,i+1); 
+     str = (char*)calloc(i+1,sizeof(char)); 
      pt = sllFirst(&(link->GuideList));
-     i=0;
      while (pt) {
            guideLink = (struct guideLink *)pt;
            strcat(str,guideLink->list);
            pt = sllNext(pt);
            if (pt) strcat(str,"\n");
-           i++;
      }
 
      XmTextSetString(propWindow->guidanceTextW, str);
@@ -409,36 +460,48 @@ static void propUpdateDialogWidgets(propWindow)
   propCreateDialog
 ******************************************************/
 
-static void propCreateDialog(area, link, linkType)
+static void propCreateDialog(area)
      ALINK    *area;
-     GCLINK   *link;
-     int      linkType;
 {
      struct propWindow *propWindow;
 
-     Widget propDialogShell, propDialog, rc, forcePV_text_w, severityPVnameTextW,property_s;
-     Widget rc3, rowcol, form, maskFrameW, alarmMaskStringLabelW;
+     Widget propDialogShell, propDialog, severityPVnameTextW;
+     Widget rowcol, form, maskFrameW;
      Widget nameLabelW, nameTextW;
      Widget guidanceScrolledW;
-     Widget alarmProcessScrolledW;
+     Widget statProcessScrolledW;
+     Widget sevrProcessScrolledW;
      Widget forcePVlabel, severityPVlabel;
      Widget alarmMaskToggleButtonW[ALARM_NMASK];
      Widget forceMaskToggleButtonW[ALARM_NMASK];
      Widget aliasLabel, aliasTextW;
      Widget processLabel, processTextW;
-     Widget alarmProcessLabel, alarmProcessTextW;
-     Widget forcePVvalueLabel,forcePVnameTextW, forcePVvalueTextW, forcePVresetValueTextW, forcePVreset;
-     Widget forcePVmaskStringLabelW, frame2, rowcol2, frame3, rowcol3, guidanceLabel, guidanceTextW;
-     Widget toggle,alarmMaskLabel,forceMaskLabel,forcePVnameLabel;
+     Widget sevrProcessLabel, sevrProcessTextW;
+     Widget statProcessLabel, statProcessTextW;
+     Widget forcePVcurrentValueTextW;
+     Widget forcePVforceValueLabel,forcePVnameTextW, forcePVforceValueTextW,
+            forcePVresetValueTextW, forcePVresetValueLabel;
+     Widget forcePVmaskStringLabelW, frame2, rowcol2, frame3,
+            rowcol3, guidanceLabel, guidanceTextW;
+     Widget alarmMaskLabel, alarmMaskStringLabelW;
+     Widget forceMaskLabel, forcePVnameLabel;
+     Widget resetMaskLabel=0, resetMaskStringLabelW=0;
+     Widget prev;
      int i;
+     Widget countFilterFrame, form4, countFilterLabel,
+            countFilterCountLabel,countFilterCountTextW,
+            countFilterSecondsLabel, countFilterSecondsTextW;
      Pixel textBackground;
-     static char text[100];
      XmString string;
-     static ActionAreaItem prop_items[] = {
+     static ActionAreaItem prop_items_act[] = {
          { "Apply",   propApplyCallback,   NULL    },
          { "Cancel",  propCancelCallback,  NULL    },
          { "Dismiss", propDismissCallback, NULL    },
-         { "Help",    helpCallback,    "Help Button" },
+         { "Help",    propHelpCallback,    "Help Button" },
+     };
+     static ActionAreaItem prop_items_alh[] = {
+         { "Dismiss", propDismissCallback, NULL    },
+         { "Help",    propHelpCallback,    "Help Button" },
      };
      static String maskFields[] = {
          "Cancel Alarm", 
@@ -447,8 +510,6 @@ static void propCreateDialog(area, link, linkType)
          "NoAck Transient Alarm",
          "NoLog Alarm"
      };
-     Atom         WM_DELETE_WINDOW;
-
 
      if (!area) return;
 
@@ -459,30 +520,15 @@ static void propCreateDialog(area, link, linkType)
           else XtManageChild(propWindow->propDialog);
      }
 
-     textBackground = bg_pixel[3];
+     if (programId != ALH) textBackground = bg_pixel[3];
+     else textBackground = bg_pixel[0];
 
      propWindow = (struct propWindow *)calloc(1,sizeof(struct propWindow)); 
      area->propWindow = (void *)propWindow;
      propWindow->area = (void *)area;
-/*
-     propDialogShell = XtAppCreateShell("Alarm Handler Properties",programName,
-         applicationShellWidgetClass, display, NULL, 0);
-*/
+
      propDialogShell = XtVaCreatePopupShell("Alarm Handler Properties",
          transientShellWidgetClass, area->toplevel, NULL, 0);
-
-     /* Modify the window manager menu "close" callback */
-/*
-     XtVaSetValues(propDialogShell,
-          XmNdeleteResponse,       XmDO_NOTHING,
-          NULL);
-
-     WM_DELETE_WINDOW = XmInternAtom(XtDisplay(propDialogShell),
-          "WM_DELETE_WINDOW", False);
-     XmAddWMProtocolCallback(propDialogShell,WM_DELETE_WINDOW,
-          (XtCallbackProc)propDismissCallback, (XtPointer)propWindow);
-*/
-
 
      propDialog = XtVaCreateWidget("propDialog",
          xmPanedWindowWidgetClass, propDialogShell,
@@ -491,7 +537,7 @@ static void propCreateDialog(area, link, linkType)
          XmNuserData,   area,
          NULL);
 
-     rc = XtVaCreateWidget("control_area", xmRowColumnWidgetClass, propDialog, NULL);
+     (void)XtVaCreateWidget("control_area", xmRowColumnWidgetClass, propDialog, NULL);
      form = XtVaCreateWidget("control_area", xmFormWidgetClass, propDialog, NULL);
 
      /* ---------------------------------
@@ -499,6 +545,7 @@ static void propCreateDialog(area, link, linkType)
      --------------------------------- */
      nameLabelW = XtVaCreateManagedWidget("nameLabelW",
           xmLabelGadgetClass, form,
+          XmNrecomputeSize,   True,
           XmNtopAttachment,   XmATTACH_FORM,
           XmNleftAttachment,  XmATTACH_FORM,
           NULL);
@@ -508,6 +555,7 @@ static void propCreateDialog(area, link, linkType)
           XmNspacing,          0,
           XmNmarginHeight,     0,
           XmNcolumns,         30,
+          XmNrecomputeSize,   True,
           XmNmaxLength,       PVNAME_SIZE,
           XmNbackground,      textBackground,
           XmNtopAttachment,   XmATTACH_WIDGET,
@@ -519,9 +567,10 @@ static void propCreateDialog(area, link, linkType)
           (XtCallbackProc)XmProcessTraversal, (XtPointer)XmTRAVERSE_NEXT_TAB_GROUP);
 
      /* ---------------------------------
-     Alarm Mask 
+     Current Alarm Mask 
      --------------------------------- */
-     string = XmStringCreateSimple("Alarm Mask:  ");
+     if (programId != ALH) string = XmStringCreateSimple("Alarm Mask:  ");
+     else string = XmStringCreateSimple("Current Mask:  ");
      alarmMaskLabel = XtVaCreateManagedWidget("alarmMaskLabel",
           xmLabelGadgetClass, form,
           XmNlabelString,     string,
@@ -530,6 +579,7 @@ static void propCreateDialog(area, link, linkType)
           XmNleftAttachment,  XmATTACH_FORM,
           NULL);
      XmStringFree(string);
+     prev = alarmMaskLabel;
 
      string = XmStringCreateSimple("-----");
      alarmMaskStringLabelW = XtVaCreateManagedWidget("alarmMaskStringLabelW",
@@ -542,30 +592,143 @@ static void propCreateDialog(area, link, linkType)
           NULL);
      XmStringFree(string);
 
-     maskFrameW = XtVaCreateManagedWidget("maskFrameW",
+     /* ---------------------------------
+     Reset Mask 
+     --------------------------------- */
+     if (programId == ALH ) {
+          string = XmStringCreateSimple("Reset Mask:  ");
+          resetMaskLabel = XtVaCreateManagedWidget("resetMaskLabel",
+               xmLabelGadgetClass, form,
+               XmNlabelString,     string,
+               XmNtopAttachment,   XmATTACH_WIDGET,
+               XmNtopWidget,       alarmMaskLabel,
+               XmNleftAttachment,  XmATTACH_FORM,
+               NULL);
+          XmStringFree(string);
+          prev = resetMaskLabel;
+     
+          string = XmStringCreateSimple("     ");
+          resetMaskStringLabelW = XtVaCreateManagedWidget("resetMaskStringLabelW",
+               xmLabelGadgetClass, form,
+               XmNlabelString,     string,
+               XmNtopAttachment,   XmATTACH_WIDGET,
+               XmNtopWidget,       alarmMaskLabel,
+               XmNleftAttachment,  XmATTACH_WIDGET,
+               XmNleftWidget,      resetMaskLabel,
+               NULL);
+          XmStringFree(string);
+     }
+
+     if (programId != ALH) {
+          maskFrameW = XtVaCreateManagedWidget("maskFrameW",
+               xmFrameWidgetClass, form,
+               XmNtopAttachment,   XmATTACH_WIDGET,
+               XmNtopWidget,       prev,
+               XmNleftAttachment,  XmATTACH_FORM,
+               NULL);
+          prev=maskFrameW;
+     
+          rowcol = XtVaCreateWidget("rowcol",
+               xmRowColumnWidgetClass, maskFrameW,
+               XmNspacing,          0,
+               XmNmarginHeight,     0,
+               NULL);
+     
+          for (i = 0; i < ALARM_NMASK; i++){
+               alarmMaskToggleButtonW[i] = XtVaCreateManagedWidget(maskFields[i],
+                    xmToggleButtonGadgetClass, rowcol,
+                    XmNmarginHeight,     0,
+                    XmNuserData,         (XtPointer)alarmMaskStringLabelW,
+                    NULL);
+               XtAddCallback(alarmMaskToggleButtonW[i], XmNvalueChangedCallback,
+                    (XtCallbackProc)propMaskChangeCallback, (XtPointer)i);
+          }
+     
+          XtManageChild(rowcol);
+     }
+
+     /* ---------------------------------
+     Alarm Count Filter
+     --------------------------------- */
+     countFilterFrame = XtVaCreateManagedWidget("countFilterFrame",
           xmFrameWidgetClass, form,
           XmNtopAttachment,   XmATTACH_WIDGET,
-          XmNtopWidget,       alarmMaskLabel,
+          XmNtopWidget,       prev,
           XmNleftAttachment,  XmATTACH_FORM,
+          XmNrightAttachment, XmATTACH_POSITION,
+          XmNrightPosition,    50,
           NULL);
 
-     rowcol = XtVaCreateWidget("rowcol",
-          xmRowColumnWidgetClass, maskFrameW,
+     form4 = XtVaCreateWidget("form4",
+          xmFormWidgetClass, countFilterFrame,
           XmNspacing,          0,
           XmNmarginHeight,     0,
           NULL);
 
-     for (i = 0; i < ALARM_NMASK; i++){
-          alarmMaskToggleButtonW[i] = XtVaCreateManagedWidget(maskFields[i],
-               xmToggleButtonGadgetClass, rowcol,
-               XmNmarginHeight,     0,
-               XmNuserData,         (XtPointer)alarmMaskStringLabelW,
-               NULL);
-          XtAddCallback(alarmMaskToggleButtonW[i], XmNvalueChangedCallback,
-               (XtCallbackProc)propMaskChange, (XtPointer)i);
-     }
+     string = XmStringCreateSimple("Alarm Count Filter             ");
+     countFilterLabel = XtVaCreateManagedWidget("countFilterLabel",
+          xmLabelGadgetClass, form4,
+          XmNlabelString,            string,
+          XmNtopAttachment,          XmATTACH_FORM,
+          XmNleftAttachment,         XmATTACH_FORM,
+          NULL);
+     XmStringFree(string);
 
-     XtManageChild(rowcol);
+     string = XmStringCreateSimple("Count: ");
+     countFilterCountLabel = XtVaCreateManagedWidget("countFilterCountLabel",
+          xmLabelGadgetClass, form4,
+          XmNlabelString,            string,
+          XmNtopAttachment,          XmATTACH_WIDGET,
+          XmNtopWidget,              countFilterLabel,
+          XmNleftAttachment,         XmATTACH_FORM,
+          NULL);
+     XmStringFree(string);
+
+     countFilterCountTextW = XtVaCreateManagedWidget("countFilterCountTextW",
+          xmTextFieldWidgetClass, form4,
+          XmNspacing,                0,
+          XmNmarginHeight,           0,
+          XmNcolumns,                3,
+          XmNmaxLength,              3,
+          XmNbackground,             textBackground,
+          XmNtopAttachment,          XmATTACH_WIDGET,
+          XmNtopWidget,              countFilterLabel,
+          XmNleftAttachment,         XmATTACH_WIDGET,
+          XmNleftWidget,             countFilterCountLabel,
+          NULL);
+
+     XtAddCallback(countFilterCountTextW, XmNactivateCallback,
+          (XtCallbackProc)XmProcessTraversal, (XtPointer)XmTRAVERSE_NEXT_TAB_GROUP);
+
+     string = XmStringCreateSimple("Seconds: ");
+     countFilterSecondsLabel = XtVaCreateManagedWidget("countFilterSecondsLabel",
+          xmLabelGadgetClass, form4,
+          XmNlabelString,            string,
+          XmNtopAttachment,          XmATTACH_WIDGET,
+          XmNtopWidget,              countFilterLabel,
+          XmNleftAttachment,         XmATTACH_WIDGET,
+          XmNleftWidget,             countFilterCountTextW,
+          NULL);
+     XmStringFree(string);
+
+     countFilterSecondsTextW = XtVaCreateManagedWidget("countFilterSecondsTextW",
+          xmTextFieldWidgetClass, form4,
+          XmNspacing,                0,
+          XmNmarginHeight,           0,
+          XmNcolumns,                3,
+          XmNmaxLength,              3,
+          XmNbackground,             textBackground,
+          XmNtopAttachment,          XmATTACH_WIDGET,
+          XmNtopWidget,              countFilterLabel,
+          XmNleftAttachment,         XmATTACH_WIDGET,
+          XmNleftWidget,             countFilterSecondsLabel,
+          NULL);
+
+     XtAddCallback(countFilterSecondsTextW, XmNactivateCallback,
+          (XtCallbackProc)XmProcessTraversal, (XtPointer)XmTRAVERSE_NEXT_TAB_GROUP);
+
+     /* Form is full -- now manage */
+     XtManageChild(form4);
 
      /* ---------------------------------
      Severity Process Variable
@@ -575,7 +738,7 @@ static void propCreateDialog(area, link, linkType)
           xmLabelGadgetClass, form,
           XmNlabelString,    string,
           XmNtopAttachment,   XmATTACH_WIDGET,
-          XmNtopWidget,       maskFrameW,
+          XmNtopWidget,       countFilterFrame,
           XmNleftAttachment,  XmATTACH_FORM,
           NULL);
      XmStringFree(string);
@@ -655,6 +818,7 @@ static void propCreateDialog(area, link, linkType)
           XmNleftAttachment,         XmATTACH_FORM,
           NULL);
      XmStringFree(string);
+     prev = forceMaskLabel;
 
      string = XmStringCreateSimple("-----");
      forcePVmaskStringLabelW = XtVaCreateManagedWidget("forcePVmaskStringLabelW",
@@ -667,42 +831,71 @@ static void propCreateDialog(area, link, linkType)
           NULL);
      XmStringFree(string);
 
-     frame3 = XtVaCreateManagedWidget("frame3",
-          xmFrameWidgetClass, rowcol2,
-          XmNtopAttachment,          XmATTACH_WIDGET,
-          XmNtopWidget,              forcePVmaskStringLabelW,
-          XmNleftAttachment,         XmATTACH_FORM,
-          NULL);
+/*
+     if (programId == ALH) {
+          string = XmStringCreateSimple("Current Value:  ");
+          forcePVcurrentValueLabel = XtVaCreateManagedWidget("forcePVcurrentValueLabel",
+               xmLabelGadgetClass, rowcol2,
+               XmNlabelString,            string,
+               XmNtopAttachment,          XmATTACH_WIDGET,
+               XmNtopWidget,              forceMaskLabel,
+               XmNleftAttachment,         XmATTACH_FORM,
+               NULL);
+          XmStringFree(string);
+          prev = forcePVcurrentValueLabel;
+     
+          string = XmStringCreateSimple("     ");
+          forcePVcurrentValueTextW = XtVaCreateManagedWidget("forcePVcurrentValueTextW",
+               xmLabelGadgetClass, rowcol2,
+               XmNlabelString,            string,
+               XmNtopAttachment,          XmATTACH_WIDGET,
+               XmNtopWidget,              forceMaskLabel,
+               XmNleftAttachment,         XmATTACH_WIDGET,
+               XmNleftWidget,             forcePVcurrentValueLabel,
+               NULL);
+          XmStringFree(string);
+     }
+*/
 
-     rowcol3 = XtVaCreateWidget("rowcol2",
-         xmRowColumnWidgetClass, frame3,
-         XmNspacing,          0,
-         XmNmarginHeight,     0,
-         NULL);
-
-     for (i = 0; i < ALARM_NMASK; i++){
-          forceMaskToggleButtonW[i] = XtVaCreateManagedWidget(maskFields[i],
-             xmToggleButtonGadgetClass, rowcol3,
-             XmNmarginHeight,     0,
-             XmNuserData,         (XtPointer)forcePVmaskStringLabelW,
-             NULL);
-          XtAddCallback(forceMaskToggleButtonW[i], XmNvalueChangedCallback,
-               (XtCallbackProc)propMaskChange, (XtPointer)i);
+     if (programId != ALH) {
+          frame3 = XtVaCreateManagedWidget("frame3",
+               xmFrameWidgetClass, rowcol2,
+               XmNtopAttachment,          XmATTACH_WIDGET,
+               XmNtopWidget,              forcePVmaskStringLabelW,
+               XmNleftAttachment,         XmATTACH_FORM,
+               NULL);
+          prev = frame3;
+     
+          rowcol3 = XtVaCreateWidget("rowcol2",
+              xmRowColumnWidgetClass, frame3,
+              XmNspacing,          0,
+              XmNmarginHeight,     0,
+              NULL);
+     
+          for (i = 0; i < ALARM_NMASK; i++){
+               forceMaskToggleButtonW[i] = XtVaCreateManagedWidget(maskFields[i],
+                  xmToggleButtonGadgetClass, rowcol3,
+                  XmNmarginHeight,     0,
+                  XmNuserData,         (XtPointer)forcePVmaskStringLabelW,
+                  NULL);
+               XtAddCallback(forceMaskToggleButtonW[i], XmNvalueChangedCallback,
+                    (XtCallbackProc)propMaskChangeCallback, (XtPointer)i);
+          }
+     
+          XtManageChild(rowcol3);
      }
 
-     XtManageChild(rowcol3);
-
      string = XmStringCreateSimple("Force Value: ");
-     forcePVvalueLabel = XtVaCreateManagedWidget("forcePVvalue",
+     forcePVforceValueLabel = XtVaCreateManagedWidget("forcePVvalue",
           xmLabelGadgetClass, rowcol2,
           XmNlabelString,            string,
           XmNtopAttachment,          XmATTACH_WIDGET,
-          XmNtopWidget,              frame3,
+          XmNtopWidget,              prev,
           XmNleftAttachment,         XmATTACH_FORM,
           NULL);
      XmStringFree(string);
 
-     forcePVvalueTextW = XtVaCreateManagedWidget("forcePVvalueTextW",
+     forcePVforceValueTextW = XtVaCreateManagedWidget("forcePVforceValueTextW",
           xmTextFieldWidgetClass, rowcol2,
           XmNspacing,                0,
           XmNmarginHeight,           0,
@@ -710,20 +903,20 @@ static void propCreateDialog(area, link, linkType)
           XmNmaxLength,              5,
           XmNbackground,             textBackground,
           XmNtopAttachment,          XmATTACH_WIDGET,
-          XmNtopWidget,              frame3,
+          XmNtopWidget,              prev,
           XmNleftAttachment,         XmATTACH_WIDGET,
-          XmNleftWidget,             forcePVvalueLabel,
+          XmNleftWidget,             forcePVforceValueLabel,
           NULL);
 
-     XtAddCallback(forcePVvalueTextW, XmNactivateCallback,
+     XtAddCallback(forcePVforceValueTextW, XmNactivateCallback,
           (XtCallbackProc)XmProcessTraversal, (XtPointer)XmTRAVERSE_NEXT_TAB_GROUP);
 
      string = XmStringCreateSimple("Reset Value: ");
-     forcePVreset = XtVaCreateManagedWidget("forcePVreset",
+     forcePVresetValueLabel = XtVaCreateManagedWidget("forcePVresetValueLabel",
           xmLabelGadgetClass, rowcol2,
           XmNlabelString,            string,
           XmNtopAttachment,          XmATTACH_WIDGET,
-          XmNtopWidget,              forcePVvalueLabel,
+          XmNtopWidget,              forcePVforceValueLabel,
           XmNleftAttachment,         XmATTACH_FORM,
           NULL);
      XmStringFree(string);
@@ -736,9 +929,9 @@ static void propCreateDialog(area, link, linkType)
           XmNmaxLength,              5,
           XmNbackground,             textBackground,
           XmNtopAttachment,          XmATTACH_WIDGET,
-          XmNtopWidget,              forcePVvalueTextW,
+          XmNtopWidget,              forcePVforceValueTextW,
           XmNleftAttachment,         XmATTACH_WIDGET,
-          XmNleftWidget,             forcePVreset,
+          XmNleftWidget,             forcePVresetValueLabel,
           NULL);
 
      XtAddCallback(forcePVresetValueTextW, XmNactivateCallback,
@@ -750,30 +943,30 @@ static void propCreateDialog(area, link, linkType)
      /* ---------------------------------
      Alias
      --------------------------------- */
+     string = XmStringCreateSimple("Alias");
+     aliasLabel = XtVaCreateManagedWidget("aliasLabel",
+          xmLabelGadgetClass,        form,
+          XmNlabelString,            string,
+          XmNcolumns,                80,
+          XmNtopAttachment,          XmATTACH_WIDGET,
+          XmNtopWidget,              severityPVnameTextW,
+          XmNleftAttachment,         XmATTACH_FORM,
+          NULL);
+     XmStringFree(string);
+
      aliasTextW = XtVaCreateManagedWidget("aliasTextW",
           xmTextFieldWidgetClass, form,
           XmNspacing,                0,
           XmNmarginHeight,           0,
           XmNbackground,             textBackground,
           XmNtopAttachment,          XmATTACH_WIDGET,
-          XmNtopWidget,              frame3,
+          XmNtopWidget,              aliasLabel,
           XmNleftAttachment,         XmATTACH_FORM,
           XmNrightAttachment,        XmATTACH_FORM,
           NULL);
 
      XtAddCallback(aliasTextW, XmNactivateCallback,
           (XtCallbackProc)XmProcessTraversal, (XtPointer)XmTRAVERSE_NEXT_TAB_GROUP);
-
-     string = XmStringCreateSimple("Alias");
-     aliasLabel = XtVaCreateManagedWidget("aliasLabel",
-          xmLabelGadgetClass,        form,
-          XmNlabelString,            string,
-          XmNcolumns,                80,
-          XmNbottomAttachment,       XmATTACH_WIDGET,
-          XmNbottomWidget,           aliasTextW,
-          XmNleftAttachment,         XmATTACH_FORM,
-          NULL);
-     XmStringFree(string);
 
      /* ---------------------------------
      Related Process Command
@@ -804,10 +997,10 @@ static void propCreateDialog(area, link, linkType)
           (XtCallbackProc)XmProcessTraversal, (XtPointer)XmTRAVERSE_NEXT_TAB_GROUP);
 
      /* ---------------------------------
-     Alarm Process Command
+     Sevr Command
      --------------------------------- */
-     string = XmStringCreateSimple("Alarm Process Commands");
-     alarmProcessLabel = XtVaCreateManagedWidget("alarmProcessLabel",
+     string = XmStringCreateSimple("Alarm Severity Commands");
+     sevrProcessLabel = XtVaCreateManagedWidget("sevrProcessLabel",
           xmLabelGadgetClass, form,
           XmNlabelString,     string,
           XmNcolumns,                80,
@@ -818,23 +1011,50 @@ static void propCreateDialog(area, link, linkType)
      XmStringFree(string);
 
      /* Create Scrolled Window  */
-     alarmProcessScrolledW = XtVaCreateManagedWidget("alarmScrolledW",
+     sevrProcessScrolledW = XtVaCreateManagedWidget("sevrScrolledW",
           xmScrolledWindowWidgetClass, form,
           XmNscrollingPolicy,        XmAUTOMATIC,
           XmNtopAttachment,          XmATTACH_WIDGET,
-          XmNtopWidget,              alarmProcessLabel,
+          XmNtopWidget,              sevrProcessLabel,
           XmNleftAttachment,         XmATTACH_FORM,
           XmNrightAttachment,        XmATTACH_FORM,
           NULL);
 
-     alarmProcessTextW = XtVaCreateManagedWidget("alarmProcessTextW",
-          xmTextWidgetClass, alarmProcessScrolledW,
+     sevrProcessTextW = XtVaCreateManagedWidget("sevrProcessTextW",
+          xmTextWidgetClass, sevrProcessScrolledW,
           XmNeditMode,               XmMULTI_LINE_EDIT,
           XmNbackground,             textBackground,
           NULL);
 
-     XtAddCallback(alarmProcessScrolledW, XmNactivateCallback,
-          (XtCallbackProc)XmProcessTraversal, (XtPointer)XmTRAVERSE_NEXT_TAB_GROUP);
+     /* ---------------------------------
+     Stat Command
+     --------------------------------- */
+     string = XmStringCreateSimple("Alarm Status Commands");
+     statProcessLabel = XtVaCreateManagedWidget("statProcessLabel",
+          xmLabelGadgetClass, form,
+          XmNlabelString,     string,
+          XmNcolumns,                80,
+          XmNtopAttachment,          XmATTACH_WIDGET,
+          XmNtopWidget,              sevrProcessScrolledW,
+          XmNleftAttachment,         XmATTACH_FORM,
+          NULL);
+     XmStringFree(string);
+
+     /* Create Scrolled Window  */
+     statProcessScrolledW = XtVaCreateManagedWidget("statScrolledW",
+          xmScrolledWindowWidgetClass, form,
+          XmNscrollingPolicy,        XmAUTOMATIC,
+          XmNtopAttachment,          XmATTACH_WIDGET,
+          XmNtopWidget,              statProcessLabel,
+          XmNleftAttachment,         XmATTACH_FORM,
+          XmNrightAttachment,        XmATTACH_FORM,
+          NULL);
+
+     statProcessTextW = XtVaCreateManagedWidget("statProcessTextW",
+          xmTextWidgetClass,statProcessScrolledW,
+          XmNeditMode,               XmMULTI_LINE_EDIT,
+          XmNbackground,             textBackground,
+          NULL);
 
      /* ---------------------------------
      Guidance Text
@@ -844,7 +1064,7 @@ static void propCreateDialog(area, link, linkType)
           xmLabelGadgetClass, form,
           XmNlabelString,     string,
           XmNtopAttachment,   XmATTACH_WIDGET,
-          XmNtopWidget,       alarmProcessScrolledW,
+          XmNtopWidget,       statProcessScrolledW,
           XmNleftAttachment,  XmATTACH_FORM,
           NULL);
      XmStringFree(string);
@@ -859,21 +1079,42 @@ static void propCreateDialog(area, link, linkType)
           XmNrightAttachment,        XmATTACH_FORM,
           XmNbottomAttachment,       XmATTACH_FORM,
           NULL);
-
      guidanceTextW = XtVaCreateManagedWidget("guidanceTextW",
           xmTextWidgetClass, guidanceScrolledW,
           XmNeditMode,               XmMULTI_LINE_EDIT,
           XmNbackground,             textBackground,
+          XmNresizeHeight,           TRUE,
+          XmNresizeWidth,            TRUE,
           NULL);
+/*
+     n=0;
+     XtSetArg(args[n], XmNeditMode, XmMULTI_LINE_EDIT); n++;
+     XtSetArg(args[n], XmNbackground, textBackground); n++;
+     XtSetArg(args[n], XmNtopAttachment, XmATTACH_WIDGET); n++;
+     XtSetArg(args[n], XmNtopWidget, guidanceLabel); n++;
+     XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;
+     XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;
+     XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;
+     guidanceTextW = XmCreateScrolledText(form,"guidanceTextW",args,n);
+     XtManageChild(guidanceTextW);
 
+*/
      XtManageChild(form);
 
-     /* Set the client data "Apply", "Cancel" and "Dismiss" button's callbacks. */
-     prop_items[0].data = (XtPointer)propWindow;
-     prop_items[1].data = (XtPointer)propWindow;
-     prop_items[2].data = (XtPointer)propWindow;
+     if (programId != ALH) {
+          /* Set the client data "Apply", "Cancel", "Dismiss" and "Help" button's callbacks. */
+          prop_items_act[0].data = (XtPointer)propWindow;
+          prop_items_act[1].data = (XtPointer)propWindow;
+          prop_items_act[2].data = (XtPointer)propWindow;
+          prop_items_act[3].data = (XtPointer)propWindow;
+     
+          (void)createActionButtons(propDialog, prop_items_act, XtNumber(prop_items_act));
+     } else {
+          prop_items_alh[0].data = (XtPointer)propWindow;
+          prop_items_alh[1].data = (XtPointer)propWindow;
 
-     property_s = createActionButtons(propDialog, prop_items, XtNumber(prop_items));
+          (void)createActionButtons(propDialog, prop_items_alh, XtNumber(prop_items_alh));
+     }
 
      XtManageChild(propDialog);
 
@@ -881,30 +1122,41 @@ static void propCreateDialog(area, link, linkType)
      propWindow->nameLabelW = nameLabelW;
      propWindow->nameTextW = nameTextW;
      propWindow->alarmMaskStringLabelW = alarmMaskStringLabelW;
+     propWindow->resetMaskStringLabelW = resetMaskStringLabelW;
      propWindow->maskFrameW = maskFrameW;
      propWindow->severityPVnameTextW = severityPVnameTextW;
+     propWindow->countFilterFrame = countFilterFrame;
+     propWindow->countFilterCountTextW = countFilterCountTextW;
+     propWindow->countFilterSecondsTextW = countFilterSecondsTextW;
      propWindow->forcePVnameTextW = forcePVnameTextW;
      propWindow->forcePVmaskStringLabelW = forcePVmaskStringLabelW;
-     propWindow->forcePVvalueTextW = forcePVvalueTextW;
+     propWindow->forcePVcurrentValueTextW = forcePVcurrentValueTextW;
+     propWindow->forcePVforceValueTextW = forcePVforceValueTextW;
      propWindow->forcePVresetValueTextW = forcePVresetValueTextW;
      propWindow->aliasTextW = aliasTextW;
      propWindow->processTextW = processTextW;
-     propWindow->alarmProcessTextW = alarmProcessTextW;
+     propWindow->sevrProcessTextW = sevrProcessTextW;
+     propWindow->statProcessTextW = statProcessTextW;
      propWindow->guidanceTextW = guidanceTextW;
-     for (i = 0; i < ALARM_NMASK; i++){
-          propWindow->alarmMaskToggleButtonW[i] = alarmMaskToggleButtonW[i];
-          propWindow->forceMaskToggleButtonW[i] = forceMaskToggleButtonW[i];
+     if (programId != ALH) {
+          for (i = 0; i < ALARM_NMASK; i++){
+               propWindow->alarmMaskToggleButtonW[i] = alarmMaskToggleButtonW[i];
+               propWindow->forceMaskToggleButtonW[i] = forceMaskToggleButtonW[i];
+          }
      }
+
+     /* update propWindow link info */
+     propEditableDialogWidgets(area);
 
      XtRealizeWidget(propDialogShell);
 
 }
 
 /******************************************************
-  propMaskChange
+  propMaskChangeCallback
 ******************************************************/
 
-static void propMaskChange(widget, index, cbs)
+static void propMaskChangeCallback(widget, index, cbs)
      Widget widget;
      int index;
      XmAnyCallbackStruct *cbs;
@@ -956,37 +1208,33 @@ static void propApplyCallback(widget, propWindow, cbs)
      struct propWindow *propWindow;
      XmAnyCallbackStruct *cbs;
 {
-     short f1;
-     int rtn;
+     short f1, f2;
+     int rtn, rtn2;
      struct anyLine *line;
      struct chanData *cdata;
      XmString string;
      char *buff;
-     char str[ALARM_NMASK];
      struct gcData *pgcData;
      GCLINK *link;
      int linkType;
-     GCLINK *holdLink;
-     int holdLinkType;
      MASK mask;
      struct guideLink *guideLink;
      SNODE *pt;
-     int i;
 
-     link = propWindow->link;
+     link =getSelectionLinkArea(propWindow->area);
      if (!link) return;
-     linkType = propWindow->linkType;
+     linkType =getSelectionLinkTypeArea(propWindow->area);
      pgcData = link->pgcData;
 
-     /* copy  the link -  for undo purposes */
-     if (linkType == GROUP){
-          holdLink = (GCLINK *)propCopyGroup((GLINK *)link);
-          holdLinkType = GROUP;
+     /* create 2 links of type channel- for undo purposes */
+     /* NOTE: a type channel link with its chanData
+              can hold all the property data */
+     if (!undoLink) {
+         undoLink = (GCLINK *)alAllocChan();
+         holdLink = (GCLINK *)alAllocChan();
      }
-     else if (linkType == CHANNEL){
-          holdLink = (GCLINK *)propCopyChannel((CLINK *)link);
-          holdLinkType = CHANNEL;
-     }
+
+     propMoveData(link,undoLink,linkType);
 
      /* ---------------------------------
      Group/Channel Name 
@@ -1005,7 +1253,7 @@ static void propApplyCallback(widget, propWindow, cbs)
           cdata = (struct chanData *)pgcData;
           alSetMask(buff,&mask);
           alChangeChanMask((CLINK *)link,mask);
-          cdata->defaultMask = cdata->curMask;
+          if (programId != ALH) cdata->defaultMask = cdata->curMask;
      }
 
      /* ---------------------------------
@@ -1015,6 +1263,27 @@ static void propApplyCallback(widget, propWindow, cbs)
      buff = XmTextFieldGetString(propWindow->severityPVnameTextW);
      if (strlen(buff)) pgcData->sevrPVName = buff;
      else pgcData->sevrPVName = "-";
+
+     /* ---------------------------------
+     Alarm Count Filter
+     --------------------------------- */
+     if (linkType == CHANNEL) {
+          cdata = (struct chanData *)pgcData;
+          free(cdata->countFilter);
+          cdata->countFilter = 0;
+          buff = XmTextFieldGetString(propWindow->countFilterCountTextW);
+          rtn = sscanf(buff,"%hd",&f1);
+          buff = XmTextFieldGetString(propWindow->countFilterCountTextW);
+          rtn2 = sscanf(buff,"%hd",&f2);
+          if (rtn == 1 || rtn2 ==1 ){
+              cdata->countFilter = (COUNTFILTER *)calloc(1,sizeof(COUNTFILTER));
+              cdata->countFilter->clink=link;
+              if (rtn == 1 ) cdata->countFilter->inputCount = f1;
+              else cdata->countFilter->inputCount = 1;
+              if (rtn2 == 1 ) cdata->countFilter->inputSeconds = f2;
+              else cdata->countFilter->inputSeconds = 1;
+          }
+     }
 
      /* ---------------------------------
      Force Process Variable
@@ -1032,7 +1301,7 @@ static void propApplyCallback(widget, propWindow, cbs)
      alSetMask(buff,&(pgcData->forcePVMask));
 
      /*  update link field  - forcePVValue */
-     buff = XmTextFieldGetString(propWindow->forcePVvalueTextW);
+     buff = XmTextFieldGetString(propWindow->forcePVforceValueTextW);
      rtn = sscanf(buff,"%hd",&f1);
      if (rtn == 1) pgcData->forcePVValue = f1;
      else pgcData->forcePVValue = 1;
@@ -1060,19 +1329,37 @@ static void propApplyCallback(widget, propWindow, cbs)
      else pgcData->command = 0;
 
      /* ---------------------------------
-     Alarm Process Commands
+     Sevr Commands
      --------------------------------- */
-     removeAlarmCommandList(&(pgcData->alarmCommandList));
+     removeSevrCommandList(&(pgcData->sevrCommandList));
 
-     buff = XmTextGetString(propWindow->alarmProcessTextW);
+     buff = XmTextGetString(propWindow->sevrProcessTextW);
      if (strlen(buff)){
-          i=0;
           while (TRUE) {
-               addNewAlarmCommand(pgcData->alarmCommandList,buff);
+               addNewSevrCommand(&pgcData->sevrCommandList,buff);
                buff=strchr(buff,'\n');
                if ( !buff ) break;
                *buff='\0';
                buff++;
+          }
+     }
+
+     /* ---------------------------------
+     Stat Commands
+     --------------------------------- */
+     if (linkType == CHANNEL) {
+          cdata = (struct chanData *)pgcData;
+          removeStatCommandList(&(cdata->sevrCommandList));
+
+          buff = XmTextGetString(propWindow->statProcessTextW);
+          if (strlen(buff)){
+               while (TRUE) {
+                    addNewSevrCommand(&cdata->statCommandList,buff);
+                    buff=strchr(buff,'\n');
+                    if ( !buff ) break;
+                    *buff='\0';
+                    buff++;
+               }
           }
      }
 
@@ -1083,15 +1370,13 @@ static void propApplyCallback(widget, propWindow, cbs)
      while (pt) {
            guideLink = (struct guideLink *)pt;
            pt = sllNext(pt);
-           sllRemove(&(link->GuideList),(SNODE *)guideLink);
            free(guideLink->list);
            free(guideLink);
      }
+     sllInit(&(link->GuideList));
 
      buff = XmTextGetString(propWindow->guidanceTextW);
      if (strlen(buff)){
-          pt = sllFirst(&(link->GuideList));
-          i=0;
           while (TRUE) {
                guideLink = (struct guideLink *)calloc(1,sizeof(struct guideLink));
                guideLink->list=buff;
@@ -1104,10 +1389,10 @@ static void propApplyCallback(widget, propWindow, cbs)
      }
 
      /* ---------------------------------
-     Update properties dialog Window
+     Update dialog windows
      --------------------------------- */
      /*  update properties dialog window field */
-     propUpdateDialog(propWindow->area,link,linkType);
+     axUpdateDialogs(propWindow->area);
 
      /*  update group line data and tree window */
      line = link->lineGroupW;
@@ -1135,7 +1420,48 @@ static void propApplyCallback(widget, propWindow, cbs)
           awRowWidgets(line, propWindow->area);
      }
 
-     editUndoSet(holdLink,holdLinkType,link, MENU_EDIT_UNDO_PROPERTIES, TRUE);
+     /* ---------------------------------
+     set undo data
+     --------------------------------- */
+     editUndoSet(undoLink,linkType, link, MENU_EDIT_UNDO_PROPERTIES, FALSE);
+
+}
+
+/******************************************************
+  propHelpCallback
+******************************************************/
+
+static void propHelpCallback(widget, propWindow, cbs)
+     Widget widget;
+     struct propWindow *propWindow;
+     XmAnyCallbackStruct *cbs;
+{
+
+     char *messageALH1 =
+         "This dialog window allows an operator to view the alarm properties\n"
+         "for a group or channel.\n"
+         "  \n"
+         "Press the Dismiss button to close the Properties dialog window.\n"
+         "Press the Help    button to get this help description window.\n"
+            ;
+     char * messageALH2 = "  ";
+
+     char *messageACT1 =
+         "This dialog window allows an operator to view and change alarm properties\n"
+         "for a group or channel.\n"
+         "  \n"
+         "Press the Apply   button to change the properties for the selected group or channel.\n"
+         "Press the Reset   button to reset the properties to their initial values.\n"
+         "Press the Dismiss button to close the Properties dialog window.\n"
+         "Press the Help    button to get this help description window.\n"
+            ;
+     char * messageACT2 = "  ";
+
+     if (programId == ALH) {
+          createDialog(widget,XmDIALOG_INFORMATION, messageALH1,messageALH2);
+     } else {
+          createDialog(widget,XmDIALOG_INFORMATION, messageACT1,messageACT2);
+     }
 
 }
 
@@ -1148,17 +1474,13 @@ static void propDismissCallback(widget, propWindow, cbs)
      struct propWindow *propWindow;
      XmAnyCallbackStruct *cbs;
 {
-     Widget menuButton;
      Widget propDialog;
 
      propDialog = propWindow->propDialog;
-/*
-     XtVaGetValues(currentForm, XmNuserData, &area, NULL);
-
-     XtVaSetValues(menuButton, XmNset, FALSE, NULL);
-*/
      XtUnmanageChild(propDialog);
      XUnmapWindow(XtDisplay(propDialog), XtWindow(XtParent(propDialog)));
+     if (propWindow->menuButton)
+          XtVaSetValues(propWindow->menuButton, XmNset, FALSE, NULL);
 }
 
 /******************************************************
@@ -1170,337 +1492,31 @@ static void propCancelCallback(widget, propWindow, cbs)
      struct propWindow *propWindow;
      XmAnyCallbackStruct *cbs;
 {
-     ALINK    *area;
-     GCLINK   *link;
-     int      linkType;
-
-     area = propWindow->area; 
-     link = propWindow->link; 
-     linkType = propWindow->linkType;
-
-     propUpdateDialog(area,link,linkType);
-}
-
-
-/******************************************************
-  CreateActionButtons
-******************************************************/
-
-#define TIGHTNESS 20
-
-static Widget createActionButtons(parent, actions, num_properties)
-     Widget parent;
-     ActionAreaItem *actions;
-     int num_properties;
-{
-    Widget prop_sheet, widget;
-    int i;
-
-    prop_sheet = XtVaCreateWidget("prop_sheet", xmFormWidgetClass, parent,
-        XmNfractionBase, TIGHTNESS*num_properties - 1,
-        XmNleftOffset,   10,
-        XmNrightOffset,  10,
-        NULL);
-
-    for (i = 0; i < num_properties; i++) {
-        widget = XtVaCreateManagedWidget(actions[i].label,
-            xmPushButtonWidgetClass, prop_sheet,
-            XmNleftAttachment,       i? XmATTACH_POSITION : XmATTACH_FORM,
-            XmNleftPosition,         TIGHTNESS*i,
-            XmNtopAttachment,        XmATTACH_FORM,
-            XmNbottomAttachment,     XmATTACH_FORM,
-            XmNrightAttachment,
-                    i != num_properties-1? XmATTACH_POSITION : XmATTACH_FORM,
-            XmNrightPosition,        TIGHTNESS*i + (TIGHTNESS-1),
-            XmNshowAsDefault,        i == 0,
-            XmNdefaultButtonShadowThickness, 1,
-            NULL);
-        if (actions[i].callback)
-            XtAddCallback(widget, XmNactivateCallback,
-                actions[i].callback, actions[i].data);
-        if (i == 0) {
-            /* Set the prop_sheet's default button to the first widget
-             * created (or, make the index a parameter to the function
-             * or have it be part of the data structure). Also, set the
-             * pane window constraint for max and min heights so this
-             * particular pane in the PanedWindow is not resizable.
-             */
-            Dimension height, h;
-            XtVaGetValues(prop_sheet, XmNmarginHeight, &h, NULL);
-            XtVaGetValues(widget, XmNheight, &height, NULL);
-            height += 2 * h;
-            XtVaSetValues(prop_sheet,
-                XmNdefaultButton, widget,
-                XmNpaneMaximum,   height,
-                XmNpaneMinimum,   height,
-                NULL);
-        }
-    }
-
-    XtManageChild(prop_sheet);
-
-    return prop_sheet;
-}
-/******************************************************
-  propCopyGroup
-******************************************************/
-
-static GLINK *propCopyGroup(glink)
-     GLINK   *glink;
-{
-	CLINK *clink;
-	GLINK *glinkNew;
-	GLINK *glinkTemp;
-	struct groupData *gdata;
-	struct groupData *gdataNew;
-	char *buff;
-	struct guideLink *guideLink;
-	SNODE *node;
-
-	glinkNew = alAllocGroup();
-    glinkNew->pgroupData = (struct groupData *)calloc(1,sizeof(struct groupData));
-	gdataNew = glinkNew->pgroupData;
-	gdata = glink->pgroupData;
-
-	/* copy viewCount and pmainGroup */
-	glinkNew->viewCount = glink->viewCount;
-	glinkNew->pmainGroup = glink->pmainGroup;
-
-	/* copy alias */
-	buff = gdata->alias;
-	if (buff){
-		gdataNew->alias = (char*)calloc(1,strlen(buff)+1);
-		strcpy(gdataNew->alias,buff);
-	}
-
-	/* copy command */
-	buff = gdata->command;
-	if (buff){
-		gdataNew->command = (char*)calloc(1,strlen(buff)+1);
-		strcpy(gdataNew->command,buff);
-	}
-
-	/* copy alarm command */
-    copyAlarmCommandList(gdata->alarmCommandList,gdataNew->alarmCommandList);
-
-	/* copy sevrPV info */
-	buff = gdata->sevrPVName;
-	if(strcmp(buff,"-") != 0){
-		gdataNew->sevrPVName = (char*)calloc(1,strlen(buff)+1);
-		strcpy(gdataNew->sevrPVName,buff);
-	} else gdataNew->sevrPVName = buff;
-    gdataNew->PVValue = gdata->PVValue;;
-
-
-	/* copy name */
-	buff = gdata->name;
-	if (buff){
-		gdataNew->name = (char*)calloc(1,strlen(buff)+1);
-		strcpy(gdataNew->name,buff);
-	}
-
-	/* copy forcePV info */
-	buff = gdata->forcePVName;
-	if(strcmp(buff,"-") != 0){
-		gdataNew->forcePVName = (char*)calloc(1,strlen(buff)+1);
-		strcpy(gdataNew->forcePVName,buff);
-	} else gdataNew->forcePVName = buff;
-	gdataNew->forcePVMask = gdata->forcePVMask;
-	gdataNew->forcePVValue = gdata->forcePVValue;
-	gdataNew->resetPVValue = gdata->resetPVValue;
-
-	/* copy guidance */
-	node = sllFirst(&(glink->GuideList));
-	while (node) {
-        buff = ((struct guideLink *)node)->list;
-		guideLink = (struct guideLink *)calloc(1,sizeof(struct guideLink));
-		guideLink->list = (char *)calloc(1,strlen(buff)+1);
-		strcpy(guideLink->list,buff);
-		sllAdd(&(glinkNew->GuideList),(SNODE *)guideLink);
-		node = sllNext(node);
-	}
-
-	/* copy list pointers */
-	glinkNew->chanList = glink->chanList;
-	glinkNew->subGroupList = glink->subGroupList;
-
-	return(glinkNew);
-
-}
-
-/******************************************************
-  propCopyChannel
-******************************************************/
-
-static CLINK *propCopyChannel(clink)
-     CLINK   *clink;
-{
-
-	return(alCopyChan(clink));
-
-}
-
-/******************************************************
-  propFreeGroup
-******************************************************/
-
-static void propFreeGroup(glink)
-     GLINK   *glink;
-{
-     SNODE *snode,*next;
-     struct guideLink *guideLink; 
-
-     if (glink->pgroupData->name) free(glink->pgroupData->name);
-     if (strcmp(glink->pgroupData->forcePVName,"-") != 0) free(glink->pgroupData->forcePVName);
-     if (strcmp(glink->pgroupData->sevrPVName,"-") != 0) free(glink->pgroupData->sevrPVName);
-     if (glink->pgroupData->command) free(glink->pgroupData->command);
-     if (glink->pgroupData->alias) free(glink->pgroupData->alias);
-
-     removeAlarmCommandList(&glink->pgroupData->alarmCommandList);
-
-     snode = sllFirst(&glink->GuideList);
-     while (snode) {
-           next = sllNext(snode);
-           guideLink = (struct guideLink *)snode;
-           free(guideLink->list);
-           free(guideLink);
-           snode = next;
-     }
-     free(glink);
-}
-
-/******************************************************
-  propFreeChannel
-******************************************************/
-
-static void propFreeChannel(clink)
-     CLINK   *clink;
-{
-    SNODE *pt,*next;
-    struct guideLink *guideLink; 
-
-	if (clink != NULL) {
-        if (clink->pchanData->name) free(clink->pchanData->name);
-        if (strcmp(clink->pchanData->forcePVName,"-") != 0) free(clink->pchanData->forcePVName);
-        if (strcmp(clink->pchanData->sevrPVName,"-") != 0) free(clink->pchanData->sevrPVName);
-        if (clink->pchanData->command) free(clink->pchanData->command);
-        if (clink->pchanData->alias) free(clink->pchanData->alias);
-
-        removeAlarmCommandList(&clink->pchanData->alarmCommandList);
-
-        pt = sllFirst(&clink->GuideList);
-        while (pt) {
-              next = sllNext(pt);
-              guideLink = (struct guideLink *)pt;
-              free(guideLink->list);
-              free(guideLink);
-              pt = next;
-        }
-		free(clink);
-	}
+     propUpdateDialog((ALINK *)(propWindow->area));
 }
 
 /******************************************************
   propUndo
 ******************************************************/
 
-void propUndo(area, link, linkType, newLink)
+void propUndo(area, link, linkType, undoLink)
      void *area;
      GCLINK *link;
      int linkType;
-     GCLINK *newLink;
+     GCLINK *undoLink;
 {
      struct anyLine *line;
-     struct chanData *cdata;
-     struct chanData *cnewdata;
-     struct gcData *pgcData;
-     struct gcData *newData;
-     GCLINK *holdLink;
-     int holdLinkType;
-     struct guideLink *guideLink;
-     SNODE *pt;
-     struct subWindow *subWindow;
 
      if (!link) return;
 
-     pgcData = link->pgcData;
-     newData = newLink->pgcData;
-
-     /* copy  the link -  for undo purposes */
-     if (linkType == GROUP){
-          holdLink = (GCLINK *)propCopyGroup((GLINK *)link);
-          holdLinkType = GROUP;
-     }
-     else if (linkType == CHANNEL){
-          holdLink = (GCLINK *)propCopyChannel((CLINK *)link);
-          holdLinkType = CHANNEL;
-     }
+     propMoveData(link,holdLink,linkType);
+     propMoveData(undoLink,link,linkType);
+     propMoveData(holdLink,undoLink,linkType);
 
      /* ---------------------------------
-     Group/Channel Name 
+     Update dialog windows
      --------------------------------- */
-     free(pgcData->name);
-     pgcData->name = newData->name;
-
-     /* ---------------------------------
-     Alarm Mask 
-     --------------------------------- */
-     if (linkType == CHANNEL) {
-          cdata = (struct chanData *)pgcData;
-          cnewdata = (struct chanData *)newData;
-          cdata->curMask = cnewdata->curMask;
-          cdata->defaultMask = cnewdata->defaultMask;
-     }
-
-     /* ---------------------------------
-     Severity Process Variable
-     --------------------------------- */
-     free(pgcData->sevrPVName);
-     pgcData->sevrPVName = newData->sevrPVName;
-
-     /* ---------------------------------
-     Force Process Variable
-     --------------------------------- */
-     free(pgcData->forcePVName);
-     pgcData->forcePVName = newData->forcePVName;
-     pgcData->forcePVMask = newData->forcePVMask;
-     pgcData->forcePVValue = newData->forcePVValue;
-     pgcData->resetPVValue = newData->resetPVValue;
-
-     /* ---------------------------------
-     Alias
-     --------------------------------- */
-     pgcData->alias = newData->alias;
-
-     /* ---------------------------------
-     Related Process Command
-     --------------------------------- */
-     pgcData->command = newData->command;
-
-     /* ---------------------------------
-     Alarm Process Command
-     --------------------------------- */
-     removeAlarmCommandList(&pgcData->alarmCommandList);
-     pgcData->alarmCommandList = newData->alarmCommandList;
-
-     /* ---------------------------------
-     Guidance Text
-     --------------------------------- */
-     pt = sllFirst(&(link->GuideList));
-     while (pt) {
-           guideLink = (struct guideLink *)pt;
-           pt = sllNext(pt);
-           sllRemove(&(link->GuideList),(SNODE *)guideLink);
-           free(guideLink->list);
-           free(guideLink);
-     }
-
-     link->GuideList = newLink->GuideList;
-
-     /* ---------------------------------
-     Update properties dialog Window
-     --------------------------------- */
-     propUpdateDialog(area,link,linkType);
+     axUpdateDialogs(area);
 
      /* ---------------------------------
      Update tree line data and tree window 
@@ -1533,10 +1549,163 @@ void propUndo(area, link, linkType, newLink)
      /* ---------------------------------
      set undo data
      --------------------------------- */
-     editUndoSet(holdLink,holdLinkType, link, MENU_EDIT_UNDO_PROPERTIES, FALSE);
+     editUndoSet(undoLink,linkType, link, MENU_EDIT_UNDO_PROPERTIES, FALSE);
+
+}
+
+/******************************************************
+  propMoveData
+******************************************************/
+
+static void propMoveData(fromLink, toLink, linkType)
+     GCLINK *fromLink;
+     GCLINK *toLink;
+     int linkType;
+{
+     struct chanData *cfromData;
+     struct chanData *ctoData;
+     struct gcData *fromData;
+     struct gcData *toData;
+     struct guideLink *guideLink;
+     SNODE *pt;
+
+     if (!toLink || !fromLink) return;
+
+     fromData = fromLink->pgcData;
+     toData = toLink->pgcData;
 
      /* ---------------------------------
-     free newLink 
+     Group/Channel Name 
      --------------------------------- */
-     free(newLink);
+     free(toData->name);
+     toData->name = fromData->name;
+     fromData->name = NULL;
+
+     /* ---------------------------------
+     Alarm Mask 
+     --------------------------------- */
+     if (linkType == CHANNEL) {
+          ctoData = (struct chanData *)toData;
+          cfromData = (struct chanData *)fromData;
+          ctoData->curMask = cfromData->curMask;
+          ctoData->defaultMask = cfromData->defaultMask;
+     }
+
+     /* ---------------------------------
+     Severity Process Variable
+     --------------------------------- */
+     free(toData->sevrPVName);
+     toData->sevrPVName = fromData->sevrPVName;
+     fromData->sevrPVName = NULL;
+
+     /* ---------------------------------
+     Alarm Count Filter 
+     --------------------------------- */
+     if (linkType == CHANNEL) {
+          ctoData = (struct chanData *)toData;
+          cfromData = (struct chanData *)fromData;
+          free(ctoData->countFilter);
+          ctoData->countFilter = cfromData->countFilter;
+          cfromData->countFilter = NULL;
+     }
+
+     /* ---------------------------------
+     Force Process Variable
+     --------------------------------- */
+     free(toData->forcePVName);
+     toData->forcePVName = fromData->forcePVName;
+     fromData->forcePVName = NULL;
+     toData->forcePVMask = fromData->forcePVMask;
+     toData->forcePVValue = fromData->forcePVValue;
+     toData->resetPVValue = fromData->resetPVValue;
+
+     /* ---------------------------------
+     Alias
+     --------------------------------- */
+     free(toData->alias);
+     toData->alias = fromData->alias;
+     fromData->alias = NULL;
+
+     /* ---------------------------------
+     Related Process Command
+     --------------------------------- */
+     free(toData->command);
+     toData->command = fromData->command;
+     fromData->command = NULL;
+
+     /* ---------------------------------
+     Sevr Command List
+     --------------------------------- */
+     removeSevrCommandList(&toData->sevrCommandList);
+     toData->sevrCommandList = fromData->sevrCommandList;
+     ellInit(&fromData->sevrCommandList);
+
+     /* ---------------------------------
+     Stat Command List
+     --------------------------------- */
+     if (linkType == CHANNEL) {
+          ctoData = (struct chanData *)toData;
+          cfromData = (struct chanData *)fromData;
+          removeStatCommandList(&ctoData->statCommandList);
+          ctoData->statCommandList = cfromData->statCommandList;
+          ellInit(&cfromData->statCommandList);
+     }
+
+
+     /* ---------------------------------
+     Guidance Text
+     --------------------------------- */
+     pt = sllFirst(&(toLink->GuideList));
+     while (pt) {
+           guideLink = (struct guideLink *)pt;
+           pt = sllNext(pt);
+           free(guideLink->list);
+           free(guideLink);
+     }
+     toLink->GuideList = fromLink->GuideList;
+     sllInit(&fromLink->GuideList);
+
 }
+
+
+/******************************************************
+  propEditableDialogWidgets
+******************************************************/
+
+static void propEditableDialogWidgets(area)
+     ALINK  *area;
+{
+     struct propWindow *propWindow;
+
+     propWindow = (struct propWindow *)area->propWindow;
+
+     if (programId == ALH) {
+          XtVaSetValues(propWindow->nameTextW,XmNeditable, FALSE, NULL);
+          XtVaSetValues(propWindow->severityPVnameTextW,XmNeditable, FALSE, NULL);
+          XtVaSetValues(propWindow->countFilterCountTextW,XmNeditable, FALSE, NULL);
+          XtVaSetValues(propWindow->countFilterSecondsTextW,XmNeditable, FALSE, NULL);
+          XtVaSetValues(propWindow->forcePVnameTextW,XmNeditable, FALSE, NULL);
+          XtVaSetValues(propWindow->forcePVforceValueTextW,XmNeditable, FALSE, NULL);
+          XtVaSetValues(propWindow->forcePVresetValueTextW,XmNeditable, FALSE, NULL);
+          XtVaSetValues(propWindow->aliasTextW,XmNeditable, FALSE, NULL);
+          XtVaSetValues(propWindow->processTextW,XmNeditable, FALSE, NULL);
+          XtVaSetValues(propWindow->sevrProcessTextW,XmNeditable, FALSE, NULL);
+          XtVaSetValues(propWindow->statProcessTextW,XmNeditable, FALSE, NULL);
+          XtVaSetValues(propWindow->guidanceTextW,XmNeditable, FALSE, NULL);
+     } else {
+          XtVaSetValues(propWindow->nameTextW,XmNeditable, TRUE, NULL);
+          XtVaSetValues(propWindow->severityPVnameTextW,XmNeditable, TRUE, NULL);
+          XtVaSetValues(propWindow->countFilterCountTextW,XmNeditable, TRUE, NULL);
+          XtVaSetValues(propWindow->countFilterSecondsTextW,XmNeditable, TRUE, NULL);
+          XtVaSetValues(propWindow->forcePVnameTextW,XmNeditable, TRUE, NULL);
+          XtVaSetValues(propWindow->forcePVforceValueTextW,XmNeditable, TRUE, NULL);
+          XtVaSetValues(propWindow->forcePVresetValueTextW,XmNeditable, TRUE, NULL);
+          XtVaSetValues(propWindow->aliasTextW,XmNeditable, TRUE, NULL);
+          XtVaSetValues(propWindow->processTextW,XmNeditable, TRUE, NULL);
+          XtVaSetValues(propWindow->sevrProcessTextW,XmNeditable, TRUE, NULL);
+          XtVaSetValues(propWindow->statProcessTextW,XmNeditable, TRUE, NULL);
+          XtVaSetValues(propWindow->guidanceTextW,XmNeditable, TRUE, NULL);
+     }
+     return;
+}
+

@@ -1,8 +1,16 @@
 /*
  $Log$
- Revision 1.3  1995/02/28 16:43:53  jba
- ansi c changes
+ Revision 1.4  1995/10/20 16:50:55  jba
+ Modified Action menus and Action windows
+ Renamed ALARMCOMMAND to SEVRCOMMAND
+ Added STATCOMMAND facility
+ Added ALIAS facility
+ Added ALARMCOUNTFILTER facility
+ Make a few bug fixes.
 
+ * Revision 1.3  1995/02/28  16:43:53  jba
+ * ansi c changes
+ *
  * Revision 1.2  1994/06/22  21:17:54  jba
  * Added cvs Log keyword
  *
@@ -72,9 +80,6 @@ static void closeFileViewWindow_callback(w,operandFile,call_data)
 **********************************************************/
 
 #include <stdio.h>
-#include <fcntl.h>
-#include <errno.h>
-#include <sys/types.h>
 #include <sys/stat.h>
 
 #include <Xm/Xm.h>
@@ -391,11 +396,6 @@ void updateLog(fileIndex,string)
   struct stat statbuf;         /* Information on a file. */
   FILE *fp = NULL;             /* Pointer to open file   */
   char filename[120];
-  Widget scrollBar;
-  int xmax,xmin,size,inc,pageInc;
-  Arg args[2];
-  int n;
-  Boolean notify=FALSE;
 
   int stringLength = strlen(string);
   int oldUsedLength = viewFileUsedLength[fileIndex];
