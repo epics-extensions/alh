@@ -306,7 +306,7 @@ void alCaPutGblAck(chid chid, short *psevr)
 {
 	int status;
 
-	if (ca_field_type(chid) == TYPENOTCONN) return;
+	if (!chid || (ca_field_type(chid) == TYPENOTCONN)) return;
 
 	status = ca_put(DBR_PUT_ACKS, chid, psevr);
 	if (status != ECA_NORMAL) {
@@ -323,7 +323,7 @@ void alCaPutGblAckT(chid chid, short *pstate)
 {
 	int status;
 
-	if (ca_field_type(chid) == TYPENOTCONN) return;
+	if (!chid || (ca_field_type(chid) == TYPENOTCONN)) return;
 
 	status = ca_put(DBR_PUT_ACKT, chid, pstate);
 	if (status != ECA_NORMAL) {
