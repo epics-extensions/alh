@@ -48,3 +48,8 @@ Fri Sep 12 16:25:02 CDT 1997
 		Bug fixes for Save and SaveAs.
 		Bug fixes for tree and group window views.
 
+Mon Oct 27 12:28:36 CST 1997
+
+	Write of sevr to sevrPVs now done even if acknowledgement not
+	necessary and now write is done only when sevr has changed.
+
