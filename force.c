@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.6  1996/12/03 22:04:25  jba
+ Changed unused Help ActionItem data to NULL.
+
  Revision 1.5  1996/11/19 19:40:24  jba
  Fixed motif delete window actions, and fixed size of force PV window.
 
@@ -286,7 +289,7 @@ static void forcePVCreateDialog(area)
          { "Apply",   forcePVApplyCallback,   NULL    },
          { "Cancel",  forcePVCancelCallback,  NULL    },
          { "Dismiss", forcePVDismissCallback, NULL    },
-         { "Help",    forcePVHelpCallback,    "Help Button" },
+         { "Help",    forcePVHelpCallback,    NULL    },
      };
      static String maskFields[] = {
          "Cancel Alarm", 
