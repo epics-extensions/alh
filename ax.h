@@ -190,7 +190,7 @@ void alGetMaskString( MASK mask, char *s);
 void alNewAlarm( int stat, int sev, char *value, CLINK *clink);
 void alNewEvent(int stat,int sevr,int acks,int ackt,char *value,CLINK *clink);
 void alHighestSystemSeverity(GLINK * glink);
-int alHighestSeverity( short sevr[ALH_ALARM_NSEV]);
+short alHighestSeverity( int sevr[ALH_ALARM_NSEV]);
 void alForceChanMask( CLINK *clink, int index, int op);
 void alForceGroupMask( GLINK *glink, int index, int op);
 void alChangeChanMask( CLINK *clink, MASK mask);
@@ -281,7 +281,7 @@ void awUpdateRowWidgets( struct anyLine  *line);
   line.c   function prototypes
 *********************************************************************/
 
-void awGetMaskString( short mask[ALARM_NMASK], char *s);
+void awGetMaskString( int mask[ALARM_NMASK], char *s);
 struct anyLine *awAllocLine(void);
 void awUpdateChanLine( struct anyLine *chanLine);
 void awUpdateGroupLine( struct anyLine *groupLine);

@@ -238,7 +238,7 @@ GLINK *alCopyGroup(GLINK *glink)
 #if 0
 
 modify parents:    
-	(short)              glink->mask[ALARM_NMASK];
+	( int)              glink->mask[ALARM_NMASK];
 modify parents:    
 	( int)               glink->viewCount;
 
@@ -354,7 +354,7 @@ CLINK *alCopyChan(CLINK *clink)
 #if 0
 
 modify parents:    
-	(short)              clink->mask[ALARM_NMASK];
+	( int)              clink->mask[ALARM_NMASK];
 modify parents:    
 	( int)               clink->viewCount;
 
@@ -850,9 +850,9 @@ void alHighestSystemSeverity(GLINK *glink)
 /******************************************************************
 	highest group severity 
 *****************************************************************/
-int alHighestSeverity(short sevr[ALH_ALARM_NSEV])
+short alHighestSeverity(int sevr[ALH_ALARM_NSEV])
 {
-	int j=0;
+	short j=0;
 	for (j=ALH_ALARM_NSEV-1;j>0;j--) {
 		if (sevr[j] > 0) return(j);
 	}

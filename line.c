@@ -30,7 +30,7 @@ static char buff[LINEMESSAGE_SIZE];
  *  the group mask.  The input to this function is the group
  *  mask array.
  *********************************************************************/
-void awGetMaskString(short mask[ALARM_NMASK],char *s)
+void awGetMaskString(int mask[ALARM_NMASK],char *s)
 {
 	strcpy(s,"-----");
 	if (mask[ALARMCANCEL] > 0) *s = 'C';

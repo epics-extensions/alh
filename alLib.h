@@ -79,9 +79,9 @@ struct groupData {
 	evid forceevid;			/* forcePV channel evid */
 	chid sevrchid;			/* group sevrPV channel id */
 	char *treeSym;                  /* tree symbols for treeWindow display */
-	short mask[ALARM_NMASK];	/* no. of channels of masked types*/
-	short curSev[ALH_ALARM_NSEV];  	/* channels of different severity */
-	short unackSev[ALH_ALARM_NSEV];  	/* channels of unacknowledged sev */
+	int mask[ALARM_NMASK];	/* no. of channels of masked types*/
+	int curSev[ALH_ALARM_NSEV];  	/* channels of different severity */
+	int unackSev[ALH_ALARM_NSEV];  	/* channels of unacknowledged sev */
 };
 
 /* channel data structure */

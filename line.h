@@ -29,10 +29,10 @@ struct anyLine {
 	char message[LINEMESSAGE_SIZE]; /* summary message string */
 	void *wline;                    /* address of line_widget */
 	int linkType;                   /* type of gclink group or channel */
-	int curSevr;                    /* current severity */
-	int unackSevr;                  /* highest unack severity */
+	short curSevr;                    /* current severity */
+	short unackSevr;                  /* highest unack severity */
 	int curStat;                    /* Channel: current status */
-	short curSev[ALH_ALARM_NSEV];   /* Group: current sevr channel counts*/
+	int curSev[ALH_ALARM_NSEV];   /* Group: current sevr channel counts*/
 };
 
 struct widgetLine {
