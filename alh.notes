@@ -20,3 +20,6 @@ option m, e.g. "alh -m 5000" will make the alarm log file a circular file with a
 maximum of 5000 records.  The command "alh -m 0" can be used to allow the alarm
 log file to have an infinite number of records.
 
+Thu Jan 16 10:35:16 CST 1997
+
+Bug fix to ALARMCOUNTFILTER
