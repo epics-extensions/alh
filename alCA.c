@@ -306,7 +306,7 @@ void alCaPutGblAck(chid chid, short *psevr)
 {
 	int status;
 
-	if (!chid) return;
+	if (!chid || ca_field_type(chid) == TYPENOTCONN) return;
 
 	status = ca_put(DBR_PUT_ACKS, chid, psevr);
 	if (status != ECA_NORMAL) {
@@ -323,11 +323,11 @@ void alCaPutGblAckT(chid chid, short *pstate)
 {
 	int status;
 
-	if (!chid) return;
+	if (!chid || ca_field_type(chid) == TYPENOTCONN) return;
 
 	status = ca_put(DBR_PUT_ACKT, chid, pstate);
 	if (status != ECA_NORMAL) {
-		errMsg("alCaPutGblAckT: ca_put acknowledge transients failed for PV %s\n"
+		errMsg("alCaPutGblAckT: ca_put acknowledge transients failed for PV %s "
 			"Return status: %s\n",ca_name(chid),ca_message(status));
 	}
 }
@@ -350,7 +350,7 @@ void alCaPutSevrValue(chid chid, short *psevr)
 
 	status = ca_put(DBR_SHORT, chid, psevr);
 	if (status != ECA_NORMAL) {
-		errMsg("alCaPutSevrValue: ca_put failed for Severity PV %s\n"
+		errMsg("alCaPutSevrValue: ca_put failed for Severity PV %s "
 			"Return status: %s\n",ca_name(chid),ca_message(status));
 	}
 }
@@ -478,7 +478,7 @@ static void alCaGroupForceEvent(struct event_handler_args args)
 	if (args.status == ECA_NORMAL) {
 		alGroupForceEvent(args.usr, *(short *) args.dbr);
 	} else {
-		errMsg("alCaGroupForceEvent failed: Return status: %s\n"
+		errMsg("alCaGroupForceEvent failed: Return status: %s "
 		" for PV %s\n",ca_message(args.status),ca_name(args.chid));
 	}
 }
@@ -491,7 +491,7 @@ static void alCaChannelForceEvent(struct event_handler_args args)
 	if (args.status == ECA_NORMAL) {
 		alChannelForceEvent(args.usr, *(short *) args.dbr);
 	} else {
-		errMsg("alCaGroupForceEvent: Return status: %s\n"
+		errMsg("alCaGroupForceEvent: Return status: %s "
 		" for PV %s\n",ca_message(args.status),ca_name(args.chid));
 	}
 }
