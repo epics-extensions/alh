@@ -227,8 +227,8 @@ void alLogNotSaveFinish();
 void alLog2DBMask (char *name);
 
 #ifdef CMLOG
-void alConnect(void);
-void alDisconnect(void);
+void alCMLOGconnect(void);
+void alCMLOGdisconnect(void);
 #endif
 
 /********************************************************************
