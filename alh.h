@@ -208,7 +208,7 @@ extern struct setup psetup;
      axSubW.h         Defs of subWindow structure
      clipboardOps.h   #defines 
      fallback.h       Def of X fallback resource values
-     line.h           Defs of groupLine,chanLine,anyLine,WLINE
+     line.h           Defs of anyLine,WLINE
      sllLib.h         Defs of SNODE,SLIST, sllFirst,sllInit,sllLast,sllNext
 
 **************************************************************************************/

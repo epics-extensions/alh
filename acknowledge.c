@@ -18,15 +18,15 @@ extern int _passive_flag;	/* Passive flag. Albert */
 /***************************************************
  channel acknowledge button callback
 ****************************************************/
-static void ackChan(struct chanLine * cline)
+static void ackChan(struct anyLine * line)
 {
 	CLINK *clink;
 	struct chanData *cdata;
-	clink = (CLINK *) cline->clink;
+	clink = (CLINK *) line->link;
 	cdata = clink->pchanData;
 	if (cdata->unackSevr == 0)
 		return;
-	alLogAckChan(cline);
+	alLogAckChan(line);
 	alCaPutGblAck(cdata->chid, &cdata->unackSevr);
 	alAckChan(clink);
 	clink->pmainGroup->modified = 1;
@@ -34,15 +34,14 @@ static void ackChan(struct chanLine * cline)
 /***************************************************
  group acknowledge button callback
 ****************************************************/
-static void ackGroup(struct groupLine * gline)
+static void ackGroup(struct anyLine * line)
 {
 	GLINK *glink;
-	glink = (GLINK *) gline->glink;
+	glink = (GLINK *) line->link;
 	if (alHighestSeverity(glink->pgroupData->unackSev) == 0)
 		return;
-	alLogAckGroup(gline);
+	alLogAckGroup(line);
 	alAckGroup(glink);
-	/* awInvokeCallback(); */
 	glink->pmainGroup->modified = 1;
 }
 /***************************************************
@@ -59,7 +58,7 @@ XmAnyCallbackStruct * cbs)
 		return;
 	}
 	if (line->linkType == GROUP)
-		ackGroup((struct groupLine *) line);
+		ackGroup(line);
 	else if (line->linkType == CHANNEL)
-		ackChan((struct chanLine *) line);
+		ackChan(line);
 }

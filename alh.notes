@@ -232,3 +232,7 @@ Mon Jun  7 09:20:02 CDT 1999
 
 Mon Jun 21 15:15:03 CDT 1999
 	Start cleanup of axRunW.c file.
+
+Tue Jun 22 11:12:51 CDT 1999
+	Some cleanup of line.h and line.c files.
+

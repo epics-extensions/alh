@@ -441,8 +441,7 @@ void redraw(struct subWindow *subWindow,int rowNumber)
 	while ( link ){
 
 		if (!line){
-			if (linkType==GROUP) line = (struct anyLine *)awAllocGroupLine();
-			else line = (struct anyLine *)awAllocChanLine();
+			line = (struct anyLine *)awAllocLine();
 			sllAdd(subWindow->lines,(SNODE *)line);
 			wline = (WLINE *)XtCalloc(1 , sizeof(WLINE));
 			line->wline = (void *)wline;
@@ -482,9 +481,9 @@ void redraw(struct subWindow *subWindow,int rowNumber)
 			link->lineTreeW = (void *)line;
 		else link->lineGroupW = (void *)line;
 		if (linkType == GROUP){
-			awUpdateGroupLine((struct groupLine *)line);
+			awUpdateGroupLine(line);
 		} else if (linkType == CHANNEL){
-			awUpdateChanLine((struct chanLine *)line);
+			awUpdateChanLine(line);
 		}
 
 		/* call subwindow create/change row widgets routine */

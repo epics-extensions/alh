@@ -158,11 +158,11 @@ void alLogConnection(const char *pvname,const char *ind)
 /***********************************************************************
  * log ackchan on operation file
  ***********************************************************************/
-void alLogAckChan(struct chanLine *cline)
+void alLogAckChan(struct anyLine *line)
 {
-	sprintf(buff,"Ack Channel--- %-28s %-16s %-16s\n",cline->pname,
-	    alarmSeverityString[cline->unackSevr],
-	    alarmSeverityString[cline->curSevr]);
+	sprintf(buff,"Ack Channel--- %-28s %-16s %-16s\n",line->pname,
+	    alarmSeverityString[line->unackSevr],
+	    alarmSeverityString[line->curSevr]);
 	filePrintf(fo,buff,NULL,ACK_CHANEL);  /* update the file */	
 }
 
@@ -181,11 +181,11 @@ void alLogGblAckChan(struct chanData *cdata)
 /***********************************************************************
  * log ackgroup on operation file
  ***********************************************************************/
-void alLogAckGroup(struct groupLine *gline)
+void alLogAckGroup(struct anyLine *line)
 {
-	sprintf(buff,"Ack Group---   %-28s %-16s %-16s\n",gline->pname,
-	    alarmSeverityString[gline->unackSevr],
-	    alarmSeverityString[alHighestSeverity(gline->curSev)]);
+	sprintf(buff,"Ack Group---   %-28s %-16s %-16s\n",line->pname,
+	    alarmSeverityString[line->unackSevr],
+	    alarmSeverityString[alHighestSeverity(line->curSev)]);
 	filePrintf(fo,buff,NULL,0);        /* update the file */
 }
 

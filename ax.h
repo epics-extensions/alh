@@ -201,8 +201,8 @@ void alLogAlarm( time_t *ptimeofdayAlarm, struct chanData *cdata, int stat,
 int sev, int h_unackStat, int h_unackSevr);
 void alLogConnection(const char *pvname,const char *ind);
 void alLogGblAckChan( struct chanData *cdata);
-void alLogAckChan( struct chanLine *cline);
-void alLogAckGroup( struct groupLine *gline);
+void alLogAckChan( struct anyLine *line);
+void alLogAckGroup( struct anyLine *line);
 void alLogChanChangeMasks( CLINK *clink, int maskno, int maskid);
 void alLogForcePVGroup( GLINK *glink, int ind);
 void alLogResetPVGroup( GLINK *glink, int ind);
@@ -265,10 +265,9 @@ void awUpdateRowWidgets( struct anyLine  *line);
 *********************************************************************/
 
 void awGetMaskString( short mask[ALARM_NMASK], char *s);
-struct chanLine *awAllocChanLine(void);
-struct groupLine *awAllocGroupLine(void);
-void awUpdateChanLine( struct chanLine *chanLine);
-void awUpdateGroupLine( struct groupLine *groupLine);
+struct anyLine *awAllocLine(void);
+void awUpdateChanLine( struct anyLine *chanLine);
+void awUpdateGroupLine( struct anyLine *groupLine);
 void initLine( struct anyLine *line);
 void initializeLines( SNODE *lines);
 

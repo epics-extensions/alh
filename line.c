@@ -25,10 +25,6 @@ extern char * alarmStatusString[];
 
 static char buff[LINEMESSAGE_SIZE];
 
-/* forward declaration */
-static void awGroupMessage(struct groupLine *groupLine);
-static void awChanMessage(struct chanLine *pchanLine);
-
 /********************************************************************* 
  *  This function returns a string with 5 characters which shows
  *  the group mask.  The input to this function is the group
@@ -46,34 +42,24 @@ void awGetMaskString(short mask[ALARM_NMASK],char *s)
 }
 
 /*********************************************************************
- *  This function allocates space for new chanLine  
+ *  This function allocates space for new line  
  *********************************************************************/
-struct chanLine *awAllocChanLine()
+struct anyLine *awAllocLine()
 {
-	struct chanLine *pLine;
-	pLine = (struct chanLine *)calloc(1,sizeof(struct chanLine));
-	return(pLine);
-}
-
-/*********************************************************************
- *  This function allocates space for new groupLine 
- *********************************************************************/
-struct groupLine *awAllocGroupLine()
-{
-	struct groupLine *pLine;
-	pLine = (struct groupLine *)calloc(1,sizeof(struct groupLine));
+	struct anyLine *pLine;
+	pLine = (struct anyLine *)calloc(1,sizeof(struct anyLine));
 	return(pLine);
 }
 
 /********************************************************************* 
  *  This function updates the channel line mask , status & severity
  *********************************************************************/
-void awUpdateChanLine(struct chanLine *chanLine)
+void awUpdateChanLine(struct anyLine *chanLine)
 {
 	struct chanData *cdata;
 	CLINK *clink;
 
-	clink = (CLINK *)chanLine->clink;
+	clink = (CLINK *)chanLine->link;
 	if (!clink) return;
 	cdata = clink->pchanData;
 	chanLine->unackSevr = cdata->unackSevr;
@@ -84,19 +70,34 @@ void awUpdateChanLine(struct chanLine *chanLine)
 		chanLine->curSevr = 0;
 	alGetMaskString(cdata->curMask,buff);
 	sprintf(chanLine->mask,"<%s>",buff);
-	awChanMessage(chanLine);
+
+	strcpy(chanLine->message," ");
+	if (cdata->curMask.Disable ) return;
+
+	if (cdata->curSevr == 0 && cdata->unackSevr == 0) return;
+
+	sprintf(chanLine->message,"<%s,%s>",
+	    alarmStatusString[cdata->curStat],
+	    alarmSeverityString[cdata->curSevr]);
+
+	if (cdata->unackSevr == 0) return;
+
+	sprintf(buff,",<%s,%s>",
+	    alarmStatusString[cdata->unackStat],
+	    alarmSeverityString[cdata->unackSevr]);
+	strcat(chanLine->message,buff);
 }
 
 /*************************************************************************** 
  *  This function updates the group line mask , status & severity, summary
  ***************************************************************************/
-void awUpdateGroupLine(struct groupLine *groupLine)
+void awUpdateGroupLine(struct anyLine *groupLine)
 {
 	struct groupData *gdata;
 	GLINK *glink;
 	int i;
 
-	glink = (GLINK *)groupLine->glink;
+	glink = (GLINK *)groupLine->link;
 	if (!glink) return;
 	gdata = glink->pgroupData;
 	awGetMaskString(gdata->mask,buff);
@@ -105,84 +106,15 @@ void awUpdateGroupLine(struct groupLine *groupLine)
 		groupLine->curSev[i] = gdata->curSev[i];
 	groupLine->unackSevr = alHighestSeverity(gdata->unackSev);
 	groupLine->curSevr = alHighestSeverity(gdata->curSev);
-	awGroupMessage(groupLine);
-}
-
-
-/***************************************************
- prepare groupLine message from groupData
-****************************************************/
-static void awGroupMessage(struct groupLine *groupLine)
-{
-	struct groupData *pData;
-	GLINK *glink;
-
-	glink = ((GLINK *)groupLine->glink);
-	if (!glink) return;
-	pData = glink->pgroupData;
-
-	groupLine->unackSevr = 
-	    alHighestSeverity(pData->unackSev);
-
-	awGetMaskString(pData->mask,buff);
-	sprintf(groupLine->mask,"<%s>",buff);
-
 
 	strcpy(groupLine->message," ");
-	if (groupLine->unackSevr == 0 && alHighestSeverity(pData->curSev) == 0)
+	if (groupLine->unackSevr == 0 && alHighestSeverity(gdata->curSev) == 0)
 		return;
-	/*        
-	#ifdef GTA
-	        sprintf(buff,"MAJOR=%d,MINOR=%d,NOALARM=%d",
-	                pData->curSev[MAJOR],pData->curSev[MINOR],
-			pData->curSev[NO_ALARM]);
-	#else
-		sprintf(buff,"COMM=%d,MAJOR=%d,MINOR=%d,INFO=%d,NOALARM=%d",
-	                pData->curSev[INVALID_ALARM],
-			pData->curSev[MAJOR_ALARM],pData->curSev[MINOR_ALARM],
-		 	pData->curSev[INFO_ALARM],pData->curSev[NO_ALARM]);
-	#endif
-	*/
-	sprintf(buff,"(%d,%d,%d,%d)",
-	    pData->curSev[INVALID_ALARM],
-	    pData->curSev[MAJOR_ALARM],pData->curSev[MINOR_ALARM],
-	    pData->curSev[NO_ALARM]);
 
-	strcpy(groupLine->message,buff);
-
-}
-
-/***************************************************
- prepare chanLine message from chanData
-****************************************************/
-static void awChanMessage(struct chanLine *pchanLine)
-{
-	MASK mask;
-	struct chanData *pData;
-	CLINK *clink;
-
-	clink = ((CLINK *)pchanLine->clink);
-	if (!clink) return;
-	pData = clink->pchanData;
-
-	mask = pData->curMask;
-
-	strcpy(pchanLine->message," ");
-	if (mask.Disable ) return;
-
-	if (pData->curSevr == 0 && pData->unackSevr == 0) return;
-
-	sprintf(pchanLine->message,"<%s,%s>",
-	    alarmStatusString[pData->curStat],
-	    alarmSeverityString[pData->curSevr]);
-
-	if (pData->unackSevr == 0) return;
-
-	sprintf(buff,",<%s,%s>",
-	    alarmStatusString[pData->unackStat],
-	    alarmSeverityString[pData->unackSevr]);
-	strcat(pchanLine->message,buff);
-
+	sprintf(groupLine->message,"(%d,%d,%d,%d)",
+	    gdata->curSev[INVALID_ALARM],
+	    gdata->curSev[MAJOR_ALARM],gdata->curSev[MINOR_ALARM],
+	    gdata->curSev[NO_ALARM]);
 }
 
 /***************************************************
