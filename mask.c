@@ -368,11 +368,11 @@ XtPointer cbs)
 	if (link){
 		linkType =getSelectionLinkTypeArea(area);
 		if (linkType == GROUP){
-			alRemoveNoAck1HrTimerGroup(link);
+			if (maskid == ALARMACK) alRemoveNoAck1HrTimerGroup(link);
 			alForceGroupMask(link,maskid,maskno);
 			alLogChangeGroupMasks(link,maskno,maskid);
 		} else {
-			alRemoveNoAck1HrTimerChan(link);
+			if (maskid == ALARMACK) alRemoveNoAck1HrTimerChan(link);
 			alForceChanMask(link,maskid,maskno);
 			alLogChangeChanMasks(link,maskno,maskid);
 		}
@@ -385,9 +385,7 @@ XtPointer cbs)
 	/* ---------------------------------
 	     Update all dialog Windows
 	     --------------------------------- */
-	/*
-	     axUpdateDialogs(area);
-	*/
+     axUpdateDialogs(area);
 
 }
 
