@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.12  1997/09/09 22:24:24  jba
+ Modified propUndo.
+
  Revision 1.11  1996/06/07 16:35:33  jba
  Added global alarm acknowledgement.
 
@@ -483,7 +486,7 @@ void printConfig( struct mainGroup *pmainGroup);
 
 void propUpdateDialog(ALINK *area);
 void propShowDialog(ALINK *area, Widget widget);
-void propUndo(void *area, GCLINK *link, int linktype, GCLINK *newLink);
+void propUndo(void *area);
  
  
 #else
