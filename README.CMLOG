@@ -1,0 +1,139 @@
+        =========================================
+        == CMLOG Support for the Alarm Handler ==
+        =========================================
+
+Ralph Lange   <Ralph.Lange@mail.bessy.de>
+
+== $Id$ ==
+
+
+Introduction
+------------
+
+CMLOG is a distributed message logging system developed at JLab (see
+http://www.jlab.org/~chen/cmlog/docs/cmlog.html for a complete
+description).
+
+The Alarm Handler can be compiled to support logging alarms and operator 
+modifications into a CMLOG database instead of (or in addition to)
+logging into files.
+
+The CMLOG system must have been installed and set up prior to compiling
+the ALH with CMLOG support.
+
+The CMLOG server must be running and the programs "cmlog_activate",
+"cmlogClientD" and "cmlog" must be in the user's PATH before using ALH
+with CMLOG support.
+
+
+Compiling ALH with CMLOG Support
+--------------------------------
+
+1) In Makefile.Host, set
+
+      I_WANT_CMLOG = YES
+
+and set the variable CMLOG to point to your CMLOG installation. (The
+most natural place for this would be the RELEASE file in the config
+directory of your extensions tree, though.)
+
+      CMLOG=<wherever_your_CMLOG_installation_resides>
+
+2) Build the Alarm Handler. (Quick test: if CMLOG support is compiled
+   in, the usage info printed by "alh -help" contains the "-aCM" and
+   "-oCM" options.)
+
+
+Starting ALH with CMLOG Logging
+-------------------------------
+
+CMLOG usage is enabled by giving the command line options "-aCM" (for
+alarms) resp. "-oCM" (for operator modification). CMLOG logging is
+independent from file logging, i.e. you have to add "-D" (disable file
+logging) if you want your ALH to log only into CMLOG.
+
+Examples (i.e. how ALH is used at BESSY):
+
+Overhead display ALHs (running on an X-terminal without keyboard and
+mouse) are started like this:
+
+   alh -global -s -S -D -aCM
+
+All other control room ALHs are started using
+
+   alh -global -D -oCM
+
+whereas all "private" ALHs outside the control room are started as
+
+   alh -S -D
+
+
+Viewing Alarm and Opmod logs
+----------------------------
+
+A standard Motif log browser is included in the CMLOG package. There is
+a patch for this browser that enhances its ability to be configured
+using command line arguments (-> Jie Chen <chen@jlab.org>). ALH uses
+these additional features when starting the cmlog browser (there's an
+additional option to start the browser in the View menu).
+
+You may define the command to start the cmlog browser and the
+configuration file name within Makefile.Host (look for the definitions
+for CMLOG_CONFIG and CMLOG_BROWSER). If the definition for the
+configuration file name contains no path, it is assumed to be in ALH's
+config file directory.
+
+cmlogrc.ALH contains a sample browser configuration.
+
+Note: If you want to include a tag in a browser query, this tag must be
+included in the browser configuration --- it does not have to be in the
+visible part of the window, though.
+
+
+CMLOG Tags used by ALH
+----------------------
+
+o Standard tags (set by CMLOG):
+
+  name           alh
+  user           user name  \
+  host           host name   \ of logging
+  pid            process ID  / ALH process
+  cmlogDispName  X display  /
+  cmlogTime      log time stamp
+
+o ALH specific tags (set by ALH):
+
+  verbosity    0: alarm
+               1: acknowledge
+               2: other operator modifications
+
+  code         1: REGULAR_RECORD    (usual record alarm)
+               2: CONNECT_ALARM     (connection loss alarm)
+               5: ACK_CHANNEL       (acknowledge alarm for channel)
+               6: ACK_GROUP         (acknowledge alarms for group)
+               7: CHANGE_MASK       (change channel mask)
+               8: CHANGE_MASK_GROUP (change group mask)
+               9: FORCE_MASK        (channel PV force)
+              10: FORCE_MASK_GROUP  (group PV force)
+
+  facility    Alarm: alarm log entries
+              Opmod: operator modification log entries
+
+  status      record's STAT field (string)
+  severity    record's SEVR field (string)
+  device      record or group name
+  message     record or group alias
+  text        additional log text
+  domain      ALH domain (alias or name of GROUP NULL)
+  value       record's value (string)
+
+
+Note: Not all log messages contain all of the ALH specific tags.
+
+
+Contact
+-------
+
+I bet there's plenty of room for improvements. So, if you have any
+comments, suggestions or bug fixes, please contact me.
