@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.5  1998/08/05 18:16:14  jba
+ Removed some comment statements.
+
  Revision 1.4  1995/10/20 16:51:03  jba
  Modified Action menus and Action windows
  Renamed ALARMCOMMAND to SEVRCOMMAND
@@ -340,15 +343,6 @@ if (clink->pchanData->curSevr == sevr &&
 	else {
 
 	alNewAlarm(status,sevr,clink->pchanData->value,clink);
-/*
- * update toggle button due to new alarm 
- * turn beep on again
-	if (psetup.beep == 0) {
-		XmToggleButtonGadgetSetState(((ALINK *)clink->pmainGroup->area)->silenceCurrent,FALSE,FALSE);
-		psetup.beep = 1;
-		}
-	resetBeep();
- */
 
 	}
 }
