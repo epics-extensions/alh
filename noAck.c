@@ -370,13 +370,9 @@ XtPointer call_data)
 #endif
 	ALINK *area;
     GCLINK *gclink;
-    CLINK *clink;
     struct gcData *gcdata;
 	int linkType;
-	struct timerData *timerData;
     XtTimerCallbackProc proc;
-	int setNewNoAckTimer;
-	MASK mask;
 
 	XtVaGetValues(widget, XmNuserData, &area, NULL);
 	gclink =(GCLINK *)getSelectionLinkArea(area);
