@@ -63,6 +63,7 @@ struct gcData {
 	short forcePVValue;	/* forcePV value for force mask */
 
 	short resetPVValue;	/* forcePV value for reset mask */
+	short forcePVDisabled;	/*Is  forcePV disabled? TRUE/FALSE */
 	MASK forcePVMask;	/* force Mask */
 	char *alias;	 	/* alias text */
 	char *command;	 	/* command text */
@@ -74,6 +75,7 @@ struct gcData {
 	evid forceevid;			/* forcePV channel evid */
 	chid sevrchid;			/* group sevrPV channel id */
 	short beepSevr;		/* beep severity */
+	XtIntervalId noAckTimerId;
 };
 
 /* group data structure */
@@ -86,6 +88,7 @@ struct groupData {
 	short forcePVValue;		/* forcePV value for force mask */
 
 	short resetPVValue;		/* forcePV value for reset mask */
+	short forcePVDisabled;	/*Is  forcePV disabled? TRUE/FALSE */
 	MASK forcePVMask;		/* force Mask */
 	char *alias;	 	/* alias text */
 	char *command;	 		/* command text */
@@ -97,6 +100,7 @@ struct groupData {
 	evid forceevid;			/* forcePV channel evid */
 	chid sevrchid;			/* group sevrPV channel id */
 	short beepSevr;		/* beep severity */
+	XtIntervalId noAckTimerId;
 	char *treeSym;                  /* tree symbols for treeWindow display */
 	int mask[ALARM_NMASK];	/* no. of channels of masked types*/
 	int curSev[ALH_ALARM_NSEV];  	/* channels of different severity */
@@ -113,6 +117,7 @@ struct chanData {
 
 	short forcePVValue;		/* forcePV value for force mask */
 	short resetPVValue;		/* forcePV value for reset mask */
+	short forcePVDisabled;	/*Is  forcePV disabled? TRUE/FALSE */
 	MASK forcePVMask;		/* forcePV force mask setting */
 	char *alias;	 	/* alias text */
 	char *command;			/* command text */
@@ -125,6 +130,7 @@ struct chanData {
 	evid forceevid;			/* forcePV channel evid */
 	chid sevrchid;		 	/* sevrPV channel id */
 	short beepSevr;		/* beep severity */
+	XtIntervalId noAckTimerId;
 	ELLLIST statCommandList;	/* alarm status command list */
 	COUNTFILTER *countFilter;	/* alarm count filter */
 	MASK curMask;			/* current mask setting */
@@ -172,7 +178,7 @@ struct anyLink {
 	SNODE node;			/* single link list node type */
 	SLIST GuideList;		/* guidance link list */
 	char *guidanceLocation;		/* guidance location (url or filename)*/
-	struct groupLink *parent;	/* parent groupLinke pointer */
+	struct groupLink *parent;	/* parent groupLink pointer */
 	struct gcData *pgcData;  	/* channel data  pointer */
 	struct mainGroup *pmainGroup;   /* mainGroup pointer */
 	void *lineTreeW;		/* line address Tree Window*/
