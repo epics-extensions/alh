@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.7  1996/08/19 13:53:39  jba
+ Minor usage and mask printed output changes.
+
  Revision 1.6  1995/11/13 22:31:29  jba
  Added beepseverity command, ansi changes and other changes.
 
@@ -565,7 +568,7 @@ void fileSetupInit( widget, argc, argv)
 
      if (input_error) {
           fprintf(stderr,
-          "\nusage: %s [-c] [-f filedir] [-l logdir] [-a alarmlogfile] [-o opmodlogfile] [Xoptions] configfile \n",
+          "\nusage: %s [-c] [-f filedir] [-l logdir] [-a alarmlogfile] [-o opmodlogfile] [Xoptions] [configfile] \n",
                argv[0]);
           fprintf(stderr,"\n\tconfigfile\tAlarm configuration filename\n");
           fprintf(stderr,"\n\t-c\tAlarm Configuration Tool mode\n");

@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.9  1996/08/19 13:53:37  jba
+ Minor usage and mask printed output changes.
+
  Revision 1.8  1995/11/13 22:31:24  jba
  Added beepseverity command, ansi changes and other changes.
 
@@ -590,7 +593,7 @@ void createMainWindowWidgets(area)
 
      /* Create group alarm decoder label for the messageArea */
      area->label_mask = XtVaCreateManagedWidget(
-         "Mask <CDATL>: (Cancel,Disable,noAck,noackT,noLog>",
+         "Mask <CDATL>: <Cancel,Disable,noAck,noackT,noLog>",
           xmLabelGadgetClass,        area->messageArea,
           XmNmarginHeight,           3,
           XmNalignment,              XmALIGNMENT_BEGINNING,
@@ -614,7 +617,7 @@ void createMainWindowWidgets(area)
 
      /* Create filenameTitle label for the messageArea */
      area->label_channelAlarm = XtVaCreateManagedWidget(
-         "Channel Alarm Data: Current(Status,Severity),Highest Unack(Status,Severity)",
+         "Channel Alarm Data: Current<Status,Severity>,Highest Unack<Status,Severity>",
           xmLabelGadgetClass,        area->messageArea,
           XmNmarginHeight,           3,
           XmNalignment,              XmALIGNMENT_BEGINNING,
