@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.11  1998/09/03 19:18:44  jba
+ Added url help for help menu.
+
  Revision 1.10  1998/08/05 18:20:05  jba
  Added silenceOneHour button.
  Moved silenceForever button to Setup menu.
@@ -223,7 +226,7 @@ static char *alhhSccsId = "@(#)alh.h	1.10\t10/8/93";
 #define MENU_INSERT_FILE		10803
 #define MENU_INSERT_SETTINGS	10804
 
-#define MENU_HELP_TOPICS	10900
+#define MENU_HELP_HELP	10900
 #define MENU_HELP_ABOUT	10906
 
 

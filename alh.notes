@@ -151,3 +151,10 @@ Wed Aug  5 13:10:12 CDT 1998
 Fri Aug  7 17:30:14 CDT 1998
 	Alh now quits when invalid config file is specified on command line.
 
+Thu Sep  3 14:11:17 CDT 1998
+	Added new version of browser.c with WIN32 support.
+	Removed unused variables from file.c.
+	Made changes for WIN32 build (using Exceed5)
+	Added url help.
+	Initial version is 1.1.1, added Albert to credits
+

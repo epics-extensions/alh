@@ -5,7 +5,8 @@
 TOP = ../../..
 include $(TOP)/config/CONFIG_EXTENSIONS
 
-USR_CFLAGS = -DACCESS_SECURITY -I$(MOTIF_INC) -I$(X11_INC)
+USR_CFLAGS += -DACCESS_SECURITY -I$(MOTIF_INC) -I$(X11_INC)
+USR_CFLAGS += -DALH_HELP_URL="\"http://www.aps.anl.gov/asd/controls/epics/EpicsDocumentation/ExtensionsManuals/AlarmHandler/alh.html\""
 
 # Use following 3 lines if USR_CFLAGS contains -DIWantGreeting
 PROD_LIBS += Unix

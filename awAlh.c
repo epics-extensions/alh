@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.16  1998/09/03 19:18:45  jba
+ Added url help for help menu.
+
  Revision 1.15  1998/08/05 20:28:27  jba
  Reading config file modified to compare whole word of command
  (GROUP,CHANNEL,$GUIDANCE,...)instead of first letter.
@@ -306,14 +309,10 @@ Widget alhCreateMenu(parent, user_data)
      };
      
      static MenuItem help_menu[] = {
-/* HELP NOT IMPLEMENTED YET
-         { "Help Topics",       &xmPushButtonGadgetClass, 'H', "Ctrl<Key>H", "Ctrl+H",
-             alhHelpCallback, (XtPointer)MENU_HELP_TOPICS, (MenuItem *)NULL },
-*/
-#if  XmVersion && XmVersion >= 1002
+         { "Help",       &xmPushButtonGadgetClass, 'H', "Ctrl<Key>H", "Ctrl+H",
+             alhHelpCallback, (XtPointer)MENU_HELP_HELP, (MenuItem *)NULL },
          { "About ALH",     &xmPushButtonGadgetClass, 'A', NULL, NULL,
              alhHelpCallback, (XtPointer)MENU_HELP_ABOUT, (MenuItem *)NULL },
-#endif
          {NULL},
      };
      
@@ -757,6 +756,11 @@ static void alhHelpCallback( Widget widget, XtPointer calldata, XtPointer cbs)
      XtVaGetValues(widget, XmNuserData, &area, NULL);
 
      switch (item){
+
+        case MENU_HELP_HELP:
+
+             callBrowser(ALH_HELP_URL);
+             break;
 
         case MENU_HELP_ABOUT:
 
