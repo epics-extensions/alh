@@ -431,7 +431,7 @@ void	alCaAddEvent	(chid 	chid,
                signal->device(), signal->attribute());
     fflush (stderr);
 #endif
-    alNewEvent (NOT_CONNECTED, ERROR_STATE, 0, 0, "0", clink);
+    alNewEvent (NOT_CONNECTED, ERROR_STATE, 0, -1, "0", clink);
   }
 
   *pevid = (evid)monitor;
@@ -621,25 +621,25 @@ static void alCaNewAlarmEvent (int 			status,
         // has changed
         if (changed)
           alNewEvent
-            (monitor->status(), monitor->severity(), 0, 0, pstr, monitor->data());
+            (monitor->status(), monitor->severity(), 0, -1, pstr, monitor->data());
       }
       break;
         
       case CDEV_NOACCESS:
       {
-        alNewEvent (NO_READ_ACCESS, ERROR_STATE, 0, 0, "0", monitor->data());
+        alNewEvent (NO_READ_ACCESS, ERROR_STATE, 0, -1, "0", monitor->data());
       }
       break;
         
       case CDEV_DISCONNECTED:
       {
-        alNewEvent (NOT_CONNECTED, ERROR_STATE, 0, 0, "0", monitor->data());
+        alNewEvent (NOT_CONNECTED, ERROR_STATE, 0, -1, "0", monitor->data());
       }
       break;
         
       default:
       {
-        alNewEvent (NOT_CONNECTED, ERROR_STATE, 0, 0, "0", monitor->data());
+        alNewEvent (NOT_CONNECTED, ERROR_STATE, 0, -1, "0", monitor->data());
       }
       break;
   }

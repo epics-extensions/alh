@@ -43,10 +43,12 @@ void alCaPend(double waitSeconds)
 	time_t startTime, currentTime;
 
 	currentTime = time(&startTime);
+printf ("time=%d\n",currentTime);
 	while (toBeConnectedCount > 0 && difftime(currentTime, startTime) < waitSeconds) {
 		ca_pend_event(.1);
 		time(&currentTime);
 	}
+printf ("time=%d\n",currentTime);
 }
 
 /*********************************************************************
@@ -401,10 +403,10 @@ static void alCaChannelAccessRightsEvent(struct access_rights_handler_args args)
 {
 	if (ca_field_type(args.chid) == TYPENOTCONN) return;
 	if (!ca_read_access(args.chid)) {
-		alNewAlarm(NO_READ_ACCESS, ERROR_STATE, "0", ca_puser(args.chid));
+		alNewEvent(NO_READ_ACCESS, ERROR_STATE, 0, -1, "0", ca_puser(args.chid));
 	}
 	if (!ca_write_access(args.chid) && _global_flag && !_passive_flag) {
-		alNewAlarm(NO_WRITE_ACCESS, ERROR_STATE, "0", ca_puser(args.chid));
+		alNewEvent(NO_WRITE_ACCESS, ERROR_STATE, 0, -1, "0", ca_puser(args.chid));
 	}
 }
 
@@ -441,7 +443,7 @@ static void alCaChannelConnectionEvent(struct connection_handler_args args)
 	if (args.op == CA_OP_CONN_UP) {
 		toBeConnectedCount--;
 	} else if (args.op == CA_OP_CONN_DOWN) {
-		alNewAlarm(NOT_CONNECTED, ERROR_STATE, "0", ca_puser(args.chid));
+		alNewEvent(NOT_CONNECTED, ERROR_STATE, 0, -1, "0", ca_puser(args.chid));
 	} else {
 		errMsg("Unknown Connnection Event for PV %s\n",ca_name(args.chid));
 	}

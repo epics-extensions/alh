@@ -245,7 +245,7 @@ void alSetNotConnected(SLIST *proot)
 		}
 		if (type == CHANNEL && ((struct chanData *)gcdata)->chid &&
 		    !alCaIsConnected(((struct chanData *)gcdata)->chid)) {
-			alNewEvent(NOT_CONNECTED,ERROR_STATE,0,1,"",(CLINK *)gclink);
+			alNewEvent(NOT_CONNECTED,ERROR_STATE,0,-1,"",(CLINK *)gclink);
 		}
 		gclink = nextGroupChannel(gclink,&type);
 	}

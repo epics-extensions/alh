@@ -29,8 +29,10 @@ extern struct setup psetup;
 
 /* forward declarations */
 static void alarmCountFilter_callback(XtPointer cd, XtIntervalId *id);
-static void alNewAlarmProcess(int stat,int sev,char *value,
-CLINK *clink,time_t timeofday);
+static void alNewAlarmFilter(int stat,int sevr,int acks,int ackt,
+	char *value,CLINK *clink);
+static void alNewAlarmProcess(int stat,int sev, int acks,int ackt,
+	char *value, CLINK *clink,time_t timeofday);
 void alSetAckTChan(CLINK *clink,int ackt);
 
 
@@ -551,6 +553,7 @@ static void alarmCountFilter_callback(XtPointer cd, XtIntervalId *id)
 	countFilter->timeoutId=0;
 	countFilter->curCount=0;
 	alNewAlarmProcess(countFilter->stat,countFilter->sev,
+	    countFilter->acks,countFilter->ackt,
 	    countFilter->value,countFilter->clink,alarmTime);
 }
 
@@ -559,45 +562,36 @@ static void alarmCountFilter_callback(XtPointer cd, XtIntervalId *id)
   alNewEvent
 ******************************************************/
 
-void alNewEvent(int stat,int sevr,int acks,int ackt,char *value,CLINK *clink)
+void alNewEvent(int stat,int sevr,int acks,int acktCA,char *value,CLINK *clink)
 {
 	struct chanData *cdata;
-	COUNTFILTER *countFilter;
 	time_t alarmTime;
-	unsigned newAckt;
+	unsigned ackt;
 
 	if (clink == NULL ) return;
 	cdata = clink->pchanData;
 	if (cdata == NULL ) return;
 
-	if (_global_flag) {
-		/* NOTE: ackt and curMask.AckT have opposite meaning */
-		newAckt = (ackt+1)%2; 
-		if (cdata->unackSevr != acks && cdata->curMask.Disable == 0 &&
-			cdata->curMask.Ack != 1 ) {
-			alSetUnackSevChan(clink,acks);
-		}
-		if (cdata->curMask.AckT != newAckt) {
-			alSetAckTChan(clink,newAckt);
-		}
-		if (cdata->curStat == stat && cdata->curSevr == sevr &&
-			cdata->curMask.Log == 0) {
-			alarmTime = time(0L);
-			alLogAlarm(&alarmTime,cdata,stat,sevr,acks,newAckt);
-		}
-	}
-	countFilter = cdata->countFilter;
-	if ((!countFilter && (cdata->curStat != stat || cdata->curSevr != sevr)) ||
-	    (countFilter && (countFilter->stat != stat || countFilter->sev != sevr)))
-	{
-		alNewAlarm(stat,sevr,value,clink);
+	if (cdata == NULL ) return;
+
+    if (acktCA == -1) ackt = cdata->curMask.AckT;
+	/* NOTE: ackt and acktCA have opposite meaning */
+	else ackt = (acktCA+1)%2;
+
+	if (cdata->countFilter) {
+		alNewAlarmFilter(stat,sevr,acks,ackt,value,clink);
+	} else {
+		/* set time of alarm */
+		alarmTime = time(0L);
+		alNewAlarmProcess(stat,sevr,acks,ackt,value,clink,alarmTime);
 	}
 }
 
+
 /*********************************************************** 
-     alNewAlarm
+     alNewAlarmFilter
 ************************************************************/
-void alNewAlarm(int stat,int sev,char *value,CLINK *clink)
+void alNewAlarmFilter(int stat,int sev,int acks,int ackt,char *value,CLINK *clink)
 {
 	struct chanData *cdata;
 	int sevr_prev;
@@ -611,24 +605,46 @@ void alNewAlarm(int stat,int sev,char *value,CLINK *clink)
 
 	/* set time of alarm */
 	alarmTime = time(0L);
-	if (!countFilter) {
-		alNewAlarmProcess(stat,sev,value,clink,alarmTime);
-		return;
-	}
 
 	sevr_prev = countFilter->sev;
 	countFilter->stat = stat;
 	countFilter->sev = sev;
+	countFilter->acks = acks;
+	countFilter->ackt = ackt;
 	strcpy(countFilter->value,value);
 
-	if (sevr_prev==sev){ /* only stat has changed */
-		alNewAlarmProcess(stat,sev,value,clink,alarmTime);
+ 	/* Process the initial state */
+	if (cdata->curStat==NO_ALARM && cdata->curSevr==ERROR_STATE ) {
+		alNewAlarmProcess(stat,sev,acks,ackt,value,clink,alarmTime);
 		return;
 	}
 
- 	/* Process the initial connection */
-	if (cdata->curStat==NO_ALARM && cdata->curSevr==ERROR_STATE ) {
-		alNewAlarmProcess(stat,sev,value,clink,alarmTime);
+/*
+After updating countFilter fields acks ackt stat sev do the following: 
+cdata->curSevr==0  sev_prev==0  sev==0  call alNewAlarmProcess to update acks and ackt
+cdata->curSevr==0  sev_prev==0  sev!=0  add timeout and start count or increase count
+cdata->curSevr==0  sev_prev!=0  sev==0  remove timeout and call alNewAlarmProcess to update acks and ackt
+cdata->curSevr==0  sev_prev!=0  sev!=0  return  (wait for timeout)
+cdata->curSevr!=0  sev_prev==0  sev==0  return (process only acks and ackt changes) (wait for timeout)
+cdata->curSevr!=0  sev_prev==0  sev!=0  remove timeout and call alNewAlarmProcess
+cdata->curSevr!=0  sev_prev!=0  sev==0  add timeout and start count or increase count
+cdata->curSevr!=0  sev_prev!=0  sev!=0  call alNewAlarmProcess
+*/
+
+
+	if (sevr_prev==0 && sev==0 ){
+		if (cdata->curSevr==0){
+			alNewAlarmProcess(stat,sev,acks,ackt,value,clink,alarmTime);
+		} else {
+			alNewAlarmProcess(cdata->curStat,cdata->curSevr,acks,ackt,value,clink,alarmTime);
+		}
+		return;
+	}
+
+	if (sevr_prev!=0 && sev!=0 ){
+		if (cdata->curSevr!=0){
+			alNewAlarmProcess(stat,sev,acks,ackt,value,clink,alarmTime);
+		}
 		return;
 	}
 
@@ -650,7 +666,7 @@ void alNewAlarm(int stat,int sev,char *value,CLINK *clink)
 				countFilter->timeoutId=0;
 				countFilter->curCount=0;
 				countFilter->alarmTime=0;
-				alNewAlarmProcess(stat,sev,value,clink,alarmTime);
+				alNewAlarmProcess(stat,sev,acks,ackt,value,clink,alarmTime);
 			}
 		}
 	} else if ((cdata->curSevr==0 && sev==0) || (cdata->curSevr!=0 && sevr_prev==0)){
@@ -658,17 +674,17 @@ void alNewAlarm(int stat,int sev,char *value,CLINK *clink)
 			XtRemoveTimeOut(countFilter->timeoutId);
 		}
 		countFilter->timeoutId=0;
-		if (cdata->curSevr) alNewAlarmProcess(stat,sev,value,clink,alarmTime);
+		if (cdata->curSevr) alNewAlarmProcess(stat,sev,acks,ackt,value,clink,alarmTime);
 
 	} else { /* change in alarm state */
-		if (cdata->curSevr) alNewAlarmProcess(stat,sev,value,clink,alarmTime);
+		if (cdata->curSevr) alNewAlarmProcess(stat,sev,acks,ackt,value,clink,alarmTime);
 	}
 }
 
 /*********************************************************** 
      alNewAlarmProcess
 ************************************************************/
-static void alNewAlarmProcess(int stat,int sev,char *value,
+static void alNewAlarmProcess(int stat,int sev,int acks,int ackt,char *value,
 CLINK *clink,time_t timeofday)
 {
 	struct chanData *cdata;
@@ -680,10 +696,29 @@ CLINK *clink,time_t timeofday)
 	int prevViewCount=0;
 
 	if (clink == NULL ) return;
+	cdata = clink->pchanData;
+	if (cdata == NULL ) return;
+
 	if (sev >= ALH_ALARM_NSEV) sev = ALH_ALARM_NSEV-1;
 	if (stat >= ALH_ALARM_NSTATUS) stat = ALH_ALARM_NSTATUS-1;
-	cdata = clink->pchanData;
 	mask = cdata->curMask;
+	strncpy(cdata->value,value,MAX_STRING_SIZE-1);
+
+	if (_global_flag) {
+		if (cdata->unackSevr != acks && cdata->curMask.Disable == 0 &&
+			cdata->curMask.Ack != 1 ) {
+			alSetUnackSevChan(clink,acks);
+		}
+		if (cdata->curMask.AckT != ackt) {
+			alSetAckTChan(clink,ackt);
+		}
+		if (cdata->curStat == stat && cdata->curSevr == sev &&
+			cdata->curMask.Log == 0) {
+			alLogAlarm(&timeofday,cdata,stat,sev,acks,ackt);
+		}
+	}
+
+	if (cdata->curStat == stat && cdata->curSevr == sev) return;
 
 	prevViewCount = awViewViewCount((void *)clink);
 
@@ -692,7 +727,6 @@ CLINK *clink,time_t timeofday)
 
 	cdata->curStat = stat;
 	cdata->curSevr = sev;
-	strncpy(cdata->value,value,MAX_STRING_SIZE-1);
 
 	viewCount = awViewViewCount((void *)clink);
 	clink->viewCount = viewCount;
@@ -983,15 +1017,14 @@ void alChangeChanMask(CLINK *clink,MASK mask)
 				if (cdata->unackSevr > NO_ALARM)
 					alSetUnackSevChan(clink,NO_ALARM);
 				if (cdata->curSevr > NO_ALARM)  {
-/*
+					saveSevr = cdata->curSevr;
 					cdata->curSevr = NO_ALARM;
 					cdata->curStat = NO_ALARM;
-*/
 					parent = clink->parent;
 					while(parent) {
 						gdata = (struct groupData *)(parent->pgroupData);
-						gdata->curSev[cdata->curSevr]--;
-						gdata->curSev[NO_ALARM]++;
+						gdata->curSev[saveSevr]--;
+						gdata->curSev[cdata->curSevr]++;
 
 						/*
 						 * spawn SEVRCOMMAND for all the parent groups
@@ -1034,7 +1067,8 @@ void alChangeChanMask(CLINK *clink,MASK mask)
 			if (cdata->curMask.Disable == 0 && cdata->curSevr > 0) {
 				saveSevr = cdata->curSevr;
 				cdata->curSevr = NO_ALARM;
-				alNewAlarmProcess(cdata->curStat,saveSevr,cdata->value,clink,time(0L));
+				alNewAlarmProcess(cdata->curStat,saveSevr,cdata->unackSevr,
+					cdata->curMask.AckT,cdata->value,clink,time(0L));
 			}
 			alCaAddEvent(cdata->chid,&cdata->evid,clink);
 		}
@@ -1078,7 +1112,8 @@ void alChangeChanMask(CLINK *clink,MASK mask)
 			if (cdata->curSevr > 0) {
 				saveSevr = cdata->curSevr;
 				cdata->curSevr = NO_ALARM;
-				alNewAlarmProcess(cdata->curStat,saveSevr,cdata->value,clink,time(0L));
+				alNewAlarmProcess(cdata->curStat,saveSevr,cdata->unackSevr,
+					cdata->curMask.AckT,cdata->value,clink,time(0L));
 			}
 		}
 
@@ -1110,7 +1145,8 @@ void alChangeChanMask(CLINK *clink,MASK mask)
 				}
 				saveSevr = cdata->curSevr;
 				cdata->curSevr = 0;
-				alNewAlarmProcess(cdata->curStat,saveSevr,cdata->value,clink,time(0L));
+				alNewAlarmProcess(cdata->curStat,saveSevr,cdata->unackSevr,
+					cdata->curMask.AckT,cdata->value,clink,time(0L));
 			}
 
 

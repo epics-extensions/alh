@@ -337,7 +337,6 @@ int alViewMaxSevrNGroupW(GCLINK *linkStart,int n)
 		while ( glink){
 			if (count == n) break;
 			if (glink->viewCount) {
-				glink->pgroupData->curSevr = alHighestSeverity(glink->pgroupData->curSev);
 				sevr = Mmax(sevr,glink->pgroupData->curSevr);
 				if (sevr >= ALH_ALARM_NSEV-1) break;
 				count++;
@@ -394,7 +393,6 @@ int alViewMaxSevrNTreeW(GLINK *glinkStart,int n)
 		}
 		else {
 			if (glink->viewCount)
-				glink->pgroupData->curSevr = alHighestSeverity(glink->pgroupData->curSev);
 			sevr = Mmax(sevr,glink->pgroupData->curSevr);
 			if (sevr >= ALH_ALARM_NSEV-1) break;
 			count += glink->viewCount;
