@@ -36,6 +36,7 @@ static char *sccsId = "@(#) $Id$";
 /* global variables */
 extern char * alhAlarmSeverityString[];
 extern char * alhAlarmStatusString[];
+extern char *bg_char[];
 
 static char buff[LINEMESSAGE_SIZE];
 
@@ -79,7 +80,9 @@ void awUpdateChanLine(struct anyLine *chanLine)
 	chanLine->unackSevr = cdata->unackSevr;
 	chanLine->curSevr = cdata->curSevr;
 	chanLine->curStat = cdata->curStat;
-	if (cdata->curMask.Disable == MASK_ON || cdata->curMask.Cancel == MASK_ON) {
+
+	if (cdata->curMask.Disable == MASK_ON ||
+		 cdata->curMask.Cancel == MASK_ON) {
 		chanLine->curSevr = 0;
 		chanLine->unackSevr = 0;
 	}
@@ -91,19 +94,23 @@ void awUpdateChanLine(struct anyLine *chanLine)
 	sprintf(chanLine->mask,"<%s>",buff);
 
 	strcpy(chanLine->message," ");
-	if (cdata->curMask.Disable || cdata->curMask.Cancel) return;
 
-	if (cdata->curSevr == 0 && cdata->unackSevr == 0) return;
+	if (!cdata->curMask.Disable && !cdata->curMask.Cancel &&
+		(cdata->curSevr || cdata->unackSevr)){
 
-	sprintf(chanLine->message,"<%s,%s>",
-	    alhAlarmStatusString[cdata->curStat],
-	    alhAlarmSeverityString[cdata->curSevr]);
+		sprintf(chanLine->message,"<%s,%s>",
+	    	alhAlarmStatusString[cdata->curStat],
+	    	alhAlarmSeverityString[cdata->curSevr]);
 
-	if (cdata->unackSevr == 0) return;
-
-	sprintf(buff,",<%s>",
-	    alhAlarmSeverityString[cdata->unackSevr]);
-	strcat(chanLine->message,buff);
+		if (cdata->unackSevr){
+			sprintf(buff,",<%s>",
+				alhAlarmSeverityString[cdata->unackSevr]);
+			strcat(chanLine->message,buff);
+		}
+	}
+	if(cdata->highestBeepSevr>1) strcpy(chanLine->highestBeepSevrString,
+			bg_char[cdata->highestBeepSevr]);
+	else strcpy(chanLine->highestBeepSevrString," ");
 }
 
 /*************************************************************************** 
@@ -128,15 +135,18 @@ void awUpdateGroupLine(struct anyLine *groupLine)
 	groupLine->curSevr = alHighestSeverity(gdata->curSev);
 
 	strcpy(groupLine->message," ");
-	if (groupLine->unackSevr == 0 && alHighestSeverity(gdata->curSev) == 0)
-		return;
 
-	sprintf(groupLine->message,"(%d,%d,%d,%d,%d)",
-	    gdata->curSev[ERROR_STATE],
-	    gdata->curSev[INVALID_ALARM],
-	    gdata->curSev[MAJOR_ALARM],
-	    gdata->curSev[MINOR_ALARM],
-	    gdata->curSev[NO_ALARM]);
+	if (groupLine->unackSevr || alHighestSeverity(gdata->curSev)){
+		sprintf(groupLine->message,"(%d,%d,%d,%d,%d)",
+	    	gdata->curSev[ERROR_STATE],
+	    	gdata->curSev[INVALID_ALARM],
+	    	gdata->curSev[MAJOR_ALARM],
+	    	gdata->curSev[MINOR_ALARM],
+	    	gdata->curSev[NO_ALARM]);
+	}
+	if(gdata->highestBeepSevr>1) strcpy(groupLine->highestBeepSevrString,
+			bg_char[gdata->highestBeepSevr]);
+	else strcpy(groupLine->highestBeepSevrString," ");
 }
 
 /***************************************************
