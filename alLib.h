@@ -32,8 +32,9 @@ typedef struct countFilter {
 	short  acks;		/* highest unack severity */
 	short  ackt;		/* acknowledge transients? */
 	char   value[MAX_STRING_SIZE];	/* channel value from CA */
-	int    curCount;
+	int    countIndex;
 	int    alarmTime;
+	time_t *alarmTimeHistory;
 	void  *clink;
 	XtIntervalId timeoutId;
 } COUNTFILTER;

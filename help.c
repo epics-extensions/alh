@@ -31,7 +31,7 @@ static char *sccsId = "@(#) $Id$";
 /* Hummingbird extra functions including lprintf
  *   Needs to be included after Intrinsic.h for Exceed 5
  *   (Intrinsic.h is included in xtParams.h) */
-#include <X11/XlibXtra.h>
+/*#include <X11/XlibXtra.h>*/
 /* This is done in Exceed 6 but not in Exceed 5
  *   Need it to define printf as lprintf for Windows
  *   (as opposed to Console) apps */

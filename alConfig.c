@@ -539,9 +539,13 @@ int context,int caConnect)
 			cdata->countFilter->clink=gclink;
 			cdata->countFilter->stat=NO_ALARM;
 			cdata->countFilter->sev=ERROR_STATE;
+		    cdata->countFilter->alarmTimeHistory = 0;
+		    cdata->countFilter->countIndex = 0;
 		}
 		if(rtn>=2) cdata->countFilter->inputCount=count;
 		if(rtn>=3) cdata->countFilter->inputSeconds=seconds;
+		if (cdata->countFilter->inputCount) cdata->countFilter->alarmTimeHistory =
+            (time_t *)calloc(2*(cdata->countFilter->inputCount),sizeof(time_t));
 		return;
 	}
 

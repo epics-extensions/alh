@@ -1238,7 +1238,13 @@ static void propApplyCallback( Widget widget,XtPointer calldata,XtPointer cbs)
 	     --------------------------------- */
 	if (linkType == CHANNEL) {
 		cdata = (struct chanData *)pgcData;
-		cdata->countFilter = 0;
+		if (cdata->countFilter){
+		    if (cdata->countFilter->alarmTimeHistory){
+                free(cdata->countFilter->alarmTimeHistory);
+            }
+    		free(cdata->countFilter);
+    		cdata->countFilter = 0;
+        }
 		buff = XmTextFieldGetString(propWindow->countFilterCountTextW);
 		rtn = sscanf(buff,"%hd",&f1);
 		buff = XmTextFieldGetString(propWindow->countFilterCountTextW);
@@ -1250,6 +1256,8 @@ static void propApplyCallback( Widget widget,XtPointer calldata,XtPointer cbs)
 			else cdata->countFilter->inputCount = 1;
 			if (rtn2 == 1 ) cdata->countFilter->inputSeconds = f2;
 			else cdata->countFilter->inputSeconds = 1;
+            if (cdata->countFilter->inputCount) cdata->countFilter->alarmTimeHistory =
+                (time_t *)calloc(2*cdata->countFilter->inputCount,sizeof(time_t));
 		}
 	}
 
@@ -1596,7 +1604,13 @@ static void propDeleteClone(GCLINK *link,int linkType)
 	removeSevrCommandList(&pgcData->sevrCommandList);
 	if (linkType == CHANNEL) {
 		pcData = (struct chanData *)pgcData;
-		if (pcData->countFilter) free(pcData->countFilter);
+		if (pcData->countFilter){
+		    if (pcData->countFilter->alarmTimeHistory){
+                free(pcData->countFilter->alarmTimeHistory);
+            }
+    		free(pcData->countFilter);
+    		pcData->countFilter = 0;
+        }
 		removeStatCommandList(&pcData->statCommandList);
 	}
 	if (linkType == GROUP) {
