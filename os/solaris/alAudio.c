@@ -46,6 +46,14 @@
 #ifndef AUDIO_MID_GAIN
 #define AUDIO_MID_GAIN  (AUDIO_MAX_GAIN / 2)
 #endif
+
+#ifndef AUDIO_PRECISION_8
+#define AUDIO_PRECISION_8               (8)
+#endif
+
+#ifndef AUDIO_CHANNELS_MONO
+#define AUDIO_CHANNELS_MONO     (1)
+#endif
 /* End of pre solaris 8 definition */
 
 #define AUDIO_SOURCE_HI      0
