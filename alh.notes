@@ -437,3 +437,6 @@ Tue Jun  1 15:41:38 CDT 2004 ALH_1_2_15
 	Added acknowledge PV support  - Albert Kagarmanov
 	Portablility change for darwin-ppc - Eric Norum
 
+Fri Jul 16 16:22:32 CDT 2004 ALH_1_2_16
+	Added comments and void return value for getDescriptionRecord.
+	Saved ca alarm event data and added a ca reconnection event (for R3.14.6).
