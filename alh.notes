@@ -318,4 +318,7 @@ Tue Oct 24 16:01:07 CDT 2000 - V1.2.8
 
 Tue Feb 13 09:24:37 CST 2001 - V1.2.9
 	Fixed bug in new alarm event filtering.
+	Removed update of current alarm history when window not displayed.
 
+Tue Feb 20 09:42:46 CST 2001 - V1.2.9
+	Reinstated update of current alarm history when window not displayed.

@@ -105,9 +105,6 @@ void currentAlarmHistoryWindow(ALINK *area,Widget menuButton)
 		/* create 10 label widgets  */
 		for ( i=0;i<10;i++){
 
-		    /* clear currentAlarmString */
-		    strcpy(area->currentAlarmString[i],"   ");
-
 			area->currentAlarm[i] = XtVaCreateManagedWidget( "-----",
 			    xmLabelGadgetClass,        area->currentAlarmForm,
 			    XmNmarginHeight,           1,
@@ -143,7 +140,6 @@ void currentAlarmHistoryWindow(ALINK *area,Widget menuButton)
 			    XtWindow(XtParent(area->currentAlarmForm)));
 		} else {
 			XtVaSetValues(menuButton, XmNset, TRUE, NULL);
-            resetCurrentAlarmWindow(area);
 			XtManageChild(area->currentAlarmForm);
 			XMapWindow(XtDisplay(area->currentAlarmForm),
 			    XtWindow(XtParent(area->currentAlarmForm)));
@@ -175,7 +171,7 @@ char value[],int stat,int sevr)
 {
 	int n;
 
-  if ( area && area->currentAlarmForm && XtIsManaged(area->currentAlarmForm) ) {
+  if ( !area ) return;
 	n = area->currentAlarmIndex;
 	sprintf(area->currentAlarmString[n],
 		"  %-24s :  %-28s %-10s %-10s %s",
@@ -186,7 +182,6 @@ char value[],int stat,int sevr)
 		value);
 	n = (n+1)%10;
 	area->currentAlarmIndex = n;
-  }
 }
 
 /******************************************************************
