@@ -1,9 +1,12 @@
 /*
  $Log$
- Revision 1.4  1995/05/30 16:07:42  jba
- Removed  local routined blinking and alProcessX.
- Renamed guidance_spawn_callback to processSpawn_callback.
+ Revision 1.5  1995/05/31 20:34:13  jba
+ Added name selection and arrow functions to Group window
 
+ * Revision 1.4  1995/05/30  16:07:42  jba
+ * Removed  local routined blinking and alProcessX.
+ * Renamed guidance_spawn_callback to processSpawn_callback.
+ *
  * Revision 1.3  1995/03/24  16:35:51  jba
  * Bug fix and reorganized some files
  *
@@ -160,11 +163,13 @@ void ack_callback( Widget widget, struct anyLine  *line, XmAnyCallbackStruct *cb
   awView.c   function prototypes
 *********************************************************************/
 
-void nameGroupW_callback( Widget pushButton, struct anyLine *line,
-     XmPushButtonCallbackStruct *cbs);
 void nameTreeW_callback( Widget pushButton, struct anyLine *line,
      XmPushButtonCallbackStruct *cbs);
-void arrow_callback( Widget pushButton, void *glink,
+void nameGroupW_callback( Widget pushButton, struct anyLine *line,
+     XmPushButtonCallbackStruct *cbs);
+void arrowTreeW_callback( Widget pushButton, void *glink,
+     XmPushButtonCallbackStruct *cbs);
+void arrowGroupW_callback( Widget pushButton, void *glink,
      XmPushButtonCallbackStruct *cbs);
 void createConfigDisplay( ALINK *area, int expansion);
 void displayNewViewTree( ALINK *area, GLINK *glink, int command);
@@ -175,8 +180,7 @@ void awViewAddNewAlarm(CLINK *clink,int prevViewCount,int viewCount);
 void awViewNewGroup( ALINK *area, GCLINK *link);
 void awViewNewChan( ALINK *area, GCLINK *link);
 int awViewViewCount( GCLINK *link);
-void awRowWidgetsTree( struct groupLine  *gline);
-void awRowWidgetsGroup( struct anyLine  *line);
+void awRowWidgets( struct anyLine *gline, void *area);
 void awUpdateRowWidgets( struct anyLine  *line);
 
 /********************************************************************
@@ -536,9 +540,10 @@ void ack_callback();
 /********************************************************************
   awView.c   function prototypes
 *********************************************************************/
-void nameGroupW_callback();
 void nameTreeW_callback();
-void arrow_callback();
+void nameGroupW_callback();
+void arrowTreeW_callback();
+void arrow_GroupWcallback();
 void createConfigDisplay();
 void displayNewViewTree();
 void redraw();
@@ -548,8 +553,7 @@ void awViewAddNewAlarm();
 void awViewNewGroup();
 void awViewNewChan();
 int awViewViewCount();
-void awRowWidgetsTree();
-void awRowWidgetsGroup();
+void awRowWidgets();
 void awUpdateRowWidgets();
 
 

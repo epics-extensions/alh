@@ -1,8 +1,11 @@
 /*
  $Log$
- Revision 1.4  1995/05/30 15:58:07  jba
- Added ALARMCOMMAND facility
+ Revision 1.5  1995/05/31 20:34:10  jba
+ Added name selection and arrow functions to Group window
 
+ * Revision 1.4  1995/05/30  15:58:07  jba
+ * Added ALARMCOMMAND facility
+ *
  * Revision 1.3  1995/03/24  16:35:49  jba
  * Bug fix and reorganized some files
  *
@@ -156,8 +159,6 @@ singleClickTreeW_callback(pdata)       Single click timeout callback
 
 ******************************************************************
 */
-
-
 
 /***************************************************
   nameGroupW_callback
@@ -168,14 +169,73 @@ void nameGroupW_callback(pushButton, line, cbs)
      struct anyLine *line;
      XmPushButtonCallbackStruct *cbs;
 {
-     struct subWindow  *subWindow;
+     struct subWindow  *treeWindow;
+     struct subWindow  *groupWindow;
+     GLINK     *parent;
+     GCLINK     *link;
+     WLINE     *wline;
+     ALINK *area;
+     int grandparentsOpen;
+     GLINK     *glinkTemp;
 
-     XtVaGetValues(pushButton, XmNuserData, &subWindow, NULL);
-     markSelectedWidget(subWindow,pushButton);
-     markSelection(subWindow, line);
 
-     propUpdateDialog(subWindow->area, line->link,line->linkType);
+     XtVaGetValues(pushButton, XmNuserData, &groupWindow, NULL);
 
+     if (line->linkType == GROUP ) {
+
+          area = groupWindow->area;
+
+          link = line->link;
+          parent = link->parent;
+
+          treeWindow = area->treeWindow;
+
+          /* markSelection */
+          area->selectionLink = link;
+          area->selectionType = GROUP;
+          area->selectionWindow = treeWindow;
+          treeWindow->selectionLink = link;
+
+          /* markSelectedWidget */
+          if (link->lineTreeW) {
+               wline = ((struct anyLine *)link->lineTreeW)->wline;
+               markSelectedWidget(treeWindow,wline->name);
+          } else {
+               markSelectedWidget(treeWindow,NULL);
+          }
+
+          /* update tree window  */
+          grandparentsOpen = TRUE;
+          glinkTemp=parent->parent;
+          while (glinkTemp){
+               if ( glinkTemp->viewCount <= 1 ) grandparentsOpen = FALSE;
+               glinkTemp = glinkTemp->parent;
+          }
+          if ( grandparentsOpen ){
+               if ( parent->viewCount <= 1 ){
+                    displayNewViewTree(area,parent,EXPANDCOLLAPSE1);
+               }
+          }
+
+          /* update property sheet window if it is displayed */
+          propUpdateDialog(area, (GCLINK *)link, GROUP);
+
+          /* groupWindow must now display contents of new treeWindow selection */
+          markSelectedWidget(groupWindow,NULL);
+          markSelection(groupWindow, NULL);
+          groupWindow->parentLink = link;
+          groupWindow->viewConfigCount = alViewAdjustGroupW((GLINK *)link, area->viewFilter);
+          groupWindow->viewOffset = 0;
+          redraw(groupWindow,0);
+
+     } else {
+
+          markSelectedWidget(groupWindow,pushButton);
+          markSelection(groupWindow, line);
+
+          propUpdateDialog(groupWindow->area, line->link,line->linkType);
+
+     }
 }
 
 /***************************************************
@@ -191,10 +251,7 @@ void nameTreeW_callback(pushButton, line, cbs)
      struct subWindow  *groupWindow;
 
      XtVaGetValues(pushButton, XmNuserData, &subWindow, NULL);
-     groupWindow = ((ALINK *)subWindow->area)->groupWindow;
 
-     markSelectedWidget(groupWindow,NULL);
-     markSelection(groupWindow, NULL);
      markSelectedWidget(subWindow,pushButton);
      markSelection(subWindow, line);
 
@@ -202,6 +259,9 @@ void nameTreeW_callback(pushButton, line, cbs)
      propUpdateDialog(subWindow->area, line->link,line->linkType);
 
      /* groupWindow must now display contents of new treeWindow selection */
+     groupWindow = ((ALINK *)subWindow->area)->groupWindow;
+     markSelectedWidget(groupWindow,NULL);
+     markSelection(groupWindow, NULL);
      groupWindow->parentLink = line->link;
      groupWindow->viewConfigCount = alViewAdjustGroupW((GLINK *)line->link,
          ((ALINK *)subWindow->area)->viewFilter);
@@ -227,10 +287,10 @@ static void singleClickTreeW_callback(pdata)
 
 
 /***************************************************
-  arrow_callback
+  arrowTreeW_callback
 ****************************************************/
 
-void arrow_callback(pushButton, glink, cbs)
+void arrowTreeW_callback(pushButton, glink, cbs)
      Widget     pushButton;
      void     *glink;
      XmPushButtonCallbackStruct *cbs;
@@ -260,6 +320,113 @@ void arrow_callback(pushButton, glink, cbs)
 
           XtVaGetValues(pushButton, XmNuserData, &area, NULL);
 
+          displayNewViewTree(area,glink,EXPAND);
+     }
+}
+
+/******************************************************
+  singleClickGroupW_callback
+******************************************************/
+
+static void singleClickGroupW_callback(pdata)
+     struct timeoutData *pdata;
+{
+     ALINK  *area;
+     WLINE     *wline;
+     GCLINK     *link;
+     GLINK     *parent;
+     GLINK     *glinkTemp;
+     struct subWindow  *groupWindow;
+     struct subWindow  *treeWindow;
+     int grandparentsOpen;
+
+     pdata->timeoutId= 0;
+
+     XtVaGetValues(pdata->pushButton, XmNuserData, &area, NULL);
+
+     link = pdata->glink;
+     parent = link->parent;
+
+     treeWindow = area->treeWindow;
+
+     /* markSelection */
+     area->selectionLink = link;
+     area->selectionType = GROUP;
+     area->selectionWindow = treeWindow;
+     treeWindow->selectionLink = link;
+
+     /* markSelectedWidget */
+     if (link->lineTreeW) {
+          wline = ((struct anyLine *)link->lineTreeW)->wline;
+          markSelectedWidget(treeWindow,wline->name);
+     } else {
+          markSelectedWidget(treeWindow,NULL);
+     }
+
+     /* update tree window  */
+     grandparentsOpen = TRUE;
+     glinkTemp=parent->parent;
+     while (glinkTemp){
+          if ( glinkTemp->viewCount <= 1 ) grandparentsOpen = FALSE;
+          glinkTemp = glinkTemp->parent;
+     }
+     if ( grandparentsOpen ){
+          if ( parent->viewCount <= 1 ){
+               displayNewViewTree(area,parent,EXPANDCOLLAPSE1);
+          }
+          if ( link->viewCount <= 1 ){
+               displayNewViewTree(area,link,EXPANDCOLLAPSE1);
+          }
+     }
+
+     /* update property sheet window if it is displayed */
+     propUpdateDialog(area, (GCLINK *)link, GROUP);
+
+     /* groupWindow must now display contents of new treeWindow selection */
+     groupWindow = area->groupWindow;
+     markSelectedWidget(groupWindow,NULL);
+     markSelection(groupWindow, NULL);
+     groupWindow->parentLink = link;
+     groupWindow->viewConfigCount = alViewAdjustGroupW((GLINK *)link, area->viewFilter);
+     groupWindow->viewOffset = 0;
+     redraw(groupWindow,0);
+}
+
+/***************************************************
+  arrowGroupW_callback
+****************************************************/
+
+void arrowGroupW_callback(pushButton, glink, cbs)
+     Widget     pushButton;
+     void     *glink;
+     XmPushButtonCallbackStruct *cbs;
+{
+     void               *area;
+     static int           interval=0;
+     static struct timeoutData data;
+     static struct timeval timeout;
+
+
+     if (cbs->click_count == 1){
+          if (!interval) interval = XtGetMultiClickTime(display);
+          timeout.tv_sec = 0;
+          timeout.tv_usec = 1000*interval;
+          
+          data.pushButton = pushButton;
+          data.glink = (void *)glink;
+          if ( data.timeoutId== 0 ) {
+               data.timeoutId= (void *)fdmgr_add_timeout(pfdctx,
+                    &timeout,singleClickGroupW_callback,&data);
+          }
+
+     }
+     else if (cbs->click_count == 2) {
+          if (data.timeoutId) fdmgr_clear_timeout(pfdctx,data.timeoutId);
+          data.timeoutId=0;
+
+          XtVaGetValues(pushButton, XmNuserData, &area, NULL);
+
+          singleClickGroupW_callback(data);
           displayNewViewTree(area,glink,EXPAND);
      }
 }
@@ -436,7 +603,7 @@ void redraw(subWindow,rowNumber)
           }
 
           /* call subwindow create/change row widgets routine */
-          (subWindow->alhRowWidgets)(line);
+          awRowWidgets(line,subWindow->area);
 
           if (line->link == subWindow->selectionLink){
                markSelectedWidget(subWindow,wline->name);

@@ -1,8 +1,11 @@
 /*
  $Log$
- Revision 1.2  1994/06/22 21:16:54  jba
- Added cvs Log keyword
+ Revision 1.3  1995/05/31 20:34:06  jba
+ Added name selection and arrow functions to Group window
 
+ * Revision 1.2  1994/06/22  21:16:54  jba
+ * Added cvs Log keyword
+ *
  */
 
 static char *sccsId = "@(#)awAlh.c	1.13\t12/15/93";
@@ -79,11 +82,9 @@ void alhHelpCallback(widget, item, cbs)     Help menu items callback
      int item;
      XmAnyCallbackStruct *cbs;
 *
-void alhRowWidgetsTree(gline)               Create line widgets for treeWindow
-     struct groupLine  *gline;
-*
-void alhRowWidgetsGroup(line)               Create line widgets for groupWindow
+void awRowWidgets(line, area)  Create line widgets
      struct anyLine  *line;
+     void *area
 *
 void awUpdateRowWidgets(line)                 Update line widgets
      struct anyLine  *line;
@@ -816,307 +817,30 @@ static void alhHelpCallback(widget, item, cbs)
 }
 
  
-/******************************************************
-  awRowWidgetsTree
-******************************************************/
-
-void awRowWidgetsTree(gline)
-     struct groupLine  *gline;
-{
-/* this routine should have parms 'Widget parent' and 'void *area' and
-    subWindow should be  changed to 'void * subWindow'   */
-
-     Widget parent;
-     struct subWindow *subWindow;
-
-     XmString   str;
-     void      *area;
-     WLINE     *wline;
-     GLINK     *glink;
-     Dimension  width;
-     Position   nextX;
-
-     subWindow=((struct subWindow *)gline->pwindow);
-     parent = subWindow->drawing_area;
-     area = subWindow->area;
-
-     wline=(WLINE *)gline->wline;
-     glink = (GLINK *)gline->glink;
-
-     /* create row widgets */
-     if (wline->row_widget == NULL) {
-
-          wline->row_widget = XtVaCreateWidget("rowWidget",
-               xmDrawingAreaWidgetClass,  parent,
-               XmNy,                        calcRowYValue(subWindow,gline->lineNo),
-               XmNnavigationType,           XmNONE,
-               XmNorientation,              XmHORIZONTAL,
-               XmNmarginHeight,             0,
-               XmNmarginWidth,              0,
-               NULL);
-
-          str = XmStringCreateSimple(glink->pgroupData->treeSym);
-          wline->treeSym = XtVaCreateManagedWidget("treeSym",
-               xmLabelGadgetClass,        wline->row_widget,
-               XmNlabelString,            str,
-               XmNmarginHeight,           0,
-               NULL);
-          XmStringFree(str);
-          XtVaGetValues(wline->treeSym,XmNwidth,&width,NULL);
-          nextX = width + 3;
-
-          str = XmStringCreateSimple(bg_char[gline->unackSevr]);
-          wline->ack = XtVaCreateManagedWidget("ack",
-               xmPushButtonWidgetClass,   wline->row_widget,
-               XmNmarginHeight,           0,
-               XmNlabelString,            str,
-               XmNuserData,               (XtPointer)area,
-               XmNsensitive,              FALSE,
-               XmNx,                      nextX,
-               NULL);
-          XmStringFree(str);
-          XtAddCallback(wline->ack, XmNactivateCallback, 
-               (XtCallbackProc)ack_callback, gline);
-          XtVaGetValues(wline->ack,XmNwidth,&width,NULL);
-          nextX = nextX + width + 3;
-    
-          str = XmStringCreateSimple(bg_char[gline->curSevr]);
-          wline->sevr = XtVaCreateManagedWidget("sevr",
-               xmLabelWidgetClass,        wline->row_widget,
-               XmNlabelString,            str,
-               XmNx,                      nextX,
-               XmNy,                      2,
-               NULL);
-          XmStringFree(str);
-          XtVaGetValues(wline->sevr,XmNwidth,&width,NULL);
-          nextX = nextX + width + 3;
-    
-          str = XmStringCreateSimple(gline->pname);
-          wline->name = XtVaCreateManagedWidget("pushButtonName",
-               xmPushButtonWidgetClass,   wline->row_widget,
-               XmNmarginHeight,           0,
-               XmNlabelString,            str,
-               XmNuserData,               (XtPointer)subWindow,
-               XmNx,                      nextX,
-               NULL);
-          XmStringFree(str);
-          XtAddCallback(wline->name, XmNactivateCallback, 
-               (XtCallbackProc)nameTreeW_callback, gline);
-          XtVaGetValues(wline->name,XmNwidth,&width,NULL);
-          nextX = nextX + width + 3;
-    
-          wline->arrow = XtVaCreateWidget("pushButtonArrow",
-               xmArrowButtonWidgetClass,   wline->row_widget,
-               XmNshadowThickness,        0,
-/*
-               XmNmarginHeight,           0,
-*/
-               XmNarrowDirection,         XmARROW_RIGHT,
-               XmNuserData,               (XtPointer)area,
-               XmNx,                      nextX,
-               XmNy,                      2,
-               NULL);
-          if(sllFirst(&(glink->subGroupList))){
-               XtManageChild(wline->arrow);
-               XtAddCallback(wline->arrow, XmNactivateCallback, 
-                    (XtCallbackProc)arrow_callback, glink);
-               XtVaGetValues(wline->arrow,XmNwidth,&width,NULL);
-               nextX = nextX + width + 3;
-          }
-
-          wline->guidance = XtVaCreateWidget("G",
-               xmPushButtonWidgetClass,   wline->row_widget,
-               XmNmarginHeight,           0,
-               XmNuserData,               (XtPointer)area,
-               XmNx,                      nextX,
-               NULL);
-          if (alGuidanceExists((GCLINK *)glink)) {
-               XtManageChild(wline->guidance);
-               XtAddCallback(wline->guidance, XmNactivateCallback, 
-                    (XtCallbackProc)guidance_callback, gline);
-               XtVaGetValues(wline->guidance,XmNwidth,&width,NULL);
-               nextX = nextX + width + 3;
-          }
-
-     
-          wline->process = XtVaCreateWidget("P",
-               xmPushButtonWidgetClass,   wline->row_widget,
-               XmNmarginHeight,           0,
-               XmNuserData,               (XtPointer)area,
-               XmNx,                      nextX,
-               NULL);
-          if (alProcessExists((GCLINK *)glink) ){
-               XtManageChild(wline->process);
-               XtAddCallback(wline->process, XmNactivateCallback, 
-                    (XtCallbackProc)relatedProcess_callback, glink);
-               XtVaGetValues(wline->process,XmNwidth,&width,NULL);
-               nextX = nextX + width + 3;
-          }
-
-     
-          str = XmStringCreateSimple(gline->mask);
-          wline->mask = XtVaCreateManagedWidget("mask",
-               xmLabelWidgetClass,        wline->row_widget,
-               XmNlabelString,            str,
-               XmNx,                      nextX,
-               XmNy,                      2,
-               NULL);
-          XmStringFree(str);
-          XtVaGetValues(wline->mask,XmNwidth,&width,NULL);
-          nextX = nextX + width + 3;
-
-          str = XmStringCreateSimple(gline->message);
-          wline->message = XtVaCreateManagedWidget("message",
-               xmLabelWidgetClass,        wline->row_widget,
-               XmNlabelString,            str,
-               XmNx,                      nextX,
-               XmNy,                      2,
-               NULL);
-          XmStringFree(str);
-
-          awUpdateRowWidgets((struct anyLine *)gline);
-
-          XtManageChild(wline->row_widget);
-     }
-
-     else
-
-     /* else modify existing  row widgets */
-     {
-          if ( wline->row_widget && XtIsManaged(wline->row_widget)){
-               XtUnmanageChild(wline->row_widget);
-          }
-
-          str = XmStringCreateSimple(glink->pgroupData->treeSym);
-          XtVaSetValues(wline->treeSym,
-               XmNlabelString,            str,
-               NULL);
-          XmStringFree(str);
-          XtVaGetValues(wline->treeSym,XmNwidth,&width,NULL);
-          nextX = width + 3;
-
-          if (gline->unackSevr == FALSE) {
-               XtVaSetValues(wline->ack,
-                    XmNsensitive,            FALSE,
-                    NULL);
-          }
-          else {
-               XtVaSetValues(wline->ack,
-                    XmNsensitive,            TRUE,
-                    NULL);
-          }
-
-          XtVaSetValues(wline->ack,XmNx,nextX,NULL);
-          XtRemoveAllCallbacks(wline->ack, XmNactivateCallback);
-          XtAddCallback(wline->ack, XmNactivateCallback, 
-               (XtCallbackProc)ack_callback, gline);
-          XtVaGetValues(wline->ack,XmNwidth,&width,NULL);
-          nextX = nextX + width +3;
-     
-
-          XtVaSetValues(wline->sevr,XmNx,nextX,NULL);
-          XtVaGetValues(wline->sevr,XmNwidth,&width,NULL);
-          nextX = nextX + width +3;
-
-
-          str = XmStringCreateSimple(gline->pname);
-          XtVaSetValues(wline->name,
-               XmNlabelString,            str,
-               XmNx,                      nextX,
-               NULL);
-          XmStringFree(str);
-          XtRemoveAllCallbacks(wline->name, XmNactivateCallback);
-          XtAddCallback(wline->name, XmNactivateCallback, 
-               (XtCallbackProc)nameTreeW_callback, gline);
-          XtVaGetValues(wline->name,XmNwidth,&width,NULL);
-          nextX = nextX + width +3;
-
-
-          if (XtHasCallbacks(wline->arrow,XmNactivateCallback))
-               XtRemoveAllCallbacks(wline->arrow, XmNactivateCallback);
-          if(sllFirst(&(glink->subGroupList))){
-               XtVaSetValues(wline->arrow,XmNx,nextX,NULL);
-               XtManageChild(wline->arrow);
-               XtAddCallback(wline->arrow, XmNactivateCallback,
-                   (XtCallbackProc)arrow_callback, glink);
-               XtVaGetValues(wline->arrow,XmNwidth,&width,NULL);
-               nextX = nextX + width +3;
-    
-          } else {
-               XtUnmanageChild(wline->arrow);
-          }
-     
-          if (XtHasCallbacks(wline->guidance,XmNactivateCallback))
-               XtRemoveAllCallbacks(wline->guidance, XmNactivateCallback);
-          if (alGuidanceExists((GCLINK *)glink)) {
-               XtVaSetValues(wline->guidance,XmNx,nextX,NULL);
-               XtManageChild(wline->guidance);
-               XtAddCallback(wline->guidance, XmNactivateCallback,
-                    (XtCallbackProc)guidance_callback, gline);
-               XtVaGetValues(wline->guidance,XmNwidth,&width,NULL);
-               nextX = nextX + width +3;
-          } else {
-               XtUnmanageChild(wline->guidance);
-          }
-     
-          if (XtHasCallbacks(wline->process,XmNactivateCallback))
-               XtRemoveAllCallbacks(wline->process, XmNactivateCallback);
-          if (alProcessExists((GCLINK *)glink) ){
-               XtVaSetValues(wline->process,XmNx,nextX,NULL);
-               XtManageChild(wline->process);
-               XtAddCallback(wline->process, XmNactivateCallback,
-                    (XtCallbackProc)relatedProcess_callback, glink);
-               XtVaGetValues(wline->process,XmNwidth,&width,NULL);
-               nextX = nextX + width +3;
-          } else {
-               XtUnmanageChild(wline->process);
-          }
-     
-          XtVaSetValues(wline->mask,XmNx,nextX,NULL);
-          XtVaGetValues(wline->mask,XmNwidth,&width,NULL);
-          nextX = nextX + width +3;
-
-          XtVaSetValues(wline->message,XmNx,nextX,NULL);
-
-          awUpdateRowWidgets((struct anyLine *)gline);
-
-          XtManageChild(wline->row_widget);
-
-     }
-
-}
-
 
 /******************************************************
-  awRowWidgetsGroup
+  awRowWidgets
 ******************************************************/
 
-void awRowWidgetsGroup(line)
+void awRowWidgets(line, area)
      struct anyLine  *line;
+     void *area;
 {
-/* this routine should have parms 'Widget parent' and 'void *area' and
-    subWindow should be  changed to 'void * subWindow'   */
 
-     Widget parent;
-     struct subWindow *subWindow;
-
+     void *subWindow;
      XmString str;
      WLINE  *wline;
-     void *area;
      void *link;
-     int nextX;
+     GLINK *glink;
+     Position nextX;
      Dimension width;
-     Position x;
+     Widget parent;
 
-
-     subWindow=((struct subWindow *)line->pwindow);
-     parent = subWindow->drawing_area;
-     area=subWindow->area;
-
+     subWindow=line->pwindow;
+     parent = ((struct subWindow *)subWindow)->drawing_area;
      wline=(WLINE *)line->wline;
      link = line->link;
-
-
+     glink = (GLINK *)line->link;
 
      /* create row widgets */
      if (wline->row_widget == NULL) {
@@ -1130,7 +854,19 @@ void awRowWidgetsGroup(line)
                XmNmarginHeight,             0,
                XmNmarginWidth,              0,
                NULL);
+          nextX = 0;
 
+          if ( isTreeWindow(area,subWindow) && line->linkType == GROUP) {
+               str = XmStringCreateSimple(glink->pgroupData->treeSym);
+               wline->treeSym = XtVaCreateManagedWidget("treeSym",
+                    xmLabelGadgetClass,        wline->row_widget,
+                    XmNlabelString,            str,
+                    XmNmarginHeight,           0,
+                    NULL);
+               XmStringFree(str);
+               XtVaGetValues(wline->treeSym,XmNwidth,&width,NULL);
+               nextX = width + 3;
+          }
 
           str = XmStringCreateSimple(bg_char[line->unackSevr]);
           wline->ack = XtVaCreateManagedWidget("ack",
@@ -1139,12 +875,13 @@ void awRowWidgetsGroup(line)
                XmNlabelString,            str,
                XmNsensitive,              FALSE,
                XmNuserData,               (XtPointer)area,
+               XmNx,                      nextX,
                NULL);
           XmStringFree(str);
           XtAddCallback(wline->ack, XmNactivateCallback, 
                (XtCallbackProc)ack_callback, line);
-          XtVaGetValues(wline->ack,XmNwidth,&width,XmNx,&x,NULL);
-          nextX = x + width + 3;
+          XtVaGetValues(wline->ack,XmNwidth,&width,NULL);
+          nextX = nextX + width + 3;
     
 
           str = XmStringCreateSimple(bg_char[line->curSevr]);
@@ -1175,10 +912,36 @@ void awRowWidgetsGroup(line)
                     XtVaSetValues(wline->name,XmNbackground,channel_bg_pixel,NULL);
 #endif
           }
-          XtAddCallback(wline->name, XmNactivateCallback, 
-               (XtCallbackProc)nameGroupW_callback, line);
+          if ( isTreeWindow(area,subWindow) ) {
+               XtAddCallback(wline->name, XmNactivateCallback,
+                    (XtCallbackProc)nameTreeW_callback, line);
+          } else {
+               XtAddCallback(wline->name, XmNactivateCallback,
+                    (XtCallbackProc)nameGroupW_callback, line);
+          }
           XtVaGetValues(wline->name,XmNwidth,&width,NULL);
           nextX = nextX + width + 3;
+
+          wline->arrow = XtVaCreateWidget("pushButtonArrow",
+               xmArrowButtonWidgetClass,   wline->row_widget,
+               XmNshadowThickness,        0,
+               XmNarrowDirection,         XmARROW_RIGHT,
+               XmNuserData,               (XtPointer)area,
+               XmNx,                      nextX,
+               XmNy,                      2,
+               NULL);
+          if (line->linkType == GROUP && sllFirst(&(glink->subGroupList))){
+               XtManageChild(wline->arrow);
+               if ( isTreeWindow(area,subWindow) ) {
+                    XtAddCallback(wline->arrow, XmNactivateCallback,
+                         (XtCallbackProc)arrowTreeW_callback, link);
+               } else {
+                    XtAddCallback(wline->arrow, XmNactivateCallback,
+                         (XtCallbackProc)arrowGroupW_callback, link);
+               }
+               XtVaGetValues(wline->arrow,XmNwidth,&width,NULL);
+               nextX = nextX + width + 3;
+          }
 
           wline->guidance = XtVaCreateWidget("G",
                xmPushButtonWidgetClass,   wline->row_widget,
@@ -1243,6 +1006,17 @@ void awRowWidgetsGroup(line)
                XtUnmanageChild(wline->row_widget);
           }
 
+          nextX = 0;
+          if ( isTreeWindow(area,subWindow) && line->linkType == GROUP) {
+               str = XmStringCreateSimple(glink->pgroupData->treeSym);
+               XtVaSetValues(wline->treeSym,
+                    XmNlabelString,            str,
+                    NULL);
+               XmStringFree(str);
+               XtVaGetValues(wline->treeSym,XmNwidth,&width,NULL);
+               nextX = width + 3;
+          }
+
           if (line->unackSevr == FALSE) {
                XtVaSetValues(wline->ack,
                     XmNsensitive,            FALSE,
@@ -1254,35 +1028,69 @@ void awRowWidgetsGroup(line)
                     NULL);
           }
 
+          XtVaSetValues(wline->ack,XmNx,nextX,NULL);
           XtRemoveAllCallbacks(wline->ack, XmNactivateCallback);
           XtAddCallback(wline->ack, XmNactivateCallback, 
                (XtCallbackProc)ack_callback, line);
-     
+          XtVaGetValues(wline->ack,XmNwidth,&width,NULL);
+          nextX = nextX + width +3;
+    
+
+          XtVaSetValues(wline->sevr,XmNx,nextX,NULL);
+          XtVaGetValues(wline->sevr,XmNwidth,&width,NULL);
+          nextX = nextX + width +3;
 
           str = XmStringCreateSimple(line->pname);
           XtVaSetValues(wline->name,
                XmNlabelString,            str,
+               XmNx,                      nextX,
                NULL);
           XmStringFree(str);
-          if (line->linkType == CHANNEL) {
+          if ( ! isTreeWindow(area,subWindow)) {
+               if (line->linkType == CHANNEL) {
 #if  XmVersion && XmVersion >= 1002
-               XmChangeColor(wline->name,channel_bg_pixel);
+                    XmChangeColor(wline->name,channel_bg_pixel);
 #else
-               XtVaSetValues(wline->name,XmNbackground,channel_bg_pixel,NULL);
+                    XtVaSetValues(wline->name,XmNbackground,channel_bg_pixel,NULL);
 #endif
-          }
-          if (line->linkType == GROUP) {
+               }
+               if (line->linkType == GROUP) {
 #if  XmVersion && XmVersion >= 1002
-               XmChangeColor(wline->name,bg_pixel[0]);
+                    XmChangeColor(wline->name,bg_pixel[0]);
 #else
-               XtVaSetValues(wline->name,XmNbackground,bg_pixel[0],NULL);
+                    XtVaSetValues(wline->name,XmNbackground,bg_pixel[0],NULL);
 #endif
+               }
           }
           XtRemoveAllCallbacks(wline->name, XmNactivateCallback);
-          XtAddCallback(wline->name, XmNactivateCallback, 
-               (XtCallbackProc)nameGroupW_callback, line);
-          XtVaGetValues(wline->name,XmNwidth,&width,XmNx,&x,NULL);
-          nextX = x + width + 3;
+          if ( isTreeWindow(area,subWindow) ) {
+               XtAddCallback(wline->name, XmNactivateCallback,
+                    (XtCallbackProc)nameTreeW_callback, line);
+          } else {
+               XtAddCallback(wline->name, XmNactivateCallback,
+                    (XtCallbackProc)nameGroupW_callback, line);
+          }
+          XtVaGetValues(wline->name,XmNwidth,&width,NULL);
+          nextX = nextX + width + 3;
+
+          if (XtHasCallbacks(wline->arrow,XmNactivateCallback))
+               XtRemoveAllCallbacks(wline->arrow, XmNactivateCallback);
+          if (line->linkType == GROUP && sllFirst(&(glink->subGroupList))){
+                    XtVaSetValues(wline->arrow,XmNx,nextX,NULL);
+                    XtManageChild(wline->arrow);
+                    if ( isTreeWindow(area,subWindow) ) {
+                         XtAddCallback(wline->arrow, XmNactivateCallback,
+                              (XtCallbackProc)arrowTreeW_callback, link);
+                    } else {
+                         XtAddCallback(wline->arrow, XmNactivateCallback,
+                              (XtCallbackProc)arrowGroupW_callback, link);
+                    }
+                    XtVaGetValues(wline->arrow,XmNwidth,&width,NULL);
+                    nextX = nextX + width +3;
+
+          } else {
+               XtUnmanageChild(wline->arrow);
+          }
 
           if (XtHasCallbacks(wline->guidance,XmNactivateCallback))
                XtRemoveAllCallbacks(wline->guidance, XmNactivateCallback);

@@ -1,8 +1,11 @@
 /*
  $Log$
- Revision 1.4  1995/05/30 15:58:02  jba
- Added ALARMCOMMAND facility
+ Revision 1.5  1995/05/31 20:34:15  jba
+ Added name selection and arrow functions to Group window
 
+ * Revision 1.4  1995/05/30  15:58:02  jba
+ * Added ALARMCOMMAND facility
+ *
  * Revision 1.3  1995/03/24  16:35:53  jba
  * Bug fix and reorganized some files
  *
@@ -205,14 +208,10 @@ void setLineRoutine(area,subWindow,program)
 
      /* Set line widget creation/modify routines to default values */
      if (isTreeWindow(area,subWindow)) {
-          if (program == ALH ) subWindow->alhRowWidgets = awRowWidgetsTree;
-          else subWindow->alhRowWidgets = awRowWidgetsTree;
           subWindow->alViewNth = ( void  *(*)())alViewNthTreeW;
           subWindow->alViewNext = ( void *(*)())alViewNextTreeW;
           subWindow->alViewMaxSevrN = alViewMaxSevrNTreeW;
      } else {
-          if (program == ALH ) subWindow->alhRowWidgets = awRowWidgetsGroup;
-          else subWindow->alhRowWidgets = awRowWidgetsGroup;
           subWindow->alViewNth = (void  *(*)())alViewNthGroupW;
           subWindow->alViewNext = (void *(*)())alViewNextGroupW;
           subWindow->alViewMaxSevrN = alViewMaxSevrNGroupW;

@@ -1,8 +1,11 @@
 /*
  $Log$
- Revision 1.3  1995/03/24 16:35:54  jba
- Bug fix and reorganized some files
+ Revision 1.4  1995/05/31 20:34:16  jba
+ Added name selection and arrow functions to Group window
 
+ * Revision 1.3  1995/03/24  16:35:54  jba
+ * Bug fix and reorganized some files
+ *
  * Revision 1.2  1994/06/22  21:17:15  jba
  * Added cvs Log keyword
  *
@@ -91,7 +94,6 @@ struct subWindow {
 /* ----- view routines ----- */
         void            *(*alViewNth)(); 
         void            *(*alViewNext)(); 
-        void            (*alhRowWidgets)(); 
         int             (*alViewMaxSevrN)(); 
 /* ----- Selection info ----- */
         void            *selectionLink; 

@@ -1,8 +1,11 @@
 /*
  $Log$
- Revision 1.4  1995/05/30 15:55:06  jba
- Added ALARMCOMMAND facility
+ Revision 1.5  1995/05/31 20:34:18  jba
+ Added name selection and arrow functions to Group window
 
+ * Revision 1.4  1995/05/30  15:55:06  jba
+ * Added ALARMCOMMAND facility
+ *
  * Revision 1.3  1995/02/28  16:43:50  jba
  * ansi c changes
  *
@@ -1058,10 +1061,9 @@ static void propApplyCallback(widget, propWindow, cbs)
      /*  update group line data and tree window */
      line = link->lineGroupW;
      if (line && line->link==link ){
-          line = link->lineGroupW;
           line->pname = ((GCLINK *)link)->pgcData->name;
           markSelectedWidget(((ALINK *)propWindow->area)->groupWindow, 0);
-          awRowWidgetsGroup(line);
+          awRowWidgets(line, propWindow->area);
           markSelectedWidget( ((ALINK *)propWindow->area)->groupWindow, ((WLINE *)line->wline)->name);
      }
 
@@ -1069,7 +1071,7 @@ static void propApplyCallback(widget, propWindow, cbs)
      line = link->lineTreeW;
      if (line && line->link==link ){
           line->pname = ((GCLINK *)link)->pgcData->name;
-          awRowWidgetsTree( (struct groupLine  *)line);
+          awRowWidgets(line, propWindow->area);
      }
 
      editUndoSet(holdLink,holdLinkType,link, MENU_EDIT_UNDO_PROPERTIES, TRUE);
@@ -1347,6 +1349,7 @@ void propUndo(area, link, linkType, newLink)
      int holdLinkType;
      struct guideLink *guideLink;
      SNODE *pt;
+     struct subWindow *subWindow;
 
      if (!link) return;
 
@@ -1430,7 +1433,7 @@ void propUndo(area, link, linkType, newLink)
      line = link->lineGroupW;
      if (line && line->link==link ){
           line->pname = ((GCLINK *)link)->pgcData->name;
-          awRowWidgetsGroup(line);
+          awRowWidgets(line,area);
      }
 
      /* ---------------------------------
@@ -1439,7 +1442,7 @@ void propUndo(area, link, linkType, newLink)
      line = link->lineTreeW;
      if (line && line->link==link ){
           line->pname = ((GCLINK *)link)->pgcData->name;
-          awRowWidgetsTree( (struct groupLine  *)line);
+          awRowWidgets(line,area);
      }
 
      /* ---------------------------------

@@ -1,8 +1,11 @@
 /*
  $Log$
- Revision 1.2  1994/06/22 21:16:56  jba
- Added cvs Log keyword
+ Revision 1.3  1995/05/31 20:34:08  jba
+ Added name selection and arrow functions to Group window
 
+ * Revision 1.2  1994/06/22  21:16:56  jba
+ * Added cvs Log keyword
+ *
  */
 
 static char *sccsId = "@(#)awEdit.c	1.1\t10/22/93";
@@ -211,10 +214,6 @@ void editCutLink( area, link, linkType)
           markSelectedWidget(groupWindow,0);
           markSelection(groupWindow, 0);
 
-          /* adjust area selection */
-          markSelectionArea(area, 0);
-          area->selectionWidget = groupWindow->selectionWidget;
-
           /* update property window */
           propUpdateDialog(area, 0, 0);
 
@@ -398,7 +397,9 @@ void editCutLink( area, link, linkType)
 
      /* update arrow */
      if (link->parent->lineTreeW)
-          awRowWidgetsTree(link->parent->lineTreeW);
+          awRowWidgets(link->parent->lineTreeW,area);
+     if (link->parent->lineGroupW)
+          awRowWidgets(link->parent->lineGroupW,area);
 
 }
 
@@ -485,7 +486,10 @@ void editPasteLink(area, newLink, linkType)
      }
 
      /* update arrow */
-     if (newLink->parent->lineTreeW) awRowWidgetsTree(newLink->parent->lineTreeW);
+     if (newLink->parent->lineTreeW)
+          awRowWidgets(newLink->parent->lineTreeW,area);
+     if (newLink->parent->lineGroupW)
+          awRowWidgets(newLink->parent->lineGroupW,area);
 
 }
 /*
