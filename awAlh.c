@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.13  1998/07/29 17:27:36  jba
+ Added "Unacknowledged Alarms Only" display filter.
+
  Revision 1.12  1998/07/07 20:51:02  jba
  Added alh versioning.
 
@@ -261,10 +264,20 @@ Widget alhCreateMenu(parent, user_data)
          {NULL},
      };
      
+     static MenuItem setup_filter_menu[] = {
+         { "No filter",      &xmPushButtonGadgetClass, 'N', NULL, NULL,
+             alhSetupCallback, (XtPointer)MENU_SETUP_FILTER_NONE,  (MenuItem *)NULL },
+         { "Active Alarms Only",      &xmPushButtonGadgetClass, 'A', NULL, NULL,
+             alhSetupCallback, (XtPointer)MENU_SETUP_FILTER_ACTIVE,  (MenuItem *)NULL },
+         { "Unacknowledged Alarms Only",      &xmPushButtonGadgetClass, 'U', NULL, NULL,
+             alhSetupCallback, (XtPointer)MENU_SETUP_FILTER_UNACK,  (MenuItem *)NULL },
+         {NULL},
+     };
+     
      static MenuItem setup_menu[] = {
-         { "Active Alarms Only", &xmToggleButtonGadgetClass, 'A', NULL, NULL,
-             alhSetupCallback, (XtPointer)MENU_SETUP_ACTIVE,     (MenuItem *)NULL },
-         { "Beep Severity",        &xmPushButtonGadgetClass, 'B', NULL, NULL,
+         { "Display Filter...",        &xmPushButtonGadgetClass, 'F', NULL, NULL,
+                                      0, 0,    (MenuItem *)setup_filter_menu },
+         { "Beep Severity...",       &xmPushButtonGadgetClass, 'B', NULL, NULL,
                                       0, 0,    (MenuItem *)setup_beep_menu },
          { "New Alarm Log File Name...",  &xmPushButtonGadgetClass, 'L', NULL, NULL,
              alhSetupCallback, (XtPointer)MENU_SETUP_ALARMLOG,     (MenuItem *)NULL },
@@ -662,15 +675,18 @@ static void alhSetupCallback( Widget widget, XtPointer calldata, XtPointer cbs)
 
      switch (item){
 
-        case MENU_SETUP_ACTIVE:
-/*
-             createDialog(area->form_main,XmDIALOG_INFORMATION,"Active Alarms Only",":  not implemented yet.");
-*/
-             if (XmToggleButtonGadgetGetState(widget)) {
-                  area->viewFilter = alFilterAlarmsOnly;
-             } else {
-                  area->viewFilter = alFilterAll;
-             }
+        case MENU_SETUP_FILTER_NONE:
+             area->viewFilter = alFilterAll;
+             createConfigDisplay(area,EXPANDCOLLAPSE1);
+             break;
+
+        case MENU_SETUP_FILTER_ACTIVE:
+             area->viewFilter = alFilterAlarmsOnly;
+             createConfigDisplay(area,EXPANDCOLLAPSE1);
+             break;
+
+        case MENU_SETUP_FILTER_UNACK:
+             area->viewFilter = alFilterUnackAlarmsOnly;
              createConfigDisplay(area,EXPANDCOLLAPSE1);
              break;
 

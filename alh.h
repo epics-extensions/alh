@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.8  1998/07/29 17:27:35  jba
+ Added "Unacknowledged Alarms Only" display filter.
+
  Revision 1.7  1998/06/02 19:40:47  evans
  Changed from using Fgmgr to using X to manage events and file
  descriptors.  (Fdmgr didn't work on WIN32.)  Uses XtAppMainLoop,
@@ -183,9 +186,11 @@ static char *alhhSccsId = "@(#)alh.h	1.10\t10/8/93";
 #define MENU_SETUP_BEEP_MINOR	10500
 #define MENU_SETUP_BEEP_MAJOR	10501
 #define MENU_SETUP_BEEP_INVALID	10502
-#define	MENU_SETUP_ACTIVE		10503
-#define	MENU_SETUP_ALARMLOG		10504
-#define	MENU_SETUP_OPMOD		10505
+#define MENU_SETUP_FILTER_NONE	10503
+#define MENU_SETUP_FILTER_ACTIVE	10504
+#define MENU_SETUP_FILTER_UNACK 	10505
+#define	MENU_SETUP_ALARMLOG		10506
+#define	MENU_SETUP_OPMOD		10507
 
 #define MENU_EDIT_UNDO			10600
 #define MENU_EDIT_CUT			10601

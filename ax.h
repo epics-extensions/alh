@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.17  1998/07/29 17:27:37  jba
+ Added "Unacknowledged Alarms Only" display filter.
+
  Revision 1.16  1998/06/22 18:42:13  jba
  Merged the new alh-options created at DESY MKS group:
   -D Disable Writing, -S Passive Mode, -T AlarmLogDated, -P Printing
@@ -255,6 +258,7 @@ void relatedProcess_callback( void *widget, GCLINK *link, void *cbs);
 
 int alFilterAll( GCLINK  *gclink);
 int alFilterAlarmsOnly( GCLINK  *gclink);
+int alFilterUnackAlarmsOnly( GCLINK  *gclink);
 
 
 /********************************************************************
@@ -309,7 +313,7 @@ int alProcessExists( GCLINK *link);
 
 void alLogAlarm( time_t *ptimeofdayAlarm, struct chanData *cdata, int stat,
      int sev, int h_unackStat, int h_unackSevr);
-void alLogConnection( char *pvname, char *ind);
+void alLogConnection( const char *pvname,const char *ind);
 void alLogGblAckChan( struct chanData *cdata);
 void alLogAckChan( struct chanLine *cline);
 void alLogAckGroup( struct groupLine *gline);
@@ -637,7 +641,7 @@ void relatedProcess_callback();
 *********************************************************************/
 
 int alFilterAll();
-int alFilterAlarmsOnly();
+int alFilterUnackAlarmsOnly();
 
 /********************************************************************
   alLib.c   function prototypes

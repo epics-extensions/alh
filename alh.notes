@@ -75,6 +75,10 @@ date: 1998/06/02 19:40:43;  author: evans;  state: Exp;  lines: +2 -1
 	and an exception handler (alCAException).  Is working on Solaris and
 	WIN32.
 
+date: 1998/06/04 17:31:58;
+	Changed system("command &") to _spawnl("command") for WIN32 in
+	processSpawn_callback.  Added test.win32.alhConfig.
+
 date: 1998/06/09 17:10:48;  author: evans;  state: Exp;  lines: +5 -1
 	Fixed a typo in the exception handler.
 
@@ -110,4 +114,18 @@ Mon Jun 22 13:34:09 CDT 1998
 Wed Jul  1 15:02:21 CDT 1998
         Bug fix for STATCOMMAND.
 
+date: 1998/07/07 20:49:01;  author: jba;  state: Exp;  lines: +9 -2
+	Removed unused variable timeout.
+	Added alh versioning file version.h.
 
+date: 1998/07/16 17:45:17;  author: jba;  state: Exp;  lines: +2 -1
+	Moved productDescriptionShell code from libUnix to alh. (libUnix removed)
+	Changed some XmStringCreateSimple to XmStringCreateLtoR in dialog.c.
+	Allowed alh to startup with no filename on command line.
+
+date: 1998/07/23 18:22:34;  author: jba;  state: Exp;  lines: +7 -6
+	Log the connection and access rights changes to alarm log file
+	Exit routine changes for alarm configuration tool.
+
+Wed Jul 29 12:27:09 CDT 1998
+	Added "Unacknowledged Alarms Only" display filter.

@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.4  1998/07/29 17:27:34  jba
+ Added "Unacknowledged Alarms Only" display filter.
+
  Revision 1.3  1997/09/12 19:28:35  jba
  Removed comments.
 
@@ -81,6 +84,19 @@ int alFilterAlarmsOnly(gclink)
 {
 
      if ( gclink->pgcData->curSevr || gclink->pgcData->unackSevr ) return(TRUE);
+     return(FALSE);
+}
+
+/***************************************************
+  alFilterUnackAlarmsOnly
+****************************************************/
+
+
+int alFilterUnackAlarmsOnly(gclink)
+     GCLINK  *gclink;
+{
+
+     if ( gclink->pgcData->unackSevr ) return(TRUE);
      return(FALSE);
 }
 
