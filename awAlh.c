@@ -57,6 +57,7 @@ void awUpdateRowWidgets(line)                 Update line widgets
 #include "alLib.h"
 #include "sllLib.h"
 #include "version.h"
+#include "alAudio.h"
 
 /* menu definitions */
 #define MENU_FILE_OPEN		10101
@@ -262,6 +263,10 @@ static MenuItem action_menuNew[] = {
 		                                      0, 0,    (MenuItem *)setup_filter_menu, 0 },
 		         { "Beep Severity...",       PushButtonGadgetClass, 'B', NULL, NULL,
 		                                      0, 0,    (MenuItem *)setup_beep_menu, 0 },
+#ifdef AUDIO_BEEP
+		         { "Audio Setup...",       ToggleButtonGadgetClass, 'D', NULL, NULL,
+		             alhAudioSetupCallback, NULL,  (MenuItem *)NULL, 0 },
+#endif
 		         { "Silence Forever",  ToggleButtonGadgetClass, 'S', NULL, NULL,
 		             alhSetupCallback, (XtPointer)MENU_SETUP_SILENCE_FOREVER,(MenuItem *)NULL, 0 },
 		         { "New Alarm Log File Name...",  PushButtonGadgetClass, 'L', NULL, NULL,
