@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.9  1996/08/22 20:03:01  jba
+ "Save as" now writes out ALARMCOUNTFILTER data
+
  Revision 1.8  1996/06/17 19:14:40  jba
  Fixed maximium lengthof filename on include line.
 
@@ -859,6 +862,10 @@ static void alWriteGroupConfig(fw,pgroup)
 			if (cdata->alias != NULL)
 			fprintf(fw,"$ALIAS  %s\n",cdata->alias);
 
+			if (cdata->countFilter != NULL)
+			fprintf(fw,"$ALARMCOUNTFILTER  %i %i\n",cdata->countFilter->inputCount,\
+                        cdata->countFilter->inputSeconds);
+
             sevrCommand=(struct sevrCommand *)ellFirst(&cdata->sevrCommandList);
             while (sevrCommand) {
                 fprintf(fw,"$SEVRCOMMAND  %s\n",sevrCommand->instructionString);
@@ -1051,6 +1058,10 @@ static void alConfigTreePrint(fw,glink,treeSym)
             fprintf(fw,"%s        COMMAND  %s\n",treeSym,cdata->command);
             if (cdata->alias != NULL)
             fprintf(fw,"%s        ALIAS  %s\n",treeSym,cdata->alias);
+
+			if (cdata->countFilter != NULL)
+			fprintf(fw,"$ALARMCOUNTFILTER  %i%i\n",cdata->countFilter->inputCount,\
+                        cdata->countFilter->inputSeconds);
 
             sevrCommand=ellFirst(cdata->sevrCommand);
             while (sevrCommand) {

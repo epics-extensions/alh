@@ -3,3 +3,9 @@ Fixed maximum length of filename on include line.
 
 Added global alarm acknowledgement.
 
+
+Thu Aug 22 14:59:41 CDT 1996
+
+Bug fix:
+     "Save as" now writes out ALARMCOUNTFILTER data
+
