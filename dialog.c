@@ -330,7 +330,6 @@ void fatalErrMsg(const char *fmt, ...)
 	va_list vargs;
 	static char lstring[1024];  /* DANGER: Fixed buffer size */
 	int nargs=10;
-	Arg args[10];
 
 	va_start(vargs,fmt);
 	vsprintf(lstring,fmt,vargs);
