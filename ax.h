@@ -1,8 +1,11 @@
 /*
  $Log$
- Revision 1.5  1995/05/31 20:34:13  jba
- Added name selection and arrow functions to Group window
+ Revision 1.6  1995/06/22 19:40:20  jba
+ Started cleanup of file.
 
+ * Revision 1.5  1995/05/31  20:34:13  jba
+ * Added name selection and arrow functions to Group window
+ *
  * Revision 1.4  1995/05/30  16:07:42  jba
  * Removed  local routined blinking and alProcessX.
  * Renamed guidance_spawn_callback to processSpawn_callback.
@@ -187,9 +190,7 @@ void awUpdateRowWidgets( struct anyLine  *line);
   guidance.c   function prototypes
 *********************************************************************/
 
-void guidance_callback( Widget widget, struct anyLine  *line, XmAnyCallbackStruct *cbs);
-void GroupGuidance_callback( Widget w, GLINK *glink, XmAnyCallbackStruct *cbs);
-void ChannelGuidance_callback( Widget w, CLINK *clink, XmAnyCallbackStruct *cbs);
+void guidance_callback( Widget widget, GCLINK *link, XmAnyCallbackStruct *cbs);
 
 
 /********************************************************************
@@ -425,7 +426,6 @@ void groupChangeMasks_callback( void *link, int index);
 *********************************************************************/
 
 void     xs_ok_callback( Widget w, void *client_data, XmAnyCallbackStruct *call_data);
-XmString xs_str_array_to_xmstr( char *cs[], int n);
 void     xs_help_callback( Widget w, char *str[], void *call_data);
 void     helpCallback( Widget w, int item, XmAnyCallbackStruct *cbs);
 
@@ -562,8 +562,6 @@ void awUpdateRowWidgets();
 *********************************************************************/
 
 void guidance_callback();
-void GroupGuidance_callback();
-void ChannelGuidance_callback();
 
 /********************************************************************
   process.c   function prototypes
@@ -784,7 +782,6 @@ void groupChangeMasks_callback();
 *********************************************************************/
 
 void     xs_ok_callback();
-XmString xs_str_array_to_xmstr();
 void     xs_help_callback();
 void     helpCallback();
 

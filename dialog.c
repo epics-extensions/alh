@@ -1,8 +1,11 @@
 /*
  $Log$
- Revision 1.3  1995/02/28 16:43:43  jba
- ansi c changes
+ Revision 1.4  1995/06/22 19:40:23  jba
+ Started cleanup of file.
 
+ * Revision 1.3  1995/02/28  16:43:43  jba
+ * ansi c changes
+ *
  * Revision 1.2  1994/06/22  21:17:23  jba
  * Added cvs Log keyword
  *
@@ -57,8 +60,6 @@ static char *sccsId = "@(#)dialog.c	1.8\t2/3/94";
 #include <alh.h>
 #include <axArea.h>
 #include <ax.h>
-
-extern XmString xs_str_array_to_xmstr();
 
 /****************************************************
 *
