@@ -851,6 +851,7 @@ void alAckChan(CLINK *clink)
 	cdata = (struct chanData *)clink->pchanData;
 	if (cdata->unackSevr == 0) return;
 
+	alCaPutGblAck(cdata->chid,&cdata->unackSevr);
 
 	/*
 	 * update all parent groups
@@ -893,11 +894,7 @@ void alAckGroup(GLINK *glink)
 	pt = sllFirst(list);
 	while (pt) {
 		clink = (CLINK *)pt;
-		cdata = clink->pchanData;
-		if (cdata->unackSevr > 0) {
-			alCaPutGblAck(cdata->chid,&cdata->unackSevr);
-			alAckChan(clink);
-		}
+		alAckChan(clink);
 		pt = sllNext(pt);
 	}
 
