@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.11  1998/07/23 18:17:00  jba
+ ANSI c changes.
+
  Revision 1.10  1998/06/22 18:42:11  jba
  Merged the new alh-options created at DESY MKS group:
   -D Disable Writing, -S Passive Mode, -T AlarmLogDated, -P Printing
@@ -100,6 +103,7 @@ alLogSetupSaveConfigFile(filename)			Log setup save config file
 */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <time.h>
 
 #include <alh.h>
@@ -154,6 +158,7 @@ extern int _printer_flag;           /* Printer flag. Albert */
   extern char printerHostname[120];
   extern int  printerPort;
   extern char printerColorModel[120];
+  int write2printer(char *message,int len,int sev);
 extern int _time_flag;              /* Dated flag. Albert */
 /***********************************************************************
  * log the channel alarm at the alarm logfile
@@ -688,5 +693,5 @@ if ((pid=fork ()))
   execl("/bin/sh","sh","-c",cmd_buf,0);
   exit(0);
   }
-
+  return 0;
 }
