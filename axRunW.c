@@ -1,8 +1,11 @@
 /*
  $Log$
- Revision 1.6  1995/11/13 22:31:28  jba
- Added beepseverity command, ansi changes and other changes.
+ Revision 1.7  1996/03/25 15:47:29  jba
+ Added cast.
 
+ * Revision 1.6  1995/11/13  22:31:28  jba
+ * Added beepseverity command, ansi changes and other changes.
+ *
  * Revision 1.5  1995/10/20  16:50:28  jba
  * Modified Action menus and Action windows
  * Renamed ALARMCOMMAND to SEVRCOMMAND
@@ -285,7 +288,7 @@ void icon_update()
 #endif
 
   if (blinkTimeoutId) {
-	fdmgr_clear_timeout(pfdctx,blinkTimeoutId);
+	fdmgr_clear_timeout(pfdctx,(fdmgrAlarmId)blinkTimeoutId);
 	blinkTimeoutId = NULL;
   }
 

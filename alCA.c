@@ -1,8 +1,11 @@
 /*
  $Log$
- Revision 1.8  1995/11/13 22:31:08  jba
- Added beepseverity command, ansi changes and other changes.
+ Revision 1.9  1996/03/25 15:47:28  jba
+ Added cast.
 
+ * Revision 1.8  1995/11/13  22:31:08  jba
+ * Added beepseverity command, ansi changes and other changes.
+ *
  * Revision 1.7  1995/10/20  16:49:47  jba
  * Modified Action menus and Action windows
  * Renamed ALARMCOMMAND to SEVRCOMMAND
@@ -10,7 +13,6 @@
  * Added ALIAS facility
  * Added ALARMCOUNTFILTER facility
  * Make a few bug fixes.
- *
  * Revision 1.6  1995/05/30  16:06:07  jba
  * Add unused parm to alCaPendEvent and alProcessX for fdmgr_add_timeout prototype.
  *
@@ -424,7 +426,7 @@ void alCaStop()
 
      /* cancel timeout */
      if (caTimeoutId) {
-          fdmgr_clear_timeout(pfdctx,caTimeoutId);
+          fdmgr_clear_timeout(pfdctx,(fdmgrAlarmId)caTimeoutId);
           caTimeoutId = NULL;
      }
 
