@@ -102,7 +102,7 @@ USR_LIBS_WIN32 += XmStatic HCLXt XlibGUI Xlib
 endif
 
 Xp_DIR = $(MOTIF_LIB)
-Xmu_DIR = $(MOTIF_LIB)
+Xmu_DIR = $(X11_LIB)
 Xm_DIR = $(MOTIF_LIB)
 Xt_DIR = $(X11_LIB)
 X11_DIR = $(X11_LIB)
