@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.13  1997/09/12 19:37:32  jba
+ Added some prototypes.
+
  Revision 1.12  1997/09/09 22:24:24  jba
  Modified propUndo.
 
@@ -411,6 +414,8 @@ void  alCaAddEvents( SLIST *proot);
 void alReplaceGroupForceEvent( GLINK *glink, char *str);
 void alReplaceChanForceEvent( CLINK *clink, char *str);
 void alProcessCA(void);         /* process CA events */
+void alCaPutGblAck(CLINK *clink);
+
 
 /********************************************************************
   alConfig.c   function prototypes
@@ -437,6 +442,7 @@ void getStringStatCommandList(ELLLIST *pList,char **pstr);
 
 void fileViewWindow( Widget w, int option, Widget menuButton);
 void updateLog( int fileIndex, char *string);
+void updateAlarmLog(int fileIndex, char *string);
 
 
 /********************************************************************
@@ -782,6 +788,7 @@ void alCaAddEvents();
 void alReplaceGroupForceEvent();
 void alReplaceChanForceEvent();
 void alProcessCA();         /* process CA events */
+void alCaPutGblAck();
 
 /********************************************************************
   alConfig.c   function prototypes
@@ -808,6 +815,7 @@ void getStringStatCommandList();
 
 void fileViewWindow();
 void updateLog();
+void updateAlarmLog();
 
 /********************************************************************
   testalarm.c   function prototypes
