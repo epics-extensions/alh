@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.12  1997/09/12 19:37:07  jba
+ Bug fixes for tree and group window views.
+
  Revision 1.11  1996/12/13 22:18:15  jba
  Bug fix.
 
@@ -293,15 +296,18 @@ void nameTreeW_callback(pushButton, line, cbs)
      struct subWindow  *subWindow;
      struct subWindow  *groupWindow;
 
-     XtVaGetValues(pushButton, XmNuserData, &subWindow, NULL);
+     if (pushButton)
+         XtVaGetValues(pushButton, XmNuserData, &subWindow, NULL);
 
      /* groupWindow must now display contents of new treeWindow selection */
      groupWindow = ((ALINK *)subWindow->area)->groupWindow;
      markSelectedWidget(groupWindow,NULL);
      markSelection(groupWindow, NULL);
-     groupWindow->parentLink = line->link;
-     groupWindow->viewConfigCount = alViewAdjustGroupW((GLINK *)line->link,
-         ((ALINK *)subWindow->area)->viewFilter);
+     if (line) {
+         groupWindow->parentLink = line->link;
+         groupWindow->viewConfigCount = alViewAdjustGroupW((GLINK *)line->link,
+             ((ALINK *)subWindow->area)->viewFilter);
+     }
      groupWindow->viewOffset = 0;
      redraw(groupWindow,0);
 
