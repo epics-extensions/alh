@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.9  1997/04/17 18:01:14  jba
+ Added calls to free allocated memory.
+
  Revision 1.8  1997/01/09 14:38:19  jba
  Added alarmLog circular file facility.
 
@@ -316,6 +319,7 @@ void fileSetupCallback(widget, client_data, cbs)
      if (area) pgm = area->programId;
      else pgm = programId;
      fileSetup(filename,area,client_data,pgm,widget);
+     XtFree(filename);
 
 }
 
@@ -649,7 +653,4 @@ void fileSetupInit( widget, argc, argv)
           strncat(psetup.configFile,configFile,NAMEDEFAULT_SIZE-len);
      }
      fileSetup(psetup.configFile,NULL,FILE_CONFIG,programId,widget);
-
-
-
 }

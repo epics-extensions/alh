@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.7  1997/04/17 18:01:15  jba
+ Added calls to free allocated memory.
+
  Revision 1.6  1996/12/03 22:04:25  jba
  Changed unused Help ActionItem data to NULL.
 
@@ -582,6 +585,7 @@ static void forcePVMaskChangeCallback(widget, index, cbs)
      string = XmStringCreateSimple(mask);
      XtVaSetValues(maskWidget, XmNlabelString, string, NULL);
      XmStringFree(string);
+     XmStringFree(mask);
 }
 
 /******************************************************
@@ -614,6 +618,7 @@ static void forcePVApplyCallback(widget, forcePVWindow, cbs)
      XmStringGetLtoR(string,XmFONTLIST_DEFAULT_TAG,&buff);
      XmStringFree(string);
      alSetMask(buff,&(pgcData->forcePVMask));
+     XtFree(buff);
 
      /*  update link field  - forcePVValue */
      buff = XmTextFieldGetString(forcePVWindow->forcePVforceValueTextW);

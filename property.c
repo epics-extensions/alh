@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.12  1997/04/17 18:01:16  jba
+ Added calls to free allocated memory.
+
  Revision 1.11  1996/12/03 22:04:32  jba
  Changed unused Help ActionItem data to NULL.
 
@@ -1217,6 +1220,7 @@ static void propMaskChangeCallback(widget, index, cbs)
      string = XmStringCreateSimple(mask);
      XtVaSetValues(maskWidget, XmNlabelString, string, NULL);
      XmStringFree(string);
+     XtFree(mask);
 }
 
 /******************************************************
@@ -1272,6 +1276,7 @@ static void propApplyCallback(widget, propWindow, cbs)
           XmStringFree(string);
           cdata = (struct chanData *)pgcData;
           alSetMask(buff,&mask);
+          XtFree(buff);
           alChangeChanMask((CLINK *)link,mask);
           if (programId != ALH) cdata->defaultMask = cdata->curMask;
      }
@@ -1319,6 +1324,7 @@ static void propApplyCallback(widget, propWindow, cbs)
      XmStringGetLtoR(string,XmFONTLIST_DEFAULT_TAG,&buff);
      XmStringFree(string);
      alSetMask(buff,&(pgcData->forcePVMask));
+     XtFree(buff);
 
      /*  update link field  - forcePVValue */
      buff = XmTextFieldGetString(propWindow->forcePVforceValueTextW);

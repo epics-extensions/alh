@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.10  1997/04/17 18:01:12  jba
+ Added calls to free allocated memory.
+
  Revision 1.9  1996/09/20 15:06:19  jba
  BEEPSEVERITY bug fix.
 
@@ -381,6 +384,7 @@ void pixelData(iconBoard,bButton)
 Arg args[10];
 int n;
 XmFontList fontlist;
+XmString mstring;
 
 
 /*
@@ -409,9 +413,9 @@ XmFontList fontlist;
   n=0;
   XtSetArg(args[n], XmNfontList, &fontlist); n++;
   XtGetValues(bButton,args,n);
-  char_width = XmStringWidth(fontlist,XmStringCreateLtoR("W",charset));
-
-  alLoadFont(fontname,&font_info);
+  mstring=XmStringCreateLtoR("W",charset);
+  char_width = XmStringWidth(fontlist,mstring);
+  XmStringFree(mstring);
   }
 
 
@@ -507,6 +511,8 @@ void createRuntimeWindow(area)
 
           blinkButton = area->blinkButton;
           resetBeep();
+
+          alLoadFont(fontname,&font_info);
      
           XtRealizeWidget(area->runtimeToplevel);
 
