@@ -1,8 +1,11 @@
 /*
  $Log$
- Revision 1.3  1995/01/09 19:38:29  jba
- For loop changed to while loop wo HP compile would work.
+ Revision 1.4  1995/05/30 16:04:02  jba
+ Removed references to ? as a valid input param since they do NOT work.
 
+ * Revision 1.3  1995/01/09  19:38:29  jba
+ * For loop changed to while loop wo HP compile would work.
+ *
  * Revision 1.2  1994/06/22  21:17:28  jba
  * Added cvs Log keyword
  *
@@ -499,7 +502,7 @@ void fileSetupInit( widget, argc, argv)
 
      /* get optional command line parameters */
      input_error = FALSE;
-     while (!input_error && (c = getopt(argc, argv, "?vcf:l:a:o:")) != -1)
+     while (!input_error && (c = getopt(argc, argv, "vcf:l:a:o:")) != -1)
      {
          switch (c) {
              case 'v': DEBUG = TRUE; break;
@@ -542,7 +545,6 @@ void fileSetupInit( widget, argc, argv)
              case 'o':
                   strncpy(opModFile,optarg,NAMEDEFAULT_SIZE);
                   break;
-             case '?': input_error = 1; break;
              default: input_error = 1; break;
          }
      }
