@@ -100,6 +100,8 @@ extern int _time_flag;              /* Dated flag. Albert */
 
 extern int _DB_call_flag;
 extern int DBMsgQId;
+extern int _message_broadcast_flag;
+extern int notsave;
 extern int DEBUG;
 /***********************************************************************
  * log the channel alarm at the alarm logfile
@@ -109,21 +111,16 @@ int sev,int h_unackStat,int h_unackSevr)
 {
 	int status=0;
 	struct tm *tms;
-	char printerBuff[250]; /* Albert */
-	char DBbuf[250]; /* Albert */
+	char printerBuff[250];
+	char DBbuf[250]; 
 	char buf[30];
-	/* 158/154 chars put into buff */
-/* new time format (like  "09-Feb-1999 12:21:12")  Albert1. */
+	if(_message_broadcast_flag && notsave) return;
+	/* new time format (like  "09-Feb-1999 12:21:12")  Albert1. */
 	tms = localtime(ptimeofdayAlarm);  
         sprintf(buf,"%-.2d-%-3s-%-.4d %-.2d:%-.2d:%-.2d",
         tms->tm_mday,digit2month[tms->tm_mon],1900+tms->tm_year,
         tms->tm_hour,tms->tm_min,tms->tm_sec);
         buf[20]=0;
-
-/* old time format (like  "Fri Feb 19 12:21:12 1999")
-	str = ctime(ptimeofdayAlarm);
-	*(str + strlen(str)-1) = '\0';
-*/
 
 	sprintf(buff,
 	    "%-24s :  %-28s %-12s %-16s %-12s %-16s %-40.40s\n",
@@ -228,7 +225,7 @@ void alLogConnection(const char *pvname,const char *ind)
 {
         struct tm *tms;
         char buf[30];
-
+	if(_message_broadcast_flag && notsave) return;  /* Albert1 */
         timeofday = time(0L);
 
         /* new time format (like  "09-Feb-1999 12:21:12")  Albert1. */
@@ -237,11 +234,7 @@ void alLogConnection(const char *pvname,const char *ind)
 		tms->tm_mday,digit2month[tms->tm_mon],1900+tms->tm_year,
 		tms->tm_hour,tms->tm_min,tms->tm_sec);
 	buf[20]=0;
-  
-	/* old time format (like  "Fri Feb 19 12:21:12 1999")
-	   str = ctime(&timeofday);
-	   *(str + strlen(str)-1) = '\0';
-	   */
+
 	sprintf(buff,"%-26s %-31s: [%s]\n", buf,ind,pvname);
   
 	/* update file and Alarm Log text window */
@@ -330,7 +323,6 @@ void alLogChanChangeMasks(CLINK *clink,int maskid,int maskno)
 	if (maskno == 2)
 		sprintf(buff,"%-26s Chan  Mask ID ---[%-21s] RESET [%s] <%s>\n",
 		    str,masksdata[3+maskid],clink->pchanData->name,buff1);
-
 	fprintf(fo,"%s",buff);	/* update the file */
 	fflush(fo);
 	updateLog(OPMOD_FILE,buff); 	/* update the text widget */
@@ -382,7 +374,7 @@ void alLogForcePVGroup(GLINK *glink,int ind)
 		fprintf(fo,"%s",buff);        /* update the file */
 		updateLog(OPMOD_FILE,buff);   /* update the text widget */
 	}
-	fflush(fo);
+	 fflush(fo);
 
 }
 
@@ -411,6 +403,7 @@ void alLogResetPVGroup(GLINK *glink,int ind)
 		    gdata->resetPVValue,
 		    gdata->forcePVName);
 		fprintf(fo,"%s",buff);        /* update the file */
+
 		updateLog(OPMOD_FILE,buff);   /* update the text widget */
 	}
 
@@ -529,7 +522,7 @@ void alLogResetPVChan(CLINK *clink,int ind)
 		updateLog(OPMOD_FILE,buff);   /* update the text widget */
 	}
 
-	fflush(fo);
+      	fflush(fo);
 }
 
 
@@ -544,8 +537,8 @@ void alLogExit()
 	*(str + strlen(str)-1) = '\0';
 
 	sprintf(buff,"%-26s Setup---Exit\n",str);
-	fprintf(fo,"%s",buff);        /* update the file */
-	fflush(fo);
+	  fprintf(fo,"%s",buff);        /* update the file */
+          fflush(fo);
 	updateLog(OPMOD_FILE,buff);   /* update the text widget */
 }
 
@@ -574,7 +567,6 @@ void alLogChangeGroupMasks(GLINK *glink,int maskno,int maskid)
 		sprintf(buff,"%-26s Group Mask ID ---[%-21s] RESET [%s] <%s>\n",
 		    str,masksdata[3+maskid],glink->pgroupData->name,
 		    buff1);
-
 	fprintf(fo,"%s",buff);        /* update the file */
 	fflush(fo);
 	updateLog(OPMOD_FILE,buff);   /* update the text widget */

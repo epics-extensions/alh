@@ -9,13 +9,10 @@ static char *sccsId = "@(#) $Id$";
 #include <stdio.h>
 #include <unistd.h>  /* Albert1 */
 #include <fcntl.h>   /* Albert1 */
+#include <signal.h>
+
 #include <errno.h>
 #include <sys/msg.h>  
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <netinet/tcp.h>
-#include <netdb.h>
-#include <arpa/inet.h>
 
 #ifndef WIN32
 /* WIN32 does not have dirent.h used by opendir, closedir */
@@ -49,13 +46,25 @@ int _DB_call_flag=0;         /* Database(Oracle...) call. Albert */
 int  DBMsgQKey;         /* Database MsgQKey.    Albert */
 int  DBMsgQId;          /* database MsgQId.     Albert */
 
-int _message_broadcast_flag=0;/* Message Broadcast System. not y.e. Albert */
+int _message_broadcast_flag=0;            /* Message Broadcast System Albert */
+char messBroadcastLockFileName[250];   /* FN for lock file. Albert */
+char messBroadcastInfoFileName[250];   /* FN for info file. Albert */
+int  messBroadcastDeskriptor;          /* FD for lock file. Albert */
+void broadcastMessTesting();
+XtIntervalId broadcastMessTimeoutId=NULL;
+int amIsender=0;
+int notsave=0;     
+char *rebootString="MIN  ALH  WILL  NOT  SAVE ALARM LOG!!!!";
+int max_not_save_time=10;
+void broadcastMess_exit_quit(int);
+unsigned long broadcastMessDelay=2000;    /* in msec. periodical messages testing. Albert */   
+
 
 int _lock_flag=0;                /* Flag for locking. Albert */
 char lockFileName[250];          /* FN for lock file. Albert */
 int lockFileDeskriptor;          /* FD for lock file. Albert */
 unsigned long lockDelay=5000;    /* in msec. periodical masterStatus testing. Albert */
-int masterFlag=1;                /* am I master for write operations? Albert */  
+int masterFlag=0;                /* am I master for write operations? Albert */  
 void masterTesting();            /* periodical calback for masterStatus testing. Albert */
 extern Widget blinkToplevel;     /* for locking status marking */
 char masterStr[30],slaveStr[30]; /* titles for Master/Slave with/whitout printer */
@@ -122,8 +131,8 @@ static struct parm_data ptable[] = {
 		{ "-D",		2,	PARM_READONLY },
 		{ "-help",	5,	PARM_HELP },
 		{ "-L",		2,	PARM_LOCK },     /* Albert1 */
-		{ "-O",		2,	PARM_DATABASE }, /* Albert1 */
- 		{ "-B",		2,	PARM_MESSAGE_BROADCAST }, /* Albert1 */               
+ 		{ "-B",		2,	PARM_MESSAGE_BROADCAST }, /* Albert1 */ 
+              	{ "-O",		2,	PARM_DATABASE }, /* Albert1 */
 	        { NULL,		-1,     -1 }};
 
 /* forward declarations */
@@ -141,6 +150,11 @@ static int getCommandLineParms(int argc, char** argv);
 void exit_quit(Widget w,ALINK *area,XmAnyCallbackStruct *call_data)
 {
 	GLINK *proot=0;
+	if(_message_broadcast_flag && amIsender) {
+        createDialog(blinkToplevel,XmDIALOG_MESSAGE,
+		    "You sent a message\n","Wait a seconds before message will delivery\n");
+	return;
+	}
 
 	alLogExit();
 	fclose(fl);
@@ -169,12 +183,19 @@ void exit_quit(Widget w,ALINK *area,XmAnyCallbackStruct *call_data)
 	if (area) free(area);
 	XtDestroyWidget(topLevelShell);
 	if(_lock_flag)  {
-	  lockf(lockFileDeskriptor, F_ULOCK, 0L); /* Albert1 */
+	  lockf(lockFileDeskriptor,     F_ULOCK, 0L); /* Albert1 */
 	  if (lockTimeoutId) {
-	  XtRemoveTimeOut(lockTimeoutId);
+	    XtRemoveTimeOut(lockTimeoutId);
+	  }
+	if(_message_broadcast_flag)  {
+	  lockf(messBroadcastDeskriptor, F_ULOCK, 0L); /* Albert1 */
+	  if (broadcastMessTimeoutId) {
+	    XtRemoveTimeOut(broadcastMessTimeoutId);
 	  }
 	}
-
+	
+	} 
+	
 	exit(0);
 }
 
@@ -248,7 +269,14 @@ static int checkFilename(char *filename,int fileType)
 
 	case FILE_OPMOD:
 	case FILE_ALARMLOG:
-		tt = fopen(filename,"a");
+		if(!_read_only_flag) tt = fopen(filename,"a");
+
+		else {tt = fopen(filename,"r");
+		if(!tt) strcpy(filename,"/tmp/aa");
+		tt = fopen(filename,"w");
+		printf("fp=%d\n",tt);
+		}
+
 		if (!tt){
 			return 4;
 		}
@@ -313,6 +341,7 @@ int programId,Widget widget)
 	time_t timeofday;
 	struct tm *tms;
 	char buf[16];
+
 	/* _______ For Dated AlLog File. Albert______________________________*/
 	timeofday = time(0L);
 	tms = localtime(&timeofday);
@@ -416,7 +445,7 @@ int programId,Widget widget)
 
 		case FILE_CONFIG:
 			setupConfig(filename,programId,area);
-			if(_lock_flag)
+			if(_lock_flag)                              /* Albert1 */
 			  {
 			    FILE *fp;
 			    strcpy(lockFileName,psetup.configFile);
@@ -442,6 +471,33 @@ int programId,Widget widget)
 			    }                           
 			    masterTesting(); /* Albert */
 			  }
+			if(_message_broadcast_flag)                              /* Albert1 */
+			  {
+			    FILE *fpL, *fpI;
+			    strcpy(messBroadcastLockFileName,psetup.configFile);
+			    strcat(messBroadcastLockFileName,".MESSLOCK");
+ 			    strcpy(messBroadcastInfoFileName,psetup.configFile);
+			    strcat(messBroadcastInfoFileName,".MESS");        
+			    if ( (!(fpL=fopen(messBroadcastLockFileName,"a"))) 
+				 || (!(fpI=fopen(messBroadcastInfoFileName,"a"))) )
+			      {
+				perror("Can't open messBroadcast file for w");
+				exit(1);
+			      }
+                              fclose(fpL);
+			      fclose(fpI);
+			    if((messBroadcastDeskriptor=
+				open(messBroadcastLockFileName,O_RDWR,0644)) == 0)
+			      { 
+				perror("Can't open messBroadcast file for rw");
+				exit(1);
+			      }
+			    if (DEBUG) fprintf(stderr,"INIT: deskriptor for %s=%d\n",
+					  messBroadcastLockFileName,messBroadcastDeskriptor);
+                          broadcastMessTesting(widget);
+			  signal(SIGINT,broadcastMess_exit_quit); 
+			  }
+
 			if( _printer_flag)
 			  {
 			    struct msqid_ds buf;  
@@ -578,7 +634,6 @@ static int getCommandLineParms(int argc, char** argv)
 	int i,j;
 	int finished=0;
 	int parm_error=0;
-        char *colon; /* Albert1 */
 
 	alarmLogFileMaxRecords=commandLine.alarmLogFileMaxRecords=2000; /* Albert1 */
         
@@ -742,6 +797,7 @@ static int getCommandLineParms(int argc, char** argv)
 		}
 	}
 
+
 if(commandLine.alarmLogFileMaxRecords&&_lock_flag)
   {
   fprintf(stderr,"use -m 0 option together with -L\n");
@@ -757,12 +813,6 @@ if(_printer_flag&&!_lock_flag)
 if(_DB_call_flag&&!_lock_flag)
   {
   fprintf(stderr,"use -O together with -L\n");
-  parm_error=1;
-  }
-
-if(_message_broadcast_flag&&!_lock_flag)
-  {
-  fprintf(stderr,"use -B together with -L\n");
   parm_error=1;
   }
 
@@ -922,6 +972,68 @@ void masterTesting()
 	
 	lockTimeoutId = XtAppAddTimeOut(appContext, lockDelay,masterTesting , NULL);
 
+}
+
+void broadcastMessTesting(Widget w)
+{
+FILE *fp;
+static char messID[30];
+char firstLine[30];
+char messBuff[500];
+char buff[250];
+char *blank;
+int notsave_time;
+void notsaveProc();
+
+broadcastMessTimeoutId=XtAppAddTimeOut(appContext,broadcastMessDelay,broadcastMessTesting,w);
+if ( (fp=fopen(messBroadcastInfoFileName,"r")) == NULL )
+  {
+    perror("broadcastMessTesting: can't open messBroadcastInfoFileName!!!!");
+    return;
+  }
+if (fgets(firstLine,32,fp)==NULL) {fclose(fp); return;}
+
+if(strcmp(firstLine,messID) == 0) {fclose(fp); return;}
+strcpy(messID,firstLine);
+memset(messBuff,0,250);
+fgets (messBuff, 250, fp);  /* Mess */
+fgets(buff,250,fp);
+strcat(messBuff,buff);      /* Date */
+fgets(buff,250,fp);
+strcat(messBuff,buff);      /* From */ 
+fclose(fp);
+
+if(!amIsender) 
+  {
+    createDialog(w,XmDIALOG_INFORMATION,"\nBROADCAST MESSAGE:\n",messBuff);
+    XBell(XtDisplay(w),50);
+  }
+
+if ( (blank=strchr( (const char *) messBuff, ' ')) == NULL ) return;
+if(strncmp(blank+1,rebootString,strlen(rebootString)-1 )==0) {
+  *blank=0;
+  notsave_time=atoi(messBuff);
+  if(DEBUG) fprintf(stderr,"notsave_time=%d",notsave_time);
+  if( (notsave_time <= 0) || (notsave_time > max_not_save_time) ) return;
+  notsave=1;
+  XtAppAddTimeOut(appContext,notsave_time*1000*60 , notsaveProc, w);
+
+}
+}
+
+void notsaveProc(Widget w) 
+{ 
+time_t time_tmp;
+
+notsave=1;
+time_tmp=time(0L);
+createDialog(w,XmDIALOG_MESSAGE,ctime(&time_tmp),"We start save alarmLog again \n");
+}
+
+void broadcastMess_exit_quit(int unused)
+{
+exit_quit(NULL,NULL,NULL);
+signal(SIGINT,broadcastMess_exit_quit);
 }
 /* *******************************End of Albert1 ************************************* */
 

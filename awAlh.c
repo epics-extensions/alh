@@ -22,6 +22,11 @@ void awUpdateRowWidgets(line)                 Update line widgets
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <unistd.h>
+#include <errno.h>
+#include <sys/types.h>
+#include <pwd.h>
+
 
 #include <Xm/Xm.h>
 #include <Xm/ArrowB.h>
@@ -97,6 +102,14 @@ extern Pixel channel_bg_pixel;
 extern struct setup psetup;
 extern Widget versionPopup;
 extern int _time_flag; /* Dated flag. Albert*/
+extern int _message_broadcast_flag; /* messages sending flag. Albert1*/
+extern int messBroadcastDeskriptor;
+extern char messBroadcastInfoFileName[250];
+int messBroadcastLockDelay=60000;
+extern char *rebootString;
+extern int max_not_save_time;
+extern int amIsender;
+extern int DEBUG;
 char FS_filename[128]; /* Filename      for FSBox. Albert*/
 
 /* prototypes for static routines */
@@ -104,6 +117,7 @@ static void alhFileCallback( Widget widget, XtPointer calldata, XtPointer cbs);
 static void alhActionCallback( Widget widget, XtPointer calldata, XtPointer cbs);
 static void alhViewCallback( Widget widget, XtPointer calldata, XtPointer cbs);
 static void alhViewBrowserCallback( Widget widget, XtPointer item, XtPointer cbs); /* Albert1 */
+static void messBroadcast(Widget widget, XtPointer item, XtPointer cbs);          /* Albert1 */
 static void alhSetupCallback( Widget widget, XtPointer calldata, XtPointer cbs);
 static void alhHelpCallback( Widget widget, XtPointer calldata, XtPointer cbs);
 static void browserFBSDialogCbOk();     /* Ok-button     for FSBox. Albert*/
@@ -150,6 +164,26 @@ Widget alhCreateMenu(Widget parent,XtPointer user_data)
 		             alhActionCallback, (XtPointer)MENU_ACTION_MODIFY_MASK, (MenuItem *)NULL, 0 },
 		         {NULL},
 		     	};
+/* ******************************************** Albert1 : ************************************ */
+static MenuItem action_menuNew[] = {
+		         { "Acknowledge Alarm",      &xmPushButtonGadgetClass, 'A', "Ctrl<Key>A", "Ctrl+A",
+		             alhActionCallback, (XtPointer)MENU_ACTION_ACK,      (MenuItem *)NULL, 0 },
+		         { "Display Guidance",       &xmPushButtonGadgetClass, 'G', "Ctrl<Key>G", "Ctrl+G",
+		             alhActionCallback, (XtPointer)MENU_ACTION_GUIDANCE, (MenuItem *)NULL, 0 },
+		         { "Start Related Process",  &xmPushButtonGadgetClass, 'P', "Ctrl<Key>P", "Ctrl+P",
+		             alhActionCallback, (XtPointer)MENU_ACTION_PROCESS,  (MenuItem *)NULL, 0 },
+		         { "Force Process Variable ...", &xmToggleButtonGadgetClass, 'V', "Ctrl<Key>V", "Ctrl+V",
+		             alhActionCallback, (XtPointer)MENU_ACTION_FORCEPV, (MenuItem *)NULL, 0 },
+		         { "Force Mask ...",          &xmToggleButtonGadgetClass, 'M',"Ctrl<Key>M", "Ctrl+M",
+		             alhActionCallback, (XtPointer)MENU_ACTION_FORCE_MASK, (MenuItem *)NULL, 0 },
+		         { "Modify Mask Settings ...",  &xmToggleButtonGadgetClass, 'S', "Ctrl<Key>S", "Ctrl+S",
+		             alhActionCallback, (XtPointer)MENU_ACTION_MODIFY_MASK, (MenuItem *)NULL, 0 },
+			 /* Albert1 For MESSAGE BROADCAST: */
+		         { "Send Message ...",  &xmToggleButtonGadgetClass, 'B', "Ctrl<Key>B", "Ctrl+B",
+		             messBroadcast, (XtPointer) NULL, (MenuItem *)NULL, 0 },
+		         {NULL},
+		     	};
+/* ******************************************** End Albert1 ********************************** */
 
 	static MenuItem view_menu[] = {
 		         { "Expand One Level",       &xmPushButtonGadgetClass, 'L', "None<Key>plus", "+",
@@ -259,7 +293,11 @@ Widget alhCreateMenu(Widget parent,XtPointer user_data)
 	menubar = XmCreateMenuBar(parent, "menubar",   NULL, 0);
 
 	widget = buildPulldownMenu(menubar, "File",     'F', TRUE, file_menu, user_data);
+        if(!_message_broadcast_flag)  /* Albert1 */
 	widget = buildPulldownMenu(menubar, "Action",   'A', TRUE, action_menu, user_data);
+        else
+        widget = buildPulldownMenu(menubar, "Action",   'A', TRUE, action_menuNew, user_data);
+        
         if(!_time_flag)
 	widget = buildPulldownMenu(menubar, "View",     'V', TRUE, view_menu, user_data);
         else  /* Albert1 */
@@ -553,8 +591,6 @@ static void alhViewBrowserCallback(Widget widget,XtPointer item,XtPointer cbs)
 {
 	ALINK   *area;
 	Widget dialog;
-	Arg al[10];
-	int ac=0;
 	XmString Xpattern,Xtitle,Xcurrentdir;
         int ch = (int) item;
 	switch ( ch )
@@ -616,8 +652,173 @@ XmSelectionBoxCallbackStruct *call_data)
 	strcpy(FS_filename,s);
 	XtFree(s);
 	XtVaGetValues(wdgt, XmNuserData, &area, NULL);
-	browser_fileViewWindow(area->form_main,ALARM_FILE,wdgt);  /* Albert1 */
+	browser_fileViewWindow(area->form_main,ALARM_FILE,wdgt); /* ALARM_FILE??????? Albert1 */
 	XtUnmanageChild(w);
+}
+
+/******************************************************
+Send Message widget
+******************************************************/
+static void messBroadcast(Widget widget,XtPointer item,XtPointer cbs)  /* Albert1 */
+{
+    Widget dialog, text_w;
+    void canselMessBroadcast(), writeMessBroadcast(), helpMessBroadcast();
+    ALINK   *area;
+    XtVaGetValues(widget, XmNuserData, &area, NULL);
+    
+    if(amIsender)
+      {
+	createDialog(area->form_main,XmDIALOG_INFORMATION,
+		     "You send some message before. \n" "\n"
+		     "Please wait a few seconds \n","");
+	return;
+      }
+         if ( lockf(messBroadcastDeskriptor, F_TLOCK, 0L) < 0 ) {
+	  if ((errno == EAGAIN || errno == EACCES )) {
+	      if(DEBUG) fprintf(stderr,"file is busy;Deskriptor=%d\n",messBroadcastDeskriptor);
+	      createDialog(area->form_main,XmDIALOG_INFORMATION,
+			   "Some other operator type a message. \n" "\n"
+			   "Please wait a few seconds \n","");
+	      return;
+	  }
+	  else {
+	    perror("lockf Error!!!!"); /* Albert1 exit ?????? */
+	  }
+	 }
+	else 
+	  {
+	    if(DEBUG) fprintf(stderr,"file is free;Deskriptor=%d\n",messBroadcastDeskriptor);	    
+
+	    dialog = XmCreatePromptDialog(area->form_main, "dialog", NULL, 0);	    
+	    XtVaSetValues(dialog,XtVaTypedArg, XmNselectionLabelString, XmRString,
+			  "Type message (See help for detail):", 40,NULL);
+	    
+	    XtAddCallback(dialog, XmNcancelCallback,canselMessBroadcast, NULL);
+	    XtAddCallback(dialog, XmNhelpCallback,helpMessBroadcast, NULL);
+	    text_w = XmSelectionBoxGetChild(dialog, XmDIALOG_TEXT);
+	    XtVaSetValues(text_w, XmNvalue,"0 type your message", NULL);
+	    XtVaSetValues(dialog,XmNuserData,area,NULL);
+	    XtAddCallback(dialog, XmNokCallback,writeMessBroadcast, text_w);
+	    XtManageChild(dialog);
+
+	  }
+}
+
+static void writeMessBroadcast(Widget dialog, Widget text_w)
+{
+FILE *fp;
+time_t timeID,time_tmp;
+void messBroadcastFileUnlock();
+char *string;
+char *blank;
+
+int notsave_time;
+char buff[500];
+char myhostname[250];
+struct passwd *pp;              
+int effective_uid = -1;
+char *loginid = "";        
+char *real_world_name =""; 
+
+    ALINK   *ar;
+    XtVaGetValues(dialog, XmNuserData, &ar, NULL);
+
+    if ( (fp=fopen(messBroadcastInfoFileName,"w")) == NULL )
+      {
+	createDialog(ar->form_main,XmDIALOG_INFORMATION,"can't open ",messBroadcastInfoFileName);
+	lockf(messBroadcastDeskriptor, F_ULOCK, 0L);
+	return;
+          }
+
+    /* NOTE: all clients MUST have the same UNIX time !!!!  ?????  */
+    timeID=time(0L); 
+    time_tmp=time(0L); 
+    
+    string = XmTextFieldGetString(text_w);
+
+    effective_uid = geteuid();
+    if (pp = getpwuid(effective_uid)) {
+      loginid=pp->pw_name;
+      real_world_name=pp->pw_gecos;
+    }
+    if(gethostname(myhostname,256) != 0) strcpy(myhostname,"unknoun");
+
+    if( (blank=strchr(string,' ')) == NULL )
+      {
+	createDialog(ar->form_main,XmDIALOG_INFORMATION,"Wrong format"," ");
+	lockf(messBroadcastDeskriptor, F_ULOCK, 0L);
+	return;
+      }
+    *blank=0;
+    blank++;
+    notsave_time=atoi(string);
+    if( (notsave_time < 0) || (notsave_time > max_not_save_time) ) 
+      {
+	createDialog(ar->form_main,XmDIALOG_INFORMATION,"time so big!!!"," ");
+	lockf(messBroadcastDeskriptor, F_ULOCK, 0L);
+	return;     
+      }
+
+    if(notsave_time != 0)
+      {
+	sprintf(buff,"%d %s %s\nDate is %sFROM: User=%s [%s] host=%s display=%s",notsave_time,
+		rebootString, blank,ctime(&time_tmp),loginid,real_world_name,myhostname,
+		DisplayString(display));
+      }
+    else
+      {
+	sprintf(buff,"%s\nDate is %sFROM: User=%s [%s] host=%s display=%s",
+		blank,ctime(&time_tmp),loginid,real_world_name,myhostname,
+		DisplayString(display));
+      }
+    fprintf(fp,"%d\n%s",timeID,buff);
+    createDialog(ar->form_main,XmDIALOG_MESSAGE,"For all people we send: \n""\n""\n",buff);
+
+    fclose(fp);	    
+    XtFree(string);
+    amIsender=1;
+    XtAppAddTimeOut(appContext,messBroadcastLockDelay,messBroadcastFileUnlock,NULL);
+    
+}
+
+static void messBroadcastFileUnlock()
+{
+  FILE *fp;
+  if(DEBUG) fprintf(stderr,"delete messBroadcastInfoFileName...\n");
+  if ( (fp=fopen(messBroadcastInfoFileName,"w")) == NULL )
+    {
+      perror("Loop:can't open messBroadcastInfoFileName!!!!");
+    }
+  if (fp) fclose (fp);
+  amIsender=0;
+  lockf(messBroadcastDeskriptor, F_ULOCK, 0L);
+}
+
+static void helpMessBroadcast(Widget w)
+{
+createDialog(w,XmDIALOG_INFORMATION,
+"This message will be pass all other operators which work with the same alh configuration. \n"
+"  \n"
+"ALH has one special type of messages : \n"
+"  \n"
+"  ''time_in_min ''any other text ''  ''  \n"
+"  \n"
+"After this message ALH doesn't save alarms during time_in_min \n"
+"  \n"
+"Please, use this type of message before rebooting IOC for communications with other people.\n"
+"  \n"
+"  \n"
+"  \n"
+"If time_in_min = 0 it's mean any other information messages without cansel saving alarmLog. \n"
+"  \n"
+"You can use it for any other communications (like Hello all)",
+"");
+}
+
+static void canselMessBroadcast(Widget w)
+{
+XtUnmanageChild(w);
+ lockf(messBroadcastDeskriptor, F_ULOCK, 0L);
 }
 
  
