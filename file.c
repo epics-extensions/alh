@@ -272,11 +272,14 @@ static int checkFilename(char *filename,int fileType)
 		if(!_read_only_flag) tt = fopen(filename,"a");
 
 		else {tt = fopen(filename,"r");
-		if(!tt) strcpy(filename,"/tmp/aa");
+		if(!tt) strcpy(filename,"/tmp/AlhDisableWriting");
 		tt = fopen(filename,"w");
+		if (!tt) {
+			printf(stderr,"can't read OPMOD or ALARMLOG and /tmp directory \n");
+			exit(1);
 		printf("fp=%d\n",tt);
 		}
-
+		}
 		if (!tt){
 			return 4;
 		}

@@ -773,7 +773,7 @@ char *real_world_name ="";
 		blank,ctime(&time_tmp),loginid,real_world_name,myhostname,
 		DisplayString(display));
       }
-    fprintf(fp,"%d\n%s",timeID,buff);
+    fprintf(fp,"%ld\n%s",timeID,buff);
     createDialog(ar->form_main,XmDIALOG_MESSAGE,"For all people we send: \n""\n""\n",buff);
 
     fclose(fp);	    

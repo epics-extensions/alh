@@ -211,3 +211,5 @@ Thu Mar 11 10:12:06 CST 1999
 							    allow don't save alarm during reboot time.
 							   (NOT IMPLEMENTED YET ;)  )	
 	                               	
+Mon Mar 15 08:57:01 CST 1999
+	ANSI c changes to eliminate warning messaged on Linux build.
