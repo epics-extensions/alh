@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.5  1997/09/09 22:23:43  jba
+ Added initialization of undo data.
+
  Revision 1.4  1995/10/20 16:50:15  jba
  Modified Action menus and Action windows
  Renamed ALARMCOMMAND to SEVRCOMMAND
@@ -135,6 +138,14 @@ void editUndoGet(plink, plinkType, pconfigLink)
      int *plinkType;
      GCLINK **pconfigLink;
 {
+     static int undoInit=1;
+
+     if (undoInit) { 
+        undoData.link=NULL;
+        undoData.linkType=0;
+        undoData.configLink=NULL;
+        undoInit =0;
+      }  
      *plink = undoData.link;
      *plinkType = undoData.linkType;
      *pconfigLink = undoData.configLink;
