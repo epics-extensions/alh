@@ -1,8 +1,11 @@
 /*
  $Log$
- Revision 1.5  1995/05/31 20:34:10  jba
- Added name selection and arrow functions to Group window
+ Revision 1.6  1995/06/01 15:15:42  jba
+ Fixed area selection bug.
 
+ * Revision 1.5  1995/05/31  20:34:10  jba
+ * Added name selection and arrow functions to Group window
+ *
  * Revision 1.4  1995/05/30  15:58:07  jba
  * Added ALARMCOMMAND facility
  *
@@ -190,20 +193,6 @@ void nameGroupW_callback(pushButton, line, cbs)
 
           treeWindow = area->treeWindow;
 
-          /* markSelection */
-          area->selectionLink = link;
-          area->selectionType = GROUP;
-          area->selectionWindow = treeWindow;
-          treeWindow->selectionLink = link;
-
-          /* markSelectedWidget */
-          if (link->lineTreeW) {
-               wline = ((struct anyLine *)link->lineTreeW)->wline;
-               markSelectedWidget(treeWindow,wline->name);
-          } else {
-               markSelectedWidget(treeWindow,NULL);
-          }
-
           /* update tree window  */
           grandparentsOpen = TRUE;
           glinkTemp=parent->parent;
@@ -227,6 +216,20 @@ void nameGroupW_callback(pushButton, line, cbs)
           groupWindow->viewConfigCount = alViewAdjustGroupW((GLINK *)link, area->viewFilter);
           groupWindow->viewOffset = 0;
           redraw(groupWindow,0);
+
+          /* markSelection */
+          area->selectionLink = link;
+          area->selectionType = GROUP;
+          area->selectionWindow = treeWindow;
+          treeWindow->selectionLink = link;
+
+          /* markSelectedWidget */
+          if (link->lineTreeW) {
+               wline = ((struct anyLine *)link->lineTreeW)->wline;
+               markSelectedWidget(treeWindow,wline->name);
+          } else {
+               markSelectedWidget(treeWindow,NULL);
+          }
 
      } else {
 
@@ -252,12 +255,6 @@ void nameTreeW_callback(pushButton, line, cbs)
 
      XtVaGetValues(pushButton, XmNuserData, &subWindow, NULL);
 
-     markSelectedWidget(subWindow,pushButton);
-     markSelection(subWindow, line);
-
-     /* update property sheet window if it is displayed */
-     propUpdateDialog(subWindow->area, line->link,line->linkType);
-
      /* groupWindow must now display contents of new treeWindow selection */
      groupWindow = ((ALINK *)subWindow->area)->groupWindow;
      markSelectedWidget(groupWindow,NULL);
@@ -267,6 +264,12 @@ void nameTreeW_callback(pushButton, line, cbs)
          ((ALINK *)subWindow->area)->viewFilter);
      groupWindow->viewOffset = 0;
      redraw(groupWindow,0);
+
+     markSelectedWidget(subWindow,pushButton);
+     markSelection(subWindow, line);
+
+     /* update property sheet window if it is displayed */
+     propUpdateDialog(subWindow->area, line->link,line->linkType);
 
 }
 
@@ -349,20 +352,6 @@ static void singleClickGroupW_callback(pdata)
 
      treeWindow = area->treeWindow;
 
-     /* markSelection */
-     area->selectionLink = link;
-     area->selectionType = GROUP;
-     area->selectionWindow = treeWindow;
-     treeWindow->selectionLink = link;
-
-     /* markSelectedWidget */
-     if (link->lineTreeW) {
-          wline = ((struct anyLine *)link->lineTreeW)->wline;
-          markSelectedWidget(treeWindow,wline->name);
-     } else {
-          markSelectedWidget(treeWindow,NULL);
-     }
-
      /* update tree window  */
      grandparentsOpen = TRUE;
      glinkTemp=parent->parent;
@@ -390,6 +379,20 @@ static void singleClickGroupW_callback(pdata)
      groupWindow->viewConfigCount = alViewAdjustGroupW((GLINK *)link, area->viewFilter);
      groupWindow->viewOffset = 0;
      redraw(groupWindow,0);
+
+     /* markSelection */
+     area->selectionLink = link;
+     area->selectionType = GROUP;
+     area->selectionWindow = treeWindow;
+     treeWindow->selectionLink = link;
+
+     /* markSelectedWidget */
+     if (link->lineTreeW) {
+          wline = ((struct anyLine *)link->lineTreeW)->wline;
+          markSelectedWidget(treeWindow,wline->name);
+     } else {
+          markSelectedWidget(treeWindow,NULL);
+     }
 }
 
 /***************************************************
