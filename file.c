@@ -50,6 +50,10 @@ int _no_error_popup=0;       /* No popup window. Error messages logged to opMod 
 int _global_flag=0;          /* Global execution mode. */
 int _transients_flag=0;      /* Do ca_put of config file value for ackt */
 
+int _main_window_flag=0;     /* Flag: Start with main window */
+                             /* Default display filter function */
+int (*default_display_filter)(GCLINK *) = alFilterAll;
+
 int _read_only_flag=0;       /* Read-only flag.          Albert    */
 int _passive_flag=0;         /* Passive flag.            Albert    */
 
@@ -117,28 +121,30 @@ struct command_line_data
 static struct command_line_data commandLine = { 
 	NULL,NULL,NULL,NULL,NULL,0};
 
-#define PARM_DEBUG			0
-#define PARM_ACT			1
-#define PARM_ALL_FILES_DIR		2
-#define PARM_LOG_DIR			3
-#define PARM_ALARM_LOG_FILE		4
-#define PARM_OPMOD_LOG_FILE		5
-#define PARM_ALARM_LOG_MAX		6
-#define PARM_DATABASE			7
-#define PARM_PRINTER			8
-#define PARM_DATED			9
-#define PARM_PASSIVE			10
-#define PARM_READONLY			11
-#define PARM_MESSAGE_BROADCAST	        12
-#define PARM_SILENT			13
-#define PARM_LOCK			14
-#define PARM_HELP			15
+#define PARM_DEBUG					0
+#define PARM_ACT					1
+#define PARM_ALL_FILES_DIR			2
+#define PARM_LOG_DIR				3
+#define PARM_ALARM_LOG_FILE			4
+#define PARM_OPMOD_LOG_FILE			5
+#define PARM_ALARM_LOG_MAX			6
+#define PARM_DATABASE				7
+#define PARM_PRINTER				8
+#define PARM_DATED					9
+#define PARM_PASSIVE				10
+#define PARM_READONLY				11
+#define PARM_MESSAGE_BROADCAST		12
+#define PARM_SILENT					13
+#define PARM_LOCK					14
+#define PARM_HELP					15
 #define PARM_ALARM_LOG_CMLOG		16
 #define PARM_OPMOD_LOG_CMLOG		17
-#define PARM_GLOBAL			18
+#define PARM_GLOBAL					18
 #define PARM_CAPUT_ACK_TRANSIENTS	19
-#define PARM_VERSION			20
-#define PARM_NO_ERROR_POPUP		21
+#define PARM_VERSION				20
+#define PARM_NO_ERROR_POPUP			21
+#define PARM_MAIN_WINDOW			22
+#define PARM_ALARM_FILTER			23
 
 struct parm_data
 {
@@ -148,34 +154,37 @@ struct parm_data
 };
 
 /* order of elements matters: long before short to prevent ambiguity */
+
 static struct parm_data ptable[] = {
 #ifdef CMLOG
-		{ "-aCM",	4,	PARM_ALARM_LOG_CMLOG },
+		{ "-aCM", 4,			PARM_ALARM_LOG_CMLOG },
 #endif
-		{ "-a",		2,	PARM_ALARM_LOG_FILE },
- 		{ "-B",		2,	PARM_MESSAGE_BROADCAST }, /* Albert */
-		{ "-c",		2,	PARM_ACT },
- 		{ "-caputackt",	10,	PARM_CAPUT_ACK_TRANSIENTS },
-		{ "-D",		2,	PARM_READONLY },
-		{ "-debug",	6 ,	PARM_DEBUG },
-		{ "-f",		2,	PARM_ALL_FILES_DIR },
- 		{ "-global",	7,	PARM_GLOBAL },
-		{ "-help",	5,	PARM_HELP },
-		{ "-L",		2,	PARM_LOCK },     /* Albert */
-		{ "-l",		2,	PARM_LOG_DIR },
-		{ "-m",		2,	PARM_ALARM_LOG_MAX },
-		{ "-noerrorpopup",	13,	PARM_NO_ERROR_POPUP },
-		{ "-O",		2,	PARM_DATABASE }, /* Albert */
+		{ "-a", 2,				PARM_ALARM_LOG_FILE },
+ 		{ "-B", 2,				PARM_MESSAGE_BROADCAST },	/* Albert */
+		{ "-c", 2,				PARM_ACT },
+ 		{ "-caputackt", 10,		PARM_CAPUT_ACK_TRANSIENTS },
+		{ "-D", 2,				PARM_READONLY },
+		{ "-debug", 6 ,			PARM_DEBUG },
+		{ "-filter", 7,			PARM_ALARM_FILTER },
+		{ "-f", 2,				PARM_ALL_FILES_DIR },
+ 		{ "-global", 7,			PARM_GLOBAL },
+		{ "-help", 5,			PARM_HELP },
+		{ "-L", 2,				PARM_LOCK },				/* Albert */
+		{ "-l", 2,				PARM_LOG_DIR },
+		{ "-mainwindow", 11,	PARM_MAIN_WINDOW },
+		{ "-m", 2,				PARM_ALARM_LOG_MAX },
+		{ "-noerrorpopup", 13,	PARM_NO_ERROR_POPUP },
+		{ "-O", 2,				PARM_DATABASE },			/* Albert */
 #ifdef CMLOG
-		{ "-oCM",	4,	PARM_OPMOD_LOG_CMLOG },
+		{ "-oCM", 4,			PARM_OPMOD_LOG_CMLOG },
 #endif
-		{ "-o",		2,	PARM_OPMOD_LOG_FILE },
-		{ "-P",		2,	PARM_PRINTER },
-		{ "-S",		2,	PARM_PASSIVE },
-		{ "-s",		2,	PARM_SILENT },
-		{ "-T",		2,	PARM_DATED },
-		{ "-v",		2,	PARM_VERSION },
-		{ "-version",	8,	PARM_VERSION },
+		{ "-o", 2,				PARM_OPMOD_LOG_FILE },
+		{ "-P", 2,				PARM_PRINTER },
+		{ "-S", 2,				PARM_PASSIVE },
+		{ "-s", 2,				PARM_SILENT },
+		{ "-T", 2,				PARM_DATED },
+		{ "-v", 2,				PARM_VERSION },
+		{ "-version", 8,		PARM_VERSION },
  		{ NULL,		-1,     -1 }};
 
 /* forward declarations */
@@ -727,7 +736,7 @@ static int getCommandLineParms(int argc, char** argv)
 					if(++i>=argc) parm_error=1;
 					else
 					{
-						if(argv[i][0]=='-') parm_error=1;
+						if(argv[i][0]=='-') parm_error=2;
 						else
 						{
 							commandLine.configDir=argv[i];
@@ -739,7 +748,7 @@ static int getCommandLineParms(int argc, char** argv)
 					if(++i>=argc) parm_error=1;
 					else
 					{
-						if(argv[i][0]=='-') parm_error=1;
+						if(argv[i][0]=='-') parm_error=2;
 						else
 						{
 							commandLine.logDir=argv[i];
@@ -751,7 +760,7 @@ static int getCommandLineParms(int argc, char** argv)
 					if(++i>=argc) parm_error=1;
 					else
 					{
-						if(argv[i][0]=='-') parm_error=1;
+						if(argv[i][0]=='-') parm_error=2;
 						else
 						{
 							commandLine.logFile=argv[i];
@@ -763,12 +772,28 @@ static int getCommandLineParms(int argc, char** argv)
 					if(++i>=argc) parm_error=1;
 					else
 					{
-						if(argv[i][0]=='-') parm_error=1;
+						if(argv[i][0]=='-') parm_error=2;
 						else
 						{
 							commandLine.opModFile=argv[i];
 							finished=1;
 						}
+					}
+					break;
+				case PARM_ALARM_FILTER:
+					if(++i>=argc) parm_error=1;
+					else
+					{
+					   if (argv[i][0] == 'a') {
+						  default_display_filter = alFilterAlarmsOnly;
+						  finished = 1;
+					   } else if (argv[i][0] == 'u') {
+						  default_display_filter = alFilterUnackAlarmsOnly;
+						  finished = 1;
+					   } else if (argv[i][0] == 'n') {
+						  default_display_filter = alFilterAll;
+						  finished = 1;
+					   } else parm_error=2;
 					}
 					break;
 #ifdef CMLOG
@@ -785,11 +810,11 @@ static int getCommandLineParms(int argc, char** argv)
 					if(++i>=argc) parm_error=1;
 					else
 					{
-						if(argv[i][0]=='-') parm_error=1;
+						if(argv[i][0]=='-') parm_error=2;
 						else
 						{
 							commandLine.alarmLogFileMaxRecords=atoi(argv[i]);
-							if( (!commandLine.alarmLogFileMaxRecords)&&(strcmp(argv[i],"0") )) parm_error=1;
+							if( (!commandLine.alarmLogFileMaxRecords)&&(strcmp(argv[i],"0") )) parm_error=2;
 							alarmLogFileMaxRecords=commandLine.alarmLogFileMaxRecords;
 							finished=1;
 						}
@@ -799,11 +824,11 @@ static int getCommandLineParms(int argc, char** argv)
 					if(++i>=argc) parm_error=1;
 					else
 					{
-						if(argv[i][0]=='-') parm_error=1;
+						if(argv[i][0]=='-') parm_error=2;
 						else
 						{
                                                         printerMsgQKey=atoi(argv[i]);
-                                                        if(!printerMsgQKey) parm_error=1;
+                                                        if(!printerMsgQKey) parm_error=2;
                                                         _printer_flag=1;
 							finished=1;
 						}
@@ -830,11 +855,11 @@ static int getCommandLineParms(int argc, char** argv)
 					if(++i>=argc) parm_error=1;
 					else
 					{
-						if(argv[i][0]=='-') parm_error=1;
+						if(argv[i][0]=='-') parm_error=2;
 						else
 						{
                                                         DBMsgQKey=atoi(argv[i]);
-                                                        if(!DBMsgQKey) parm_error=1;
+                                                        if(!DBMsgQKey) parm_error=2;
                                                         _DB_call_flag=1;
 							finished=1;
 						}
@@ -842,6 +867,10 @@ static int getCommandLineParms(int argc, char** argv)
 					break;
 				case PARM_MESSAGE_BROADCAST:
 					_message_broadcast_flag=1;/* Mess. Broadcast Albert */
+					finished=1;
+					break;
+				case PARM_MAIN_WINDOW:
+					_main_window_flag=1;
 					finished=1;
 					break;
 				case PARM_NO_ERROR_POPUP:
@@ -901,9 +930,13 @@ if(_DB_call_flag&&!_lock_flag)
   parm_error=1;
   }
 
-	if(parm_error)
-	{
-  		fprintf(stderr,"\nInvalid command line option %s\n ",argv[i-1]);
+	if (parm_error == 1) {
+  		fprintf(stderr,"\nInvalid command line option %s\n ", argv[i-1]);
+		printUsage(argv[0]);
+		return 1;
+	}
+	if (parm_error == 2) {
+  		fprintf(stderr,"\nInvalid command line option %s %s\n ", argv[i-2], argv[i-1]);
 		printUsage(argv[0]);
 		return 1;
 	}
@@ -925,15 +958,21 @@ static void printUsage(char *pgm)
 #endif			
 	fprintf(stderr,"  -B               Message Broadcast System\n");
 	fprintf(stderr,"  -c               Alarm Configuration Tool mode\n");
-	fprintf(stderr,"  -caputackt       Caput config file ackt settings to channels (if global and active)\n");
+	fprintf(stderr,"  -caputackt       Caput config file ackt settings to channels on startup\n");
+	fprintf(stderr,"                     (if global and active)\n");
 	fprintf(stderr,"  -D               Disable alarm and opmod log writing\n");
 	fprintf(stderr,"  -debug           Debug output\n");
 	fprintf(stderr,"  -f filedir       Directory for config files [.]\n");
+	fprintf(stderr,"  -filter f-opt    Set alarm display filter with f-opt being one of [no]\n");
+	fprintf(stderr,"                     n[o]:     no filter\n");
+	fprintf(stderr,"                     a[ctive]: show only active alarms\n");
+	fprintf(stderr,"                     u[nack]:  show only unacknowledged alarms\n");
 	fprintf(stderr,"  -global          Global mode (acks and ackt fields) \n");
 	fprintf(stderr,"  -help            Print usage\n");
 	fprintf(stderr,"  -L               Locking system\n");
 	fprintf(stderr,"  -l logdir        Directory for log files [.]\n");
 	fprintf(stderr,"  -m maxrecords    Alarm log file max records [2000]\n");
+	fprintf(stderr,"  -mainwindow      Start with main window\n");
 	fprintf(stderr,"  -noerrorpopup    Do not display error popup window (errors are logged).\n");
 	fprintf(stderr,"  -O key           Database call\n");
 	fprintf(stderr,"  -o opmodlogfile  OpMod log filename ["DEFAULT_OPMOD"]\n");
