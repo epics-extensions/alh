@@ -481,7 +481,6 @@ static void alCaNewAlarmEvent(struct event_handler_args args)
 
 	switch (args.status) {
 	case ECA_NORMAL:
-		alSaveAlarmEvent(stat, sevr, acks, ackt, value, args.usr);
 		alNewEvent(stat, sevr, acks, ackt, value, args.usr);
 		break;
 	default:
