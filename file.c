@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.15  1998/06/22 17:49:29  jba
+ Bug fixes for command line option handling.
+
  Revision 1.14  1998/06/02 19:40:51  evans
  Changed from using Fgmgr to using X to manage events and file
  descriptors.  (Fdmgr didn't work on WIN32.)  Uses XtAppMainLoop,
@@ -542,8 +545,6 @@ int getCommandLineParms(int argc, char** argv)
 						else
 						{
 							commandLine.configDir=argv[i];
-							if (!commandLine.logDir)
-								commandLine.logDir=argv[i];
 							finished=1;
 						}
 					}
@@ -600,13 +601,23 @@ int getCommandLineParms(int argc, char** argv)
 					parm_error=1;
 					break;
 				}
-			}else {
-		        commandLine.configFile=argv[i];
-			finished=1;
-			}
+                        }
 		}
-		finished=1;
-		if(ptable[j].parm==NULL) parm_error=1;
+		if(ptable[j].parm==NULL)
+		{
+			if(i+1==argc)
+			{
+				if(argv[i][0]=='-') parm_error=1;
+				else
+				{
+			        	commandLine.configFile=argv[i];
+					finished=1;
+				}
+			}
+			else parm_error=1;
+		}else {
+	 		finished=0;
+		}
 	}
 
 	if(parm_error)
@@ -616,7 +627,6 @@ int getCommandLineParms(int argc, char** argv)
 	}
 	return 0;
 }
-
 
 /******************************************************
   printUsage
@@ -663,16 +673,15 @@ void fileSetupInit( widget, argc, argv)
      if (DEBUG) printf("programName=%s\n",programName);
 
      if (commandLine.configDir)
-          strncpy(psetup.configDir,commandLine.configDir,NAMEDEFAULT_SIZE);
+          psetup.configDir=commandLine.configDir;
      else
-     /* set config file directory using environment variable ALARMHANDLER */
-          psetup.configDir = (char *)getenv("ALARMHANDLER");
-         /* strncpy(psetup.configDir,(char *)getenv("ALARMHANDLER"),NAMEDEFAULT_SIZE);*/
+          psetup.configDir=getenv("ALARMHANDLER");
+
      if (commandLine.logDir)
-          strncpy(psetup.logDir,commandLine.logDir,NAMEDEFAULT_SIZE);
+          psetup.logDir=commandLine.logDir;
 
      if (psetup.configDir && !psetup.logDir)
-          strncpy(psetup.logDir,psetup.configDir,NAMEDEFAULT_SIZE);
+          psetup.logDir=psetup.configDir;
 
      /* ----- initialize and setup opMod file ----- */
      if (psetup.logDir) {
