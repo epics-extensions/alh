@@ -440,3 +440,6 @@ Tue Jun  1 15:41:38 CDT 2004 ALH_1_2_15
 Fri Jul 16 16:22:32 CDT 2004 ALH_1_2_16
 	Added comments and void return value for getDescriptionRecord.
 	Saved ca alarm event data and added a ca reconnection event (for R3.14.6).
+
+Thu Jul 22 11:02:33 CDT 2004 ALH_1_2_17
+	Removed menu tearoff feature. Tornoff menus cannot be closed.

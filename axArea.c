@@ -96,11 +96,13 @@ int tearOff, MenuItem *items, XtPointer user_data)
 	    NULL);
 	XmStringFree(str);
 
+# if 0    /* DO NOT Use TEAROFF FEATURE. TORNOFF MENUS CANNOT BE CLOSED */
 #if  XmVersion && XmVersion >= 1002
 	if (tearOff){
 		/* Enable pulldown menu tearoff functionality */
 		XtVaSetValues(PullDown, XmNtearOffModel, XmTEAR_OFF_ENABLED, NULL);
 	}
+#endif
 #endif
 
 	/* Now add the menu items */
