@@ -1,8 +1,11 @@
 /*
  $Log$
- Revision 1.9  1996/03/25 15:46:12  jba
- Removed unused alOpenLogFiles references.
+ Revision 1.10  1996/06/07 15:47:24  jba
+ Added global alarm acknowledgement.
 
+ * Revision 1.9  1996/03/25  15:46:12  jba
+ * Removed unused alOpenLogFiles references.
+ *
  * Revision 1.8  1995/11/13  22:31:22  jba
  * Added beepseverity command, ansi changes and other changes.
  *
@@ -255,6 +258,7 @@ void alSetMask( char *s4, MASK *mask);
 void alGetMaskString( MASK mask, char *s);
 void alOrMask( MASK *m1,MASK *m2);
 void alNewAlarm( int stat, int sev, char value[MAX_STRING_SIZE], CLINK *clink);
+void alNewEvent(int stat,int sevr,int acks,char value[MAX_STRING_SIZE],CLINK *clink);
 void alHighestSystemSeverity(GLINK * glink);
 int alHighestSeverity( short sevr[ALARM_NSEV]);
 void alAckChan( CLINK *clink);
@@ -277,7 +281,8 @@ int alProcessExists( GCLINK *link);
 
 void alLogAlarm( time_t *ptimeofdayAlarm, struct chanData *cdata, int stat,
      int sev, int h_unackStat, int h_unackSevr);
-void alLogConnection( char *pvname, int ind);
+void alLogConnection( char *pvname, char *ind);
+void alLogGblAckChan( CLINK *clink);
 void alLogAckChan( struct chanLine *cline);
 void alLogAckGroup( struct groupLine *gline);
 void alLogChanChangeMasks( CLINK *clink, int maskno, int maskid);
@@ -632,6 +637,7 @@ void alSetMask();
 void alGetMaskString();
 void alOrMask();
 void alNewAlarm();
+void alNewEvent();
 void alHighestSystemSeverity();
 int alHighestSeverity();
 void alAckChan();

@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.12  1996/06/07 15:44:59  jba
+ Added global alarm acknowledgement.
+
  Revision 1.11  1996/03/25 15:45:31  jba
  Bug fix for spawn of SEVRCOMMAND for channel and all parent groups
 
@@ -937,6 +940,26 @@ static void alarmCountFilter_callback(pdata)
 }
 
 
+/******************************************************
+  alNewEvent
+******************************************************/
+
+void alNewEvent(stat,sevr,acks,value,clink)
+     int stat,sevr,acks;
+     char value[MAX_STRING_SIZE];	
+     CLINK *clink;
+{
+     struct chanData *cdata;
+
+     cdata = clink->pchanData;
+     if (cdata->curStat != stat || cdata->curSevr != sevr) {
+          alNewAlarm(stat,sevr,value,clink);
+     }else if (cdata->unackSevr > 0) {
+          alLogGblAckChan(cdata);
+          alAckChan(clink);
+     }
+}
+
 /*********************************************************** 
      alNewAlarm
 ************************************************************/
@@ -1316,9 +1339,12 @@ SNODE *pt;
         while (pt) {
                 clink = (CLINK *)pt;
                 cdata = clink->pchanData;
-                if (cdata->unackSevr > 0) alAckChan(clink);
-                pt = sllNext(pt);
+                if (cdata->unackSevr > 0) {
+                     alCaPutGblAck(clink);
+                     alAckChan(clink);
                 }
+                pt = sllNext(pt);
+        }
 
         list = &(glink->subGroupList);
         pt = sllFirst(list);

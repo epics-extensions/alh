@@ -1,8 +1,11 @@
 /*
  $Log$
- Revision 1.2  1994/06/22 21:16:20  jba
- Added cvs Log keyword
+ Revision 1.3  1996/06/07 15:43:47  jba
+ Added global alarm acknowledgement.
 
+ * Revision 1.2  1994/06/22  21:16:20  jba
+ * Added cvs Log keyword
+ *
  */
 
  /*  @(#)acknowledge.c  */
@@ -90,17 +93,15 @@ static void ackChan(cline)
   struct chanLine *cline;
 {
   CLINK *clink;
-  struct chanData *pdata;
-
+  struct chanData *cdata;
 
   clink = (CLINK *)cline->clink;
-  pdata = clink->pchanData;
-  if ( pdata->unackSevr == 0) return;
+  cdata = clink->pchanData;
+  if ( cdata->unackSevr == 0) return;
   alLogAckChan(cline);
+  alCaPutGblAck(clink);
   alAckChan(clink);
-/*  awInvokeCallback(); */
   clink->pmainGroup->modified = 1;
- 
 }
 
 /***************************************************
