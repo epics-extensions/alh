@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.10  1997/09/12 19:38:27  jba
+ Bug fixes for Save and SaveAs.
+
  Revision 1.9  1997/04/17 18:01:14  jba
  Added calls to free allocated memory.
 
@@ -309,8 +312,7 @@ void fileSetupCallback(widget, client_data, cbs)
 
 
      /* get the filename string */
-     if ( client_data == FILE_SAVE) filename = psetup.configFile;
-     else XmStringGetLtoR(cbs->value, XmSTRING_DEFAULT_CHARSET, &filename);
+     XmStringGetLtoR(cbs->value, XmSTRING_DEFAULT_CHARSET, &filename);
      if ( DEBUG == 1 ) printf("\nFilename is %s \n", filename);
 
      /* get the area pointer */
@@ -319,7 +321,7 @@ void fileSetupCallback(widget, client_data, cbs)
      if (area) pgm = area->programId;
      else pgm = programId;
      fileSetup(filename,area,client_data,pgm,widget);
-     XtFree(filename);
+     /* XtFree(filename); */
 
 }
 
@@ -440,7 +442,6 @@ void fileSetup(filename,area,fileType,programId, widget)
                     if (alarmLogFileMaxRecords && alarmLogFileEndStringLength) {
                         fseek(fl,0,SEEK_SET);
                         while (fgets(str,sizeof(str),fl)) {
-printf ("reading file: %s",str);
                             if(strncmp(alarmLogFileEndString,str,
                                      alarmLogFileEndStringLength)==0){
                                 fseek(fl,-strlen(str),SEEK_CUR);
@@ -448,7 +449,6 @@ printf ("reading file: %s",str);
                             }
                         }
                         alarmLogFileOffsetBytes = ftell(fl);
-printf ("alarmLogFileOffsetBytes=%d\n",ftell(fl));
                     } else {
                          fseek(fl,0,SEEK_END);
                     }
