@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.11  1996/06/07 16:35:33  jba
+ Added global alarm acknowledgement.
+
  Revision 1.10  1996/06/07 15:47:24  jba
  Added global alarm acknowledgement.
 
@@ -282,7 +285,7 @@ int alProcessExists( GCLINK *link);
 void alLogAlarm( time_t *ptimeofdayAlarm, struct chanData *cdata, int stat,
      int sev, int h_unackStat, int h_unackSevr);
 void alLogConnection( char *pvname, char *ind);
-void alLogGblAckChan( CLINK *clink);
+void alLogGblAckChan( struct chanData *cdata);
 void alLogAckChan( struct chanLine *cline);
 void alLogAckGroup( struct groupLine *gline);
 void alLogChanChangeMasks( CLINK *clink, int maskno, int maskid);
