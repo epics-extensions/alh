@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.16  1997/10/27 17:28:00  jba
+ Moved write of sevr to sevrPVs and now write only when changed.
+
  Revision 1.15  1997/09/12 19:29:15  jba
  Removed unnecessary link tests.
 
@@ -1123,10 +1126,13 @@ int prevViewCount=0;
 
 /*
  * spawn SEVRCOMMAND for the channel
+ * write the severity value to sevrPV channels
  */
 
-       if ( sev != sevr_prev )
+       if ( sev != sevr_prev ) {
         spawnSevrCommandList(&cdata->sevrCommandList,sev,sevr_prev);
+        alCaPutSevrValue(cdata->sevrPVName,cdata->sevrchid,sev);
+       } 
 
 /*
  * spawn STATCOMMAND for the channel
@@ -1139,6 +1145,7 @@ int prevViewCount=0;
 /*
  * spawn SEVRCOMMAND for all the parent groups
  * update curSev[] of all the parent groups
+ * write the severity value to sevrPV channels
  */
     glink = clink->parent;
     while (glink) {
@@ -1151,6 +1158,7 @@ int prevViewCount=0;
         if ( sevrHold != gdata->curSevr ) {
             spawnSevrCommandList(&gdata->sevrCommandList,
                  gdata->curSevr,sevrHold);
+            alCaPutSevrValue(gdata->sevrPVName,gdata->sevrchid,gdata->curSevr);
         }
 
         glink->modified = 1;
@@ -1205,15 +1213,6 @@ int prevViewCount=0;
                 cdata->unackSevr = sev;
                 cdata->unackStat = stat;
                 }
-
-/*
- *   write the severity code to sevrPV channels
-	alSevrPVValueUpdate(clink);
- */
-
-	 alCaPutSevr(clink);
-
-
 
 
 /*

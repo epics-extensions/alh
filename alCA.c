@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.11  1997/10/27 17:27:59  jba
+ Moved write of sevr to sevrPVs and now write only when changed.
+
  Revision 1.10  1996/06/07 16:35:29  jba
  Added global alarm acknowledgement.
 
@@ -535,6 +538,21 @@ CLINK *clink;
                     ca_field_type(gdata->sevrchid));
         }
         glink = glink->parent;
+    }
+}
+
+
+/********************************************************
+       put sevr value to sevrPV 
+********************************************************/
+void  alCaPutSevrValue(char *sevrPVName,chid sevrchid,int sevr)
+{
+    int status;
+
+    if (sevrchid && ca_field_type(sevrchid) != TYPENOTCONN) {
+        status=ca_put(DBR_SHORT,sevrchid,&sevr);
+        if (status!=ECA_NORMAL)
+            al_ca_error_code("alCaPutSevrValue","ca_put",status,sevrPVName);
     }
 }
 
