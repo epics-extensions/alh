@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.9  1997/04/17 18:39:47  jba
+ Bug fix for mask.
+
  Revision 1.8  1997/04/17 18:31:46  jba
  Changed mask from char ro uchar.
 
@@ -552,7 +555,7 @@ static void forcePVMaskChangeCallback(widget, index, cbs)
      int index;
      XmAnyCallbackStruct *cbs;
 {
-     uchar *mask;
+     char *mask;
      Widget maskWidget;
      XmString string;
 
@@ -588,7 +591,7 @@ static void forcePVMaskChangeCallback(widget, index, cbs)
      string = XmStringCreateSimple(mask);
      XtVaSetValues(maskWidget, XmNlabelString, string, NULL);
      XmStringFree(string);
-     XmStringFree(mask);
+     free(mask);
 }
 
 /******************************************************
