@@ -1,143 +1,8 @@
 /*
- $Log$
- Revision 1.13  1998/08/07 22:29:43  jba
- Alh now quits when invalid config file is specified on command line.
-
- Revision 1.12  1998/08/05 18:20:08  jba
- Added silenceOneHour button.
- Moved silenceForever button to Setup menu.
- Added logging for operator silence changes.
-
- Revision 1.11  1997/02/28 23:29:22  jba
- Fixed INCLUDE file bug which caused counts and alarms to be incorrect.
-
- Revision 1.10  1996/09/20 15:06:18  jba
- BEEPSEVERITY bug fix.
-
- Revision 1.9  1996/08/19 13:53:37  jba
- Minor usage and mask printed output changes.
-
- Revision 1.8  1995/11/13 22:31:24  jba
- Added beepseverity command, ansi changes and other changes.
-
- * Revision 1.7  1995/10/20  16:50:23  jba
- * Modified Action menus and Action windows
- * Renamed ALARMCOMMAND to SEVRCOMMAND
- * Added STATCOMMAND facility
- * Added ALIAS facility
- * Added ALARMCOUNTFILTER facility
- * Make a few bug fixes.
- *
- * Revision 1.6  1995/06/01  19:47:06  jba
- * Configuration mode bug fix
- *
- * Revision 1.5  1995/05/31  20:29:55  jba
- * fixed comment
- *
- * Revision 1.4  1995/05/30  15:58:05  jba
- * Added ALARMCOMMAND facility
- *
- * Revision 1.3  1995/02/28  16:43:36  jba
- * ansi c changes
- *
- * Revision 1.2  1994/06/22  21:17:05  jba
- * Added cvs Log keyword
- *
- */
+ $Id$: axArea.c,v $
+*/
 
 static char *sccsId = "@(#)axArea.c	1.14\t12/21/93";
-
-/* axArea.c */
-/*
- *      Author:		Janet Anderson
- *      Date:		05-04-92
- *
- *	Experimental Physics and Industrial Control System (EPICS)
- *
- *	Copyright 1991, the Regents of the University of California,
- *	and the University of Chicago Board of Governors.
- *
- *	This software was produced under  U.S. Government contracts:
- *	(W-7405-ENG-36) at the Los Alamos National Laboratory,
- *	and (W-31-109-ENG-38) at Argonne National Laboratory.
- *
- *	Initial development by:
- *		The Controls and Automation Group (AT-8)
- *		Ground Test Accelerator
- *		Accelerator Technology Division
- *		Los Alamos National Laboratory
- *
- *	Co-developed with
- *		The Controls and Computing Group
- *		Accelerator Systems Division
- *		Advanced Photon Source
- *		Argonne National Laboratory
- *
- *
- * Modification Log:
- * -----------------
- * .01	mm-dd-yy		nnn	Description
- */
-
-/*************************************************************
-	routines defined in axArea.c
-*************************************************************
-*
-*-----------------------------------------------------------------
-*    routines related to the area structure
-*-----------------------------------------------------------------
-*
- -------------
- |  PUBLIC   |
- -------------
-Widget buildPulldownMenu(parent,menu_title, Generic menu creation
-     menu_mnemonic, tearOff, items, user_data)
-     Widget parent;
-     char *menu_title;
-     char menu_mnemonic;
-     int tearOff;
-     MenuItem *items;
-     XtPointer user_data;
-*
-void setupConfig(filename,program, areaOld)    Setup area with new config.file
-     char      *filename;
-     int       program;
-     ALINK     *areaOld;
-*
-void createMainWindowWidgets(area)    Create area Main Window widgets
-     ALINK *area;
-*
-void markActiveWidget(area,newWidget) Mark active widget border
-     ALINK        *area;
-     Widget        newWidget;
-*
-ALINK *setupArea(areaOld)                    Initialize an area 
-     ALINK *areaOld;
-
-*
-int isTreeWindow(area,subWindow)      Returns TRUE if area treeWindow 
-ALINK *area;
-void * subWindow;
-*
-void scale_callback(widget,area,cbs)  Scale moved callback
-     Widget widget;
-     ALINK                 *area;
-     XmScaleCallbackStruct *cbs;
-* 
-void markSelectionArea(area,line)     Set area selection values
-     ALINK *area;
-     struct anyLine  *line;
-*
-void changeBeepSeverityText(area)
-     ALINK *area;
-
- -------------
- |  PRIVATE  |
- -------------
-*
-
-****************************************************************/
-
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -166,6 +31,7 @@ void changeBeepSeverityText(area)
 #include <Xm/ToggleBG.h>
 
 /* global variables */
+extern int toBeConnectedCount;
 extern int DEBUG;
 extern SLIST *areaList;
 extern struct setup psetup;
@@ -174,21 +40,12 @@ extern char *alarmSeverityString[];
 
 ALINK *alhArea;
 
-/* prototypes for static routines */
-#ifdef __STDC__
-
+/* forward definitions */
 static ALINK *setupArea( ALINK *areaOld);
-
-#else
-
-static ALINK *setupArea();
-
-#endif /*__STDC__*/
-
 
 
 /******************************************************
-  buildPulldownMenu
+  buildPulldownMenu - Generic menu creation
 ******************************************************/
 #ifdef __STDC__
 Widget buildPulldownMenu( Widget parent, char *menu_title, char menu_mnemonic,
@@ -280,7 +137,7 @@ Widget buildPulldownMenu(parent, menu_title, menu_mnemonic, tearOff, items, user
 
 
 /***************************************************
-  setupConfig
+  setupConfig -  Setup area with new config.file
 ****************************************************/
 
 void setupConfig(filename, program, areaOld)
@@ -307,10 +164,12 @@ void setupConfig(filename, program, areaOld)
                firstTime = FALSE;
                alCaInit();
           }
+/*
           else  if (programId == ALH ) {
                alCaStop();
                alCaInit();
           }
+*/
      }
 
      /* Log new configfile filename */
@@ -333,10 +192,15 @@ void setupConfig(filename, program, areaOld)
      /* Read the config file  or create a minimal config file  */
      if (filename[0] != '\0'){
           if ( program == ALH) {
+
+               toBeConnectedCount =0;
                alGetConfig(pmainGroup,filename,CA_CONNECT_YES);
 
-               /* pendio and add change connection events */
-               alCaStartEvents((SLIST *)pmainGroup);
+               /* now lets give the connection layer a little time
+                * to establish communications */
+               alCaPend(2.0);
+
+               alSetNotConnected((SLIST *)pmainGroup);
           }
           else alGetConfig(pmainGroup,filename,CA_CONNECT_NO);
 
@@ -431,7 +295,7 @@ void setupConfig(filename, program, areaOld)
 }
 
 /******************************************************
-  markActiveWidget
+  markActiveWidget - Mark active widget border
 ******************************************************/
 
 void markActiveWidget(area,newWidget)
@@ -460,7 +324,7 @@ void markActiveWidget(area,newWidget)
 }
 
 /******************************************************
-  setupArea
+  setupArea - Initialize an area 
 ******************************************************/
 
 static ALINK *setupArea(areaOld)
@@ -496,9 +360,7 @@ static ALINK *setupArea(areaOld)
           
 
           /* cancel channel access */
-/*
           alCaCancel((SLIST *)area->pmainGroup);
-*/
 
           /* Delete the current config */
           if (area->pmainGroup){
@@ -537,7 +399,7 @@ static ALINK *setupArea(areaOld)
 }
 
 /******************************************************
-  createMainWindowWidgets
+  createMainWindowWidgets - Create area Main Window widgets
 ******************************************************/
 
 void createMainWindowWidgets(area)
@@ -799,7 +661,7 @@ void createMainWindowWidgets(area)
 }
 
 /***************************************************
- isTreeWindow
+ isTreeWindow - Returns TRUE if area is a treeWindow 
 ****************************************************/
 
 int isTreeWindow(area,subWindow)
@@ -828,7 +690,7 @@ void unmapArea_callback(main,w,cbs)
 
 }
 /******************************************************
-  scale_callback
+  scale_callback - Scale moved callback
 ******************************************************/
 
 void scale_callback(widget,area,cbs)
@@ -850,7 +712,7 @@ void scale_callback(widget,area,cbs)
 
 
 /***************************************************
-  markSelectionArea
+  markSelectionArea - Set area selection values
 ****************************************************/
 
 void markSelectionArea(area,line)
@@ -1027,4 +889,3 @@ Widget createActionButtons(parent, actions, num_buttons)
 
     return mask_sheet;
 }
-

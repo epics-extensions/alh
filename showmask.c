@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.10  1999/01/13 21:41:43  jba
+ Added CDEV and made Ca changes for adding CDEV.
+
  Revision 1.9  1998/08/05 18:20:12  jba
  Added silenceOneHour button.
  Moved silenceForever button to Setup menu.
@@ -603,14 +606,14 @@ static void forceMaskApplyCallback(Widget widget,XtPointer calldata,XtPointer cb
      XtFree(buff);
      if (linkType == CHANNEL) {
           alOperatorForcePVChanEvent((CLINK *)link,mask);
-          ca_poll();
+          alCaFlushIo();
           alLogForcePVChan((CLINK *)link,OPERATOR);
           cdata = (struct chanData *)pgcData;
           if (programId != ALH) cdata->defaultMask = cdata->curMask;
      }
      if (linkType == GROUP) {
           alChangeGroupMask((GLINK *)link,mask);
-          ca_poll();
+          alCaFlushIo();
           alLogForcePVGroup((GLINK *)link,OPERATOR);
      }
 
@@ -646,14 +649,14 @@ static void forceMaskResetCallback(Widget widget,XtPointer calldata,XtPointer cb
      if (linkType == CHANNEL) {
           cdata = (struct chanData *)link->pgcData;
           alOperatorForcePVChanEvent((CLINK *)link,cdata->defaultMask);
-          ca_poll();
+          alCaFlushIo();
           alLogResetPVChan((CLINK *)link,OPERATOR);
           cdata = (struct chanData *)pgcData;
           if (programId != ALH) cdata->defaultMask = cdata->curMask;
      }
      if (linkType == GROUP) {
           alResetGroupMask((GLINK *)link);
-          ca_poll();
+          alCaFlushIo();
           alLogResetPVGroup((GLINK *)link,OPERATOR);
      }
 

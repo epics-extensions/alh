@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.10  1999/01/13 21:41:42  jba
+ Added CDEV and made Ca changes for adding CDEV.
+
  Revision 1.9  1998/08/05 20:28:25  jba
  Reading config file modified to compare whole word of command
  (GROUP,CHANNEL,$GUIDANCE,...)instead of first letter.
@@ -174,7 +177,7 @@ struct groupData {
 
 /* channel data structure */
 struct chanData {
-        char *name; 		/* channel name */         
+        char *name; 		/* channel name, or device/attribute */
 	char *forcePVName;	/* force PV name */
 	char *sevrPVName;	/* severity PV name */
 	short PVValue;		/* PV value */	
@@ -370,12 +373,8 @@ alLogSetupSaveConfigFile(filename)			Log setup save config file
 
 alCaStart()                             	Start and setup channel access
 alCaCancel()                              	Disconnect channel access
-alCaAddEvent(clink)                 		Add channel access alarm event 
 alCaClearEvent(clink)				Clear channel access alarm event
-void alCaPutSevr(clink)          		Update SevrPVValue
-void alProcessCA()                      	ca_pend_io
 void  alCaSearch(glink)           		Add all channel access searchs
-void  alCaAddEvents(glink)  			Add CA connection events
 static void registerCA(dummy,fd,condition)
 static ClearChannelAccessEvents(glink)          Clear Channel access events
 static void AlarmChangeConnectionEvent(args)    Add alarm not connected event

@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.20  1999/01/13 21:41:42  jba
+ Added CDEV and made Ca changes for adding CDEV.
+
  Revision 1.19  1998/08/05 20:28:28  jba
  Reading config file modified to compare whole word of command
  (GROUP,CHANNEL,$GUIDANCE,...)instead of first letter.
@@ -198,6 +201,12 @@ void initSevrAbove( struct subWindow  *subWindow, void *link);
 void initSevrBelow( struct subWindow  *subWindow, void *link);
 
 /********************************************************************
+  browser.c   function prototypes
+*********************************************************************/
+
+int callBrowser(char *url);
+
+/********************************************************************
   dialog.c   function prototypes
 *********************************************************************/
 
@@ -311,8 +320,8 @@ CLINK *alCreateChannel();
 void alSetMask( char *s4, MASK *mask);
 void alGetMaskString( MASK mask, char *s);
 void alOrMask( MASK *m1,MASK *m2);
-void alNewAlarm( int stat, int sev, char value[MAX_STRING_SIZE], CLINK *clink);
-void alNewEvent(int stat,int sevr,int acks,char value[MAX_STRING_SIZE],CLINK *clink);
+void alNewAlarm( int stat, int sev, char *value, CLINK *clink);
+void alNewEvent(int stat,int sevr,int acks,char *value,CLINK *clink);
 void alHighestSystemSeverity(GLINK * glink);
 int alHighestSeverity( short sevr[ALARM_NSEV]);
 void alAckChan( CLINK *clink);
@@ -334,7 +343,7 @@ int alProcessExists( GCLINK *link);
 
 void alLogAlarm( time_t *ptimeofdayAlarm, struct chanData *cdata, int stat,
      int sev, int h_unackStat, int h_unackSevr);
-void alLogConnection( const char *pvname,const char *ind);
+void alLogConnection(const char *pvname,const char *ind);
 void alLogGblAckChan( struct chanData *cdata);
 void alLogAckChan( struct chanLine *cline);
 void alLogAckGroup( struct groupLine *gline);
@@ -442,24 +451,36 @@ void alOperatorForcePVChanEvent( CLINK *clink, MASK pvMask);
   alCA.c   function prototypes
 *********************************************************************/
 
-void alFdmgrInit(Display *display);
+void alCaPend(double sec);
+short alCaIsConnected(chid chid);
+void alCaFlushIo(void);
 void alCaInit(void);
+void alCaPoll(void);
 void alCaStop(void);
+void alCaConnectChannel(char *name,chid *pchid,void *puser);
+void alCaConnectForcePV(char *name,chid *pchid,void *puser);
+void alCaConnectSevrPV(char *name,chid *pchid,void *puser);
+void alCaClearChannel(chid *pchid);
+void alCaClearEvent(evid *pevid);
+void alCaAddEvent(chid chid,evid *pevid,void *clink);
+void alCaAddForcePVEvent(chid chid,void *link,evid *pevid,int type);
+void alCaPutGblAck(chid chid,short *psevr);
+void alCaPutSevrValue(chid chid,short *psevr);
+
+
+/********************************************************************
+  alTest.c   function prototypes
+*********************************************************************/
 void alCaStart(SLIST *proot);
-void alCaStartEvents(SLIST *proot);
-void alCaCancel(SLIST *proot);
-void alCaAddEvent( CLINK *clink);
-void alCaClearEvent( CLINK *clink);
-void  alCaPutSevr( CLINK *clink);
-void  alCaSearch( SLIST *proot);
-void alCaSearchName( char *name, chid *pchid);
-void ClearChannelAccessEvents( SLIST *proot);
-void ClearChannelAccessChids( SLIST *proot);
-void  alCaAddEvents( SLIST *proot);
 void alReplaceGroupForceEvent( GLINK *glink, char *str);
 void alReplaceChanForceEvent( CLINK *clink, char *str);
-void alCaPutGblAck(CLINK *clink);
-void alCaPutSevrValue(char *sevrPVName,chid sevrchid,int sevr);
+void alCaSearch( SLIST *proot);
+void alCaCancel(SLIST *proot);
+void registerCA(void *dummy, int fd, int opened);
+void alUpdateAreas();
+void alGroupForceEvent(GLINK *glink,short value);
+void alChannelForceEvent(CLINK *clink,short value);
+void alSetNotConnected(SLIST *proot);
 
 /********************************************************************
   alConfig.c   function prototypes
@@ -486,8 +507,7 @@ void getStringStatCommandList(ELLLIST *pList,char **pstr);
 
 void fileViewWindow( Widget w, int option, Widget menuButton);
 void updateLog( int fileIndex, char *string);
-void updateAlarmLog(int fileIndex, char *string);
-
+void updateAlarmLog( int fileIndex, char *string);
 
 /********************************************************************
   testalarm.c   function prototypes
@@ -538,12 +558,6 @@ void propUpdateDialog(ALINK *area);
 void propShowDialog(ALINK *area, Widget widget);
 void propUndo(void *area);
  
-/********************************************************************
-  browser.c   function prototypes
-*********************************************************************/
-
-int callBrowser(char *url);
-
 #else
 
 /********************************************************************
@@ -609,6 +623,11 @@ void exposeResizeCallback();
 void defaultTreeSelection();
 void initSevrAbove();
 void initSevrBelow();
+
+/********************************************************************
+  browser.c   function prototypes
+*********************************************************************/
+int callBrowser();
 
 /********************************************************************
   dialog.c   function prototypes
@@ -827,24 +846,35 @@ void alOperatorForcePVChanEvent();
   alCA.c   function prototypes
 *********************************************************************/
 
-void alFdmgrInit();
+void alCaPend();
+short alCaIsConnected();
+void alCaFlushIo();
 void alCaInit();
+void alCaPoll();
 void alCaStop();
-void alCaStart();
-void alCaStartEvents();
-void alCaCancel();
-void alCaAddEvent();
+void alCaConnectChannel();
+void alCaConnectForcePV();
+void alCaConnectSevrPV();
+void alCaClearChannel();
 void alCaClearEvent();
-void alCaPutSevr();
-void alCaSearch();
-void alCaSearchName();
-void ClearChannelAccessEvents();
-void ClearChannelAccessChids();
-void alCaAddEvents();
+void alCaAddEvent();
+void alCaAddForcePVEvent();
+void alCaPutGblAck();
+void alCaPutSevrValue();
+
+/********************************************************************
+  alTest.c   function prototypes
+*********************************************************************/
+void alCaStart();
 void alReplaceGroupForceEvent();
 void alReplaceChanForceEvent();
-void alProcessCA();         /* process CA events */
-void alCaPutGblAck();
+void alCaSearch();
+void alCaCancel();
+void registerCA();
+void alUpdateAreas();
+void alGroupForceEvent();
+void alChannelForceEvent();
+void alSetNotConnected();
 
 /********************************************************************
   alConfig.c   function prototypes
@@ -912,6 +942,12 @@ void alCaAddressInfo();
 void printConfig();
  
 /********************************************************************
+  printer.c   function prototypes
+*********************************************************************/
+
+void write2printer();
+
+/********************************************************************
   property.c   function prototypes
 *********************************************************************/
 
@@ -919,12 +955,6 @@ void propUpdateDialog();
 void propShowDialog();
 void propUndo();
  
-/********************************************************************
-  browser.c   function prototypes
-*********************************************************************/
-
-int callBrowser();
-
 #endif /*__STDC__*/
 
 #endif

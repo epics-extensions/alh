@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.23  1999/01/13 21:41:41  jba
+ Added CDEV and made Ca changes for adding CDEV.
+
  Revision 1.22  1998/08/05 20:28:24  jba
  Reading config file modified to compare whole word of command
  (GROUP,CHANNEL,$GUIDANCE,...)instead of first letter.
@@ -145,13 +148,12 @@ extern struct setup psetup;
 static void alarmCountFilter_callback(XtPointer cd, XtIntervalId *id);
 
 /* external routines
-extern   alCaAddEvent();
 extern void updateLog();
 extern processSpawn_callback();
 */
 
 #ifdef __STDC__
-     static void alNewAlarmProcess(int stat,int sev,char value[],
+     static void alNewAlarmProcess(int stat,int sev,char *value,
      CLINK *clink,time_t timeofday);
 #else
      static void alNewAlarmProcess();
@@ -991,25 +993,24 @@ static void alarmCountFilter_callback(XtPointer cd, XtIntervalId *id)
 
 void alNewEvent(stat,sevr,acks,value,clink)
      int stat,sevr,acks;
-     char value[MAX_STRING_SIZE];	
+     char *value;	
      CLINK *clink;
 {
-     struct chanData *cdata;
-     COUNTFILTER *countFilter;
-
-     cdata = clink->pchanData;
-     countFilter = cdata->countFilter;
-     if ((!countFilter && (cdata->curStat != stat || cdata->curSevr != sevr)) ||
-        (countFilter && (countFilter->stat != stat || countFilter->sev != sevr)) )
-     {
-          alNewAlarm(stat,sevr,value,clink);
-     } 
-     else
-     if (cdata->unackSevr > 0)
-     {
-          alLogGblAckChan(cdata);
-          alAckChan(clink);
-     }
+  struct chanData *cdata;
+  COUNTFILTER *countFilter;
+  
+  cdata = clink->pchanData;
+  countFilter = cdata->countFilter;
+  if ((!countFilter && (cdata->curStat != stat || cdata->curSevr != sevr)) ||
+      (countFilter && (countFilter->stat != stat || countFilter->sev != sevr)))
+  {
+    alNewAlarm(stat,sevr,value,clink);
+  } 
+  else if (cdata->unackSevr > 0)
+  {
+    alLogGblAckChan(cdata);
+    alAckChan(clink);
+  }
 }
 
 /*********************************************************** 
@@ -1017,7 +1018,7 @@ void alNewEvent(stat,sevr,acks,value,clink)
 ************************************************************/
 void alNewAlarm(stat,sev,value,clink)
      int stat,sev;
-     char value[MAX_STRING_SIZE];	
+     char *value;	
      CLINK *clink;
 {
      struct chanData *cdata;
@@ -1083,7 +1084,7 @@ void alNewAlarm(stat,sev,value,clink)
 ************************************************************/
 static void alNewAlarmProcess(stat,sev,value,clink,timeofday)
 int stat,sev;
-char value[MAX_STRING_SIZE];	
+char *value;	
 CLINK *clink;
 time_t timeofday;
 {
@@ -1108,7 +1109,7 @@ int prevViewCount=0;
 
         cdata->curStat = stat;
         cdata->curSevr = sev;
-	strcpy(cdata->value,value);
+	strncpy(cdata->value,value,MAX_STRING_SIZE-1);
 
         viewCount = awViewViewCount((void *)clink);
         clink->viewCount = viewCount;
@@ -1153,7 +1154,7 @@ int prevViewCount=0;
 
        if ( sev != sevr_prev ) {
         spawnSevrCommandList(&cdata->sevrCommandList,sev,sevr_prev);
-        alCaPutSevrValue(cdata->sevrPVName,cdata->sevrchid,sev);
+        if (cdata->sevrchid) alCaPutSevrValue(cdata->sevrchid,&cdata->curSevr);
        } 
 
 /*
@@ -1180,7 +1181,7 @@ int prevViewCount=0;
         if ( sevrHold != gdata->curSevr ) {
             spawnSevrCommandList(&gdata->sevrCommandList,
                  gdata->curSevr,sevrHold);
-            alCaPutSevrValue(gdata->sevrPVName,gdata->sevrchid,gdata->curSevr);
+            if (gdata->sevrchid) alCaPutSevrValue(gdata->sevrchid,&gdata->curSevr);
         }
 
         glink->modified = 1;
@@ -1387,7 +1388,7 @@ SNODE *pt;
                 clink = (CLINK *)pt;
                 cdata = clink->pchanData;
                 if (cdata->unackSevr > 0) {
-                     alCaPutGblAck(clink);
+                     alCaPutGblAck(cdata->chid,&cdata->unackSevr);
                      alAckChan(clink);
                 }
                 pt = sllNext(pt);
@@ -1576,8 +1577,7 @@ void alChangeChanMask(clink,mask)
 
 	if (mask.Cancel == 1 ) {
 
-	    if (cdata->evid) 
-		alCaClearEvent(clink);
+	    if (cdata->evid) alCaClearEvent(&cdata->evid);
 	    
 
 	    if (cdata->curMask.Disable  == 0) {
@@ -1615,7 +1615,7 @@ void alChangeChanMask(clink,mask)
 
 	if (mask.Cancel == 0)
 	    if (cdata->evid == NULL) 
-		  alCaAddEvent(clink);
+		alCaAddEvent(cdata->chid,&cdata->evid,clink);
 
   }
 

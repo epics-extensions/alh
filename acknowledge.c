@@ -1,50 +1,5 @@
 /*
- $Log$
- Revision 1.4  1998/06/22 18:42:11  jba
- Merged the new alh-options created at DESY MKS group:
-  -D Disable Writing, -S Passive Mode, -T AlarmLogDated, -P Printing
-
- Revision 1.3  1996/06/07 15:43:47  jba
- Added global alarm acknowledgement.
-
- * Revision 1.2  1994/06/22  21:16:20  jba
- * Added cvs Log keyword
- *
- */
-
- /*  @(#)acknowledge.c  */
-static char *sccsId = "@(#)acknowledge.c	1.4\t9/9/93";
-
- /* share/src/alh        @(#)acknowledge.c	1.4     9/9/93 
- *      Author: Ben-chin Cha
- *      Date:   12-20-90
- *
- *      Experimental Physics and Industrial Control System (EPICS)
- *
- *      Copyright 1991, the Regents of the University of California,
- *      and the University of Chicago Board of Governors.
- *
- *      This software was produced under  U.S. Government contracts:
- *      (W-7405-ENG-36) at the Los Alamos National Laboratory,
- *      and (W-31-109-ENG-38) at Argonne National Laboratory.
- *
- *      Initial development by:
- *              The Controls and Automation Group (AT-8)
- *              Ground Test Accelerator
- *              Accelerator Technology Division
- *              Los Alamos National Laboratory
- *
- *      Co-developed with
- *              The Controls and Computing Group
- *              Accelerator Systems Division
- *              Advanced Photon Source
- *              Argonne National Laboratory
- *
- * Modification Log:
- * -----------------
- * .01  02-16-93        jba     Reorganized files for new user interface
- * .nn  mm-dd-yy        iii     Comment
- *      ...
+ $Id$
  */
 
 #include <stdio.h>
@@ -59,32 +14,9 @@ extern int _passive_flag; /* Passive flag. Albert */
 
 /*
 ******************************************************************
-	routines defined in acknowledge.c
-*******************************************************************
-	acknowledge.c 
+*   acknowledge.c 
 *
 *	This file contains routines for alarm acknowledgement
-*
-******************************************************************
--------------
-|  PUBLIC   |
--------------
-*
-void ack_callback(widget,line,cbs)      Line acknowledge callback
-     Widget widget;
-     struct anyLine  *line;
-     XmAnyCallbackStruct *cbs;
--------------
-|  PRIVATE  |
--------------
-*
-static void 
-ackChan(cline)				Channel acknowledge callback
- 	struct chanLine *cline;
-*
-static void 
-ackGroup(gline)				Group acknowledge callback
-  	struct groupLine *gline;
 *
 ******************************************************************
 */
@@ -103,7 +35,7 @@ static void ackChan(cline)
   cdata = clink->pchanData;
   if ( cdata->unackSevr == 0) return;
   alLogAckChan(cline);
-  alCaPutGblAck(clink);
+  alCaPutGblAck(cdata->chid,&cdata->unackSevr);
   alAckChan(clink);
   clink->pmainGroup->modified = 1;
 }

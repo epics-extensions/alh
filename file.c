@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.22  1999/01/13 21:41:43  jba
+ Added CDEV and made Ca changes for adding CDEV.
+
  Revision 1.21  1998/09/01 20:26:03  jba
  Removed unused variables.
 
@@ -223,7 +226,10 @@ void exit_quit(w, area, call_data)
      if (proot) {
 
           /* cancel all the channel access requests */
-          if (programId==ALH) alCaStop();
+          if (programId==ALH) {
+               alCaCancel((SLIST *)proot);
+               alCaStop();
+          }
 
           /* delete all the subgroups of proot & free proot */
           alDeleteGroup(proot);

@@ -1,75 +1,110 @@
-
 #
 # $Id$
 #
+
 TOP = ../../..
 include $(TOP)/config/CONFIG_EXTENSIONS
 
-I_WANT_GREETINGS    = NO
-
-USR_CFLAGS += -I$(MOTIF_INC) -I$(X11_INC)
-alCa_CFLAGS += -DACCESS_SECURITY
-awAlh_CFLAGS += -DALH_HELP_URL="\"http://www.aps.anl.gov/asd/controls/epics/EpicsDocumentation/ExtensionsManuals/AlarmHandler/alh.html\""
-
+I_WANT_CDEV             = NO
+I_WANT_GREETINGS        = NO
+ 
 ifeq ($(I_WANT_GREETINGS),YES)
 alh_CFLAGS += -DIWantGreetings
 alh_SRCS += productDescriptionShell.c
 endif
 
+ifeq ($(DEBUG), YES)
+  USR_CCFLAGS   += -DDEBUG
+endif
+ 
+ifeq ($(I_WANT_CDEV),YES)
+ 
+  CDEV_LIB      = $(CDEVLIB)
+  CDEV_INC      = $(CDEVINCLUDE)
+ 
+  USR_CCFLAGS      += -g
+  USR_CCFLAGS      += -D__STDC__
+  USR_CCFLAGS      += -I$(CDEV_INC)
+ 
+  USR_LDFLAGS      += -Wl,-E
+ 
+  PROD_LIBS_DEFAULT += -lcdev
+  cdev_DIR = $(CDEV_LIB)
+
+ifeq ($(ANSI), GCC)
+  PROD_LIBS_DEFAULT += EpicsCa ca
+  EpicsCa_DIR = $(CDEV_LIB)
+endif
+  SYS_PROD_LIBS_DEFAULT += y l
+ 
+  alh_SRCS         += alCaCdev.cc
+else
+  PROD_LIBS_DEFAULT += ca
+ 
+  alh_SRCS         += alCA.c
+endif
+ 
+USR_CFLAGS += -I$(MOTIF_INC) -I$(X11_INC)
+# baseR3.13.0.beta12 and later
+awAlh_CFLAGS += -DALH_HELP_URL="\"http://www.aps.anl.gov/asd/controls/epics/EpicsDocumentation/ExtensionsManuals/AlarmHandler/alh.html\""
+
 # Debugging options
 #CC = purify -first-only -chain-length=25  $($(ANSI)_$(CMPLR))
 #HOST_OPT=NO
 
-alh_SRCS +=  acknowledge.c  \
-		alCA.c \
-		alConfig.c \
-		alDebug.c \
-		alFilter.c \
-		alInitialize.c \
-		alLib.c \
-		alLog.c \
-		alView.c  \
-		alh.c \
-		awAct.c \
-		awAlh.c \
-		awEdit.c \
-		awView.c \
-		axArea.c \
-		axRunW.c \
-		axSubW.c \
-		browser.c \
-		clipboardOps.c \
-		current.c \
-		dialog.c \
-		file.c \
-		force.c \
-		guidance.c \
-		help.c \
-		line.c \
-		mask.c \
-		process.c \
-		property.c \
-		scroll.c \
-		showmask.c \
-		sllLib.c \
-		testalarm.c
+alh_SRCS += acknowledge.c
+alh_SRCS += alCaCommon.c
+alh_SRCS += alConfig.c
+alh_SRCS += alDebug.c
+alh_SRCS += alFilter.c
+alh_SRCS += alInitialize.c
+alh_SRCS += alLib.c
+alh_SRCS += alLog.c
+alh_SRCS += alView.c
+alh_SRCS += alh.c
+alh_SRCS += awAct.c
+alh_SRCS += awAlh.c
+alh_SRCS += awEdit.c
+alh_SRCS += awView.c
+alh_SRCS += axArea.c
+alh_SRCS += axRunW.c
+alh_SRCS += axSubW.c
+alh_SRCS += browser.cc
+alh_SRCS += clipboardOps.c
+alh_SRCS += current.c
+alh_SRCS += dialog.c
+alh_SRCS += file.c
+alh_SRCS += force.c
+alh_SRCS += guidance.c
+alh_SRCS += help.c
+alh_SRCS += line.c
+alh_SRCS += mask.c
+alh_SRCS += process.c
+alh_SRCS += property.c
+alh_SRCS += scroll.c
+alh_SRCS += showmask.c
+alh_SRCS += sllLib.c
+alh_SRCS += testalarm.c
 
 alh_printer_SRCS = printer.c
 
-PROD = alh alh_printer
+PROD_DEFAULT = alh alh_printer
+PROD_WIN32 = alh
 
 USR_CFLAGS_WIN32 += /DWIN32 /D_WINDOWS
 USR_LDFLAGS_WIN32 += /SUBSYSTEM:WINDOWS
 
-PROD_LIBS += ca Com
+PROD_LIBS_DEFAULT += Com
 USR_LIBS_DEFAULT = Xmu Xm Xt X11
+USR_LIBS_Linux +=  Xmu Xm Xt X11 Xp
 
 ifeq ($(EXCEED),Exceed5)
-USR_LIBS_WIN32 = XmStatic Xt XlibGUI Xlib
+USR_LIBS_WIN32 += XmStatic Xt XlibGUI Xlib
 else
-USR_LIBS_WIN32 = XmStatic HCLXt XlibGUI Xlib
+USR_LIBS_WIN32 += XmStatic HCLXt XlibGUI Xlib
 endif
 
+Xp_DIR = $(MOTIF_LIB)
 Xmu_DIR = $(MOTIF_LIB)
 Xm_DIR = $(MOTIF_LIB)
 Xt_DIR = $(X11_LIB)
@@ -79,8 +114,10 @@ XmStatic_DIR = $(MOTIF_LIB)
 HCLXt_DIR = $(X11_LIB)
 Xlib_DIR = $(X11_LIB)
 
+
 RCS_WIN32 += alh.rc
-alh.res:../alh.ico
 
 include $(TOP)/config/RULES.Host
+
+alh.res:../alh.ico
 
