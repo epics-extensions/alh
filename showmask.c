@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.6  1997/04/17 18:17:58  jba
+ Added calls to free for allocated memory.
+
  Revision 1.5  1996/12/03 22:04:37  jba
  Changed unused Help ActionItem data to NULL.
 
@@ -542,6 +545,7 @@ static void forceMaskChangeCallback(widget, index, cbs)
      string = XmStringCreateSimple(mask);
      XtVaSetValues(maskWidget, XmNlabelString, string, NULL);
      XmStringFree(string);
+     XtFree(mask);
 }
 
 /******************************************************
@@ -600,6 +604,7 @@ static void forceMaskApplyCallback(widget, forceMaskWindow, cbs)
      XmStringGetLtoR(string,XmFONTLIST_DEFAULT_TAG,&buff);
      XmStringFree(string);
      alSetMask(buff,&mask);
+     XtFree(buff);
      if (linkType == CHANNEL) {
           alOperatorForcePVChanEvent((CLINK *)link,mask);
           alProcessCA();
