@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.17  1998/07/16 18:30:56  jba
+ not error to start alh with no filename on command line.
+
  Revision 1.16  1998/06/22 18:42:14  jba
  Merged the new alh-options created at DESY MKS group:
   -D Disable Writing, -S Passive Mode, -T AlarmLogDated, -P Printing
@@ -132,7 +135,7 @@ extern int alarmLogFileEndStringLength; /* alarm log file end data string len*/
 extern FILE *fl;		/* alarm log pointer */
 extern FILE *fo;		/* opmod log pointer */
 
-struct command_line_stuff
+struct command_line_data
 {
 	char* configDir;
 	char* logDir;
@@ -141,11 +144,11 @@ struct command_line_stuff
 	char* opModFile;
 	int alarmLogFileMaxRecords;
 };
-static struct command_line_stuff commandLine = { NULL,NULL,NULL,NULL,NULL,0};
+static struct command_line_data commandLine = { NULL,NULL,NULL,NULL,NULL,0};
 
 #define PARM_DEBUG			0
 #define PARM_ACT			1
-#define PARM_ALL_FILES_DIR			2
+#define PARM_ALL_FILES_DIR		2
 #define PARM_LOG_DIR			3
 #define PARM_ALARM_LOG_FILE		4
 #define PARM_OPMOD_LOG_FILE		5
@@ -156,15 +159,14 @@ static struct command_line_stuff commandLine = { NULL,NULL,NULL,NULL,NULL,0};
 #define PARM_READONLY			10
 #define PARM_HELP			11
 
-struct parm_stuff
+struct parm_data
 {
 	char* parm;
 	int len;
 	int id;
 };
-typedef struct parm_stuff PARM_STUFF;
 
-static PARM_STUFF ptable[] = {
+static struct parm_data ptable[] = {
 	{ "-v",		2,	PARM_DEBUG },
 	{ "-c",		2,	PARM_ACT },
 	{ "-f",		2,	PARM_ALL_FILES_DIR },
@@ -342,7 +344,7 @@ void fileSetupCallback(widget, client_data, cbs)
      if (area) pgm = area->programId;
      else pgm = programId;
      fileSetup(filename,area,client_data,pgm,widget);
-     /* XtFree(filename); */
+     XtFree(filename);
 
 }
 
@@ -387,12 +389,13 @@ void fileSetup(filename,area,fileType,programId, widget)
                case FILE_CONFIG_INSERT:
                     pattern = CONFIG_PATTERN;
                     dir = psetup.configDir;
-                    if (programId == ALH) 
+                    if (programId == ALH) {
                          strcpy(fileTypeString,"Alarm Handler: Alarm Configuration File");
-                    else
+                    } else {
                          /* not error to start act with no filename */
                          if ( filename[0] == '\0' && fileType == FILE_CONFIG ) error = 0;
                          strcpy(fileTypeString,"Alarm Configuration Tool: Alarm Configuration File");
+                    }
                     break;
 
                case FILE_OPMOD:
@@ -455,6 +458,8 @@ void fileSetup(filename,area,fileType,programId, widget)
 
                case 4: 
                     createDialog(fileSelectionBox,XmDIALOG_ERROR,filename," write error.");
+                    break;
+               default: 
                     break;
           }
      } else {
@@ -803,7 +808,7 @@ void fileSetupInit( widget, argc, argv)
      if (commandLine.logFile) {
           strncpy(logFile,commandLine.logFile,NAMEDEFAULT_SIZE-1);
      } else {
-          strcpy(logFile,DEFAULT_OPMOD);
+          strcpy(logFile,DEFAULT_ALARM);
      }
      name = logFile;
      if ( name[0] == '/' || (name[0] == '.' && name[1] == '.') ||
@@ -818,13 +823,13 @@ void fileSetupInit( widget, argc, argv)
 
      /* ----- initialize and setup config file ----- */
      if (psetup.configDir) {
-          strncpy(psetup.configFile,psetup.configDir,NAMEDEFAULT_SIZE);
+          strncpy(psetup.configFile,psetup.configDir,NAMEDEFAULT_SIZE-1);
           strcat(psetup.configFile,"/");
      }
      if (commandLine.configFile) {
           strncpy(configFile,commandLine.configFile,NAMEDEFAULT_SIZE-1);
      } else {
-          strcpy(configFile,"");
+          strcpy(configFile,DEFAULT_CONFIG);
      }
      name = configFile;
      if ( name[0] == '/' || (name[0] == '.' && name[1] == '.') ||
