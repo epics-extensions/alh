@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.6  1998/07/23 16:22:31  jba
+ Added code to free memory when finished with it.
+
  Revision 1.5  1998/05/12 18:22:49  evans
  Initial changes for WIN32.
 
@@ -242,7 +245,8 @@ XmString xs_str_array_to_xmstr(cs,n)
 char *cs[];
 int n;
 {
-XmString xmstr;
+XmString xmstr,xmsep, xmstr1,xmstr2 ;
+XmString str;
 int i;
 /*
  * if the array is empty just return an empty string.
@@ -251,13 +255,19 @@ if (n <= 0)
 	return(XmStringCreate("",XmSTRING_DEFAULT_CHARSET));
 
 xmstr = (XmString) NULL;
+xmsep =  XmStringSeparatorCreate();
 
 for (i=0;i<n;i++) {
-	if (i > 0)
-		xmstr = XmStringConcat(xmstr, XmStringSeparatorCreate());
-	xmstr = XmStringConcat(xmstr,
-			XmStringCreate(cs[i],XmSTRING_DEFAULT_CHARSET));
-	}
+	xmstr1=xmstr;
+	if (i > 0) xmstr = XmStringConcat(xmstr1,xmsep);
+	XmStringFree(xmstr1);
+	xmstr1 = xmstr;
+	xmstr2 = XmStringCreate(cs[i],XmSTRING_DEFAULT_CHARSET);
+	xmstr = XmStringConcat(xmstr1,xmstr2);
+	XmStringFree(xmstr1);
+	XmStringFree(xmstr2);
+}
+	XmStringFree(xmsep);
 	return (xmstr);
 }
 
@@ -300,6 +310,7 @@ void *call_data;
 	XtSetArg(wargs[n], XmNautoUnmanage, FALSE); n++;
 	XtSetArg(wargs[n], XmNallowShellResize, FALSE); n++;
 	dialog = XmCreateMessageDialog(w, "Help", wargs, n);
+	free(buff);
 /*
  * We won't use the cancel widget. Unmanage it.
  */
