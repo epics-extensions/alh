@@ -1,8 +1,0 @@
-.DEPENDS
-ALH-default.alhAlarm
-ALH-default.alhConfig
-ALH-default.alhOpmod
-alh
-core
-*.alhConfig
-z*
