@@ -291,3 +291,8 @@ Tue Nov  2 14:10:45 CST 1999
 
 Fri Nov 12 16:27:37 CST 1999
 	Don't set unack global sevr from alarm events if curMask.Ack==true
+
+Mon Apr 24 09:40:43 CDT 2000 -  V1.2.4
+	Simplified alHighestSystemSeverity calculation.
+	Added new alarm event error checking.
+
