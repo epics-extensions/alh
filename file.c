@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.12  1998/05/13 19:29:49  evans
+ More WIN32 changes.
+
  Revision 1.11  1998/05/12 18:22:48  evans
  Initial changes for WIN32.
 
@@ -95,10 +98,6 @@ static char *sccsId = "@(#)file.c	1.14\t2/3/94";
 
 extern int DEBUG;
 
-extern int getopt();
-extern char *optarg; /* needed for getopt() */
-extern int optind;   /* needed for getopt() */
-
 extern int alarmLogFileMaxRecords;  /* alarm log file maximum # records */
 extern int alarmLogFileOffsetBytes; /* alarm log file current offset in bytes */
 extern char alarmLogFileEndString[]; /* alarm log file end of data string */
@@ -112,68 +111,49 @@ extern FILE *fo;		/* opmod log pointer */
 #define FDMGR_USEC_TIMEOUT  0
 extern fdctx *pfdctx;
 
-#ifdef __STDC__
+struct command_line_stuff
+{
+	char* configDir;
+	char* logDir;
+	char* configFile;
+	char* logFile;
+	char* opModFile;
+	int alarmLogFileMaxRecords;
+};
+static struct command_line_stuff commandLine = { NULL,NULL,NULL,NULL,NULL,0};
+
+#define PARM_DEBUG			0
+#define PARM_ACT			1
+#define PARM_ALL_FILES_DIR			2
+#define PARM_LOG_DIR			3
+#define PARM_ALARM_LOG_FILE		4
+#define PARM_OPMOD_LOG_FILE		5
+#define PARM_ALARM_LOG_MAX		6
+#define PARM_HELP			7
+
+struct parm_stuff
+{
+	char* parm;
+	int len;
+	int id;
+};
+typedef struct parm_stuff PARM_STUFF;
+
+static PARM_STUFF ptable[] = {
+	{ "-v",		2,	PARM_DEBUG },
+	{ "-c",		2,	PARM_ACT },
+	{ "-f",		2,	PARM_ALL_FILES_DIR },
+	{ "-l",		2,	PARM_LOG_DIR },
+	{ "-a",		2,	PARM_ALARM_LOG_FILE },
+	{ "-o",		2,	PARM_OPMOD_LOG_FILE },
+	{ "-m",		2,	PARM_ALARM_LOG_MAX },
+	{ "-help",	5,	PARM_HELP },
+        { NULL,		-1,     -1 }
+};
+
 void saveConfigFile_callback(Widget widget,char *filename,XmAnyCallbackStruct *cbs);
-#else
-void saveConfigFile_callback();
-#endif
+void printUsage(char *);
 
-/*******************************************************************
-  Routines defined in file.c
-
-  Routine for file handling and alh exit
-
-******************************************************************
--------------
-|   PUBLIC  |
--------------
-*
-void exit_quit(w, flag, call_data)                Exit & quit ALH callback
-  Widget          w;
-  int             flag;
-  XmAnyCallbackStruct *call_data;
-*
-void fileSetupCallback(widget, client_data, cbs)  New file,any type, handling
-     Widget widget;
-     int    client_data;
-     XmFileSelectionBoxCallbackStruct *cbs;
-*
-void fileCancelCallback(widget, client_data, cbs)
-     Widget widget;
-     int    client_data;
-     XmFileSelectionBoxCallbackStruct *cbs;
-*
-void fileSetup(filename,area,fileType,programId, widget)
-     char *filename;
-     ALINK *area;
-     int    fileType;
-     int    programId;
-     Widget widget;
-*
-void fileSetupInit( widget, argc, argv)
-     Widget widget;
-     int argc;
-     char *argv[];
-*
---------------
-|   PRIVATE  |
---------------
-char *shortfile(name)                             Cut away the path from file name
-     char *name;
-*
-int checkFilename(filename,fileType)              Check filename for validity
-     char      *filename;
-     int        fileType;
-*
-void saveConfigFile_callback(widget,filename,cbs) Save config file 
-     Widget widget;
-     char                 *filename;
-     XmAnyCallbackStruct *cbs;
-*
-*
-
-********************************************************************************/
- 
 
 /***************************************************
  exit and quit application
@@ -516,6 +496,141 @@ void saveConfigFile_callback(widget,filename,cbs)
      createFileDialog(0,0,0,0,0,0,0,0,0);
 }
 
+/******************************************************
+  getCommandLineParms
+******************************************************/
+
+int getCommandLineParms(int argc, char** argv)
+{
+	int i,j;
+	int finished=0;
+	int parm_error=0;
+
+	for(i=1;i<argc && !parm_error;i++)
+	{
+		for(j=0;!finished && !parm_error && ptable[j].parm;j++)
+		{
+			if(strncmp(ptable[j].parm,argv[i],ptable[j].len)==0)
+			{
+				switch(ptable[j].id)
+				{
+
+				case PARM_DEBUG:
+					DEBUG = TRUE;
+					finished=1;
+					break;
+				case PARM_HELP:
+					printUsage(argv[0]);
+					finished=1;
+					break;
+				case PARM_ACT:
+					strcpy(programName,"act");
+					programId = ACT;
+					finished=1;
+					break;
+				case PARM_ALL_FILES_DIR:
+					if(++i>=argc) parm_error=1;
+					else
+					{
+						if(argv[i][0]=='-') parm_error=1;
+						else
+						{
+							commandLine.configDir=argv[i];
+							if (!commandLine.logDir)
+								commandLine.logDir=argv[i];
+							finished=1;
+						}
+					}
+					break;
+				case PARM_LOG_DIR:
+					if(++i>=argc) parm_error=1;
+					else
+					{
+						if(argv[i][0]=='-') parm_error=1;
+						else
+						{
+							commandLine.logDir=argv[i];
+							finished=1;
+						}
+					}
+					break;
+				case PARM_ALARM_LOG_FILE:
+					if(++i>=argc) parm_error=1;
+					else
+					{
+						if(argv[i][0]=='-') parm_error=1;
+						else
+						{
+							commandLine.logFile=argv[i];
+							finished=1;
+						}
+					}
+					break;
+				case PARM_OPMOD_LOG_FILE:
+					if(++i>=argc) parm_error=1;
+					else
+					{
+						if(argv[i][0]=='-') parm_error=1;
+						else
+						{
+							commandLine.opModFile=argv[i];
+							finished=1;
+						}
+					}
+					break;
+				case PARM_ALARM_LOG_MAX:
+					if(++i>=argc) parm_error=1;
+					else
+					{
+						if(argv[i][0]=='-') parm_error=1;
+						else
+						{
+							sscanf(argv[i],"%u",&commandLine.alarmLogFileMaxRecords);
+							finished=1;
+						}
+					}
+					break;
+				default:
+					parm_error=1;
+					break;
+				}
+			}else {
+		        commandLine.configFile=argv[i];
+			finished=1;
+			}
+		}
+		finished=1;
+		if(ptable[j].parm==NULL) parm_error=1;
+	}
+
+	if(parm_error)
+        {
+		printUsage(argv[0]);
+		return 1;
+	}
+	return 0;
+}
+
+
+/******************************************************
+  printUsage
+******************************************************/
+
+void printUsage(char *pgm)
+{
+          fprintf(stderr,
+          "\nusage: %s [-c] [-f filedir] [-l logdir] [-a alarmlogfile] [-o opmodlogfile] [-m alarmlogmaxrecords [Xoptions] [configfile] \n",
+               pgm);
+          fprintf(stderr,"\n\tconfigfile\tAlarm configuration filename\n");
+          fprintf(stderr,"\n\t-c\t\tAlarm Configuration Tool mode\n");
+          fprintf(stderr,"\n\t-f filedir\tDirectory for all files\n");
+          fprintf(stderr,"\n\t-l logdir\tDirectory for log files\n");
+          fprintf(stderr,"\n\t-a alarmlogfile\tAlarm log filename\n");
+          fprintf(stderr,"\n\t-o opmodlogfile\tOpMod log filename\n");
+          fprintf(stderr,"\n\t-m maxrecords\talarm log file max records (default 2000)\n");
+          exit(1);
+}
+
 
 /******************************************************
   fileSetupInit
@@ -535,117 +650,37 @@ void fileSetupInit( widget, argc, argv)
      static struct timeval timeout = {
           FDMGR_SEC_TIMEOUT, FDMGR_USEC_TIMEOUT};
 
-     strcpy(configFile,"");
-     strcpy(logFile,DEFAULT_ALARM);
-     strcpy(opModFile,DEFAULT_OPMOD);
-
      programId = ALH;
      programName = (char *)calloc(1,4);
      strcpy(programName,"alh");
  
-     /* set config file directory using environment variable ALARMHANDLER */
-     psetup.configDir = (char *)getenv("ALARMHANDLER");
-#ifdef WIN32
-     if (psetup.configDir){
-          createDialog(widget,XmDIALOG_WARNING,psetup.configDir,
-               ": ALARMHANDLER directory not found");
-     }
-#else     
-     if (psetup.configDir && !opendir(psetup.configDir)){
-          createDialog(widget,XmDIALOG_WARNING,psetup.configDir,
-               ": ALARMHANDLER directory not found");
-     }
-#endif     
-
      /* get optional command line parameters */
-     input_error = FALSE;
-     while (!input_error && (c = getopt(argc, argv, "vcf:l:a:o:m:")) != -1)
-     {
-         switch (c) {
-             case 'v': DEBUG = TRUE; break;
-             case 'c':
-                  strcpy(programName,"act");
-                  programId = ACT;
-                  break;
-             case 'f':
-                  psetup.configDir = optarg;
-#ifdef WIN32
-                  if (psetup.configDir){
-                       createDialog(widget,XmDIALOG_WARNING,psetup.configDir,
-                            ": Config directory not found");
-                  }
-#else
-                  if (psetup.configDir && !opendir(psetup.configDir)){
-                       createDialog(widget,XmDIALOG_WARNING,psetup.configDir,
-                            ": Config directory not found");
-                  }
-#endif		  
-                  strncpy(psetup.configFile,psetup.configDir,NAMEDEFAULT_SIZE);
-                  strcat(psetup.configFile,"/");
-                  if (!psetup.logDir){
-                       psetup.logDir = psetup.configDir;
-                       strncpy(psetup.logFile,psetup.configDir,NAMEDEFAULT_SIZE-1);
-                       strcat(psetup.logFile,"/");
-                       strncpy(psetup.opModFile,psetup.configDir,NAMEDEFAULT_SIZE-1);
-                       strcat(psetup.opModFile,"/");
-                  }
-                  break;
-             case 'l':
-                  psetup.logDir = optarg;
-#ifdef WIN32
-                  if (psetup.logDir){
-                       createDialog(widget,XmDIALOG_WARNING,psetup.logDir,
-                            ": Config directory not found");
-                  }
-#else
-                  if (psetup.logDir && !opendir(psetup.logDir)){
-                       createDialog(widget,XmDIALOG_WARNING,psetup.logDir,
-                            ": Config directory not found");
-                  }
-#endif		  
-                  strncpy(psetup.logFile,psetup.logDir,NAMEDEFAULT_SIZE-1);
-                  strcat(psetup.logFile,"/");
-                  strncpy(psetup.opModFile,psetup.logDir,NAMEDEFAULT_SIZE-1);
-                  strcat(psetup.opModFile,"/");
-                  break;
-             case 'a':
-                  strncpy(logFile,optarg,NAMEDEFAULT_SIZE);
-                  break;
-             case 'o':
-                  strncpy(opModFile,optarg,NAMEDEFAULT_SIZE);
-                  break;
-             case 'm':
-                  sscanf(optarg,"%u",&alarmLogFileMaxRecords);
-                  break;
-             default: input_error = 1; break;
-         }
-     }
- 
+     getCommandLineParms(argc,argv);
 
-     /* ----- get filename from the command line ----- */
-     if (optind < argc) strncpy(configFile,argv[optind],NAMEDEFAULT_SIZE);
-     else if (programId == ALH) strcpy(configFile,DEFAULT_CONFIG);
-     if (DEBUG == 1 && argc > 1) printf("\nConfig File is %s \n", configFile);
- 
-     if (optind+1 < argc) input_error = 1;
-
-     if (input_error) {
-          fprintf(stderr,
-          "\nusage: %s [-c] [-f filedir] [-l logdir] [-a alarmlogfile] [-o opmodlogfile] [-m alarmlogmaxrecords [Xoptions] [configfile] \n",
-               argv[0]);
-          fprintf(stderr,"\n\tconfigfile\tAlarm configuration filename\n");
-          fprintf(stderr,"\n\t-c\t\tAlarm Configuration Tool mode\n");
-          fprintf(stderr,"\n\t-f filedir\tDirectory for all files\n");
-          fprintf(stderr,"\n\t-l logdir\tDirectory for log files\n");
-          fprintf(stderr,"\n\t-a alarmlogfile\tAlarm log filename\n");
-          fprintf(stderr,"\n\t-o opmodlogfile\tOpMod log filename\n");
-          fprintf(stderr,"\n\t-m maxrecords\talarm log file max records (default 2000)\n");
-          exit(1);
-     }
- 
      if (DEBUG) printf("programName=%s\n",programName);
 
+     if (commandLine.configDir)
+          strncpy(psetup.configDir,commandLine.configDir,NAMEDEFAULT_SIZE);
+     else
+     /* set config file directory using environment variable ALARMHANDLER */
+          psetup.configDir = (char *)getenv("ALARMHANDLER");
+         /* strncpy(psetup.configDir,(char *)getenv("ALARMHANDLER"),NAMEDEFAULT_SIZE);*/
+     if (commandLine.logDir)
+          strncpy(psetup.logDir,commandLine.logDir,NAMEDEFAULT_SIZE);
+
+     if (psetup.configDir && !psetup.logDir)
+          strncpy(psetup.logDir,psetup.configDir,NAMEDEFAULT_SIZE);
+
      /* ----- initialize and setup opMod file ----- */
+     if (psetup.logDir) {
+          strncpy(psetup.opModFile,psetup.logDir,NAMEDEFAULT_SIZE-1);
+          strcat(psetup.opModFile,"/");
+     }
+     if (commandLine.opModFile) {
+          strncpy(opModFile,commandLine.opModFile,NAMEDEFAULT_SIZE-1);
+     } else {
+          strcpy(opModFile,DEFAULT_OPMOD);
+     }
      name = opModFile;
      if ( name[0] == '/' || (name[0] == '.' && name[1] == '.') ||
           (name[0] == '.' && name[1] == '/')) { 
@@ -654,6 +689,7 @@ void fileSetupInit( widget, argc, argv)
           len = strlen(psetup.opModFile);
           strncat(psetup.opModFile,opModFile,NAMEDEFAULT_SIZE-len);
      }
+     if (DEBUG == 1 ) printf("\nOpMod File is %s \n", psetup.opModFile);
      fileSetup(psetup.opModFile,NULL,FILE_OPMOD,programId,widget);
 
      while (!fo) { 
@@ -661,6 +697,15 @@ void fileSetupInit( widget, argc, argv)
      }
 
      /* ----- initialize and setup alarm log file ----- */
+     if (psetup.logDir) {
+          strncpy(psetup.logFile,psetup.logDir,NAMEDEFAULT_SIZE-1);
+          strcat(psetup.logFile,"/");
+     }
+     if (commandLine.logFile) {
+          strncpy(logFile,commandLine.logFile,NAMEDEFAULT_SIZE-1);
+     } else {
+          strcpy(logFile,DEFAULT_OPMOD);
+     }
      name = logFile;
      if ( name[0] == '/' || (name[0] == '.' && name[1] == '.') ||
           (name[0] == '.' && name[1] == '/')) { 
@@ -669,6 +714,7 @@ void fileSetupInit( widget, argc, argv)
           len = strlen(psetup.logFile);
           strncat(psetup.logFile,logFile,NAMEDEFAULT_SIZE-len);
      }
+     if (DEBUG == 1 ) printf("\nAlarmLog File is %s \n", psetup.logFile);
      fileSetup(psetup.logFile,NULL,FILE_ALARMLOG,programId,widget);
 
      while (!fl) {
@@ -676,6 +722,15 @@ void fileSetupInit( widget, argc, argv)
      }
 
      /* ----- initialize and setup config file ----- */
+     if (psetup.configDir) {
+          strncpy(psetup.configFile,psetup.configDir,NAMEDEFAULT_SIZE);
+          strcat(psetup.configFile,"/");
+     }
+     if (commandLine.configFile) {
+          strncpy(configFile,commandLine.configFile,NAMEDEFAULT_SIZE-1);
+     } else {
+          strcpy(configFile,"");
+     }
      name = configFile;
      if ( name[0] == '/' || (name[0] == '.' && name[1] == '.') ||
           (name[0] == '.' && name[1] == '/')) { 
@@ -684,5 +739,6 @@ void fileSetupInit( widget, argc, argv)
           len = strlen(psetup.configFile);
           strncat(psetup.configFile,configFile,NAMEDEFAULT_SIZE-len);
      }
+     if (DEBUG == 1 ) printf("\nConfig File is %s \n", psetup.configFile);
      fileSetup(psetup.configFile,NULL,FILE_CONFIG,programId,widget);
 }

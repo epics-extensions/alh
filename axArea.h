@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.6  1998/05/13 19:29:49  evans
+ More WIN32 changes.
+
  Revision 1.5  1998/05/12 18:22:46  evans
  Initial changes for WIN32.
 
@@ -127,7 +130,9 @@ typedef struct _menu_item {
     char         mnemonic;      /* mnemonic; NULL if none */
     char        *accelerator;   /* accelerator; NULL if none */
     char        *accel_text;    /* to be converted to compound string */
-    void       (*callback)(Widget, void *, void*);   /* routine to call; NULL if none */
+/*    void       (*callback)(Widget, void *, void*); */  /* routine to call; NULL if none */
+ void (*callback)( Widget,XtPointer,XtPointer);
+/*    XtCallbackProc    callback; */ /* routine to call; NULL if none */
     XtPointer    callback_data; /* client_data for callback() */
     struct _menu_item *subitems; /* pullright menu items, if not NULL */
 } MenuItem;

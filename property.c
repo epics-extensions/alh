@@ -85,35 +85,16 @@ struct propWindow {
 
 };
 
-
-/* prototypes for static routines */
-#ifdef __STDC__
-
-static void propApplyCallback(Widget widget,struct propWindow *propWindow,XmAnyCallbackStruct *cbs);
-static void propCancelCallback(Widget widget,struct propWindow *propWindow,XmAnyCallbackStruct *cbs);
-static void propDismissCallback(Widget widget,struct propWindow *propWindow,XmAnyCallbackStruct *cbs);
-static void propHelpCallback(Widget widget,struct propWindow *propWindow,XmAnyCallbackStruct *cbs);
+static void propApplyCallback(Widget widget,XtPointer calldata,XtPointer cbs);
+static void propCancelCallback(Widget widget,XtPointer calldata,XtPointer cbs);
+static void propDismissCallback(Widget widget,XtPointer calldata,XtPointer cbs);
+static void propHelpCallback(Widget widget,XtPointer calldata,XtPointer cbs);
 static void propCreateDialog(ALINK*area);
 static void propUpdateDialogWidgets(struct propWindow *propWindow);
-static void propMaskChangeCallback( Widget widget, int index, XmAnyCallbackStruct *cbs);
+static void propMaskChangeCallback( Widget widget,XtPointer calldata,XtPointer cbs);
 static void propEditableDialogWidgets(ALINK *area);
 static GCLINK *propCreateClone(GCLINK *link,int linkType);
 static void propDeleteClone(GCLINK *link,int linkType);
-
-#else
-
-static void propApplyCallback();
-static void propCancelCallback();
-static void propDismissCallback();
-static void propHelpCallback();
-static void propCreateDialog();
-static void propUpdateDialogWidgets();
-static void propMaskChangeCallback();
-static void propEditableDialogWidgets();
-static GCLINK *propCreateClone();
-static void propDeleteClone();
-
-#endif /*__STDC__*/
 
 /******************************************************
   propUpdateDialog
@@ -1140,11 +1121,9 @@ static void propCreateDialog(area)
   propMaskChangeCallback
 ******************************************************/
 
-static void propMaskChangeCallback(widget, index, cbs)
-     Widget widget;
-     int index;
-     XmAnyCallbackStruct *cbs;
+static void propMaskChangeCallback( Widget widget,XtPointer calldata,XtPointer cbs)
 {
+     int index=(int)calldata;
      char *mask;
      Widget maskWidget;
      XmString string;
@@ -1188,11 +1167,9 @@ static void propMaskChangeCallback(widget, index, cbs)
   propApplyCallback
 ******************************************************/
 
-static void propApplyCallback(widget, propWindow, cbs)
-     Widget widget;
-     struct propWindow *propWindow;
-     XmAnyCallbackStruct *cbs;
+static void propApplyCallback( Widget widget,XtPointer calldata,XtPointer cbs)
 {
+     struct propWindow *propWindow=(struct propWindow *)calldata;
      short f1, f2;
      int rtn, rtn2;
      struct anyLine *line;
@@ -1407,11 +1384,9 @@ static void propApplyCallback(widget, propWindow, cbs)
   propHelpCallback
 ******************************************************/
 
-static void propHelpCallback(widget, propWindow, cbs)
-     Widget widget;
-     struct propWindow *propWindow;
-     XmAnyCallbackStruct *cbs;
+static void propHelpCallback( Widget widget,XtPointer calldata,XtPointer cbs)
 {
+     struct propWindow *propWindow=(struct propWindow *)calldata;
 
      char *messageALH1 =
          "This dialog window allows an operator to view the alarm properties\n"
@@ -1445,11 +1420,9 @@ static void propHelpCallback(widget, propWindow, cbs)
   propDismissCallback
 ******************************************************/
 
-static void propDismissCallback(widget, propWindow, cbs)
-     Widget widget;
-     struct propWindow *propWindow;
-     XmAnyCallbackStruct *cbs;
+static void propDismissCallback( Widget widget,XtPointer calldata,XtPointer cbs)
 {
+     struct propWindow *propWindow=(struct propWindow *)calldata;
      Widget propDialog;
 
      propDialog = propWindow->propDialog;
@@ -1463,11 +1436,9 @@ static void propDismissCallback(widget, propWindow, cbs)
   propCancelCallback
 ******************************************************/
 
-static void propCancelCallback(widget, propWindow, cbs)
-     Widget widget;
-     struct propWindow *propWindow;
-     XmAnyCallbackStruct *cbs;
+static void propCancelCallback( Widget widget,XtPointer calldata,XtPointer cbs)
 {
+     struct propWindow *propWindow=(struct propWindow *)calldata;
      propUpdateDialog((ALINK *)(propWindow->area));
 }
 

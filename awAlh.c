@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.10  1998/05/13 19:29:48  evans
+ More WIN32 changes.
+
  Revision 1.9  1997/09/12 19:32:04  jba
  Added treeSym test.
 
@@ -151,11 +154,11 @@ extern Widget versionPopup;
 #ifdef __STDC__
 
 /* prototypes for static routines */
-static void alhFileCallback( Widget widget, int item, XmAnyCallbackStruct *cbs);
-static void alhActionCallback( Widget widget, int item, XmAnyCallbackStruct *cbs);
-static void alhViewCallback( Widget widget, int item, XmAnyCallbackStruct *cbs);
-static void alhSetupCallback( Widget widget, int item, XmAnyCallbackStruct *cbs);
-static void alhHelpCallback( Widget widget, int item, XmAnyCallbackStruct *cbs);
+static void alhFileCallback( Widget widget, XtPointer calldata, XtPointer cbs);
+static void alhActionCallback( Widget widget, XtPointer calldata, XtPointer cbs);
+static void alhViewCallback( Widget widget, XtPointer calldata, XtPointer cbs);
+static void alhSetupCallback( Widget widget, XtPointer calldata, XtPointer cbs);
+static void alhHelpCallback( Widget widget, XtPointer calldata, XtPointer cbs);
 
 #else 
 
@@ -295,12 +298,10 @@ Widget alhCreateMenu(parent, user_data)
   alhFileCallback
 ******************************************************/
 
-static void alhFileCallback(widget, item, cbs)
-     Widget widget;
-     int item;
-     XmAnyCallbackStruct *cbs;
+static void alhFileCallback( Widget widget, XtPointer calldata, XtPointer cbs)
 {
      ALINK      *area;
+     int item=(int)calldata;
 
      XtVaGetValues(widget, XmNuserData, &area, NULL);
 
@@ -366,11 +367,9 @@ static void alhFileCallback(widget, item, cbs)
   alhActionCallback
 ******************************************************/
 
-static void alhActionCallback(widget, item, cbs)
-     Widget widget;
-     int item;
-     XmAnyCallbackStruct *cbs;
+static void alhActionCallback( Widget widget, XtPointer calldata, XtPointer cbs)
 {
+     int item=(int)calldata;
      ALINK               *area;
      Widget               parent;
      GCLINK              *link;
@@ -495,11 +494,9 @@ static void alhActionCallback(widget, item, cbs)
   alhViewCallback
 ******************************************************/
 
-static void alhViewCallback(widget, item, cbs)
-     Widget widget;
-     int item;
-     XmAnyCallbackStruct *cbs;
+static void alhViewCallback( Widget widget, XtPointer calldata, XtPointer cbs)
 {
+     int item=(int)calldata;
      ALINK   *area;
      void   *link;
      struct subWindow *treeWindow;
@@ -577,11 +574,9 @@ static void alhViewCallback(widget, item, cbs)
   alhSetupCallback
 ******************************************************/
 
-static void alhSetupCallback(widget, item, cbs)
-     Widget widget;
-     int item;
-     XmAnyCallbackStruct *cbs;
+static void alhSetupCallback( Widget widget, XtPointer calldata, XtPointer cbs)
 {
+     int item=(int)calldata;
      ALINK      *area;
 
 
@@ -647,11 +642,9 @@ static void alhSetupCallback(widget, item, cbs)
   alhHelpCallback
 ******************************************************/
 
-static void alhHelpCallback(widget, item, cbs)
-     Widget widget;
-     int item;
-     XmAnyCallbackStruct *cbs;
+static void alhHelpCallback( Widget widget, XtPointer calldata, XtPointer cbs)
 {
+     int item=(int)calldata;
      ALINK  *area;
 
      XtVaGetValues(widget, XmNuserData, &area, NULL);

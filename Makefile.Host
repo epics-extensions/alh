@@ -1,0 +1,97 @@
+#
+# $Id$
+#
+TOP = ../../..
+include $(TOP)/config/CONFIG_EXTENSIONS
+
+USR_CFLAGS = -DACCESS_SECURITY -I$(MOTIF_INC) -I$(X11_INC)
+
+# use following 3 lines if USR_CFLAGS contains -DIWantGreeting
+PROD_LIBS += Unix
+USR_CFLAGS += -DIWantGreetings
+Unix_DIR = $(INSTALL_LIB)
+
+# Test
+#alh_CFLAGS= -Dalh_CFLAGS
+#alh_INCLUDES= -Dalh_INCLUDES
+#alh_LDFLAGS= -Dalh_LDFLAGS
+
+# debugging options
+#CC = purify $(C_$(CMPLR))
+#HOST_OPT=NO
+
+SRCS =  acknowledge.c  \
+		alCA.c \
+		alConfig.c \
+		alDebug.c \
+		alFilter.c \
+		alInitialize.c \
+		alLib.c \
+		alLog.c \
+		alView.c  \
+		alh.c \
+		awAct.c \
+		awAlh.c \
+		awEdit.c \
+		awView.c \
+		axArea.c \
+		axRunW.c \
+		axSubW.c \
+		clipboardOps.c \
+		current.c \
+		dialog.c \
+		file.c \
+		force.c \
+		guidance.c \
+		help.c \
+		line.c \
+		mask.c \
+		process.c \
+		property.c \
+		scroll.c \
+		showmask.c \
+		sllLib.c \
+		testalarm.c
+
+PROD = alh
+
+USR_CFLAGS_WIN32 += /DWIN32 /D_WINDOWS
+USR_LDFLAGS_WIN32 += /SUBSYSTEM:WINDOWS
+
+PROD_LIBS += ca Com
+USR_LIBS_DEFAULT = Xm Xt X11
+
+ifeq ($(EXCEED),Exceed5)
+USR_LIBS_WIN32 = XmStatic Xt XlibGUI Xlib
+else
+USR_LIBS_WIN32 = XmStatic HCLXt XlibGUI Xlib
+endif
+
+Xm_DIR = $(MOTIF_LIB)
+Xt_DIR = $(X11_LIB)
+X11_DIR = $(X11_LIB)
+XlibGUI_DIR = $(X11_LIB)
+XmStatic_DIR = $(MOTIF_LIB)
+HCLXt_DIR = $(X11_LIB)
+Xlib_DIR = $(X11_LIB)
+
+ifdef WIN32
+# If objects were compiled with different default runtime libraries
+#   (not a good idea), specify which one you want to use by making it
+#   the default and the others nodefault.
+ifeq ($(HOST_OPT),NO)
+USR_LDFLAGS += /defaultlib:"msvcrtd.lib" #-MDd Multi-thread DLL, Debug
+USR_LDFLAGS += /nodefaultlib:"msvcrt.lib"  #-MD  Multi-thread DLL
+else
+USR_LDFLAGS += /defaultlib:"msvcrt.lib"  #-MD  Multi-thread DLL
+USR_LDFLAGS += /nodefaultlib:"msvcrtd.lib" #-MDd Multi-thread DLL, Debug
+endif
+USR_LDFLAGS += /nodefaultlib:"libcmt.lib"  #-MT  Multi-thread
+USR_LDFLAGS += /nodefaultlib:"libcmtd.lib" #-MTd Multi-thread, Debug
+USR_LDFLAGS += /nodefaultlib:"libc.lib"    #-ML  Single-thread     
+USR_LDFLAGS += /nodefaultlib:"libcd.lib"   #-MLd Single-thread, Debug
+endif
+
+RCS_WIN32 += alh.rc
+
+include $(TOP)/config/RULES.Host

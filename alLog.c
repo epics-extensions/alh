@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.9  1998/05/13 19:29:47  evans
+ More WIN32 changes.
+
  Revision 1.8  1998/05/12 18:22:41  evans
  Initial changes for WIN32.
 
@@ -99,6 +102,7 @@ alLogSetupSaveConfigFile(filename)			Log setup save config file
 #include <alLib.h>
 #include <line.h>
 #include <ax.h>
+#include <truncateFile.h>
 
 static char *masksdata[] = {
         "Summary ...",
@@ -170,7 +174,7 @@ struct chanData *cdata;
         		fseek(fl,alarmLogFileOffsetBytes,SEEK_SET);
 		if (alarmLogFileOffsetBytes >= alarmLogFileStringLength*alarmLogFileMaxRecords) {
 			rewind(fl);
-			status=ftruncate(fileno(fl),alarmLogFileOffsetBytes);
+			status=truncateFile(psetup.logFile,alarmLogFileOffsetBytes);
 			alarmLogFileOffsetBytes = 0;
 		}
 		(void)fprintf(fl,"%s",buff);

@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.11  1998/05/13 19:29:50  evans
+ More WIN32 changes.
+
  Revision 1.10  1997/08/27 22:00:47  jba
  Added calls to XtFree.
 
@@ -88,29 +91,13 @@ struct forcePVWindow {
     Widget forcePVresetValueTextW;
 };
 
-
-/* prototypes for static routines */
-#ifdef __STDC__
-
-static void forcePVApplyCallback(Widget widget,struct forcePVWindow *forcePVWindow,XmAnyCallbackStruct *cbs);
-static void forcePVCancelCallback(Widget widget,struct forcePVWindow *forcePVWindow,XmAnyCallbackStruct *cbs);
-static void forcePVDismissCallback(Widget widget,struct forcePVWindow *forcePVWindow,XmAnyCallbackStruct *cbs);
-static void forcePVHelpCallback(Widget widget,struct forcePVWindow *forcePVWindow,XmAnyCallbackStruct *cbs);
+static void forcePVApplyCallback(Widget widget,XtPointer calldata,XtPointer cbs);
+static void forcePVCancelCallback(Widget widget,XtPointer calldata,XtPointer cbs);
+static void forcePVDismissCallback(Widget widget,XtPointer calldata,XtPointer cbs);
+static void forcePVHelpCallback(Widget widget,XtPointer calldata,XtPointer cbs);
 static void forcePVCreateDialog(ALINK*area);
 static void forcePVUpdateDialogWidgets(struct forcePVWindow *forcePVWindow);
-static void forcePVMaskChangeCallback( Widget widget, int index, XmAnyCallbackStruct *cbs);
-
-#else
-
-static void forcePVApplyCallback();
-static void forcePVCancelCallback();
-static void forcePVDismissCallback();
-static void forcePVHelpCallback();
-static void forcePVCreateDialog();
-static void forcePVUpdateDialogWidgets();
-static void forcePVMaskChangeCallback();
-
-#endif /*__STDC__*/
+static void forcePVMaskChangeCallback( Widget widget, XtPointer calldata, XtPointer cbs);
 
 /******************************************************
   forcePVUpdateDialog
@@ -553,11 +540,9 @@ static void forcePVCreateDialog(area)
   forcePVMaskChangeCallback
 ******************************************************/
 
-static void forcePVMaskChangeCallback(widget, index, cbs)
-     Widget widget;
-     int index;
-     XmAnyCallbackStruct *cbs;
+static void forcePVMaskChangeCallback(Widget widget, XtPointer calldata, XtPointer cbs)
 {
+     int index=(int)calldata;
      char *mask;
      Widget maskWidget;
      XmString string;
@@ -601,11 +586,9 @@ static void forcePVMaskChangeCallback(widget, index, cbs)
   forcePVApplyCallback
 ******************************************************/
 
-static void forcePVApplyCallback(widget, forcePVWindow, cbs)
-     Widget widget;
-     struct forcePVWindow *forcePVWindow;
-     XmAnyCallbackStruct *cbs;
+static void forcePVApplyCallback(Widget widget, XtPointer calldata, XtPointer cbs)
 {
+     struct forcePVWindow *forcePVWindow= (struct forcePVWindow *)calldata;
      short f1;
      int rtn;
      XmString string;
@@ -668,11 +651,10 @@ static void forcePVApplyCallback(widget, forcePVWindow, cbs)
   forcePVHelpCallback
 ******************************************************/
 
-static void forcePVHelpCallback(widget, forcePVWindow, cbs)
-     Widget widget;
-     struct forcePVWindow *forcePVWindow;
-     XmAnyCallbackStruct *cbs;
+static void forcePVHelpCallback(Widget widget, XtPointer calldata, XtPointer cbs)
 {
+     struct forcePVWindow *forcePVWindow= (struct forcePVWindow *)calldata;
+
      char *message1 =
          "This dialog window allows an operator to specify or modify the forcePV\n"
          "values for a selected group or channel.\n"
@@ -693,11 +675,9 @@ static void forcePVHelpCallback(widget, forcePVWindow, cbs)
   forcePVDismissCallback
 ******************************************************/
 
-static void forcePVDismissCallback(widget, forcePVWindow, cbs)
-     Widget widget;
-     struct forcePVWindow *forcePVWindow;
-     XmAnyCallbackStruct *cbs;
+static void forcePVDismissCallback(Widget widget, XtPointer calldata, XtPointer cbs)
 {
+     struct forcePVWindow *forcePVWindow= (struct forcePVWindow *)calldata;
      Widget forcePVDialog;
 
      forcePVDialog = forcePVWindow->forcePVDialog;
@@ -711,11 +691,9 @@ static void forcePVDismissCallback(widget, forcePVWindow, cbs)
   forcePVCancelCallback
 ******************************************************/
 
-static void forcePVCancelCallback(widget, forcePVWindow, cbs)
-     Widget widget;
-     struct forcePVWindow *forcePVWindow;
-     XmAnyCallbackStruct *cbs;
+static void forcePVCancelCallback(Widget widget, XtPointer calldata, XtPointer cbs)
 {
+     struct forcePVWindow *forcePVWindow= (struct forcePVWindow *)calldata;
      forcePVUpdateDialog((ALINK *)(forcePVWindow->area));
 }
 

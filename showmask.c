@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.7  1998/05/13 19:29:53  evans
+ More WIN32 changes.
+
  Revision 1.6  1997/04/17 18:17:58  jba
  Added calls to free for allocated memory.
 
@@ -84,28 +87,13 @@ struct forceMaskWindow {
 };
 
 
-/* prototypes for static routines */
-#ifdef __STDC__
-
-static void forceMaskApplyCallback(Widget widget,struct forceMaskWindow *forceMaskWindow,XmAnyCallbackStruct *cbs);
-static void forceMaskResetCallback(Widget widget,struct forceMaskWindow *forceMaskWindow,XmAnyCallbackStruct *cbs);
-static void forceMaskDismissCallback(Widget widget,struct forceMaskWindow *forceMaskWindow,XmAnyCallbackStruct *cbs);
-static void forceMaskHelpCallback(Widget widget,struct forceMaskWindow *forceMaskWindow,XmAnyCallbackStruct *cbs);
+static void forceMaskApplyCallback(Widget widget,XtPointer calldata,XtPointer cbs);
+static void forceMaskResetCallback(Widget widget,XtPointer calldata,XtPointer cbs);
+static void forceMaskDismissCallback(Widget widget,XtPointer calldata,XtPointer cbs);
+static void forceMaskHelpCallback(Widget widget,XtPointer calldata,XtPointer cbs);
 static void forceMaskCreateDialog(ALINK*area);
 static void forceMaskUpdateDialogWidgets(struct forceMaskWindow *forceMaskWindow);
-static void forceMaskChangeCallback( Widget widget, int index, XmAnyCallbackStruct *cbs);
-
-#else
-
-static void forceMaskApplyCallback();
-static void forceMaskResetCallback();
-static void forceMaskDismissCallback();
-static void forceMaskHelpCallback();
-static void forceMaskCreateDialog();
-static void forceMaskUpdateDialogWidgets();
-static void forceMaskChangeCallback();
-
-#endif /*__STDC__*/
+static void forceMaskChangeCallback( Widget widget,XtPointer calldata,XtPointer cbs);
 
 /******************************************************
   forceMaskUpdateDialog
@@ -504,11 +492,9 @@ static void forceMaskCreateDialog(area)
   forceMaskChangeCallback
 ******************************************************/
 
-static void forceMaskChangeCallback(widget, index, cbs)
-     Widget widget;
-     int index;
-     XmAnyCallbackStruct *cbs;
+static void forceMaskChangeCallback(Widget widget,XtPointer calldata,XtPointer cbs)
 {
+     int index=(int)calldata;
      char *mask;
      Widget maskWidget;
      XmString string;
@@ -552,11 +538,9 @@ static void forceMaskChangeCallback(widget, index, cbs)
   forceMaskHelpCallback
 ******************************************************/
 
-static void forceMaskHelpCallback(widget, forceMaskWindow, cbs)
-     Widget widget;
-     struct forceMaskWindow *forceMaskWindow;
-     XmAnyCallbackStruct *cbs;
+static void forceMaskHelpCallback(Widget widget,XtPointer calldata,XtPointer cbs)
 {
+     struct forceMaskWindow *forceMaskWindow=(struct forceMaskWindow *)calldata;
 
      char *message1 = 
          "This dialog window allows an operator to set the current mask for a group or channel.\n"
@@ -579,11 +563,9 @@ static void forceMaskHelpCallback(widget, forceMaskWindow, cbs)
   forceMaskApplyCallback
 ******************************************************/
 
-static void forceMaskApplyCallback(widget, forceMaskWindow, cbs)
-     Widget widget;
-     struct forceMaskWindow *forceMaskWindow;
-     XmAnyCallbackStruct *cbs;
+static void forceMaskApplyCallback(Widget widget,XtPointer calldata,XtPointer cbs)
 {
+     struct forceMaskWindow *forceMaskWindow=(struct forceMaskWindow *)calldata;
      struct chanData *cdata;
      XmString string;
      char *buff;
@@ -634,11 +616,9 @@ static void forceMaskApplyCallback(widget, forceMaskWindow, cbs)
   forceMaskResetCallback
 ******************************************************/
 
-static void forceMaskResetCallback(widget, forceMaskWindow, cbs)
-     Widget widget;
-     struct forceMaskWindow *forceMaskWindow;
-     XmAnyCallbackStruct *cbs;
+static void forceMaskResetCallback(Widget widget,XtPointer calldata,XtPointer cbs)
 {
+     struct forceMaskWindow *forceMaskWindow=(struct forceMaskWindow *)calldata;
      struct chanData *cdata;
      struct gcData *pgcData;
      GCLINK *link;
@@ -678,11 +658,9 @@ static void forceMaskResetCallback(widget, forceMaskWindow, cbs)
   forceMaskDismissCallback
 ******************************************************/
 
-static void forceMaskDismissCallback(widget, forceMaskWindow, cbs)
-     Widget widget;
-     struct forceMaskWindow *forceMaskWindow;
-     XmAnyCallbackStruct *cbs;
+static void forceMaskDismissCallback(Widget widget,XtPointer calldata,XtPointer cbs)
 {
+     struct forceMaskWindow *forceMaskWindow=(struct forceMaskWindow *)calldata;
      Widget maskDialog;
 
      maskDialog = forceMaskWindow->maskDialog;

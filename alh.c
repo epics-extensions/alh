@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.5  1998/05/13 19:29:48  evans
+ More WIN32 changes.
+
  Revision 1.4  1995/10/20 16:50:05  jba
  Modified Action menus and Action windows
  Renamed ALARMCOMMAND to SEVRCOMMAND
@@ -98,6 +101,11 @@ void main(argc, argv)
      static struct timeval timeout = {
           FDMGR_SEC_TIMEOUT, FDMGR_USEC_TIMEOUT};
      Widget        topLevelShell;
+
+     /* WIN32 initialization */
+#ifdef WIN32	
+     HCLXmInit();
+#endif
 
      /*  Xt initialize the application */
      topLevelShell = XtAppInitialize(&appContext, "Alarm", NULL, 0, &argc, argv,

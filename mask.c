@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.7  1998/05/13 19:29:51  evans
+ More WIN32 changes.
+
  Revision 1.6  1996/12/03 22:04:29  jba
  Changed unused Help ActionItem data to NULL.
 
@@ -103,24 +106,11 @@ struct maskWindow {
     Widget nameTextW;
 };
 
-/* prototypes for static routines */
-#ifdef __STDC__
-
-static void maskDismissCallback(Widget widget,struct maskWindow *maskWindow,XmAnyCallbackStruct *cbs);
-static void maskHelpCallback(Widget widget,struct maskWindow *maskWindow,XmAnyCallbackStruct *cbs);
-static void maskActivateCallback( Widget widget, int index, XmAnyCallbackStruct *cbs);
+static void maskDismissCallback(Widget widget,XtPointer calldata,XtPointer cbs);
+static void maskHelpCallback(Widget widget,XtPointer calldata,XtPointer cbs);
+static void maskActivateCallback( Widget widget,XtPointer calldata,XtPointer cbs);
 static void maskCreateDialog(ALINK*area);
 static void maskUpdateDialogWidgets(struct maskWindow *maskWindow);
-
-#else
-
-static void maskDismissCallback();
-static void maskHelpCallback();
-static void maskActivateCallback();
-static void maskCreateDialog();
-static void maskUpdateDialogWidgets();
-
-#endif /*__STDC__*/
 
 
 /******************************************************
@@ -374,11 +364,9 @@ static void maskCreateDialog(area)
   maskHelpCallback
 ******************************************************/
 
-static void maskHelpCallback(widget, maskWindow, cbs)
-     Widget widget;
-     struct maskWindow *maskWindow;
-     XmAnyCallbackStruct *cbs;
+static void maskHelpCallback(Widget widget,XtPointer calldata,XtPointer cbs)
 {
+     struct maskWindow *maskWindow=(struct maskWindow *)calldata;
 
      char *message1 = 
          "This dialog window allows an operator to change individual mask field\n"
@@ -400,11 +388,9 @@ static void maskHelpCallback(widget, maskWindow, cbs)
   maskDismissCallback
 ******************************************************/
 
-static void maskDismissCallback(widget, maskWindow, cbs)
-     Widget widget;
-     struct maskWindow *maskWindow;
-     XmAnyCallbackStruct *cbs;
+static void maskDismissCallback(Widget widget,XtPointer calldata,XtPointer cbs)
 {
+     struct maskWindow *maskWindow=(struct maskWindow *)calldata;
      Widget maskDialog;
 
      maskDialog = maskWindow->maskDialog;
@@ -420,11 +406,9 @@ static void maskDismissCallback(widget, maskWindow, cbs)
   maskActivateCallback
 ****************************************************/
 
-static void maskActivateCallback(widget, index, cbs)
-     Widget widget;
-     int index;
-     XmAnyCallbackStruct *cbs;
+static void maskActivateCallback(Widget widget,XtPointer calldata,XtPointer cbs)
 {
+     int index=(int)calldata;
      ALINK *area;
      void *link;
      int maskid,maskno;
