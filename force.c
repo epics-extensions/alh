@@ -72,7 +72,7 @@ static void forcePVCreateDialog(ALINK*area);
 static void forcePVUpdateDialogWidgets(struct forcePVWindow *forcePVWindow);
 static void forcePVMaskChangeCallback( Widget widget, XtPointer calldata, XtPointer cbs);
 static void forcePVUpdateFields(GCLINK* gclink,FORCEPV* pfPV,int context);
-static void forcePVCalcPerform(GCLINK* gclink,int linktype);
+static void forcePVCalcPerform(GCLINK* gclink,int linktype,int forcePVChanged);
 static void forcePVNewValueEvent(GCLINK* gclink,short linktype,double value);
 
 
@@ -137,10 +137,11 @@ static void forcePVUpdateDialogWidgets(struct forcePVWindow *forcePVWindow)
 	struct gcData *pgcData;
 	GCLINK *link;
 	int i,linkType;
-	XmString string;
+	XmString string,oldString;
 	char buff[MAX_STRING_LENGTH];
 	char buff1[MAX_STRING_LENGTH];
 	MASK mask;
+	Boolean sameName;
 
 	if (! forcePVWindow || !forcePVWindow->forcePVDialog ) return;
 
@@ -151,28 +152,33 @@ static void forcePVUpdateDialogWidgets(struct forcePVWindow *forcePVWindow)
 		XtVaSetValues(forcePVWindow->nameTextW,XmNlabelString, string, NULL);
 		XmStringFree(string);
 		return;
-	}
-
-	pgcData = link->pgcData;
-	linkType =getSelectionLinkTypeArea(forcePVWindow->area);
-
-	/* ---------------------------------
-	     Group/Channel Name 
-	     --------------------------------- */
-	if (linkType == GROUP) string = XmStringCreateSimple("Group Name:");
-	else string = XmStringCreateSimple("Channel Name:");
-	XtVaSetValues(forcePVWindow->nameLabelW, XmNlabelString, string, NULL);
-	XmStringFree(string);
-
-	if (pgcData->alias){
-		string = XmStringCreateSimple(pgcData->alias);
 	} else {
-		string = XmStringCreateSimple(pgcData->name);
+		pgcData = link->pgcData;
+		linkType =getSelectionLinkTypeArea(forcePVWindow->area);
+	
+		/* ---------------------------------
+	     	Group/Channel Name 
+	     	--------------------------------- */
+		if (linkType == GROUP) string = XmStringCreateSimple("Group Name:");
+		else string = XmStringCreateSimple("Channel Name:");
+		XtVaSetValues(forcePVWindow->nameLabelW, XmNlabelString, string, NULL);
+		XmStringFree(string);
+	
+		if (pgcData->alias){
+			string = XmStringCreateSimple(pgcData->alias);
+		} else {
+			if (pgcData->name) string = XmStringCreateSimple(pgcData->name);
+		}
 	}
+	XtVaGetValues(forcePVWindow->nameTextW, XmNlabelString, &oldString, NULL);
 	XtVaSetValues(forcePVWindow->nameTextW, XmNlabelString, string, NULL);
+	sameName = XmStringCompare(string, oldString);
 	XmStringFree(string);
+	XmStringFree(oldString);
 
-	if (!link || !pgcData->pforcePV) {
+	if (!link || !pgcData->pforcePV || !sameName ) {
+		XmToggleButtonGadgetSetState(forcePVWindow->forcePVdisabledToggleButton,
+			FALSE,FALSE);
 		XmTextFieldSetString(forcePVWindow->forcePVnameTextW,"");
 		string = XmStringCreateSimple("-----");
 		XtVaSetValues(forcePVWindow->forcePVmaskStringLabelW,
@@ -195,7 +201,7 @@ static void forcePVUpdateDialogWidgets(struct forcePVWindow *forcePVWindow)
         for (i=0;i<NO_OF_CALC_PVS;i++){
             XmTextFieldSetString(forcePVWindow->forcePVCalcPVTextW[i],"");
         }
-		return;
+		if (!link || !pgcData->pforcePV) return;
 	}
 
 	/* ---------------------------------
@@ -797,7 +803,7 @@ XtPointer cbs)
 			" Group forcePV modified <%s> [%g] [%s]",
               buff1,
               link->pgcData->pforcePV->forceValue,
-              link->pgcData->pforcePV->name);
+              link->pgcData->pforcePV->name ? link->pgcData->pforcePV->name : " ");
 
 	}else {
 		alGetMaskString(((CLINK*)link)->pchanData->curMask,buff1);
@@ -805,7 +811,7 @@ XtPointer cbs)
 			"Channel forcePV modified <%s> [%g] [%s]",
               buff1,
               link->pgcData->pforcePV->forceValue,
-              link->pgcData->pforcePV->name);
+              link->pgcData->pforcePV->name ? link->pgcData->pforcePV->name : " ");
 	}
 
 	/* ---------------------------------
@@ -1005,17 +1011,20 @@ void forcePVUpdateFields(GCLINK* gclink,FORCEPV* pfPV,int context)
 	FORCEPV* pforcePV;
 	int i,status=0;
 	short err=0;
+	short disabledHold;
 	FORCEPV_CALC* pcalc;
 	FORCEPV_CALC* pcalcNew;
 	FORCEPVCADATA* puser;
 	char buf[MAX_STRING_LENGTH];
 	double holdValue;
+	ALINK *area = gclink->pmainGroup->area;
 
 	if (!gclink->pgcData->pforcePV)
 			gclink->pgcData->pforcePV=(FORCEPV*)calloc(1,sizeof(FORCEPV));
 	pforcePV=gclink->pgcData->pforcePV;
 
 	/* temporarily disable forcePV */
+	disabledHold=pforcePV->disabled;
 	pforcePV->disabled=YES;
 
 	if (pforcePV->forceValue != pfPV->forceValue) pforcePV->forceValue=pfPV->forceValue;
@@ -1038,9 +1047,6 @@ void forcePVUpdateFields(GCLINK* gclink,FORCEPV* pfPV,int context)
 			if (strlen(pforcePV->name) && strcmp(pforcePV->name,"CALC")) {
 				/* start channel access */
 				pforcePV->currentValue = -999;
-#if 0
-				pforcePV->disabled=pfPV->disabled;
-#endif
 				alCaConnectForcePV(pforcePV->name,&pforcePV->chid,gclink->pgcData->name);
 				puser=(FORCEPVCADATA *)calloc(1,sizeof(FORCEPVCADATA));
 				puser->index=-1;
@@ -1149,9 +1155,10 @@ void forcePVUpdateFields(GCLINK* gclink,FORCEPV* pfPV,int context)
 	}
 	pforcePV->pcalc=pcalc;
 	pforcePV->disabled=pfPV->disabled;
+        updateDisabledForcePVCount(area,(int)(pforcePV->disabled-disabledHold));
 
-	if (strcmp(pforcePV->name,"CALC")==0)
-		forcePVCalcPerform(gclink,context);
+	if (pforcePV->name && strcmp(pforcePV->name,"CALC")==0)
+		forcePVCalcPerform(gclink,context,1);
 	else {
 		holdValue=pforcePV->currentValue;
 		pforcePV->currentValue = -999;
@@ -1248,13 +1255,13 @@ void alForcePVCalcNewValueEvent(GCLINK* gclink,short linktype,short index,double
 	if (pcalc->value[index]==value) return;
 	pcalc->value[index]=value;
 
-	forcePVCalcPerform(gclink,linktype);
+	forcePVCalcPerform(gclink,linktype,0);
 }
 
 /*******************************************************************
     ForcePVCalc Calculate expression value
 *******************************************************************/
-static void forcePVCalcPerform(GCLINK* gclink,int linktype)
+static void forcePVCalcPerform(GCLINK* gclink,int linktype,int forcePVChanged)
 {
 	FORCEPV* pforcePV=gclink->pgcData->pforcePV;
 	FORCEPV_CALC* pcalc=gclink->pgcData->pforcePV->pcalc;
@@ -1264,6 +1271,8 @@ static void forcePVCalcPerform(GCLINK* gclink,int linktype)
 	char buff1[6];
 	char buff2[20];
 
+	if (!pcalc) return;
+
 	for (i=0;i<NO_OF_CALC_PVS;i++){
 		if (pcalc->chid[i] && !alCaIsConnected(pcalc->chid[i])) return;
 		if (pcalc->value[i]==-999.) return;
@@ -1271,10 +1280,11 @@ static void forcePVCalcPerform(GCLINK* gclink,int linktype)
 	if (!pcalc->rpbuf) return;
 	status=calcPerform(pcalc->value,&calcValue,pcalc->rpbuf);
 	if (status) errMsg("ForcePV calcPerform failed: status=%ld\n",status);
+printf ("calcValue=%f\n",calcValue);
 
-	if (calcValue == pforcePV->currentValue) return;
+	if (!forcePVChanged && calcValue == pforcePV->currentValue) return;
 
-	if (!pforcePV->disabled) {
+	if (pforcePV->name && strcmp(pforcePV->name,"CALC")==0 && !pforcePV->disabled) {
 		if ((float)calcValue == (float)pforcePV->forceValue) {
 			if (linktype==GROUP){
 				alChangeGroupMask((GLINK*)gclink,pforcePV->forceMask);
@@ -1294,11 +1304,11 @@ static void forcePVCalcPerform(GCLINK* gclink,int linktype)
               		pforcePV->name);
 			}
 			alCaFlushIo();
-		} else if (((pforcePV->currentValue=-999 ||
-				pforcePV->currentValue==pforcePV->forceValue) &&
-				pforcePV->forceValue==pforcePV->resetValue) ||
+		} else if (((pforcePV->currentValue == -999 ||
+				pforcePV->currentValue == pforcePV->forceValue) &&
+		 		pforcePV->forceValue == pforcePV->resetValue) ||
               	( (float)calcValue == (float)pforcePV->resetValue  &&
-                	pforcePV->forceValue!=pforcePV->resetValue) ){
+                	pforcePV->forceValue != pforcePV->resetValue) ){
 			if (linktype==GROUP){
 				alResetGroupMask((GLINK*)gclink);
 				awGetMaskString(((GLINK*)gclink)->pgroupData->mask,buff1);
