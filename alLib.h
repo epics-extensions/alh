@@ -36,6 +36,16 @@ typedef struct mask {			/* mask bit setting */
 	unsigned Unused    : 11;
 } MASK;
 
+typedef struct alarmEvent {
+	short  stat;
+	short  sevr;
+	short  acks;
+	short  ackt;
+	char   value[MAX_STRING_SIZE];
+	int    alarmTime;
+	void  *clink;
+} ALARMEVENT;
+
 typedef struct countFilter {
 	int    inputCount;
 	int    inputSeconds;
@@ -152,6 +162,7 @@ struct chanData {
         char *ackPVName;                /* ackPV name        */
 	chid ackPVId;                   /* id of prev.       */
         short ackPVValue;               /* value to ackPV    */
+	ALARMEVENT caAlarmEvent;	/* saved ca alarm event data */
 };
 
 /* group link  */

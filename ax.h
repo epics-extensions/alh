@@ -203,6 +203,8 @@ CLINK *alCreateChannel();
 void alSetMask( char *s4, MASK *mask);
 void alGetMaskString( MASK mask, char *s);
 void alNewAlarm( int stat, int sev, char *value, CLINK *clink);
+void alSaveAlarmEvent(int stat,int sevr,int acks,int ackt,char *value,CLINK *clink);
+void alConnectEvent(CLINK *clink);
 void alNewEvent(int stat,int sevr,int acks,int ackt,char *value,CLINK *clink);
 void alHighestSystemSeverity(GLINK * glink);
 short alHighestSeverity( int sevr[ALH_ALARM_NSEV]);

@@ -481,6 +481,7 @@ static void alCaNewAlarmEvent(struct event_handler_args args)
 
 	switch (args.status) {
 	case ECA_NORMAL:
+		alSaveAlarmEvent(stat, sevr, acks, ackt, value, args.usr);
 		alNewEvent(stat, sevr, acks, ackt, value, args.usr);
 		break;
 	default:
@@ -558,6 +559,7 @@ static void alCaChannelConnectionEvent(struct connection_handler_args args)
 {
 	if (args.op == CA_OP_CONN_UP) {
 		toBeConnectedCount--;
+		alConnectEvent(ca_puser(args.chid));
 	} else if (args.op == CA_OP_CONN_DOWN) {
 		alNewEvent(NOT_CONNECTED, ERROR_STATE, 0, -1, "0", ca_puser(args.chid));
 	} else {

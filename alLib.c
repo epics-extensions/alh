@@ -578,6 +578,37 @@ static void alarmCountFilter_callback(XtPointer cd, XtIntervalId *id)
 
 
 /******************************************************
+  alSaveAlarmEvent
+******************************************************/
+
+void alSaveAlarmEvent(int stat,int sevr,int acks,int ackt,char *value,CLINK *clink)
+{
+	struct chanData *cdata = clink->pchanData;
+	ALARMEVENT ca = cdata->caAlarmEvent;
+
+	ca.stat = stat;
+	ca.sevr = sevr;
+	ca.acks = acks;
+	ca.ackt = ackt;
+	strcpy(ca.value,value);
+	ca.clink = clink;
+}
+
+
+/******************************************************
+  alConnectEvent
+******************************************************/
+
+void alConnectEvent(CLINK *clink)
+{
+	struct chanData *cdata = clink->pchanData;
+	ALARMEVENT ca = cdata->caAlarmEvent;
+
+	if (ca.clink) alNewEvent(ca.stat,ca.sevr,ca.acks,ca.ackt,ca.value,ca.clink);
+}
+
+
+/******************************************************
   alNewEvent
 ******************************************************/
 
