@@ -49,6 +49,7 @@ static void alNewAlarmProcess(int stat,int sev, int acks,int ackt,
 	char *value, CLINK *clink,time_t timeofday);
 void alSetAckTChan(CLINK *clink,int ackt);
 short alHighestBeepSeverity(int sevr[ALH_ALARM_NSEV], int beepSevr);
+static void alSetBeepSevCount(GLINK* glink,int beepSevr,int oldBeepSevr);
 
 
 /**********************************************************************
@@ -1415,14 +1416,17 @@ void alSetBeepSevrChan(CLINK *clink,int beepSevr)
 	int osev=0;
 	int nsev=0;
 
+	if (clink->pchanData->beepSevr == beepSevr) return;
 	oldBeepSevr = clink->pchanData->beepSevr;
 	clink->pchanData->beepSevr = beepSevr;
+	clink->pchanData->highestBeepSevr = beepSevr;
+	clink->modified = 1;
+	clink->pmainGroup->modified = TRUE;
+	if (clink->parent) alSetBeepSevCount(clink->parent,beepSevr,oldBeepSevr);
 	sev = clink->pchanData->unackSevr;
 	if (sev >= oldBeepSevr) osev=sev; 
 	if (sev >= beepSevr) nsev=sev;
 	if (osev == nsev) return;
-	clink->modified = 1;
-	clink->pmainGroup->modified = TRUE;
 	if (clink->parent) alSetUnackBeepSevGroup(clink->parent,nsev,osev);
 }
 
@@ -1462,6 +1466,7 @@ void alSetBeepSevrGroup(GLINK *glink,int beepSevr)
 	oldBeepSevr = gdata->beepSevr;
 	if (oldBeepSevr == beepSevr) return;
 	gdata->beepSevr = beepSevr;
+	alSetBeepSevCount(glink,beepSevr,oldBeepSevr);
 	gdata->unackBeepSevr = alHighestBeepSeverity(gdata->unackBeepSev,gdata->beepSevr);
 	glink->modified = 1;
 	glink->pmainGroup->modified = TRUE;
@@ -1474,6 +1479,24 @@ void alSetBeepSevrGroup(GLINK *glink,int beepSevr)
 		if (i >= oldBeepSevr) osev=i; 
 		if (i >= beepSevr) nsev=i;
 		if (glink->parent && osev != nsev ) alSetUnackBeepSevCountGroup(glink->parent,nsev,osev,count);
+	}
+}
+
+
+/***************************************************
+  alSetBeepSevCount
+****************************************************/
+static void alSetBeepSevCount(GLINK *glink,int newBeepSevr,int oldBeepSevr)
+{
+	struct groupData * gdata;
+
+	while (glink) {
+		gdata = glink->pgroupData;
+		if (oldBeepSevr>=MINOR_ALARM) gdata->beepSev[oldBeepSevr]--;
+		if (newBeepSevr>=MINOR_ALARM) gdata->beepSev[newBeepSevr]++;
+		gdata->highestBeepSevr=alHighestSeverity(gdata->beepSev);
+		glink->modified = 1;
+		glink = glink->parent;
 	}
 }
 
