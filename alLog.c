@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.7  1997/08/27 22:03:31  jba
+ Fixed parm order.
+
  Revision 1.6  1997/01/09 14:38:13  jba
  Added alarmLog circular file facility.
 
@@ -191,8 +194,8 @@ struct chanData *cdata;
  * log the connection change on operation file
  ***********************************************************************/
 void alLogConnection(pvname,ind)
-char *ind;
 char *pvname;
+char *ind;
 {
 	timeofday = time(0L);
 	str = ctime(&timeofday);
