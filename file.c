@@ -927,6 +927,7 @@ static void printUsage(char *pgm)
 	fprintf(stderr,"  -c               Alarm Configuration Tool mode\n");
 	fprintf(stderr,"  -caputackt       Caput config file ackt settings to channels (if global and active)\n");
 	fprintf(stderr,"  -D               Disable alarm and opmod log writing\n");
+	fprintf(stderr,"  -debug           Debug output\n");
 	fprintf(stderr,"  -f filedir       Directory for config files [.]\n");
 	fprintf(stderr,"  -global          Global mode (acks and ackt fields) \n");
 	fprintf(stderr,"  -help            Print usage\n");
@@ -943,7 +944,7 @@ static void printUsage(char *pgm)
 	fprintf(stderr,"  -S               Passive (no caputs - acks field, ackt field, sevrpv)\n");
 	fprintf(stderr,"  -s               Silent (no alarm beeping)\n");
 	fprintf(stderr,"  -T               AlarmLogDated\n");
-	fprintf(stderr,"  -v               Debug output\n");
+	fprintf(stderr,"  -v               Print version number\n");
 	fprintf(stderr,"  -version         Print version number\n");
 	exit(1);
 }
