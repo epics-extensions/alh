@@ -271,16 +271,21 @@ static int checkFilename(char *filename,int fileType)
 	case FILE_OPMOD:
 	case FILE_ALARMLOG:
 		if(!_read_only_flag) tt = fopen(filename,"a");
-		else {tt = fopen(filename,"r");
-		if(!tt) strcpy(filename,"/tmp/AlhDisableWriting");
-		tt = fopen(filename,"w");
-		if (!tt) {
+		else {
+		  tt = fopen(filename,"r");
+		  if(!tt) 
+		    { 
+		      strcpy(filename,"/tmp/AlhDisableWriting");
+		      chmod("/tmp/AlhDisableWriting",0777); 
+		      tt = fopen(filename,"w");
+		      if (!tt) {
 			fprintf(stderr,"can't read OPMOD or ALARMLOG and /tmp directory \n");
 			exit(1);
+		      }
+		    }
 		}
 		if (!tt){
 		        return 4;
-		}
 		}
 		break;
 	}
