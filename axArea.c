@@ -51,6 +51,7 @@ static char *sccsId = "@(#) $Id$";
 char *silenceString[] = {"Off","On"};
 char *executionModeString[] = {"Local","Global"};
 char *executionStateString[] = {"Active","Passive"};
+char *disabledForcePVCountString[] = {" ","Disabled forcePVs:"};
 
 /* global variables */
 extern int _global_flag;
@@ -384,6 +385,9 @@ static ALINK *setupArea(ALINK *areaOld)
 		area->groupWindow = createSubWindow(area);
 	}
 
+	/* Reset count of disabled forcePVs  */
+	area->disabledForcePVCount = 0;
+
 	/* Reset data for Current alarm window */
 	resetCurrentAlarmWindow(area);
 
@@ -652,7 +656,7 @@ void createMainWindowWidgets(ALINK *area)
 	XmStringFree(str);
 
 	/* Create BeepSeverityLabel string for the messageArea */
-	str = XmStringCreateSimple("Global Beep Severity:");
+	str = XmStringCreateSimple("ALH Beep Severity:");
 	area->beepSeverityLabel = XtVaCreateManagedWidget("beepSeverityLabel",
 	    xmLabelGadgetClass,        area->messageArea,
 	    XmNshadowThickness,        2,
@@ -669,6 +673,18 @@ void createMainWindowWidgets(ALINK *area)
 
 	XtAddCallback(area->silenceCurrent, XmNvalueChangedCallback,
 	    (XtCallbackProc)silenceCurrent_callback,0);
+
+	/* Create Disabled ForcePV Count string for the messageArea */
+	str = XmStringCreateSimple(disabledForcePVCountString[0]);
+	area->disabledForcePVCountLabel = XtVaCreateManagedWidget("disabledForcePVCountLabel",
+	    xmLabelGadgetClass,        area->messageArea,
+	    XmNshadowThickness,        2,
+	    XmNlabelString,            str,
+	    XmNtopAttachment,          XmATTACH_WIDGET,
+	    XmNtopWidget,              area->beepSeverity,
+	    XmNrightAttachment,        XmATTACH_FORM,
+	    NULL);
+	XmStringFree(str);
 
 	/* manage the message area */
 	XtManageChild(area->messageArea);
@@ -856,6 +872,35 @@ void changeSilenceForeverText(ALINK *area)
 	}
 }
 
+/***************************************************
+ changeDisabledForcePVText
+****************************************************/
+void updateDisabledForcePVCount(ALINK *area,int value)
+{
+	area->disabledForcePVCount += value;
+}
+
+/***************************************************
+ changeDisabledForcePVText
+****************************************************/
+void changeDisabledForcePVText(ALINK *area)
+{
+	XmString    str;
+	char buff[24];
+
+	if (area->disabledForcePVCountLabel) {
+		if (area->disabledForcePVCount) {
+			sprintf(buff,"%-.18s %4.4d",
+				disabledForcePVCountString[1],area->disabledForcePVCount);
+		} else sprintf(buff,"%-.18s",disabledForcePVCountString[0]);
+		str = XmStringCreateSimple(buff);
+		XtVaSetValues(area->disabledForcePVCountLabel,
+		    XmNlabelString,            str,
+		    NULL);
+		XmStringFree(str);
+	}
+}
+
 /******************************************************
   axUpdateDialogs
 ******************************************************/
@@ -866,6 +911,9 @@ void axUpdateDialogs(ALINK *area)
 
 	/* update silenceForever string on main window */
 	changeSilenceForeverText(area);
+
+	/* update disabledForcePVCount string on main window */
+	changeDisabledForcePVText(area);
 
 	/* update property sheet window if it is displayed */
 	propUpdateDialog(area);
