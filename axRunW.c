@@ -40,6 +40,8 @@ static XtIntervalId blinkTimeoutId = (XtIntervalId)0;
 static char *bg_color[] = {"lightblue","yellow","red","white","white","grey"};
 
 static char *channel_bg_color = "lightblue";
+static char *silenced_bg_color = "grey";
+
 
 /* global variabless */
 Widget blinkToplevel; /* Albert1 for locking status marking*/
@@ -49,6 +51,7 @@ extern char *programName;
 extern Pixmap ALH_pixmap;
 Pixel bg_pixel[ALH_ALARM_NSEV];
 Pixel channel_bg_pixel;
+Pixel silenced_bg_pixel;
 const char *bg_char[] = {" ", "Y", "R", "V", "E"," " };
 
 /* forward declarations */
@@ -58,6 +61,7 @@ static void blinking(XtPointer pointer, XtIntervalId *id);
 static void createMainWindow_callback(Widget w,ALINK *area,XmAnyCallbackStruct *call_data);
 static void icon_update(Widget blinkButton);
 static void silenceOneHourReset(void *area);
+static void changeTreeColor(Widget widget,Pixel color);
 
 /******************************************************
   createRuntimeWindow
@@ -314,6 +318,7 @@ XmAnyCallbackStruct *call_data)
 {
 	static XtIntervalId intervalId = 0;
 	int seconds = 3600;
+    Boolean getState;
 
 	psetup.silenceOneHour = psetup.silenceOneHour?FALSE:TRUE;
 	if (psetup.silenceOneHour) {
@@ -321,15 +326,57 @@ XmAnyCallbackStruct *call_data)
 		    (unsigned long)(1000*seconds),
 		    (XtTimerCallbackProc)silenceOneHourReset,
 		    (XtPointer)area);
+#if 0
+		changeTreeColor(area->toplevel,silenced_bg_pixel);
+#endif
+		XmChangeColor(area->messageArea,silenced_bg_pixel);
+		changeTreeColor(area->treeWindowForm,silenced_bg_pixel);
+		changeTreeColor(area->groupWindowForm,silenced_bg_pixel);
+		changeTreeColor(area->scale,silenced_bg_pixel);
 		alLogOpModMessage(0,0,"Silence One Hour set to TRUE");
 	} else {
 		if (intervalId) {
 			XtRemoveTimeOut(intervalId);
 			intervalId = 0;
 		}
+#if 0
+		changeTreeColor(area->toplevel,bg_pixel[0]);
+#endif
+		XmChangeColor(area->messageArea,bg_pixel[0]);
+		changeTreeColor(area->treeWindowForm,bg_pixel[0]);
+		changeTreeColor(area->groupWindowForm,bg_pixel[0]);
+		changeTreeColor(area->scale,bg_pixel[0]);
 		alLogOpModMessage(0,0,"Silence One Hour set to FALSE");
 	}
 }
+
+/***************************************************
+ changeTreeColor
+****************************************************/
+static void changeTreeColor(Widget widget,Pixel color)
+{
+    int i;
+    Widget *children;
+    Cardinal numChildren;
+	char *name;
+
+	if (!widget || !color) return;
+	XtVaGetValues(widget,XmNnumChildren,&numChildren, NULL);
+	if (numChildren > 0) {
+		XtVaGetValues(widget,XmNchildren,&children, NULL);
+		for(i=0; i < (int)numChildren; i++) {
+			changeTreeColor(children[i],color);
+		}
+	}
+	name = XtName(widget);
+	if(name &&
+		strcmp(name,"ack") &&
+		strcmp(name,"sevr") &&
+		strcmp(name,"pushButtonName") ) {
+			XmChangeColor(widget,color);
+	}
+}
+
 
 /***************************************************
  silenceForeverChangeState
@@ -339,7 +386,7 @@ void silenceForeverChangeState(ALINK *area)
 	psetup.silenceForever = psetup.silenceForever?FALSE:TRUE;
 	if (psetup.silenceForever)
 		alLogOpModMessage(0,0,"Silence Forever set to TRUE");
-		else
+	else
 		alLogOpModMessage(0,0,"Silence Forever set to FALSE");
 	changeSilenceForeverText(area);
 }
@@ -387,6 +434,7 @@ void pixelData(Widget iconBoard)
 		bg_pixel[n] = COLOR(dsply,bg_color[n]);
 
 	channel_bg_pixel = COLOR(dsply,channel_bg_color);
+    silenced_bg_pixel = COLOR(dsply,silenced_bg_color);
 
 	/* retrieve the background color of the iconBoard */
 	XtVaGetValues(iconBoard, XmNbackground, &bg_pixel[0], NULL);

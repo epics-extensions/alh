@@ -456,3 +456,5 @@ Tue Aug 10 10:48:18 CDT 2004 ALH_1_2_19beta1
 	Added ca clear channel for Acknowledge PV.
 	Popup error msg for invalid SEVRPV, FORCEPV, ACKPV, HEARTBEATPV input
 
+Fri Oct 29 14:54:00 CDT 2004  ALH_1_2_19beta2
+	Set main window background color grey if Silence For One Hour is active.
