@@ -50,6 +50,11 @@ ifeq ($(DEBUG), YES)
   USR_CCFLAGS   += -DDEBUG
 endif
 
+Linux_CPPFLAGS += -D_SVID_SOURCE -D_BSD_SOURCE
+printer_CPPFLAGS += $($(OS_CLASS)_CPPFLAGS)
+file_CPPFLAGS += $($(OS_CLASS)_CPPFLAGS)
+alLog_CPPFLAGS += $($(OS_CLASS)_CPPFLAGS)
+
 ifeq ($(I_WANT_CMLOG),YES)
   CMLOG_BIN		 = $(CMLOG)/bin/$(HOST_ARCH)
   alLog_CFLAGS	+= -I$(CMLOG)/include -DCMLOG
