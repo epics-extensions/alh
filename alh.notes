@@ -296,3 +296,11 @@ Mon Apr 24 09:40:43 CDT 2000 -  V1.2.4
 	Simplified alHighestSystemSeverity calculation.
 	Added new alarm event error checking.
 
+Wed Aug  9 09:16:57 CDT 2000 - V1.2.5
+	Fixed some memory leaks in scroll.c and dialog.c and file.c.
+	Removed change to group curSevr in alView.c. Added CMLOG_BIN
+	definition and added -R ld option for cmlog in Makefile.Host.
+	Added acks and ackt fields to countFilter structure in alLib.h.
+	Modified the handling of new events when a count Filter exists,
+	see comment table in alLib.c (near line 630 ).
+
