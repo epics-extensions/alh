@@ -116,7 +116,7 @@ ifeq ($(EXCEED),Exceed6)
 endif
 ifeq ($(EXCEED),Exceed6.1)
   PROD_LIBS_WIN32 = XmStatic XMSTATXT XlibGUI Xlib
-  USR_CFLAGS += -DXMSTATIC
+  USR_CFLAGS_WIN32 += -DXMSTATIC
 endif
 
 XlibGUI_DIR = $(X11_LIB)
@@ -132,4 +132,8 @@ RCS_WIN32 += alh.rc
 include $(TOP)/config/RULES.Host
 
 alh.res:../alh.ico
+
+alh.o: ../version.h
+awAct.o: ../version.h
+awAlh.o: ../version.h
 
