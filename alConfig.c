@@ -452,6 +452,8 @@ int context,int caConnect,struct mainGroup *pmainGroup)
                 alCaConnectHeartbeatPV(pmainGroup->heartbeatPV.name,
 					&(pmainGroup->heartbeatPV.chid),pmainGroup);
             }
+		} else {
+	        print_error(buf,"Invalid $HEARTBEATPV Line");
         }
         return;
     }
@@ -586,13 +588,15 @@ int context,int caConnect,struct mainGroup *pmainGroup)
 				alCaAddForcePVEvent (pcalc->chid[index],puser,&pcalc->evid[index]);
 			}
 
-		}
+		} else {
+	        print_error(buf,"Invalid $FORCEPV_CALC Line");
+        }
 		return;
 	}
 
 	if (strncmp(&buf[1],"SEVRPV",6)==0) { /*SEVRPV*/
 
-		if (gcdata->sevrPVName) return;
+		if(strcmp(gcdata->sevrPVName,"-") != 0) return;
 		rtn = sscanf(buf,"%20s%32s",command,name);
 		if(rtn>=2) {
 			gcdata->sevrPVName = (char *)calloc(1,strlen(name)+1);
@@ -601,7 +605,9 @@ int context,int caConnect,struct mainGroup *pmainGroup)
 				alCaConnectSevrPV(gcdata->sevrPVName,&gcdata->sevrchid,gcdata->name);
 			}
 
-		}
+		} else {
+	        print_error(buf,"Invalid $SEVRPV Line");
+        }
 
 		return;
 	}
@@ -746,7 +752,7 @@ int context,int caConnect,struct mainGroup *pmainGroup)
 		rtn = sscanf(&buf[7],"%30s%32s",name,command);
 
 		if(rtn>=2) {
-		        cdata=(struct chanData *)gcdata;
+            cdata=(struct chanData *)gcdata;
 			cdata->ackPVName = (char *)calloc(1,strlen(name)+1);
 			strcpy(cdata->ackPVName,name);
 			cdata->ackPVValue=(short) atoi(command);
@@ -754,8 +760,9 @@ int context,int caConnect,struct mainGroup *pmainGroup)
 				 alCaConnectAckPV(cdata->ackPVName,&cdata->ackPVId,cdata->name);
 			}
 
-		}
-
+		} else {
+	        print_error(buf,"Invalid $ACKPV Line");
+        }
 		return;
 	}
 	print_error(buf,"Invalid Optional Line");
