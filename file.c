@@ -64,7 +64,7 @@ int _lock_flag=0;                /* Flag for locking. Albert */
 char lockFileName[250];          /* FN for lock file. Albert */
 int lockFileDeskriptor;          /* FD for lock file. Albert */
 unsigned long lockDelay=5000;    /* in msec. periodical masterStatus testing. Albert */
-int masterFlag=0;                /* am I master for write operations? Albert */  
+int masterFlag=1;                /* am I master for write operations? Albert */  
 void masterTesting();            /* periodical calback for masterStatus testing. Albert */
 extern Widget blinkToplevel;     /* for locking status marking */
 char masterStr[30],slaveStr[30]; /* titles for Master/Slave with/whitout printer */
