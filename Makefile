@@ -2,6 +2,8 @@ ADD_ON = ../..
 
 include $(ADD_ON)/src/config/CONFIG
 
+EPICS_LIBS = $(EPICS_BASE_BIN/libca.a $(EPICS_BASE_BIN/libCom.a $(EPICS_BASE_BIN/libUnix.a
+
 USR_CFLAGS = $(MOTIF_CFLAGS) $(X11_CFLAGS)
 USR_LDFLAGS = $(MOTIF_LDFLAGS) $(X11_LDFLAGS) -lm
 
