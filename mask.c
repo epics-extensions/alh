@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.5  1996/11/19 19:40:27  jba
+ Fixed motif delete window actions, and fixed size of force PV window.
+
  Revision 1.4  1995/10/20 16:50:48  jba
  Modified Action menus and Action windows
  Renamed ALARMCOMMAND to SEVRCOMMAND
@@ -70,6 +73,7 @@ static char *sccsId = "@(#)mask.c	1.4\t9/9/93";
 #include <Xm/PushB.h>
 #include <Xm/ToggleB.h>
 #include <Xm/PanedW.h>
+#include <Xm/Protocols.h>
 #include <Xm/RowColumn.h>
 #include <Xm/ToggleBG.h>
 
@@ -195,7 +199,8 @@ static void maskUpdateDialogWidgets(maskWindow)
 
      if (!link) {
           string = XmStringCreateSimple("");
-          XtVaSetValues(maskWindow->nameTextW,XmNlabelString, string, NULL);
+          if (maskWindow->nameTextW )
+              XtVaSetValues(maskWindow->nameTextW,XmNlabelString, string, NULL);
           XmStringFree(string);
           return;
      }
@@ -266,6 +271,17 @@ static void maskCreateDialog(area)
          transientShellWidgetClass, area->toplevel, 
          XmNallowShellResize, TRUE,
          NULL);
+
+     /* Modify the window manager menu "close" callback */
+     {
+        Atom         WM_DELETE_WINDOW;
+        XtVaSetValues(maskDialogShell,
+             XmNdeleteResponse, XmDO_NOTHING, NULL);
+        WM_DELETE_WINDOW = XmInternAtom(XtDisplay(maskDialogShell),
+             "WM_DELETE_WINDOW", False);
+        XmAddWMProtocolCallback(maskDialogShell,WM_DELETE_WINDOW,
+           (XtCallbackProc)maskDismissCallback, (XtPointer)maskWindow);
+     }
 
      maskDialog = XtVaCreateWidget("maskDialog",
          xmPanedWindowWidgetClass, maskDialogShell,

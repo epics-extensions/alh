@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.10  1996/11/19 19:40:30  jba
+ Fixed motif delete window actions, and fixed size of force PV window.
+
  Revision 1.9  1995/11/13 22:31:32  jba
  Added beepseverity command, ansi changes and other changes.
 
@@ -533,6 +536,17 @@ static void propCreateDialog(area)
      propDialogShell = XtVaCreatePopupShell("Alarm Handler Properties",
          transientShellWidgetClass, area->toplevel, NULL, 0);
 
+     /* Modify the window manager menu "close" callback */
+     {
+        Atom         WM_DELETE_WINDOW;
+        XtVaSetValues(propDialogShell,
+             XmNdeleteResponse, XmDO_NOTHING, NULL);
+        WM_DELETE_WINDOW = XmInternAtom(XtDisplay(propDialogShell),
+             "WM_DELETE_WINDOW", False);
+        XmAddWMProtocolCallback(propDialogShell,WM_DELETE_WINDOW,
+           (XtCallbackProc)propDismissCallback, (XtPointer)propWindow);
+     }
+ 
      propDialog = XtVaCreateWidget("propDialog",
          xmPanedWindowWidgetClass, propDialogShell,
          XmNsashWidth,  1,

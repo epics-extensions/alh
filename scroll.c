@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.5  1996/11/19 19:40:35  jba
+ Fixed motif delete window actions, and fixed size of force PV window.
+
  Revision 1.4  1995/10/20 16:50:55  jba
  Modified Action menus and Action windows
  Renamed ALARMCOMMAND to SEVRCOMMAND
@@ -75,7 +78,7 @@ void fileViewWindow(w,option,menuButton)                  Open file view window 
 |  PRIVATE  |
 -------------
 static void closeFileViewWindow_callback(w,operandFile,call_data)     
-                                Close file view callback
+static void closeFileViewShell(w,operandFile,call_data)     
 *
 **********************************************************/
 
@@ -86,6 +89,7 @@ static void closeFileViewWindow_callback(w,operandFile,call_data)
 #include <Xm/RowColumn.h>
 #include <Xm/Form.h>
 #include <Xm/LabelG.h>
+#include <Xm/Protocols.h>
 #include <Xm/PushB.h>
 #include <Xm/ScrollBar.h>
 #include <Xm/Text.h>
@@ -120,10 +124,12 @@ char error_file_size[] = {
 #ifdef __STDC__
 
 static void closeFileViewWindow_callback( Widget w, int operandFile, caddr_t call_data);
+static void closeFileViewShell( Widget w, int operandFile, caddr_t call_data);
 
 #else
 
 static void closeFileViewWindow_callback();
+static void closeFileViewShell();
 
 #endif /*__STDC__*/
 
@@ -259,6 +265,17 @@ if (!app_shell) {
   XmStringFree(str);
   XtVaSetValues(app_shell, XmNallowOverlap, FALSE, NULL);
 
+  /* Modify the window manager menu "close" callback */
+  {
+     Atom         WM_DELETE_WINDOW;
+     XtVaSetValues(XtParent(app_shell),
+          XmNdeleteResponse, XmDO_NOTHING, NULL);
+     WM_DELETE_WINDOW = XmInternAtom(XtDisplay(XtParent(app_shell)),
+          "WM_DELETE_WINDOW", False);
+     XmAddWMProtocolCallback(XtParent(app_shell),WM_DELETE_WINDOW,
+          (XtCallbackProc)closeFileViewShell, (XtPointer)operandFile);
+  }
+ 
   switch (option) {
     case CONFIG_FILE:   
         config_shell = app_shell;
@@ -354,6 +371,32 @@ if (!app_shell) {
 
 
   XtManageChild(app_shell); 
+
+}
+
+
+/**************************************************************************
+    close scroll window for file view
+**************************************************************************/
+static void closeFileViewShell(w,operandFile,call_data)
+Widget w;
+int operandFile;
+caddr_t call_data;
+{
+    Widget menuButton;
+    WidgetList children;
+
+    XtVaGetValues(w, XmNchildren, &children, NULL);
+    XtUnmanageChild(children[0]);
+    XtVaGetValues(children[0], XmNchildren, &children, NULL);
+    XtVaGetValues(children[0], XmNuserData, &menuButton, NULL);
+    XtVaSetValues(menuButton, XmNset, FALSE, NULL);
+
+    viewFileUsedLength[operandFile] = 0;
+    viewFileMaxLength[operandFile] = 0;
+
+    XtFree((char *)viewFileString[operandFile]);
+    viewFileString[operandFile]=NULL;
 
 }
 

@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.5  1996/11/19 19:40:24  jba
+ Fixed motif delete window actions, and fixed size of force PV window.
+
  Revision 1.4  1995/10/20 16:50:40  jba
  Modified Action menus and Action windows
  Renamed ALARMCOMMAND to SEVRCOMMAND
@@ -311,6 +314,17 @@ static void forcePVCreateDialog(area)
      forcePVDialogShell = XtVaCreatePopupShell("Force Process Variable",
          transientShellWidgetClass, area->toplevel, NULL, 0);
 
+     /* Modify the window manager menu "close" callback */
+     {
+        Atom         WM_DELETE_WINDOW;
+        XtVaSetValues(forcePVDialogShell,
+             XmNdeleteResponse, XmDO_NOTHING, NULL);
+        WM_DELETE_WINDOW = XmInternAtom(XtDisplay(forcePVDialogShell),
+             "WM_DELETE_WINDOW", False);
+        XmAddWMProtocolCallback(forcePVDialogShell,WM_DELETE_WINDOW,
+           (XtCallbackProc)forcePVDismissCallback, (XtPointer)forcePVWindow);
+     }
+ 
      forcePVDialog = XtVaCreateWidget("forcePVDialog",
          xmPanedWindowWidgetClass, forcePVDialogShell,
          XmNsashWidth,  1,
@@ -347,7 +361,8 @@ static void forcePVCreateDialog(area)
      /* ---------------------------------
      Force Process Variable
      --------------------------------- */
-     frame2 = XtVaCreateManagedWidget("frame2",
+
+     frame2 = XtVaCreateWidget("frame2",
           xmFrameWidgetClass, form,
           XmNtopAttachment,   XmATTACH_WIDGET,
           XmNtopWidget,       nameLabelW,
@@ -486,12 +501,6 @@ static void forcePVCreateDialog(area)
      XtAddCallback(forcePVresetValueTextW, XmNactivateCallback,
           (XtCallbackProc)XmProcessTraversal, (XtPointer)XmTRAVERSE_NEXT_TAB_GROUP);
 
-     /* RowColumn is full -- now manage */
-     XtManageChild(rowcol2);
-
-     /* form is full -- now manage */
-     XtManageChild(form);
-
      /* Set the client data "Apply", "Cancel", "Dismiss" and "Help" button's callbacks. */
      forcePV_items[0].data = (XtPointer)forcePVWindow;
      forcePV_items[1].data = (XtPointer)forcePVWindow;
@@ -499,8 +508,6 @@ static void forcePVCreateDialog(area)
      forcePV_items[3].data = (XtPointer)forcePVWindow;
 
      (void)createActionButtons(forcePVDialog, forcePV_items, XtNumber(forcePV_items));
-
-     XtManageChild(forcePVDialog);
 
      forcePVWindow->forcePVDialog = forcePVDialog;
      forcePVWindow->nameLabelW = nameLabelW;
@@ -515,6 +522,13 @@ static void forcePVCreateDialog(area)
 
      /* update forcePVWindow link info */
      forcePVUpdateDialogWidgets(forcePVWindow);
+
+     /* RowColumn is full -- now manage */
+     XtManageChild(rowcol2);
+     XtManageChild(frame2);
+     XtManageChild(form);
+
+     XtManageChild(forcePVDialog);
 
      XtRealizeWidget(forcePVDialogShell);
 

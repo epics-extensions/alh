@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.4  1996/11/19 19:40:38  jba
+ Fixed motif delete window actions, and fixed size of force PV window.
+
  Revision 1.3  1995/10/20 16:50:58  jba
  Modified Action menus and Action windows
  Renamed ALARMCOMMAND to SEVRCOMMAND
@@ -50,6 +53,7 @@ void forceMaskShowDialog(area)          Create/show mask dialog
 #include <Xm/LabelG.h>
 #include <Xm/ToggleB.h>
 #include <Xm/PanedW.h>
+#include <Xm/Protocols.h>
 #include <Xm/RowColumn.h>
 #include <Xm/ToggleBG.h>
 
@@ -311,6 +315,17 @@ static void forceMaskCreateDialog(area)
          XmNallowShellResize, TRUE,
          NULL);
 
+     /* Modify the window manager menu "close" callback */
+     {
+        Atom         WM_DELETE_WINDOW;
+        XtVaSetValues(maskDialogShell,
+             XmNdeleteResponse, XmDO_NOTHING, NULL);
+        WM_DELETE_WINDOW = XmInternAtom(XtDisplay(maskDialogShell),
+             "WM_DELETE_WINDOW", False);
+        XmAddWMProtocolCallback(maskDialogShell,WM_DELETE_WINDOW,
+           (XtCallbackProc)forceMaskDismissCallback, (XtPointer)forceMaskWindow);
+     }
+ 
      maskDialog = XtVaCreateWidget("maskDialog",
          xmPanedWindowWidgetClass, maskDialogShell,
          XmNallowResize, TRUE,
