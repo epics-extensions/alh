@@ -1,8 +1,11 @@
 /*
  $Log$
- Revision 1.3  1995/02/28 16:43:32  jba
- ansi c changes
+ Revision 1.4  1995/03/24 16:35:46  jba
+ Bug fix and reorganized some files
 
+ * Revision 1.3  1995/02/28  16:43:32  jba
+ * ansi c changes
+ *
  * Revision 1.2  1994/06/22  21:16:35  jba
  * Added cvs Log keyword
  *
@@ -214,10 +217,6 @@ int alGuidanceExists(link)              Returns True if guidance exists
 int alProcessExists(link)               Returns True if related process
      GCLINK *link;                      exists
 *
-void alResetLineData(link, subWindow)   Initializes line fields to NULL
-     GCLINK *link;
-     void   *subWindow;
-
 */
 
 /**********************************************************************
@@ -1636,20 +1635,5 @@ int alProcessExists(link)
 {
      if (link->pgcData->command)  return(TRUE);
      return(FALSE);
-}
-
-/***************************************************
-  alResetLineData
-****************************************************/
-
-void alResetLineData(link, subWindow)
-     GCLINK *link;
-     void   *subWindow;
-{
-    if (!link) return;
-
-    link->modified = 0;
-    if (link->lineTreeW == subWindow ) link->lineTreeW = NULL;
-    if (link->lineGroupW == subWindow ) link->lineGroupW = NULL;
 }
 

@@ -1,8 +1,11 @@
 /*
  $Log$
- Revision 1.2  1994/06/22 21:17:13  jba
- Added cvs Log keyword
+ Revision 1.3  1995/03/24 16:35:53  jba
+ Bug fix and reorganized some files
 
+ * Revision 1.2  1994/06/22  21:17:13  jba
+ * Added cvs Log keyword
+ *
  */
 
 static char *sccsId = "@(#)axSubW.c	1.7\t10/1/93";
@@ -120,11 +123,6 @@ void initSevrAbove(subWindow,link)            Initialize severity above indicato
 void initSevrBelow(subWindow,link)            Initialize severity below indicator
      struct subWindow  *subWindow;
      void *link;
-*
-void 
-adjustManagedRows(startLine,subWindow)        Unmanages unused line Widgets
-     SNODE *startLine;
-     void  *subWindow;
 *
 *******************************************************************************/
 
@@ -677,32 +675,5 @@ void initSevrBelow(subWindow,link)
           XtVaSetValues(subWindow->sevrBelowInd,XmNbackground,bg_pixel[sevrBelow],NULL);
 #endif
      }
-}
-
-/***************************************************
-  adjustManagedRows
-****************************************************/
- 
-void adjustManagedRows(startLine,subWindow)
-     SNODE *startLine;
-     void  *subWindow;
-{
-     struct anyLine *line;
-     SNODE *pt;
-     WLINE *wline;
-
-     pt = startLine;
-     while (pt){
-          line = (struct anyLine *)pt;
-          wline = (WLINE *)line->wline;
-          if (XtIsManaged(wline->row_widget) == TRUE ){
-               XtUnmanageChild(wline->row_widget); 
-          }
-          alResetLineData((GCLINK *)line->link, subWindow);
-          initLine(line);
-
-          pt = sllNext(pt);
-     }
-                   
 }
 

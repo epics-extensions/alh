@@ -1,8 +1,11 @@
 /*
  $Log$
- Revision 1.2  1994/06/22 21:17:02  jba
- Added cvs Log keyword
+ Revision 1.3  1995/03/24 16:35:51  jba
+ Bug fix and reorganized some files
 
+ * Revision 1.2  1994/06/22  21:17:02  jba
+ * Added cvs Log keyword
+ *
  */
 
 static char *axSccsId = "@(#)ax.h	1.11\t12/15/93";
@@ -118,7 +121,6 @@ void exposeResizeCallback( Widget widget, struct subWindow *subWindow,
 void defaultTreeSelection( ALINK * area);
 void initSevrAbove( struct subWindow  *subWindow, void *link);
 void initSevrBelow( struct subWindow  *subWindow, void *link);
-void adjustManagedRows( SNODE *startLine, void  *subWindow);
 
 /********************************************************************
   dialog.c   function prototypes
@@ -239,7 +241,6 @@ void alForcePVGroupEvent( GLINK *glink, int value);
 char *alAlarmGroupName( GLINK *link);
 int alGuidanceExists( GCLINK *link);
 int alProcessExists( GCLINK *link);
-void alResetLineData( GCLINK *link, void *subWindow);
 
 /********************************************************************
   alLog.c   function prototypes
@@ -509,7 +510,6 @@ void exposeResizeCallback();
 void defaultTreeSelection();
 void initSevrAbove();
 void initSevrBelow();
-void adjustManagedRows();
 
 /********************************************************************
   dialog.c   function prototypes
@@ -614,7 +614,6 @@ void alForcePVGroupEvent();
 char *alAlarmGroupName();
 int alGuidanceExists();
 int alProcessExists();
-void alResetLineData();
 
 /********************************************************************
   alLog.c   function prototypes

@@ -1,8 +1,11 @@
 /*
  $Log$
- Revision 1.2  1994/06/22 21:16:59  jba
- Added cvs Log keyword
+ Revision 1.3  1995/03/24 16:35:49  jba
+ Bug fix and reorganized some files
 
+ * Revision 1.2  1994/06/22  21:16:59  jba
+ * Added cvs Log keyword
+ *
  */
 
 static char *sccsId = "@(#)awView.c	1.14\t10/22/93";
@@ -348,10 +351,14 @@ void redraw(subWindow,rowNumber)
      int rowNumber;
 {
      struct anyLine *line=0;
+     struct anyLine *ptline;
      int  row, r, linkType;
      GCLINK *link;
+     GCLINK *ptlink;
      GCLINK *linkOld;
      WLINE *wline;
+     WLINE *ptwline;
+     SNODE *pt;
 
      row = rowNumber;
 
@@ -461,9 +468,27 @@ void redraw(subWindow,rowNumber)
           link = (GCLINK *)(subWindow->alViewNext)(link,&linkType);
      }
 
-     adjustManagedRows((SNODE *)line,subWindow);
-
-
+     /* adjustManagedRows */
+     pt = (SNODE *)line;
+     while (pt){
+          ptline = (struct anyLine *)pt;
+          ptwline = (WLINE *)ptline->wline;
+          if (XtIsManaged(ptwline->row_widget) == TRUE ){
+               XtUnmanageChild(ptwline->row_widget); 
+          }
+          ptlink = (GCLINK *)ptline->link;
+          if (ptlink) {
+               ptlink->modified = 0;
+               if (isTreeWindow(subWindow->area, subWindow) ) {
+                    ptlink->lineTreeW = NULL;
+               } else {
+                    ptlink->lineGroupW = NULL;
+               }
+          }
+          initLine(ptline);
+          pt = sllNext(pt);
+     }
+                   
      adjustScrollBar(subWindow);
 
      if (link) {

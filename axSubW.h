@@ -1,8 +1,11 @@
 /*
  $Log$
- Revision 1.2  1994/06/22 21:17:15  jba
- Added cvs Log keyword
+ Revision 1.3  1995/03/24 16:35:54  jba
+ Bug fix and reorganized some files
 
+ * Revision 1.2  1994/06/22  21:17:15  jba
+ * Added cvs Log keyword
+ *
  */
 
 /* share/src/act	@(#)axSubW.h	1.4	G% */
@@ -125,5 +128,4 @@ void exposeResizeCallback()             Redraw subWindows if resize has occurred
 void defaultTreeSelection()             Make 1st line treeWindow default selection
 void initSevrAbove()                    Initialize severity above indicator
 void initSevrBelow()                    Initialize severity below indicator
-void adjustManagedRows()                Unmanages unused line Widgets
 *******************************************************************************/
