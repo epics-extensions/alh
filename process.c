@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.6  1998/08/03 18:07:50  jba
+ Increased config file max line size to 500 chars.
+
  Revision 1.5  1998/06/04 17:31:58  evans
  Changed system("command &") to _spawnl("command") for WIN32 in
  processSpawn_callback.  Added test.win32.alhConfig.
@@ -98,7 +101,7 @@ Widget w;
 char *command;
 void * call_data;
 {
-    char buff[120];
+    char buff[MAX_STRING_LENGTH +2];
     int l;
     int status;
 #ifdef WIN32

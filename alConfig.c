@@ -1,5 +1,8 @@
 /*
  $Log$
+ Revision 1.17  1998/08/03 18:07:51  jba
+ Increased config file max line size to 500 chars.
+
  Revision 1.16  1998/07/01 20:03:59  jba
  Bug fix for STATCOMMAND
 
@@ -216,7 +219,6 @@ static void alConfigTreePrint(fw,glink,treeSym)
 #define UP_ALARM ALARM_ANY + 1
 #endif
 
-#define BUF_SIZE 150
 #define GROUP_LINE 1
 #define CHANNEL_LINE 2
 
@@ -286,7 +288,7 @@ char *filename;
 int caConnect;
 {
     FILE *fp;
-    char buf[BUF_SIZE];
+    char buf[MAX_STRING_LENGTH ];
     CLINK *clink;
     GLINK *glink;
     GCLINK *gclink=0;
@@ -303,7 +305,7 @@ int caConnect;
 
     glink = NULL;
     clink = NULL;
-    while( fgets(buf,BUF_SIZE,fp) != NULL) {
+    while( fgets(buf,MAX_STRING_LENGTH,fp) != NULL) {
 	
 	/* find first non blank character */
 
@@ -727,7 +729,7 @@ static void GetOptionalLine(fp,buf,gclink,context,caConnect)
  	struct guideLink *pgl;
 	int first_char;
 
-    	while( fgets(buf,BUF_SIZE,fp) != NULL) {
+    	while( fgets(buf,MAX_STRING_LENGTH,fp) != NULL) {
 
 	    /*change return to blank for x message box*/
 
