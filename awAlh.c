@@ -1,8 +1,11 @@
 /*
  $Log$
- Revision 1.4  1995/06/22 19:48:50  jba
- Added $ALIAS facility.
+ Revision 1.5  1995/10/05 22:26:34  jba
+ bug fix for alias.
 
+ * Revision 1.4  1995/06/22  19:48:50  jba
+ * Added $ALIAS facility.
+ *
  * Revision 1.3  1995/05/31  20:34:06  jba
  * Added name selection and arrow functions to Group window
  *
@@ -508,8 +511,13 @@ static void alhActionCallback(widget, item, cbs)
                        guidance_callback(wline->guidance,(GCLINK *)link, cbs);
                   }
                   else {
-                       createDialog(area->form_main,XmDIALOG_WARNING,"No guidance for ",
+                       if (link->pgcData->alias){
+                            createDialog(area->form_main,XmDIALOG_WARNING,"No guidance for ",
                             link->pgcData->alias);
+                       } else {
+                            createDialog(area->form_main,XmDIALOG_WARNING,"No guidance for ",
+                            link->pgcData->name);
+                       }
                   }
              }
              else {
@@ -526,8 +534,13 @@ static void alhActionCallback(widget, item, cbs)
                   if (alProcessExists(link)){
                        relatedProcess_callback(widget,link, cbs);
                   } else {
-                       createDialog(area->form_main,XmDIALOG_WARNING,"No related process for ",
+                       if (link->pgcData->alias){
+                            createDialog(area->form_main,XmDIALOG_WARNING,"No related process for ",
                             link->pgcData->alias );
+                       } else {
+                            createDialog(area->form_main,XmDIALOG_WARNING,"No related process for ",
+                            link->pgcData->name );
+                       }
                   }
 
              } else {
