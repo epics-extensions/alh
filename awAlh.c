@@ -1077,6 +1077,7 @@ void awRowWidgets(struct anyLine *line,void *area)
 	Position nextX;
 	Dimension width;
 	Widget parent;
+	Pixel backgroundColor;
 
 	subWindow=line->pwindow;
 	parent = ((struct subWindow *)subWindow)->drawing_area;
@@ -1097,6 +1098,9 @@ void awRowWidgets(struct anyLine *line,void *area)
 		    XmNmarginWidth,              0,
 		    NULL);
 		nextX = 0;
+
+		XtVaGetValues(parent,XmNbackground,&backgroundColor,NULL);
+		XtVaSetValues(wline->row_widget,XmNbackground,backgroundColor,NULL);
 
 		if ( isTreeWindow(area,subWindow) && line->linkType == GROUP) {
 			if ( glink->pgroupData->treeSym) {
@@ -1173,6 +1177,7 @@ void awRowWidgets(struct anyLine *line,void *area)
 		    XmNuserData,               (XtPointer)area,
 		    XmNx,                      nextX,
 		    XmNy,                      2,
+		    XmNbackground,             backgroundColor,
 		    NULL);
 		if (line->linkType == GROUP && sllFirst(&(glink->subGroupList))){
 			XtManageChild(wline->arrow);
@@ -1192,6 +1197,7 @@ void awRowWidgets(struct anyLine *line,void *area)
 		    XmNmarginHeight,           0,
 		    XmNuserData,               (XtPointer)line->alias,
 		    XmNx,                      nextX,
+		    XmNbackground,             backgroundColor,
 		    NULL);
 
 		if (guidanceExists(link)) {
@@ -1207,6 +1213,7 @@ void awRowWidgets(struct anyLine *line,void *area)
 		    XmNmarginHeight,           0,
 		    XmNuserData,               (XtPointer)area,
 		    XmNx,                      nextX,
+		    XmNbackground,             backgroundColor,
 		    NULL);
 
 		if (alProcessExists(link) ){
@@ -1223,6 +1230,7 @@ void awRowWidgets(struct anyLine *line,void *area)
 		    XmNlabelString,            str,
 		    XmNx,                      nextX,
 		    XmNy,                      2,
+		    XmNbackground,             backgroundColor,
 		    NULL);
 		XmStringFree(str);
 		XtVaGetValues(wline->mask,XmNwidth,&width,NULL);
@@ -1234,6 +1242,7 @@ void awRowWidgets(struct anyLine *line,void *area)
 		    XmNlabelString,            str,
 		    XmNx,                      nextX,
 		    XmNy,                      2,
+		    XmNbackground,             backgroundColor,
 		    NULL);
 		XmStringFree(str);
 		XtVaGetValues(wline->highestbeepsevr,XmNwidth,&width,NULL);
@@ -1245,6 +1254,7 @@ void awRowWidgets(struct anyLine *line,void *area)
 		    XmNlabelString,            str,
 		    XmNx,                      nextX,
 		    XmNy,                      2,
+		    XmNbackground,             backgroundColor,
 		    NULL);
 		XmStringFree(str);
 		XtVaGetValues(wline->message,XmNwidth,&width,NULL);
