@@ -326,9 +326,6 @@ XmAnyCallbackStruct *call_data)
 		    (unsigned long)(1000*seconds),
 		    (XtTimerCallbackProc)silenceOneHourReset,
 		    (XtPointer)area);
-#if 0
-		changeTreeColor(area->toplevel,silenced_bg_pixel);
-#endif
 		XmChangeColor(area->messageArea,silenced_bg_pixel);
 		changeTreeColor(area->treeWindowForm,silenced_bg_pixel);
 		changeTreeColor(area->groupWindowForm,silenced_bg_pixel);
@@ -339,9 +336,6 @@ XmAnyCallbackStruct *call_data)
 			XtRemoveTimeOut(intervalId);
 			intervalId = 0;
 		}
-#if 0
-		changeTreeColor(area->toplevel,bg_pixel[0]);
-#endif
 		XmChangeColor(area->messageArea,bg_pixel[0]);
 		changeTreeColor(area->treeWindowForm,bg_pixel[0]);
 		changeTreeColor(area->groupWindowForm,bg_pixel[0]);
@@ -369,10 +363,10 @@ static void changeTreeColor(Widget widget,Pixel color)
 		}
 	}
 	name = XtName(widget);
-	if(name &&
-		strcmp(name,"ack") &&
+	if( !name || 
+		( strcmp(name,"ack") &&
 		strcmp(name,"sevr") &&
-		strcmp(name,"pushButtonName") ) {
+		strcmp(name,"pushButtonName")) ) {
 			XmChangeColor(widget,color);
 	}
 }
