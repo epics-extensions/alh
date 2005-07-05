@@ -99,10 +99,6 @@ extern int alarmLogFileMaxRecords;   /* alarm log file maximum # records */
 
 extern int DEBUG;
 extern struct setup psetup;            /* current file setup */
-extern FILE *fl;                /* alarm logfile pointer*/
-extern FILE *fo;                /* opmod file pointer*/
-
-
 
 static char error_file_size[] = {
 	    "  Sorry:  file size too big to view."
@@ -129,14 +125,17 @@ void fileViewWindow(Widget w,int option,Widget menuButton)
 	case CONFIG_FILE:
 		operandFile = CONFIG_FILE;
 		app_shell = config_shell;
+		strcpy(filename,psetup.configFile);
 		break;
 	case ALARM_FILE:
 		operandFile = ALARM_FILE;
 		app_shell = alarm_shell;
+		strcpy(filename,psetup.logFile);
 		break;
 	case OPMOD_FILE:
 		operandFile = OPMOD_FILE;
 		app_shell = opmod_shell;
+		strcpy(filename,psetup.opModFile);
 		break;
 	}
 	if (app_shell && XtIsManaged(app_shell)) {
@@ -155,42 +154,11 @@ void fileViewWindow(Widget w,int option,Widget menuButton)
 
 	XtVaSetValues(menuButton, XmNset, TRUE, NULL);
 
-	switch (option) {
-	case CONFIG_FILE:
-		strcpy(filename,psetup.configFile);
-		if ((fp = fopen(filename, "r+")) == NULL) {
-			if ((fp = fopen(filename, "r")) != NULL) {
-				fprintf(stderr, "fileViewWindow: file %s opened read only.\n",
-				    filename);
-			} else {
-				XtVaSetValues(menuButton, XmNset, FALSE, NULL);
-				fprintf(stderr,"fileViewWindow: file %s not found\n",filename);
-				return;             /* bail out if no file found */
-			}
-		}
 
-		break;
-
-	case ALARM_FILE:
-			strcpy(filename,psetup.logFile);
-			fp=fl;
-            		if(alarmLogFileMaxRecords) fseek(fp,0,SEEK_SET);
-		        break;
-
-	case OPMOD_FILE:
-		strcpy(filename,psetup.opModFile);
-		if ((fp = fopen(filename, "r+")) == NULL) {
-			if ((fp = fopen(filename, "r")) != NULL) {
-				fprintf(stderr, "fileViewWindow: file %s opened read only.\n",
-				    filename);
-			} else {
-				XtVaSetValues(menuButton, XmNset, FALSE, NULL);
-				fprintf(stderr,"fileViewWindow: file %s not found\n",filename);
-				return;             /* bail out if no file found */
-			}
-		}
-
-		break;
+	if ((fp = fopen(filename, "r")) == NULL) {
+		XtVaSetValues(menuButton, XmNset, FALSE, NULL);
+		fprintf(stderr,"fileViewWindow: file %s not found\n",filename);
+		return;             /* bail out if no file found */
 	}
 
 	if (stat(filename, &statbuf) == 0)
@@ -219,21 +187,13 @@ void fileViewWindow(Widget w,int option,Widget menuButton)
 	  createDialog(XtParent(w),XmDIALOG_ERROR,"no free memory","");
 	  return;
 	}
-	fread(viewFileString[operandFile], sizeof(char), 
-	    viewFileUsedLength[operandFile], fp);
- clearerr(fp);
-	/* close up the file */
-	switch(operandFile) {
-	case ALARM_FILE:
-		if(alarmLogFileMaxRecords) fseek(fp,alarmLogFileOffsetBytes,SEEK_SET);
-		break;
-	case CONFIG_FILE:
-	case OPMOD_FILE:
-		if (fclose(fp)) fprintf(stderr, 
-		    "fileViewWindow: unable to close file %s.\n",filename);
-		break;
-	}
+	fread(viewFileString[operandFile], 
+	    viewFileUsedLength[operandFile],1, fp);
 
+	clearerr(fp);
+
+	if (fclose(fp)) fprintf(stderr,
+		"fileViewWindow: unable to close file %s.\n",filename);
 
 	if (!app_shell) {
 		/*  create view window dialog */
@@ -479,27 +439,6 @@ void updateLog(int fileIndex,char *string)
 	/* simply return if the file string does not exist */
 	if (viewFileString[fileIndex] == NULL) return;
 
-
-	/*
-	 *  update the scroll bar 
-	 */
-	/*
-	  n = 0;
-	  XtSetArg(args[n],XmNverticalScrollBar,&scrollBar); n++;
-	  XtGetValues(XtParent(viewTextWidget[fileIndex]),args,n);
-	
-	  n = 0;
-	  XtSetArg(args[n],XmNmaximum,&xmax); n++;
-	  XtSetArg(args[n],XmNminimum,&xmin); n++;
-	  XtGetValues(scrollBar,args,n);
-	
-	  xmax++;
-	
-	  n = 0;
-	  XtSetArg(args[n],XmNmaximum,&xmax); n++;
-	  XtSetValues(scrollBar,args,n);
-	*/
-
 	if (viewFileUsedLength[fileIndex] + stringLength  <= 
 	    viewFileMaxLength[fileIndex]) {
 
@@ -593,20 +532,9 @@ else return;
 		strcat((char *)viewFileString[fileIndex],string);
 		viewFileUsedLength[fileIndex] = viewFileUsedLength[fileIndex] + stringLength;
 		XmTextSetString(viewTextWidget[fileIndex], (char *)viewFileString[fileIndex]);
-		/*
-				XmTextReplace(viewTextWidget[fileIndex],oldUsedLength, oldUsedLength,string);
-		*/
 
 	} else 
 	{
-		/*
-				strncpy((char *)(viewFileString[fileIndex]+
-					alarmLogFileOffsetBytes-alarmLogFileStringLength),string,stringLength) ;
-		*/
-		/*
-		                strncpy((char *)(viewFileString[fileIndex]+alarmLogFileOffsetBytes),
-					str,alarmLogFileStringLength);
-		*/
 		startPosition=alarmLogFileOffsetBytes-alarmLogFileStringLength;
 		endPosition=alarmLogFileOffsetBytes;
 		XmTextReplace(viewTextWidget[fileIndex],startPosition, endPosition,string);
@@ -615,10 +543,6 @@ else return;
 		endPosition=alarmLogFileOffsetBytes+alarmLogFileStringLength;
 		XmTextReplace(viewTextWidget[fileIndex],startPosition, endPosition,str);
 
-		/* add the file string to the text widget */
-		/*
-				XmTextSetString(viewTextWidget[fileIndex], (char *)viewFileString[fileIndex]);
-		*/
 	}
 
         XtVaSetValues(viewTextWidget[fileIndex],
