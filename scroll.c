@@ -22,23 +22,6 @@
   events recorded in log files.
 **********************************************************************/
 
-/**********************************************************************
-Routines defined in scroll.c:
-
--------------
-|   PUBLIC  |
--------------
-void updateLog(fileIndex,string)                            Update open file view window
-void fileViewWindow(w,option,menuButton)                  Open file view window callback
-
--------------
-|  PRIVATE  |
--------------
-static void closeFileViewWindow_callback(w,operandFile,call_data)     
-static void closeFileViewShell(w,operandFile,call_data)     
-*
-**********************************************************/
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/stat.h>
@@ -46,7 +29,6 @@ static void closeFileViewShell(w,operandFile,call_data)
 #ifndef WIN32
 #include <dirent.h>
 #endif
-
 
 #include <Xm/Xm.h>
 #include <Xm/RowColumn.h>
@@ -82,30 +64,33 @@ static Widget findShell, findText;
 static Widget text_with,text_fy,text_fmo,text_fd,text_fh,text_fmi,
 text_ty,text_tmo,text_td,text_th,text_tmi;
 
+/* forward declarations */
+static void closeFileViewWindow_callback( Widget w, int operandFile, caddr_t call_data);
+static void closeFileViewShell( Widget w, int operandFile, caddr_t call_data);
 static void findForward(Widget,XtPointer,XtPointer);
 static void findReverse(Widget,XtPointer,XtPointer); 
 static void findDismiss(Widget,XtPointer,XtPointer);
 static void searchCallback(Widget,XtPointer,XmAnyCallbackStruct *);
-void allDigit(Widget,XtPointer,XmTextVerifyCallbackStruct *);
+static void allDigit(Widget,XtPointer,XmTextVerifyCallbackStruct *);
 static void showAllCallback(Widget,XtPointer,XtPointer);
 static void showSelectedCallback(Widget,XtPointer,XtPointer);
-void compactDataAscMonth(char *,char *,char *,char *,char *,char *);
-void compactData(char *,char *,char *,char *,char *,char *);
-char *digitalMonth(char *);
-Boolean extensionIsDate(char *);
+static void compactDataAscMonth(char *,char *,char *,char *,char *,char *);
+static void compactData(char *,char *,char *,char *,char *,char *);
+static char *digitalMonth(char *);
+static Boolean extensionIsDate(char *);
 
 #ifndef MAX
 #  define MAX(a,b) ((a) > (b) ? a : b)
 #endif
 
 
-int viewFileUsedLength[N_LOG_FILES];        /* used length of file. */
-int viewFileMaxLength[N_LOG_FILES];        /* max length of file. */
-unsigned char *viewFileString[N_LOG_FILES];    /* contents of file. */
+static int viewFileUsedLength[N_LOG_FILES];        /* used length of file. */
+static int viewFileMaxLength[N_LOG_FILES];        /* max length of file. */
+static unsigned char *viewFileString[N_LOG_FILES];    /* contents of file. */
 
-Widget viewTextWidget[N_LOG_FILES] = {0,0,0};        /* view text widget */
-Widget browserWidget;
-Widget viewFilenameWidget[N_LOG_FILES] = {0,0,0}; /* view filename widget */
+static Widget viewTextWidget[N_LOG_FILES] = {0,0,0};        /* view text widget */
+static Widget browserWidget;
+static Widget viewFilenameWidget[N_LOG_FILES] = {0,0,0}; /* view filename widget */
 
 extern int alarmLogFileOffsetBytes; /* alarm log file current offset in bytes */
 extern int alarmLogFileStringLength;  /* alarm log file record length*/
@@ -119,13 +104,9 @@ extern FILE *fo;                /* opmod file pointer*/
 
 
 
-char error_file_size[] = {
+static char error_file_size[] = {
 	    "  Sorry:  file size too big to view."
 	    };
-
-/* forward declarations */
-static void closeFileViewWindow_callback( Widget w, int operandFile, caddr_t call_data);
-static void closeFileViewShell( Widget w, int operandFile, caddr_t call_data);
 
 
 /**************************************************************************
@@ -1458,7 +1439,7 @@ XtPointer call_data)
 /**************************************************************************
     allDigit
 **************************************************************************/
-void allDigit(Widget text_w,XtPointer unused,XmTextVerifyCallbackStruct *cbs)
+static void allDigit(Widget text_w,XtPointer unused,XmTextVerifyCallbackStruct *cbs)
 {
 	char c;
 	int len = XmTextGetLastPosition(text_w);
@@ -1589,7 +1570,7 @@ XtPointer call_data)
 /******************************************************************
    Compact presentation of YYY-MM-DD.  
 *****************************************************************/
-void compactData(char *year,char *month,char *day,char *hour,
+static void compactData(char *year,char *month,char *day,char *hour,
 char *min,char *presentation)
 {
 	memcpy(&presentation[0],year,4);
@@ -1603,7 +1584,7 @@ char *min,char *presentation)
 /******************************************************************
    Compact presentation of YYY-MMM-DD. 
 *****************************************************************/
-void compactDataAscMonth(char *year,char *month,char *day,char *hour,
+static void compactDataAscMonth(char *year,char *month,char *day,char *hour,
 char *min,char *presentation)
 {
 	compactData(year,digitalMonth(month),day,hour,min,presentation);
@@ -1612,7 +1593,7 @@ char *min,char *presentation)
 /******************************************************************
    Month to Digit.
 *****************************************************************/
-char *digitalMonth(char *strMonth)
+static char *digitalMonth(char *strMonth)
 {
 	if(!strcmp(strMonth,"Jan")) return("01");
 	if(!strcmp(strMonth,"Feb")) return("02");
@@ -1633,7 +1614,7 @@ char *digitalMonth(char *strMonth)
 /******************************************************************
  Cheking that extension looks like YYYY-MM-DD. 
 *****************************************************************/
-Boolean extensionIsDate(char *ext)
+static Boolean extensionIsDate(char *ext)
 {
   if(*(ext+10) != 0)     return False;
   if(!isdigit(*ext))     return False;
