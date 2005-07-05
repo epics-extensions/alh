@@ -197,6 +197,7 @@ void setupConfig(char *filename,int program,ALINK *areaOld)
 		if ( program == ALH) {
 
 			toBeConnectedCount =0;
+			alLogOpModMessage(0,0, "Setup Config File : %s",filename);
 			alGetConfig(pmainGroup,filename,CA_CONNECT_YES);
 
 			/* now lets give the connection layer a little time
@@ -211,10 +212,11 @@ void setupConfig(char *filename,int program,ALINK *areaOld)
 			alSetNotConnected(pmainGroup);
 			alPutGblAckT(pmainGroup);
 		}
-		else alGetConfig(pmainGroup,filename,CA_CONNECT_NO);
-		/* Log new configfile filename */
-		alLogOpModMessage(0,0,
-			"Setup Config File : %s",filename);
+		else {
+			/* Log new configfile filename */
+			alLogOpModMessage(0,0, "Setup Config File : %s",filename);
+			alGetConfig(pmainGroup,filename,CA_CONNECT_NO);
+		}
 		if (sllFirst(pmainGroup)) strcpy(psetup.configFile,filename);
 	} else{
 		if (program == ACT) alCreateConfig(pmainGroup);
