@@ -110,7 +110,6 @@ Widget viewFilenameWidget[N_LOG_FILES] = {0,0,0}; /* view filename widget */
 extern int alarmLogFileOffsetBytes; /* alarm log file current offset in bytes */
 extern int alarmLogFileStringLength;  /* alarm log file record length*/
 extern int alarmLogFileMaxRecords;   /* alarm log file maximum # records */
-extern char alarmLogFileEndString[];  /* alarm log file end of data string */
 
 
 extern int DEBUG;
@@ -623,7 +622,6 @@ else return;
 				strncpy((char *)(viewFileString[fileIndex]+
 					alarmLogFileOffsetBytes-alarmLogFileStringLength),string,stringLength) ;
 		*/
-		/*                sprintf(str, "%-157s\n",alarmLogFileEndString); */
 		/*
 		                strncpy((char *)(viewFileString[fileIndex]+alarmLogFileOffsetBytes),
 					str,alarmLogFileStringLength);

@@ -124,8 +124,6 @@ extern int DEBUG;
 
 extern int alarmLogFileMaxRecords;     /* alarm log file maximum # records */
 extern int alarmLogFileOffsetBytes;    /* alarm log file current offset in bytes */
-extern char alarmLogFileEndString[];   /* alarm log file end of data string */
-extern int alarmLogFileEndStringLength;/* alarm log file end data string len*/
 
 extern FILE *fl;		/* alarm log pointer */
 extern FILE *fo;		/* opmod log pointer */

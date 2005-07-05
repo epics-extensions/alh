@@ -101,7 +101,6 @@ struct setup psetup = {         /* initial files & beeping setup */
 
 int alarmLogFileMaxRecords = 2000;   /* alarm log file maximum # records */
 int alarmLogFileOffsetBytes = 0;  /* alarm log file current offset in bytes */
-const char alarmLogFileEndString[] = "           ";  /* alarm log file end of data string */
 int alarmLogFileStringLength = 158;  /* alarm log file record length*/
 
 FILE *fo=0;       /* write opmod file pointer */
