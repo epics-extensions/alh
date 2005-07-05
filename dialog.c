@@ -300,8 +300,9 @@ void errMsg(const char *fmt, ...)
 
 	if(lstring[TIME_SIZE-1] == '\0') return;
 
+	alLogOpModMessage(0,0,&lstring[TIME_SIZE-1]);
+
 	if (_no_error_popup) {
-		alLogOpModMessage(0,0,lstring);
 		return;
 	}
 
@@ -342,7 +343,7 @@ void errMsg(const char *fmt, ...)
 		XmStringFree(cstring);
 		XtDestroyWidget(XmMessageBoxGetChild(warningbox,XmDIALOG_CANCEL_BUTTON));
 		XtDestroyWidget(XmMessageBoxGetChild(warningbox,XmDIALOG_HELP_BUTTON));
-		XtAddCallback(warningbox,XmNokCallback,logMessageString,NULL);
+		/*XtAddCallback(warningbox,XmNokCallback,logMessageString,NULL);*/
 		XtAddCallback(warningbox,XmNokCallback,killWidget,NULL);
 		warningboxMessages = 1;
 		XtManageChild(warningbox);
