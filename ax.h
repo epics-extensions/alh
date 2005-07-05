@@ -347,6 +347,8 @@ void alCaPutGblAck(chid chid,short *psevr);
 void alCaPutSevrValue(chid chid,short *psevr);
 void alCaPutHeartbeatValue(chid chid,short *value);
 void alCaPutGblAckT(chid chid, short *pstate);
+void alCaPutAckValue(chid chid, short *psevr);
+void getDescriptionRecord(char *name,char *description,chid descriptionFieldCaId);
 
 /********************************************************************
   alCaCommon.c   function prototypes
