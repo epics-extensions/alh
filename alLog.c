@@ -270,15 +270,13 @@ void alLogOpModMessage(int messageCode,GCLINK* gclink,const char* fmt,...)
 	    (alhArea ? alhArea->blinkString : "N/A"));
     }
 #endif
+    if(text[strlen(text)-1] == '\n') text[strlen(text)-1]= '\0';
+    if(text[strlen(text)-1] == '\n') text[strlen(text)-1]= '\0';
 
-	if (!alhArea || !alhArea->blinkString){
-		sprintf(buff," : : %s \n",text);
+	if (!alhArea || !alhArea->blinkString || !gcdata){
+		sprintf(buff," %s \n",text);
 	} else {
-		if (!gcdata){
-			sprintf(buff,"%s: : %s\n",alhArea->blinkString,text);
-		} else {
-			sprintf(buff,"%s: %s:  %s\n",alhArea->blinkString,gcdata->name,text);
-		}
+		sprintf(buff,"%s: %s: %s\n",alhArea->blinkString,gcdata->name,text);
 	}
 
 	filePrintf(fo,buff,NULL,messageCode);
