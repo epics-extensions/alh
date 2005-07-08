@@ -154,13 +154,6 @@ void fileViewWindow(Widget w,int option,Widget menuButton)
 
 	XtVaSetValues(menuButton, XmNset, TRUE, NULL);
 
-
-	if ((fp = fopen(filename, "r")) == NULL) {
-		XtVaSetValues(menuButton, XmNset, FALSE, NULL);
-		fprintf(stderr,"fileViewWindow: file %s not found\n",filename);
-		return;             /* bail out if no file found */
-	}
-
 	if (stat(filename, &statbuf) == 0)
 		viewFileUsedLength[operandFile] = statbuf.st_size;
 		else
@@ -173,13 +166,11 @@ void fileViewWindow(Widget w,int option,Widget menuButton)
 		return;
 	}
 
-
-	/* read the file string */
+	/* allocate space for the file string */
 	viewFileMaxLength[operandFile] = MAX(INITIAL_FILE_LENGTH,
 	    2*viewFileUsedLength[operandFile]);
 	if (operandFile == ALARM_FILE && alarmLogFileMaxRecords)
 		viewFileMaxLength[operandFile] =  alarmLogFileStringLength*alarmLogFileMaxRecords;
-
 	viewFileString[operandFile] = (unsigned char *)
 	    XtCalloc(1,(unsigned)viewFileMaxLength[operandFile]);
 	if(!viewFileString[operandFile]) { 
@@ -187,16 +178,21 @@ void fileViewWindow(Widget w,int option,Widget menuButton)
 	  createDialog(XtParent(w),XmDIALOG_ERROR,"no free memory","");
 	  return;
 	}
-	fread(viewFileString[operandFile], 
+
+	/* read the file string */
+	if ((fp = fopen(filename, "r")) == NULL) {
+		XtVaSetValues(menuButton, XmNset, FALSE, NULL);
+		fprintf(stderr,"fileViewWindow: file %s not found\n",filename);
+		return;             /* bail out if no file found */
+	}
+	fread(viewFileString[operandFile],
 	    viewFileUsedLength[operandFile],1, fp);
-
 	clearerr(fp);
-
 	if (fclose(fp)) fprintf(stderr,
 		"fileViewWindow: unable to close file %s.\n",filename);
 
+	/*  create view window dialog */
 	if (!app_shell) {
-		/*  create view window dialog */
 		ac = 0;
 		XtSetArg (al[ac], XmNy, 47);  
 		ac++;
@@ -374,9 +370,6 @@ void fileViewWindow(Widget w,int option,Widget menuButton)
 		XmTextShowPosition(viewTextWidget[operandFile], viewFileUsedLength[operandFile]-1);
 		break;
 	}
-	/*
-	  XtSetSensitive(viewTextWidget[operandFile], False);
-	*/
 
 	XtManageChild(app_shell);
 }
@@ -443,7 +436,6 @@ void updateLog(int fileIndex,char *string)
 	    viewFileMaxLength[fileIndex]) {
 
 		/* string fits, insert */
-
 		strcat((char *)viewFileString[fileIndex],string);
 		viewFileUsedLength[fileIndex] = viewFileUsedLength[fileIndex] + 
 		    stringLength;
@@ -470,24 +462,18 @@ void updateLog(int fileIndex,char *string)
 			break;
 		}
 
-		if ((fp = fopen(filename, "r+")) == NULL) {
-			if ((fp = fopen(filename, "r")) != NULL) {
-				fprintf(stderr, "updateLog: file %s opened read only.\n",filename);
-			} else {
-				fprintf(stderr,"updateLog: file %s not found.\n",filename);
-				return;                /* bail out if no file found */
-			}
-		}
 		if (stat(filename, &statbuf) == 0)
 			viewFileUsedLength[fileIndex] = statbuf.st_size;
-			else
+		else
 			viewFileUsedLength[fileIndex] = 1000000; /* arbitrary file length */
 
 		/* read the file string */
+		if ((fp = fopen(filename, "r")) == NULL) {
+			fprintf(stderr,"updateLog: file %s open error.\n",filename);
+			return;                /* bail out if no file found */
+		}
 		fread(viewFileString[fileIndex], sizeof(char), 
 		    viewFileUsedLength[fileIndex], fp);
-
-		/* close up the file */
 		if (fclose(fp)) fprintf(stderr, 
 		    "updateLog: unable to close file %s.\n",filename);
 
@@ -516,11 +502,7 @@ void updateAlarmLog(int fileIndex,char *string)
 
 	if (viewTextWidget[fileIndex] == NULL) return;
 
-if(viewTextWidget[fileIndex])
-	XtVaGetValues(viewTextWidget[fileIndex],
-	    XmNcursorPosition,  &pos,
-	    NULL); 
-else return;      
+	XtVaGetValues(viewTextWidget[fileIndex], XmNcursorPosition, &pos, NULL); 
 
 	/* simply return if the file string does not exist */
 	if (viewFileString[fileIndex] == NULL) return;
@@ -542,12 +524,9 @@ else return;
 		startPosition=alarmLogFileOffsetBytes;
 		endPosition=alarmLogFileOffsetBytes+alarmLogFileStringLength;
 		XmTextReplace(viewTextWidget[fileIndex],startPosition, endPosition,str);
-
 	}
 
-        XtVaSetValues(viewTextWidget[fileIndex],
-	    XmNcursorPosition,  pos,
-	    NULL);
+	XtVaSetValues(viewTextWidget[fileIndex], XmNcursorPosition, pos, NULL);
 	XmTextShowPosition(viewTextWidget[fileIndex],pos);
 }
 
@@ -625,7 +604,6 @@ void browser_fileViewWindow(Widget w,int option,Widget menuButton)
 			fprintf(stderr, "Can't open file %s\n",filename);
 			return;
 		}
-		if(option==ALARM_FILE && alarmLogFileMaxRecords)fseek(fp,0,SEEK_SET);
 
 	if (stat(filename, &statbuf) == 0)
 		viewFileUsedLength[operandFile] = statbuf.st_size;
@@ -659,7 +637,6 @@ void browser_fileViewWindow(Widget w,int option,Widget menuButton)
 	    viewFileUsedLength[operandFile], fp);
 
 	/* close up the file */
-		if(option==ALARM_FILE && alarmLogFileMaxRecords)fseek(fp,alarmLogFileOffsetBytes,SEEK_SET);
 		fclose (fp) ;
 
 	if (!app_shell) {
