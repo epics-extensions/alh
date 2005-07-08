@@ -130,7 +130,7 @@ void createDialog(Widget parent,int dialogType,char *message1,char *message2)
 	static Widget   dialog = 0; /* make it static for reuse */
 	XmString        str,str1,str2,str3,string,string2;
 
-	if (dialog) XtUnmanageChild(dialog);
+	if (dialog && XtIsManaged(dialog)) XtUnmanageChild(dialog);
 	if (!dialogType ) return;
 
 	/* destroy runtimeToplevel dialog so dialog is positioned properly */
@@ -208,7 +208,7 @@ XtCallbackProc okCallback,XtPointer okParm,XtPointer userParm)
 	static XtCallbackProc oldOkCallback = 0;
 	static XtPointer      oldOkParm = 0;
 
-	if (dialog) XtUnmanageChild(dialog);
+	if (dialog && XtIsManaged(dialog)) XtUnmanageChild(dialog);
 	if (!dialogType ) return;
 
 	/* destroy runtimeToplevel dialog so dialog is positioned properly */
