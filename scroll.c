@@ -169,8 +169,6 @@ void fileViewWindow(Widget w,int option,Widget menuButton)
 	/* allocate space for the file string */
 	viewFileMaxLength[operandFile] = MAX(INITIAL_FILE_LENGTH,
 	    2*viewFileUsedLength[operandFile]);
-	if (operandFile == ALARM_FILE && alarmLogFileMaxRecords)
-		viewFileMaxLength[operandFile] =  alarmLogFileStringLength*alarmLogFileMaxRecords;
 	viewFileString[operandFile] = (unsigned char *)
 	    XtCalloc(1,(unsigned)viewFileMaxLength[operandFile]);
 	if(!viewFileString[operandFile]) { 
@@ -317,7 +315,7 @@ void fileViewWindow(Widget w,int option,Widget menuButton)
 		ac = 0;
 		XtSetArg (al[ac], XmNrows, 24);  
 		ac++; 
-		XtSetArg (al[ac], XmNcolumns, 120);  
+		XtSetArg (al[ac], XmNcolumns, 130);  
 		ac++;
 		XtSetArg (al[ac], XmNscrollVertical, True);  
 		ac++;
@@ -356,19 +354,17 @@ void fileViewWindow(Widget w,int option,Widget menuButton)
 	/* add the file string to the text widget */
 	XmTextSetString(viewTextWidget[operandFile], (char *)viewFileString[operandFile]);
 
-	switch(operandFile) {
-	case ALARM_FILE:
+	if (operandFile == ALARM_FILE && alarmLogFileOffsetBytes ) {
 		XtVaSetValues(viewTextWidget[operandFile],
-		    XmNcursorPosition,  alarmLogFileOffsetBytes+1,
+		    XmNcursorPosition,  alarmLogFileOffsetBytes-1,
 		    NULL);
-		XmTextShowPosition(viewTextWidget[operandFile], alarmLogFileOffsetBytes+1);
-		break;
-	case OPMOD_FILE:
+		XmTextShowPosition(viewTextWidget[operandFile], alarmLogFileOffsetBytes-1);
+		viewFileUsedLength[operandFile] = alarmLogFileOffsetBytes;
+    } else {
 		XtVaSetValues(viewTextWidget[operandFile],
 		    XmNcursorPosition,  viewFileUsedLength[operandFile]-1,
 		    NULL);
 		XmTextShowPosition(viewTextWidget[operandFile], viewFileUsedLength[operandFile]-1);
-		break;
 	}
 
 	XtManageChild(app_shell);
@@ -422,6 +418,7 @@ void updateLog(int fileIndex,char *string)
 	struct stat statbuf;         /* Information on a file. */
 	FILE *fp = NULL;             /* Pointer to open file   */
 	char filename[120];
+	char *tmp;
 
 	int stringLength = strlen(string);
 	int oldUsedLength = viewFileUsedLength[fileIndex];
@@ -448,11 +445,22 @@ void updateLog(int fileIndex,char *string)
 		/* string doesn't fit - reallocate to get enough room */
 		viewFileMaxLength[fileIndex] = MAX(INITIAL_FILE_LENGTH,
 		    2*viewFileMaxLength[fileIndex]);
+		tmp = (char *)XtCalloc(1,(unsigned)viewFileMaxLength[fileIndex]);
+		strcpy(tmp,(const char *)viewFileString[fileIndex]);
 		XtFree((char *)viewFileString[fileIndex]);
-		viewFileString[fileIndex] = (unsigned char *)
-		    XtCalloc(1,(unsigned)viewFileMaxLength[fileIndex]);
+		viewFileString[fileIndex] = (unsigned char*)tmp;
 
+		if (viewFileUsedLength[fileIndex] + stringLength  <= 
+	   	 viewFileMaxLength[fileIndex]) {
 
+			/* string fits, insert */
+			strcat((char *)viewFileString[fileIndex],string);
+			viewFileUsedLength[fileIndex] = viewFileUsedLength[fileIndex] + 
+			    stringLength;
+			XmTextReplace(viewTextWidget[fileIndex],oldUsedLength,
+			    oldUsedLength,string);
+		}
+#if 0
 		switch(fileIndex) {
 		case ALARM_FILE: 
 			strcpy(filename,psetup.logFile);
@@ -479,6 +487,7 @@ void updateLog(int fileIndex,char *string)
 
 		/* add the file string to the text widget */
 		XmTextSetString(viewTextWidget[fileIndex], (char *)viewFileString[fileIndex]);
+#endif
 
 	}
 
@@ -500,6 +509,8 @@ void updateAlarmLog(int fileIndex,char *string)
 	int startPosition,endPosition;
 	int pos=0;
 
+    updateLog(fileIndex,string);
+#if 0
 	if (viewTextWidget[fileIndex] == NULL) return;
 
 	XtVaGetValues(viewTextWidget[fileIndex], XmNcursorPosition, &pos, NULL); 
@@ -528,6 +539,7 @@ void updateAlarmLog(int fileIndex,char *string)
 
 	XtVaSetValues(viewTextWidget[fileIndex], XmNcursorPosition, pos, NULL);
 	XmTextShowPosition(viewTextWidget[fileIndex],pos);
+#endif
 }
 
 /**************************************************************************
