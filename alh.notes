@@ -461,3 +461,18 @@ Fri Oct 29 14:54:00 CDT 2004  ALH_1_2_19beta2
 
 Tue Apr  5 10:06:27 CDT 2005
 	Added "ALH" to popup dialogs and added timestamp to popup error dialog.
+
+Tue Jun 21 13:23:04 CDT 2005 ALH_1_2_20
+	Silence One Hour:
+		Set color of newly created row widgets to color of parent widget.
+		Change color of ALL widget children except ack button, sevr indicator,
+		and name push button.
+	Write errMsg text to opMod log file when errors occur.
+	Remove extra carriage returns in opMod log file.
+	Remove group and channel data from opMod log message if they do not exist.
+	Print "Setup Config File" to opMod log before config file error messages.
+	Open file for scroll window reading as r. Removed comments. Cleaned code.
+	Set cursor position to last line written, even in circular files.
+	Create new dialog when a dialog is requested. Destroy dialog when closed.
+
+

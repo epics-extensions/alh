@@ -23,9 +23,9 @@
 
 #define ALH_VERSION       1
 #define ALH_REVISION      2
-#define ALH_MODIFICATION 19
+#define ALH_MODIFICATION 20
 
-#define ALH_VERSION_STRING "ALH Version 1.2.19beta2"
+#define ALH_VERSION_STRING "ALH Version 1.2.20"
 
 #define ALH_CREDITS_STRING  \
           "Developed at Argonne National Laboratory\n\n" \
