@@ -275,7 +275,9 @@ void setupConfig(char *filename,int program,ALINK *areaOld)
 		axUpdateDialogs(area);
 
 		/* unmap dialog */
+/*
 		createDialog(0,0," "," ");
+*/
 
 	} else {
 		free(pmainGroup);

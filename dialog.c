@@ -36,6 +36,7 @@ static Widget warningbox = NULL;
 
 /* function prototypes */
 static void killWidget(Widget w, XtPointer clientdata, XtPointer calldata);
+static void killDialog(Widget w, XtPointer clientdata, XtPointer calldata);
 static void logMessageString(Widget w, XtPointer clientdata, XtPointer calldata);
 
 
@@ -127,27 +128,14 @@ String title,String pattern,String directory)
 ******************************************************/
 void createDialog(Widget parent,int dialogType,char *message1,char *message2)
 {
-	static Widget   dialog = 0; /* make it static for reuse */
 	XmString        str,str1,str2,str3,string,string2;
+	Widget   dialog = 0;
 
-	if (dialog && XtIsManaged(dialog)) XtUnmanageChild(dialog);
-	if (!dialogType ) return;
-
-	/* destroy runtimeToplevel dialog so dialog is positioned properly */
-	if ( !parent ) return;
-	if ( parent && dialog &&
-	    XtParent(XtParent(dialog)) != parent) {
-		XtDestroyWidget(dialog);
-		dialog = 0;
-	}
-
-	if (!dialog) {
-		dialog = XmCreateMessageDialog(parent, "Dialog", NULL, 0);
-		XtUnmanageChild(XmMessageBoxGetChild(dialog,XmDIALOG_CANCEL_BUTTON));
-		XtUnmanageChild(XmMessageBoxGetChild(dialog,XmDIALOG_HELP_BUTTON));
-		XtSetSensitive(XmMessageBoxGetChild(dialog,XmDIALOG_HELP_BUTTON),FALSE);
-		XtAddCallback(dialog,XmNokCallback, (XtCallbackProc)XtUnmanageChild,NULL);
-	}
+	dialog = XmCreateMessageDialog(parent, "Dialog", NULL, 0);
+	XtUnmanageChild(XmMessageBoxGetChild(dialog,XmDIALOG_CANCEL_BUTTON));
+	XtUnmanageChild(XmMessageBoxGetChild(dialog,XmDIALOG_HELP_BUTTON));
+	XtSetSensitive(XmMessageBoxGetChild(dialog,XmDIALOG_HELP_BUTTON),FALSE);
+	XtAddCallback(dialog,XmNokCallback,killDialog,NULL);
 
 	switch(dialogType) {
 	case XmDIALOG_WARNING:
@@ -192,9 +180,6 @@ void createDialog(Widget parent,int dialogType,char *message1,char *message2)
 
 	XtManageChild(dialog);
 	XFlush(display);
-	/*
-	     XmUpdateDisplay(dialog);
-	*/
 }
 
 /******************************************************
@@ -406,4 +391,12 @@ static void killWidget(Widget w, XtPointer clientdata, XtPointer calldata)
 	if (w == warningbox) {
 		warningbox = NULL;
 	}
+}
+
+/******************************************************
+  Static callback routine for destroying a widget 
+******************************************************/
+static void killDialog(Widget w, XtPointer clientdata, XtPointer calldata)
+{
+	XtDestroyWidget(w);
 }
