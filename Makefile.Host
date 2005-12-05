@@ -174,6 +174,8 @@ PROD_LIBS_WIN32 += $(EXCEED_XLIBS)
 SYS_PROD_LIBS_WIN32 += winmm user32
 USR_CFLAGS_WIN32 += $(EXCEED_CFLAGS)
 
+SYS_PROD_LIBS_solaris += socket nsl
+
 Xmu_DIR = $(X11_LIB)
 #Xmu_DIR = /usr/contrib/X11R6/lib
 Xm_DIR = $(MOTIF_LIB)
