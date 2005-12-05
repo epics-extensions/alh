@@ -475,4 +475,6 @@ Tue Jun 21 13:23:04 CDT 2005 ALH_1_2_20
 	Set cursor position to last line written, even in circular files.
 	Create new dialog when a dialog is requested. Destroy dialog when closed.
 
+Mon Dec  5 10:23:24 CST 2005
+	Added alh_printer libraries socket & nsl for R3.14.8 build to Makefile.Host.
 
