@@ -46,6 +46,7 @@
 #include "sllLib.h"
 #include "ax.h"
 
+Pixmap ALH_pixmap;
 char *silenceString[] = {"Off","On"};
 const char *executionStateString[] = {"Active","Passive"};
 char *disabledForcePVCountString[] = {" ","Disabled forcePVs:"};

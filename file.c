@@ -47,6 +47,10 @@
 #include "axArea.h"
 #include "ax.h"
 
+/* global variables */
+char *programName;
+int programId;
+
 /* default  file names */
 #define DEFAULT_CONFIG  "ALH-default.alhConfig"
 #define DEFAULT_ALARM   "ALH-default.alhAlarm"

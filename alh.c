@@ -34,12 +34,16 @@
 /* global variables */
 const char *executionModeString[] = {"Local","Global"};
 const char *ackTransientsString[] = {"ackT","noackT"};
+Widget productDescriptionShell;
+XtAppContext appContext;
+Widget topLevelShell;
+Display *display;
+
+
 
 int DEBUG = 0;
 SLIST *areaList;
 char alhVersionString[100];
-extern XtAppContext appContext;
-extern Display *display;
 XFontStruct *font_info;
 
 /******************************************************

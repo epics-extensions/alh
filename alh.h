@@ -159,14 +159,14 @@ typedef struct {
 #define TIGHTNESS  30
 
 /* ------- start of defines for global variables    */
-char               *programName;
-SLIST              *areaList;
-Display            *display;
-XtAppContext        appContext;
-Widget              topLevelShell;
-Widget              productDescriptionShell;
-Pixmap              ALH_pixmap;
-int                 programId;
+extern char               *programName;
+extern SLIST              *areaList;
+extern Display            *display;
+extern XtAppContext        appContext;
+extern Widget              topLevelShell;
+extern Widget              productDescriptionShell;
+extern Pixmap              ALH_pixmap;
+extern int                 programId;
 
 struct heartbeatPV {
     char *name;
