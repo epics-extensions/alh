@@ -69,7 +69,7 @@ static GCLINK *firstGroupChannel(SLIST *proot,int *plinkType)
 /***************************************************************
 	get next group or channel
 ***************************************************************/
-GCLINK *nextGroupChannel(GCLINK *gclink,int *plinkType)
+static GCLINK *nextGroupChannel(GCLINK *gclink,int *plinkType)
 {
 	SNODE *pt;
 	GCLINK *next=0;
@@ -185,7 +185,7 @@ void alSetNotConnected(struct mainGroup *pmainGroup)
 }
 
 /*****************************************************************
-   alSetAckt
+   alPutGblAckT
  *****************************************************************/
 void alPutGblAckT(struct mainGroup *pmainGroup)
 {
@@ -237,8 +237,7 @@ void registerCA(void *dummy, int fd, int opened)
 		cur=lastFdInList;
 		while(cur) {
 			if(cur->fd == fd) {
-				errMsg("Tried to add a second callback "
-				    "for file descriptor %d\n",fd);
+				errMsg("Tried to add a second callback for file descriptor %d\n",fd);
 				return;
 			}
 			cur=cur->prev;
@@ -246,8 +245,7 @@ void registerCA(void *dummy, int fd, int opened)
 		/* Allocate and fill a linked list structure for this fd */
 		cur=(struct FDLIST *)calloc(1,sizeof(struct FDLIST));
 		if(cur == NULL) {
-			errMsg("Could not allocate space to keep track of "
-			    "file descriptor %d\n",fd);
+			errMsg("Could not allocate space to keep track of file descriptor %d\n",fd);
 			return;
 		}
 		cur->prev=lastFdInList;
