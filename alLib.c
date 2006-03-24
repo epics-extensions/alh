@@ -713,7 +713,7 @@ void alNewAlarmFilter(int stat,int sev,int acks,int ackt,char *value,CLINK *clin
         }
     }
 
-    /* check in/out alarm count against */
+    /* check in/out alarm count within time interval*/
     if ( (sevr_prev==0 && sev!=0) || (sevr_prev!=0 && sev==0)){
         i = countFilter->countIndex;
          if ( !countFilter->alarmTimeHistory || 
