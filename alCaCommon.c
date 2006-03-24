@@ -115,36 +115,6 @@ static GCLINK *nextGroupChannel(GCLINK *gclink,int *plinkType)
 
 
 /*****************************************************************
-	close all the channel links, groups & subwindows
- *****************************************************************/
-void alCaCancel(struct mainGroup *pmainGroup)
-{
-	GCLINK *gclink;
-	struct gcData *gcdata;
-	int type;
-
-	if (!pmainGroup) return;
-
-	if (pmainGroup->heartbeatPV.chid) alCaClearChannel(&(pmainGroup->heartbeatPV.chid));
-
-	gclink = firstGroupChannel((SLIST *)pmainGroup,&type);
-	while (gclink) {
-		gcdata = gclink->pgcData;
-		alForcePVClearCA(gcdata->pforcePV);
-		alCaClearChannel(&gcdata->sevrchid);
-		if (type == CHANNEL) {
-			alCaClearEvent(&((struct chanData *)gcdata)->evid);
-			alCaClearChannel(&((struct chanData *)gcdata)->chid);
-			alCaClearChannel(&((struct chanData *)gcdata)->ackPVId);
-			if(_description_field_flag) 
-			  alCaClearChannel(&((struct chanData *)gcdata)->descriptionId);
-		}
-		gclink = nextGroupChannel(gclink,&type);
-	}
-	alCaPoll();
-}
-
-/*****************************************************************
    alSetNotConnected
  *****************************************************************/
 void alSetNotConnected(struct mainGroup *pmainGroup)
@@ -302,5 +272,35 @@ void alUpdateAreas()
 		}
 		area = (ALINK *)sllNext(area);
 	}
+}
+
+/*****************************************************************
+	close all the channel links, groups & subwindows
+ *****************************************************************/
+void alCaCancel(struct mainGroup *pmainGroup)
+{
+	GCLINK *gclink;
+	struct gcData *gcdata;
+	int type;
+
+	if (!pmainGroup) return;
+
+	if (pmainGroup->heartbeatPV.chid) alCaClearChannel(&(pmainGroup->heartbeatPV.chid));
+
+	gclink = firstGroupChannel((SLIST *)pmainGroup,&type);
+	while (gclink) {
+		gcdata = gclink->pgcData;
+		alForcePVClearCA(gcdata->pforcePV);
+		alCaClearChannel(&gcdata->sevrchid);
+		if (type == CHANNEL) {
+			alCaClearEvent(&((struct chanData *)gcdata)->evid);
+			alCaClearChannel(&((struct chanData *)gcdata)->chid);
+			alCaClearChannel(&((struct chanData *)gcdata)->ackPVId);
+			if(_description_field_flag) 
+			  alCaClearChannel(&((struct chanData *)gcdata)->descriptionId);
+		}
+		gclink = nextGroupChannel(gclink,&type);
+	}
+	alCaPoll();
 }
 
