@@ -350,8 +350,8 @@ XmAnyCallbackStruct *call_data)
 static void changeTreeColor(Widget widget,Pixel color)
 {
     int i;
-    Widget *children;
-    Cardinal numChildren;
+    WidgetList children=(WidgetList)0 ;
+    Cardinal numChildren=0;
 	char *name;
 
 	if (!widget || !color) return;
@@ -359,8 +359,10 @@ static void changeTreeColor(Widget widget,Pixel color)
 	if (numChildren > 0) {
 		XtVaGetValues(widget,XmNchildren,&children, NULL);
 		for(i=0; i < (int)numChildren; i++) {
+                   if (children[i] != (Widget)0) 
 			changeTreeColor(children[i],color);
 		}
+
 	}
 	name = XtName(widget);
 	if( !name || 
