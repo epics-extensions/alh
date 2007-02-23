@@ -478,3 +478,7 @@ Tue Jun 21 13:23:04 CDT 2005 ALH_1_2_20
 Mon Dec  5 10:23:24 CST 2005
 	Added alh_printer libraries socket & nsl for R3.14.8 build to Makefile.Host.
 
+
+Fri Feb 23 09:31:05 CST 2007  ALH_1_2_21
+	Fixed core dump on linux after pushing a Silence button. (Needed to 
+        initialize numChildren before getting XmNnumChildren.)
