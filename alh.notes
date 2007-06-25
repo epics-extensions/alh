@@ -480,5 +480,5 @@ Mon Dec  5 10:23:24 CST 2005
 
 
 Fri Feb 23 09:31:05 CST 2007  ALH_1_2_21
-	Fixed core dump on linux after pushing a Silence button. (Needed to 
-        initialize numChildren before getting XmNnumChildren.)
+	Fixed core dump after pushing a Silence button on linux. (Initialized 
+	numChildren before getting XmNnumChildren.)
