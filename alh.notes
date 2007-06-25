@@ -481,4 +481,7 @@ Mon Dec  5 10:23:24 CST 2005
 
 Fri Feb 23 09:31:05 CST 2007  ALH_1_2_21
 	Fixed core dump after pushing a Silence button on linux. (Initialized 
-	numChildren before getting XmNnumChildren.)
+	numChildren before getting XmNnumChildren.) 
+	Portability changes for darwin.
+	Moved code for alCaCancel.  
+	Updated to R3.14 Makefiles.  
