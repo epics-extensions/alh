@@ -18,11 +18,20 @@
 TOP=../..
 include $(TOP)/configure/CONFIG
 
+#===========================
 # Debugging options
-#HOST_OPT=NO
-#DEBUGCMD = purify -first-only -chain-length=26 -max_threads=256 \
-           -always-use-cache-dir -cache-dir=$(shell $(PERL) $(TOP)/config/fullPathName.pl .)
 
+ifeq ($(OS_CLASS), Darwin)
+GCC_OPT_YES = -O2
+endif
+
+HOST_OPT=NO
+#DEBUGCMD = purify -first-only -chain-length=40 -max_threads=256 \
+           -always-use-cache-dir -cache-dir=$(shell $(PERL) $(TOP)/config/fullPathName.pl .)
+#DEBUGCMD = purify -first-only -chain-length=40 -max_threads=256 \
+#           -always-use-cache-dir -cache-dir=$(shell $(PERL) $(TOOLS)/fullPathName.pl .)
+
+#=============================
 
 I_WANT_CDEV             = NO
 I_WANT_GREETINGS        = NO
@@ -147,8 +156,8 @@ alh_DB_SRCS = alh_DB.c
 
 alh_printer_SRCS = printer.c
 
-PROD_DEFAULT = alh alh_printer
-PROD_WIN32 = alh
+PROD_HOST_DEFAULT = alh alh_printer
+PROD_HOST_WIN32 = alh
 
 WIN32_RUNTIME=MD
 USR_CFLAGS_WIN32 += /DWIN32 /D_WINDOWS
