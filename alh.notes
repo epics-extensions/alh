@@ -485,3 +485,64 @@ Fri Feb 23 09:31:05 CST 2007  ALH_1_2_21
 	Portability changes for darwin.
 	Moved code for alCaCancel.  
 	Updated to R3.14 Makefiles.  
+
+Tue Jun 26 10:27:36 CDT 2007  ALH_1_2_22
+	Merged the follwing sns modifications into alh code:
+
+	alCA.c - sinclair
+	Modified code in function description_callback
+	change pend io time from 0.5 to 5.0 seconds
+	add pend event poll after each pend io
+ 
+	alLog.c, file.c - kasemir
+	Added xml flag. Log file is more XML-ish
+
+	alLog.c, file.c - sinclair
+	added format specifier
+
+	awAlh.c, awView.c - sinclair
+	modified code associated with clipboard copy operation
+	on drag-and-drop operation, attempt to put pv name into 
+	  primary selection buffer
+	added code so a drag-and-drop operation displays the group
+	  name or pv name; this may be used to examine the pv name associated
+	  with an alias; to do this I needed to change user data associated 
+	  with group and pv name buttons
+	modified code to accommodate the above change in user data
+	code cleanup
+
+	axArea.h - axRunW.c - sinclair
+	Environment variable ALHMAINFONT may be used to set top level button font
+	e.g. export ALHMAINFONT='-*-utopia-bold-r-normal--0-720-75-75-p-0-*-*'
+	Added code to display mask of top group in top level button label
+
+	alLib.c - sinclair
+	code cleanup
+	added serveral NULL pointer checks
+
+	alLib.c - axRunW.c - sinclair
+	show force mask on top button only when at least one bit is set
+
+	axRunW.c.c - sinclair
+	code cleanup
+	changed if/then test condition
+	Enclose top level button mask info in <     >
+
+	process.c - sinclair
+	Change action separator from "|" to "!"
+	make command menu a child of topLevelShell
+	add code to allow multiple commands to be specified for one 
+ 	  command (corresponding to the old syntax) - execute when button is 
+	  pressed
+	multiple commands are designated using the following syntax
+	cmd 1 name|cmd 1 string|cmd 2 name|cmd 2 string|...cmd n name|cmd n string
+	  for multiple commands, popup menu and execute the selected command
+
+	scroll.c - sinclair
+	remove static qualifier from Strncat
+	change "/" to '/' in comparison
+	code cleanup
+	use configuration directory (if given) when building include file names
+	set maximum config file line length to 1023
+	added code to recursively display contents of configuration include 
+	  files

@@ -49,6 +49,30 @@ void alSetAckTChan(CLINK *clink,int ackt);
 short alHighestBeepSeverity(int sevr[ALH_ALARM_NSEV], int beepSevr);
 static void alSetBeepSevCount(GLINK* glink,int beepSevr,int oldBeepSevr);
 
+char *Strncat(
+  char *dest,
+  const char *src,
+  int max ) {
+
+  /* max must be >= 0 and no more than stringsize - 1 */
+  /* for char string[10];       max must be <= 9 */
+
+int l, newMax;
+char *s;
+
+  l = strlen( dest );
+  newMax = max - l;
+  if ( newMax < 0 ) {
+    dest[max] = 0;
+    return dest;
+  }
+
+  s = strncat( dest, src, newMax );
+  dest[max] = 0;
+
+  return s;
+
+}
 
 /**********************************************************************
       allocate main Group  
@@ -1044,11 +1068,19 @@ void alForceGroupMask(GLINK *glink,int index,int op)
  **************************************************************************/
 static void alUpdateGroupMask(CLINK *clink,int index,int op)
 {
+	
+	char buff[LINEMESSAGE_SIZE], labelStr[80+1];
+	MASK mask;
+	int i, ok;
+	XmString str;
+	ALINK *areaTop;
+
 	struct groupData *gdata;
-	GLINK *parent;
+	GLINK *parent, *top;
 
 	parent = clink->parent;
-
+	top = NULL;
+	
 	switch (op) {
 
 	case MASK_OFF:  /* turns off */
@@ -1058,6 +1090,11 @@ static void alUpdateGroupMask(CLINK *clink,int index,int op)
 			else 
 				errMsg("Error:alUpdateGroupMask, mask[%d] < 1\n",index);
 			parent->modified = 1;
+			
+			if ( !(parent->parent) ) {
+			  top = parent;
+			}
+			
 			parent = parent->parent;
 		}
 		break;
@@ -1067,6 +1104,11 @@ static void alUpdateGroupMask(CLINK *clink,int index,int op)
 			gdata = parent->pgroupData;
 			gdata->mask[index]++;
 			parent->modified = 1;
+			
+			if ( !(parent->parent) ) {
+			  top = parent;
+			}
+						
 			parent = parent->parent;
 		}
 		break;
@@ -1074,6 +1116,81 @@ static void alUpdateGroupMask(CLINK *clink,int index,int op)
 	}
 
 	clink->pmainGroup->modified = TRUE;
+
+	if ( top ) {
+
+	  ok = 1;
+
+	  if ( !top->pgroupData ) {
+	    ok = 0;
+	  }
+	  else if ( !top->pgroupData->mask ) {
+	    ok = 0;
+	  }
+
+	  if ( ok ) {
+	
+	    mask.Cancel = mask.Disable = mask.Ack = mask.AckT = mask.Log = 0;
+	    for ( i=0; i<ALARM_NMASK; i++ ) {
+	      if ( i == ALARMCANCEL ) {
+	        mask.Cancel = ( top->pgroupData->mask[i] > 0 );
+	      }
+	      else if ( i == ALARMDISABLE ) {
+	        mask.Disable = ( top->pgroupData->mask[i] > 0 );
+	      }
+	      else if ( i == ALARMACK ) {
+	        mask.Ack = ( top->pgroupData->mask[i] > 0 );
+	      }
+	      else if ( i == ALARMACKT ) {
+	        mask.AckT = ( top->pgroupData->mask[i] > 0 );
+	      }
+	      else if ( i == ALARMLOG ) {
+	        mask.Log = ( top->pgroupData->mask[i] > 0 );
+	      }
+	    }
+
+	    alGetMaskString(mask,buff);
+
+	  }
+
+	  ok = 1;
+
+	  if ( !top->pmainGroup ) {
+	    ok = 0;
+	  }
+	  else if ( !top->pmainGroup->area ) {
+	    ok = 0;
+	  }
+
+	  if ( ok ) {
+	  
+	    areaTop = (ALINK *) top->pmainGroup->area;
+
+            strncpy( labelStr, areaTop->blinkString, 80 );
+	    labelStr[80] = 0;
+	
+	    if ( strcmp( buff, "-----" ) != 0 ) {
+
+	      Strncat( labelStr, "  <", 80 );
+	      labelStr[80] = 0;
+	
+	      Strncat( labelStr, buff, 80 );
+	      labelStr[80] = 0;
+
+              Strncat( labelStr, ">", 80 );
+	      labelStr[80] = 0;
+
+	    }
+
+	    str = XmStringCreateSimple(labelStr);
+	    XtVaSetValues(areaTop->blinkButton,
+	     XmNlabelString, str,
+	     NULL);
+	    XmStringFree(str);
+
+	  }
+
+	}
 
 }
 

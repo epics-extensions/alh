@@ -23,14 +23,16 @@
 
 #define ALH_VERSION       1
 #define ALH_REVISION      2
-#define ALH_MODIFICATION 21
+#define ALH_MODIFICATION 22
 
-#define ALH_VERSION_STRING "ALH Version 1.2.21"
+#define ALH_VERSION_STRING "ALH Version 1.2.22"
 
 #define ALH_CREDITS_STRING  \
           "Developed at Argonne National Laboratory\n\n" \
           "Authors: Ben-Chin Cha, Janet Anderson,\n" \
           "         Mark Anderson, Marty Kraimer,\n" \
-          "         and Albert Kagarmanov\n\n" 
+          "         and Albert Kagarmanov\n\n" \
+          "(With SNS modifications as of 3/07 by\n" \
+          "John Sinclair and Kay Kasemir)\n\n"
 
 #endif /* INCversionh */

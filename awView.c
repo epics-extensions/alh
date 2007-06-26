@@ -56,7 +56,11 @@ XmPushButtonCallbackStruct *cbs)
 	int grandparentsOpen;
 	GLINK     *glinkTemp;
 
-	XtVaGetValues(pushButton, XmNuserData, &groupWindow, NULL);
+	struct anyLine *l;
+
+        XtVaGetValues(pushButton, XmNuserData, &l, NULL);
+        groupWindow = l->pwindow;
+
 	area = groupWindow->area;
 
 	if (line->linkType == GROUP ) {
@@ -122,8 +126,15 @@ XmPushButtonCallbackStruct *cbs)
 	struct subWindow  *subWindow;
 	struct subWindow  *groupWindow;
 
-	if (pushButton)
-		XtVaGetValues(pushButton, XmNuserData, &subWindow, NULL);
+	struct anyLine *l;
+
+	if (pushButton) {
+	  XtVaGetValues(pushButton, XmNuserData, &l, NULL);
+	  subWindow = l->pwindow;
+	}
+	else {
+	  return;
+	}
 
 	/* groupWindow must now display contents of new treeWindow selection */
 	groupWindow = ((ALINK *)subWindow->area)->groupWindow;
@@ -207,7 +218,11 @@ XmPushButtonCallbackStruct *cbs)
 	static struct timeoutData data;
 	struct subWindow  *groupWindow;
 
-	XtVaGetValues(pushButton, XmNuserData, &groupWindow, NULL);
+	struct anyLine *l;
+
+        XtVaGetValues(pushButton, XmNuserData, &l, NULL);
+        groupWindow = l->pwindow;
+
 	area = groupWindow->area;
 
 	if (line->linkType == GROUP ) {
@@ -245,6 +260,8 @@ static void singleClickNameGroupW_callback(XtPointer cd, XtIntervalId *id)
 	struct subWindow  *groupWindow;
 	struct timeoutData *pdata = (struct timeoutData *)cd;
 
+	struct anyLine *l;
+
 #if DEBUG_CALLBACKS
 	{
 		static int n=0;
@@ -254,7 +271,10 @@ static void singleClickNameGroupW_callback(XtPointer cd, XtIntervalId *id)
 #endif
 
 	pdata->timeoutId= 0;
-	XtVaGetValues(pdata->pushButton, XmNuserData, &groupWindow, NULL);
+
+        XtVaGetValues(pdata->pushButton, XmNuserData, &l, NULL);
+        groupWindow = l->pwindow;
+
 	area = groupWindow->area;
 
 	markSelectedWidget(groupWindow,pdata->pushButton);

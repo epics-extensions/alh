@@ -58,6 +58,16 @@ void awUpdateRowWidgets(line)                 Update line widgets
 #include <Xm/ToggleB.h>
 #include <Xm/ToggleBG.h>
 
+#include <X11/Intrinsic.h>
+#include <X11/StringDefs.h>
+#include <Xm/AtomMgr.h>
+#include <Xm/DragDrop.h>
+#include <Xm/CutPaste.h>
+#include <X11/Xos.h>
+#include <X11/Xatom.h>
+#include <X11/Xmu/Atoms.h>
+#include <X11/Xmu/StdSel.h>
+
 #include "alarm.h"
 #include "epicsVersion.h"
 
@@ -165,6 +175,359 @@ static void awCMLOGstartBrowser(void);
 #endif
 
 
+
+static void drag (
+  Widget w,
+  XEvent *e,
+  String *params,
+  Cardinal numParams );
+
+static void dummy (
+  Widget w,
+  XEvent *e,
+  String *params,
+  Cardinal numParams );
+
+static int g_transInit = 1;
+static XtTranslations g_parsedTrans;
+
+static char g_dragTrans[] =
+   "~Ctrl~Shift<Btn2Down>: startDrag()\n\
+   Ctrl~Shift<Btn2Down>: dummy()\n\
+   Shift~Ctrl<Btn2Down>: dummy()\n\
+   Shift Ctrl<Btn2Down>: dummy()\n\
+   Shift Ctrl<Btn2Up>: dummy()\n\
+   Shift~Ctrl<Btn2Up>: dummy()";
+
+static XtActionsRec g_dragActions[] = {
+  { "startDrag", (XtActionProc) drag },
+  { "dummy", (XtActionProc) dummy }
+};
+
+static int g_ddFixedFont_created = 0;
+static XFontStruct *g_ddFixedFont = NULL;
+
+static int g_ddgc_created = 0;
+static GC g_ddgc = NULL;
+
+static void dragFin (
+  Widget w,
+  XtPointer clientData,
+  XtPointer call_data )
+{
+
+Widget icon;
+
+  icon = NULL;
+
+  XtVaGetValues( w, XmNsourcePixmapIcon, &icon, NULL );
+
+  if ( icon ) {
+    XtDestroyWidget( icon );
+  }
+
+}
+
+static Boolean cvtSel (
+  Widget w,
+  Atom *selection,
+  Atom *target,
+  Atom *type_return,
+  XtPointer *value_return,
+  unsigned long *len_return,
+  int *format_return )
+{
+
+struct anyLine *line;
+int l;
+char *pasteData;
+char **value = (char**) value_return;
+XSelectionRequestEvent* req;
+Display* d = XtDisplay( w );
+Atom* targetP;
+Atom* std_targets;
+unsigned long std_length;
+
+  if ( *selection != XA_PRIMARY ) {
+    return FALSE;
+  }
+
+  req = XtGetSelectionRequest( w, *selection, (XtRequestId) NULL );
+
+  XtVaGetValues( w, XmNuserData, &line, NULL );
+
+  if ( !line ) {
+    return FALSE;
+  }
+
+  if ( !line->pname ) {
+    return FALSE;
+  }
+
+  l = strlen( line->pname );
+  if ( l < 1 ) {
+    return FALSE;
+  }
+
+  if (*target == XA_TARGETS(d)) {
+
+    Atom* targetP;
+    Atom* std_targets;
+    unsigned long std_length;
+
+    XmuConvertStandardSelection( w, req->time, selection, target, type_return,
+     (XPointer*) &std_targets, &std_length, format_return );
+
+    *value =
+     (char*) XtMalloc( sizeof(Atom) * ( (unsigned) std_length + 5 ) );
+    targetP = *( (Atom**) value );
+    *targetP++ = XA_STRING;
+    *targetP++ = XA_TEXT(d);
+    *len_return = std_length + ( targetP - ( *(Atom **) value) );
+
+    memcpy( (void*) targetP, (void*) std_targets,
+     (size_t)( sizeof(Atom) * std_length ) );
+
+    XtFree( (char*) std_targets );
+
+    *type_return = XA_ATOM;
+    *format_return = 32;
+
+    return True;
+
+  }
+
+  if ( *target == XA_STRING ||
+       *target == XA_TEXT(d) ||
+       *target == XA_COMPOUND_TEXT(d) ) {
+
+    if ( *target == XA_COMPOUND_TEXT(d) ) {
+      *type_return = *target;
+    }
+    else {
+      *type_return = XA_STRING;
+    }
+
+    pasteData = strdup( line->pname );
+
+    *value_return = pasteData;
+    *len_return = l;
+    *format_return = 8;
+
+    return TRUE;
+
+  }
+
+  if ( XmuConvertStandardSelection( w, req->time, selection, target,
+   type_return, (XPointer *) value_return, len_return, format_return ) ) {
+    return True;
+  }
+
+  return False;
+
+}
+
+static Boolean cvt (
+  Widget w,
+  Atom *selection,
+  Atom *target,
+  Atom *type_return,
+  XtPointer *value_return,
+  unsigned long *len_return,
+  int *format_return )
+{
+
+Display *d;
+struct anyLine *line;
+Atom MOTIF_DROP;
+int l;
+char *dragData;
+
+  d = XtDisplay( w );
+  MOTIF_DROP = XmInternAtom( d, "_MOTIF_DROP", FALSE );
+
+  if ( *selection != MOTIF_DROP ) {
+    return FALSE;
+  }
+
+  if ( *target != XA_STRING ) {
+    return FALSE;
+  }
+
+  XtVaGetValues( w, XmNclientData, &line, NULL );
+
+  if ( !line->pname ) {
+    return FALSE;
+  }
+
+  l = strlen( line->pname );
+  if ( l < 1 ) {
+    return FALSE;
+  }
+
+  dragData = strdup( line->pname );
+
+  *type_return = *target;
+  *value_return = dragData;
+  *len_return = l+1;
+  *format_return = 8;
+
+  return TRUE;
+
+}
+
+/* 21 Aug 01 16:04:30 Thomas Birke (Thomas.Birke@mail.bessy.de)
+ *
+ *  Create a small pixmap to be set as the drag-icon and write the
+ *  PV-names into the pixmap    
+ */
+
+static Widget mkDragIcon (
+  Widget w,
+  struct anyLine *line
+) {
+
+  Arg             args[8];
+  Cardinal        n;
+  Widget          sourceIcon;
+  int             textWidth=0, maxWidth, maxHeight, fontHeight;
+  unsigned long   fg, bg;
+  XGCValues       gcValues;
+  unsigned long   gcValueMask;
+  char tmpStr[131+1], *str;
+
+  Display *display = XtDisplay(w);
+  int screenNum = DefaultScreen(display);
+
+  Pixmap sourcePixmap = (Pixmap)NULL;
+
+  if ( !g_ddFixedFont_created ) {
+    g_ddFixedFont_created = 1;
+    g_ddFixedFont = XLoadQueryFont( display, "fixed" );
+  }
+
+#define X_SHIFT 8
+#define MARGIN  2
+
+  bg = BlackPixel(display,screenNum);
+  fg = WhitePixel(display,screenNum);
+
+  fontHeight = g_ddFixedFont->ascent + g_ddFixedFont->descent;
+
+  strcpy( tmpStr, "[N/A]" );
+  str = strdup( line->pname );
+  if ( str ) {
+    strncpy( tmpStr, str, 131 );
+    tmpStr[131] = 0;
+  }
+
+  textWidth = XTextWidth( g_ddFixedFont, tmpStr, strlen(tmpStr) );
+
+  maxWidth = X_SHIFT + ( textWidth + MARGIN );
+  maxHeight = fontHeight + 2 * MARGIN;
+  
+  sourcePixmap = XCreatePixmap(display,
+   RootWindow(display, screenNum),
+   maxWidth,maxHeight,
+   DefaultDepth(display,screenNum) );
+
+  if ( !g_ddgc_created ) {
+    g_ddgc_created = 1;
+    g_ddgc = XCreateGC( display, sourcePixmap, 0, NULL );
+  }
+  
+  gcValueMask = GCForeground|GCBackground|GCFunction|GCFont;
+  
+  gcValues.foreground = bg;
+  gcValues.background = bg;
+  gcValues.function   = GXcopy;
+  gcValues.font       = g_ddFixedFont->fid;
+  
+  XChangeGC( display, g_ddgc, gcValueMask, &gcValues );
+  
+  XFillRectangle( display, sourcePixmap, g_ddgc, 0, 0, maxWidth,
+   maxHeight);
+
+  XSetForeground( display, g_ddgc, fg );
+
+  XDrawString( display, sourcePixmap, g_ddgc,
+	       X_SHIFT, g_ddFixedFont->ascent + MARGIN, 
+	       tmpStr, strlen(tmpStr) );
+  
+  n = 0;
+  XtSetArg(args[n],XmNpixmap,sourcePixmap); n++;
+  XtSetArg(args[n],XmNwidth,maxWidth); n++;
+  XtSetArg(args[n],XmNheight,maxHeight); n++;
+  XtSetArg(args[n],XmNdepth,DefaultDepth(display,screenNum)); n++;
+  sourceIcon = XmCreateDragIcon(XtParent(w),"sourceIcon",args,n);
+
+  return sourceIcon;
+
+}
+
+static int startDrag (
+  struct anyLine *line,
+  Widget w,
+  XEvent *e )
+{
+
+Atom expList[1];
+int status, n;
+Arg args[10];
+Widget dc;
+Widget icon;
+
+  /* attempt to put pv name into primary select buffer */
+  if ( w ) {
+    XtDisownSelection( w, XA_PRIMARY, CurrentTime );
+    status = XtOwnSelection( w, XA_PRIMARY, CurrentTime,
+     cvtSel, (XtLoseSelectionProc) 0, (XtSelectionDoneProc) 0 );
+  }
+
+  icon = mkDragIcon( w, line );
+  if ( !icon ) return 0;
+ 
+  expList[0] = XA_STRING;
+  n = 0;
+  XtSetArg( args[n], XmNexportTargets, expList ); n++;
+  XtSetArg( args[n], XmNnumExportTargets, 1 ); n++;
+  XtSetArg( args[n], XmNdragOperations, XmDROP_COPY ); n++;
+  XtSetArg( args[n], XmNconvertProc, cvt ); n++;
+  XtSetArg( args[n], XmNsourcePixmapIcon, icon ); n++;
+  XtSetArg( args[n], XmNclientData, (XtPointer) line ); n++;
+    
+  dc = XmDragStart( w, e, args, n );
+  XtAddCallback( dc, XmNdragDropFinishCallback, dragFin, (XtPointer) line );
+
+  return 1;
+
+}
+
+static void drag (
+   Widget w,
+   XEvent *e,
+   String *params,
+   Cardinal numParams )
+{
+
+struct anyLine *line;
+int stat;
+
+  XtVaGetValues( w, XmNuserData, &line, NULL );
+
+  stat = startDrag( line, w, e );
+
+}
+
+static void dummy (
+   Widget w,
+   XEvent *e,
+   String *params,
+   Cardinal numParams )
+{
+
+}
+
 /******************************************************
   alhCreateMenu
 ******************************************************/
@@ -1143,16 +1506,23 @@ void awRowWidgets(struct anyLine *line,void *area)
 		XtVaGetValues(wline->sevr,XmNwidth,&width,NULL);
 		nextX = nextX + width + 3;
 
+		/* load actions once */
+                if ( g_transInit ) {
+                  g_transInit = 0;
+                  g_parsedTrans = XtParseTranslationTable( g_dragTrans );
+                  XtAppAddActions( appContext, g_dragActions, XtNumber(g_dragActions) );
+                }
 
 		str = XmStringCreateSimple(line->alias);
 		wline->name = XtVaCreateManagedWidget("pushButtonName",
 		    xmPushButtonWidgetClass,   wline->row_widget,
 		    XmNmarginHeight,           0,
 		    XmNlabelString,            str,
-		    XmNuserData,               (XtPointer)subWindow,
+		    XmNuserData,               (XtPointer) line,
 		    XmNx,                      nextX,
 		    NULL);
 		XmStringFree(str);
+                XtOverrideTranslations( wline->name, g_parsedTrans );
 		if (line->linkType == CHANNEL) {
 #if  XmVersion && XmVersion >= 1002
 			XmChangeColor(wline->name,channel_bg_pixel);

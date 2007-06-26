@@ -25,6 +25,8 @@
 #include <process.h>     /* For spawn */
 #endif
 #include <Xm/Xm.h>
+#include <Xm/RowColumn.h>
+#include <Xm/PushB.h>
 
 #include "alLib.h"
 #include "ax.h"
@@ -35,6 +37,9 @@ extern int DEBUG;
 extern int _lock_flag; 
 extern int masterFlag;
 extern int notsave;
+
+static char *g_popupCmdString;
+static Widget g_pum = NULL;
 
 /******************************************************
   spawn a new related prcess if command is not null
@@ -114,16 +119,139 @@ Else if you're  master-alh-process  -- the same
 }
 
 /***************************************************
+  menu callback
+****************************************************/
+static void relprocmenu_cb (
+  Widget w,
+  XtPointer index,
+  void * call_data
+) {
+
+char buf[1023+1], *tk, *ctx;
+int i;
+
+  strncpy( buf, g_popupCmdString, 1023 );
+  buf[1023] = 0;
+
+  i = 0;
+  ctx = NULL;
+  tk = strtok_r( buf, "!\n", &ctx );
+  while ( tk ) {
+    tk = strtok_r( NULL, "!\n", &ctx );
+    if ( tk ) {
+      if ( i == (int) index ) {
+        processSpawn_callback( w, tk, call_data );
+        return;
+      }
+      i++;
+    }
+    tk = strtok_r( NULL, "!\n", &ctx );
+  };
+
+}
+
+/***************************************************
   relatedProcess_callback
 ****************************************************/
 void relatedProcess_callback(void *widget,GCLINK *link,void *cbs)
 {
 	void *area;
+	char buf[1023+1], *tk, *ctx;
+	int i, n;
+	Widget pdm, pb;
+        Arg args[10];
+	XmString str;
+	unsigned short x, y;
+        Window root, child;
+        int rootX, rootY, winX, winY;
+        unsigned int mask;
+        XButtonEvent be;
 
 	XtVaGetValues(widget, XmNuserData, &area, NULL);
 
 	if (link && alProcessExists(link)){
-		processSpawn_callback(widget,link->pgcData->command,cbs);
-	}
-}
 
+	  strncpy( buf, link->pgcData->command, 1023 );
+	  buf[1023] = 0;
+
+	  i = 0;
+	  ctx = NULL;
+          tk = strtok_r( buf, "!\n", &ctx );
+	  while ( tk ) {
+            if ( tk ) {
+	      i++;
+	    }
+            tk = strtok_r( NULL, "!\n", &ctx );
+	  };
+
+	  if ( i > 1 ) {
+
+	    if ( i % 2 ) { /* if i > one then i must be even */
+              fprintf( stderr, "Command syntax error\n" );
+              return;
+	    }
+
+            g_popupCmdString = link->pgcData->command;
+
+            if ( g_pum ) {
+              XtDestroyWidget( g_pum );
+              g_pum = NULL;
+	    }
+
+            n = 0;
+            XtSetArg( args[n], XmNpopupEnabled, (XtArgVal) False ); n++;
+            g_pum = XmCreatePopupMenu( topLevelShell, "relprocmenu", args, n );
+
+            pdm = XmCreatePulldownMenu( g_pum, "relprocpd", NULL, 0 );
+
+	    strncpy( buf, link->pgcData->command, 1023 );
+	    buf[1023] = 0;
+
+	    i = 0;
+	    ctx = NULL;
+            tk = strtok_r( buf, "!\n", &ctx );
+
+	    while ( tk ) {
+
+              if ( tk ) {
+
+                str = XmStringCreateLocalized( tk );
+                pb = XtVaCreateManagedWidget( "pb", xmPushButtonWidgetClass,
+                 g_pum, XmNlabelString, str, NULL );
+                XmStringFree( str );
+                XtAddCallback( pb, XmNactivateCallback, relprocmenu_cb,
+                 (XtPointer) i );
+
+	        i++;
+
+	      }
+
+              tk = strtok_r( NULL, "!\n", &ctx );
+              tk = strtok_r( NULL, "!\n", &ctx );
+
+	    };
+
+            XQueryPointer( display, XtWindow(XtParent(widget)), &root, &child,
+             &rootX, &rootY, &winX, &winY, &mask );
+
+            be.x_root = rootX;
+	    be.y_root = rootY;
+
+	    XmMenuPosition( g_pum, &be );
+            XtManageChild( g_pum );
+
+	  }
+	  else {
+
+	    strncpy( buf, link->pgcData->command, 1023 );
+	    buf[1023] = 0;
+
+	    ctx = NULL;
+            tk = strtok_r( buf, "!\n", &ctx );
+            processSpawn_callback( widget, tk, cbs );
+
+	  }
+
+	}
+
+}

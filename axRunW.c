@@ -62,14 +62,53 @@ static void createMainWindow_callback(Widget w,ALINK *area,XmAnyCallbackStruct *
 static void icon_update(Widget blinkButton);
 static void silenceOneHourReset(void *area);
 static void changeTreeColor(Widget widget,Pixel color);
+char *Strncat(
+  char *dest,
+  const char *src,
+  int max );
+
+static void topWinEventHandler (
+  Widget w,
+  XtPointer client,
+  XEvent *e,
+  Boolean *continueToDispatch ) {
+
+XConfigureEvent *ce;
+ALINK *area;
+
+  area = (ALINK *) client;
+
+  *continueToDispatch = True;
+
+  if ( e->type == ConfigureNotify ) {
+
+    ce = (XConfigureEvent *) e;
+    
+    /*printf( "ce->width = %-d\n", ce->width);*/
+    /*printf( "ce->height = %-d\n", ce->height);*/
+    
+    area->w = ce->width;
+    area->h = ce->height;
+
+  }
+
+}
 
 /******************************************************
   createRuntimeWindow
 ******************************************************/
 void createRuntimeWindow(ALINK *area)
 {
+
+	char buff[LINEMESSAGE_SIZE], labelStr[80+1];
+	MASK mask;
+	int i;
 	const char   *alhTitle={"Alarm Handler"};
 	XmString str;
+	XFontStruct *btnFont;
+	XmFontListEntry fontListEntry;
+	XmFontList fontList;
+	char *envPtr;
 
 	if (!area->runtimeToplevel){
 		/* create toplevel setup window */
@@ -115,6 +154,16 @@ void createRuntimeWindow(ALINK *area)
 			    (XtCallbackProc) axExitArea_callback, (XtPointer)area );
 		}
 
+		envPtr = getenv( "ALHMAINFONT" );
+		if ( envPtr ) {
+		  btnFont = XLoadQueryFont(display,envPtr);
+		  fontListEntry = XmFontListEntryCreate( "btnfont", XmFONT_IS_FONT, btnFont );
+		  fontList = XmFontListAppendEntry( NULL, fontListEntry );
+		}
+		else {
+		  fontList = NULL;
+		}
+		
 		/* create control button */
 		str  = XmStringCreateLtoR( "--- No config file specified. ---",
 		    XmSTRING_DEFAULT_CHARSET);
@@ -128,6 +177,7 @@ void createRuntimeWindow(ALINK *area)
 		XmNactivateCallback,       NULL,
 		    XmNuserData,               (XtPointer)area,
 		    XmNlabelString,            str,
+		    XmNfontList,               fontList,
 		    NULL);
 		XmStringFree(str);
 
@@ -135,7 +185,11 @@ void createRuntimeWindow(ALINK *area)
 		    (XtCallbackProc)createMainWindow_callback, area);
 
 		XtRealizeWidget(area->runtimeToplevel);
-
+		
+		XtAddEventHandler( area->runtimeToplevel, StructureNotifyMask, False,
+		 topWinEventHandler, (XtPointer) area );
+		
+		
 	} else {
 		XMapWindow(XtDisplay(area->runtimeToplevel),
 		    XtWindow(area->runtimeToplevel));
@@ -155,6 +209,50 @@ void createRuntimeWindow(ALINK *area)
 	silenceOneHourReset(area);
 
 	icon_update(area->blinkButton);
+	
+	mask.Cancel = mask.Disable = mask.Ack = mask.AckT = mask.Log = 0;
+	for ( i=0; i<ALARM_NMASK; i++ ) {
+	  if ( i == ALARMCANCEL ) {
+	    mask.Cancel = ( area->pmainGroup->p1stgroup->pgroupData->mask[i] > 0 );
+	  }
+	  else if ( i == ALARMDISABLE ) {
+	    mask.Disable = ( area->pmainGroup->p1stgroup->pgroupData->mask[i] > 0 );
+	  }
+	  else if ( i == ALARMACK ) {
+	    mask.Ack = ( area->pmainGroup->p1stgroup->pgroupData->mask[i] > 0 );
+	  }
+	  else if ( i == ALARMACKT ) {
+	    mask.AckT = ( area->pmainGroup->p1stgroup->pgroupData->mask[i] > 0 );
+	  }
+	  else if ( i == ALARMLOG ) {
+	    mask.Log = ( area->pmainGroup->p1stgroup->pgroupData->mask[i] > 0 );
+	  }
+	}
+	
+	alGetMaskString(mask,buff);
+	
+        strncpy( labelStr, area->blinkString, 80 );
+	labelStr[80] = 0;
+
+	if ( strcmp( buff, "-----" ) != 0 ) {
+
+	  Strncat( labelStr, "  <", 80 );
+	  labelStr[80] = 0;
+	
+	  Strncat( labelStr, buff, 80 );
+	  labelStr[80] = 0;
+
+          Strncat( labelStr, ">", 80 );
+	  labelStr[80] = 0;
+
+	}
+
+	str = XmStringCreateSimple(labelStr);
+	XtVaSetValues(area->blinkButton,
+	    XmNlabelString,         str,
+	    NULL);
+	XmStringFree(str);
+		
 }
 
 /******************************************************
@@ -210,6 +308,7 @@ static void createMainWindow_callback(Widget w,ALINK *area,
 ******************************************************/
 static void icon_update(Widget blinkButton)
 {
+
 	XmChangeColor(blinkButton,bg_pixel[0]);
 
 	/* Remove any existing timer */
@@ -350,8 +449,8 @@ XmAnyCallbackStruct *call_data)
 static void changeTreeColor(Widget widget,Pixel color)
 {
     int i;
-    WidgetList children=(WidgetList)0 ;
-    Cardinal numChildren=0;
+    Widget *children;
+    Cardinal numChildren;
 	char *name;
 
 	if (!widget || !color) return;
@@ -359,10 +458,8 @@ static void changeTreeColor(Widget widget,Pixel color)
 	if (numChildren > 0) {
 		XtVaGetValues(widget,XmNchildren,&children, NULL);
 		for(i=0; i < (int)numChildren; i++) {
-                   if (children[i] != (Widget)0) 
 			changeTreeColor(children[i],color);
 		}
-
 	}
 	name = XtName(widget);
 	if( !name || 

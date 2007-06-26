@@ -86,6 +86,7 @@ int  printerMsgQKey;         /* Network printer MsgQKey. Albert    */
 int  printerMsgQId;          /* Network printer MsgQId.  Albert    */
  
 int _time_flag=0;            /* Dated flag.              Albert    */
+
 int tm_day_old;              /* Day-variable for dated.  Albert    */
 
 int _DB_call_flag=0;         /* Database(Oracle...) call. Albert   */
@@ -123,6 +124,8 @@ extern char alhVersionString[100];
 int use_CMLOG_alarm = 0;
 int use_CMLOG_opmod = 0;
 #endif
+
+int _xml_flag = 0;           /* Use XML-ish log format. SNS */
 
 extern int DEBUG;
 
@@ -168,7 +171,8 @@ static struct command_line_data commandLine = {
 #define PARM_NO_ERROR_POPUP			21
 #define PARM_MAIN_WINDOW			22
 #define PARM_ALARM_FILTER			23
-#define PARM_DESC_FIELD			        24
+#define PARM_DESC_FIELD			    24
+#define PARM_XML                    25
 struct parm_data
 {
 	char* parm;
@@ -209,6 +213,7 @@ static struct parm_data ptable[] = {
 		{ "-T", 2,				PARM_DATED },
 		{ "-v", 2,				PARM_VERSION },
 		{ "-version", 8,		PARM_VERSION },
+        { "-xml", 4,            PARM_XML },                 /* SNS */
  		{ NULL,		-1,     -1 }};
 
 /* forward declarations */
@@ -924,6 +929,10 @@ static int getCommandLineParms(int argc, char** argv)
 					_description_field_flag=1;
 					finished=1;
 					break;
+                case PARM_XML: /* SNS */
+                    _xml_flag=1;
+                    finished=1;
+                    break;
 				default:
 					parm_error=1;
 					break;
@@ -971,6 +980,9 @@ if(_DB_call_flag&&!_lock_flag)
 		printUsage(argv[0]);
 		return 1;
 	}
+    
+    if (_xml_flag)    puts ("XML!"); else puts("no XML!");
+    
 	return 0;
 }
 
@@ -1015,6 +1027,7 @@ static void printUsage(char *pgm)
 	fprintf(stderr,"  -S               Passive (no caputs - acks field, ackt field, sevrpv)\n");
 	fprintf(stderr,"  -s               Silent (no alarm beeping)\n");
 	fprintf(stderr,"  -T               AlarmLogDated\n");
+    fprintf(stderr,"  -xml             Use XML-ish format for log files\n"); /* SNS */
 	fprintf(stderr,"  -v               Print version number\n");
 	fprintf(stderr,"  -version         Print version number\n");
 	exit(1);

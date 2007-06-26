@@ -745,7 +745,9 @@ void getDescriptionRecord(char *name,char *description,chid descriptionFieldCaId
     return;      
   }
   
-  status = ca_pend_io(0.5);	
+  /* status = ca_pend_io(0.5); */
+  status = ca_pend_io(5.0);	
+  ca_pend_event(.0001);
   if (status != ECA_NORMAL) 
     {
       SEVCHK(status,"     CAN'T pend description field\n");
@@ -763,7 +765,9 @@ void getDescriptionRecord(char *name,char *description,chid descriptionFieldCaId
     return;           
   }
   
-  status= ca_pend_io(0.5);
+  /* status = ca_pend_io(0.5); */
+  status = ca_pend_io(5.0);
+  ca_pend_event(.0001);
   if (status != ECA_NORMAL)  
     {
       SEVCHK(status,"     CAN'T pend description field again \n");
@@ -774,7 +778,9 @@ void getDescriptionRecord(char *name,char *description,chid descriptionFieldCaId
   
   status=ca_add_event
     (DBR_STRING,descriptionFieldCaId,description_callback,description,NULL);
-  status= ca_pend_io(0.5);
+  /* status = ca_pend_io(0.5); */
+  status = ca_pend_io(5.0);
+  ca_pend_event(.0001);
 
 }
 

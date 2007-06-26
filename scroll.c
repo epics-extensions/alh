@@ -78,6 +78,10 @@ static void compactDataAscMonth(char *,char *,char *,char *,char *,char *);
 static void compactData(char *,char *,char *,char *,char *,char *);
 static char *digitalMonth(char *);
 static Boolean extensionIsDate(char *);
+char *Strncat(
+  char *dest,
+  const char *src,
+  int max );
 
 #ifndef MAX
 #  define MAX(a,b) ((a) > (b) ? a : b)
@@ -104,6 +108,146 @@ static char error_file_size[] = {
 	    "  Sorry:  file size too big to view."
 	    };
 
+
+typedef struct fplistTag {
+  struct fplistTag *flink;
+  struct fplistTag *blink;
+  FILE *f;
+} fplistType, *fplistPtr;
+
+static fplistPtr g_head;
+
+#define MAXCONFIGFILELINE 1023
+
+static void readFile (
+  fplistPtr cur,
+  char *buf,
+  int *max,
+  int *size,
+  int *depth
+) {
+
+char line[MAXCONFIGFILELINE+1], *result, *tk, *ctx, incFile[1023+1];
+fplistPtr new;
+int i, l;
+
+  if ( cur->f ) {
+
+    do {
+
+      result = fgets( line, MAXCONFIGFILELINE, cur->f );
+      if ( result ) {
+
+        *size += strlen(line) + *depth * 3;
+
+        if ( *size+10 > *max ) {
+          *max = *size + 0.5 * *size;
+          buf = (char *) XtRealloc( buf, *max );
+        }
+
+        for ( i=0; i<*depth; i++ ) strcat( buf, "   " );
+
+        strcat( buf, line );
+
+        ctx = NULL;
+        tk = strtok_r( line, " \t\n", &ctx );
+        if ( tk ) {
+          if ( strcmp( tk, "INCLUDE" ) == 0 ) {
+            tk = strtok_r( NULL, " \t\n", &ctx );
+            if ( tk ) {
+              tk = strtok_r( NULL, " \t\n", &ctx );
+              if ( tk ) {
+                new = (fplistPtr) calloc( 1, sizeof(fplistType) );
+                g_head->blink->flink = new;
+                new->blink = g_head->blink;
+                new->flink = g_head;
+                g_head->blink = new;
+		if ( psetup.configDir ) {
+                  strncpy( incFile, psetup.configDir, 1023 );
+		  incFile[1023] = 0;
+		  l = strlen( incFile );
+		  if ( l > 0 ) {
+		    if ( incFile[l-1] != '/' ) {
+		      Strncat( incFile, "/", 1023 );
+		      incFile[1023] = 0;
+		    }
+		  }
+		}
+		else {
+		  strcpy( incFile, "" );
+		}
+		Strncat( incFile, tk, 1023 );
+		incFile[1023] = 0;
+                new->f = fopen( incFile, "r" );
+		(*depth)++;
+                *size += strlen("----------------------------\n") +
+                 *depth * 3;
+                if ( *size+10 > *max ) {
+                  *max = *size + 0.5 * *size;
+                  buf = (char *) XtRealloc( buf, *max );
+                }
+                for ( i=0; i<*depth; i++ ) strcat( buf, "   " );
+                strcat( buf, "----------------------------\n" );
+                readFile( new, buf, max, size, depth );
+                *size += strlen("----------------------------\n") + *depth * 3;
+                if ( *size+10 > *max ) {
+                  *max = *size + 0.5 * *size;
+                  buf = (char *) XtRealloc( buf, *max );
+                }
+                for ( i=0; i<*depth; i++ ) strcat( buf, "   " );
+                strcat( buf, "----------------------------\n" );
+		(*depth)--;
+		if ( new->f ) fclose( new->f );
+                new->blink->flink = new->flink;
+                new->flink->blink = new->blink;
+		free( new );
+              }
+            }
+          }
+        }
+
+      }
+
+    } while ( result );
+
+  }
+
+}
+
+static void readAll (
+  char *buf,
+  int max,
+  int num,
+  FILE *fp
+) {
+
+fplistPtr cur;
+int size = 0;
+int depth = 0;
+
+  g_head = (fplistPtr) calloc( 1, sizeof(fplistType) );
+  g_head->f = NULL;
+  g_head->flink = g_head;
+  g_head->blink = g_head;
+
+  cur = (fplistPtr) calloc( 1, sizeof(fplistType) );
+  cur->f = fp;
+
+  /* link */
+  cur->blink = g_head->blink;
+  g_head->blink->flink = cur;
+  cur->flink = g_head;
+  g_head->blink = cur;
+
+  readFile( cur, buf, &max, &size, &depth );
+
+  cur->blink->flink = cur->flink;
+  cur->flink->blink = cur->blink;
+  free( cur );
+
+  free( g_head );
+
+}
 
 /**************************************************************************
     create scroll window for file view
@@ -183,8 +327,21 @@ void fileViewWindow(Widget w,int option,Widget menuButton)
 		fprintf(stderr,"fileViewWindow: file %s not found\n",filename);
 		return;             /* bail out if no file found */
 	}
-	fread(viewFileString[operandFile],
-	    viewFileUsedLength[operandFile],1, fp);
+
+	switch (option) {
+
+	case CONFIG_FILE:
+	  readAll( viewFileString[operandFile],
+           viewFileUsedLength[operandFile], 1, fp );
+	  break;
+
+	default:
+	  fread(viewFileString[operandFile],
+	   viewFileUsedLength[operandFile],1, fp);
+	  break;
+
+	}
+
 	clearerr(fp);
 	if (fclose(fp)) fprintf(stderr,
 		"fileViewWindow: unable to close file %s.\n",filename);

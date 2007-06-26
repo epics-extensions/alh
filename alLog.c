@@ -55,6 +55,7 @@ extern int _message_broadcast_flag;
 extern int _printer_flag;           /* Printer flag. Albert */
 extern int _read_only_flag;         /* RO flag. Albert */
 extern int _time_flag;              /* Dated flag. Albert */
+extern int _xml_flag;               /* Use XML-ish log format. SNS */
 extern char * alhAlarmSeverityString[];
 extern const char *ackTransientsString[];
 extern char * alhAlarmStatusString[];
@@ -101,6 +102,7 @@ struct setup psetup = {         /* initial files & beeping setup */
 
 int alarmLogFileMaxRecords = 2000;   /* alarm log file maximum # records */
 int alarmLogFileOffsetBytes = 0;  /* alarm log file current offset in bytes */
+const char alarmLogFileEndString[] = "           ";  /* alarm log file end of data string */
 int alarmLogFileStringLength = 158;  /* alarm log file record length*/
 
 FILE *fo=0;       /* write opmod file pointer */
@@ -180,60 +182,94 @@ void alLogAlarmMessage(time_t *ptimeofdayAlarm,int messageCode,CLINK* clink,cons
 
 #ifdef CMLOG
     cmlog_logmsg(cmlog,
-	    0,			/* verbosity */
-	    0,			/* dummy severity */
-	    messageCode,	/* code */
-	    "Alarm",            /* facility */
-	    "status=%s severity=%s device=%s message=%s "
-	    "text=%s domain=%s value=%s",
-	    alhAlarmStatusString[cdata->curStat],
-	    alhAlarmSeverityString[cdata->curSevr],
-	    cdata->name,
-		cdata->name,
-	    (cdata->alias ? cdata->alias : "N/A"),
-	    text,
-	    (alhArea ? alhArea->blinkString : "N/A"),
-	    cdata->value);
+        0,            /* verbosity */
+        0,            /* dummy severity */
+        messageCode,    /* code */
+        "Alarm",            /* facility */
+        "status=%s severity=%s device=%s message=%s "
+        "text=%s domain=%s value=%s",
+        alhAlarmStatusString[cdata->curStat],
+        alhAlarmSeverityString[cdata->curSevr],
+        cdata->name,
+        cdata->name,
+        (cdata->alias ? cdata->alias : "N/A"),
+        text,
+        (alhArea ? alhArea->blinkString : "N/A"),
+        cdata->value);
 #endif
-    if (!_description_field_flag) { 
-	if (_global_flag) {
-		sprintf(buff,
-			"%-28s %-12s %-16s %-12s %-5s %-40.40s\n",
-			cdata->name,
-			alhAlarmStatusString[cdata->curStat],
-			alhAlarmSeverityString[cdata->curSevr],
-			alhAlarmSeverityString[cdata->unackSevr],
-			ackTransientsString[cdata->curMask.AckT],
-			cdata->value);
-	} else {
-		sprintf(buff,
-			"%-28s %-12s %-16s %-40.40s\n",
-			cdata->name,
-			alhAlarmStatusString[cdata->curStat],
-			alhAlarmSeverityString[cdata->curSevr],
-			cdata->value);
-	}
-    } else { /* _description_field_flag is ON */
-         if (_global_flag) {
-		sprintf(buff,
-			"%-28s %-28s %-40.40s %-12s %-16s %-12s %-5s\n",
-			cdata->name,cdata->description,cdata->value,
-			alhAlarmStatusString[cdata->curStat],
-			alhAlarmSeverityString[cdata->curSevr],
-			alhAlarmSeverityString[cdata->unackSevr],
-			ackTransientsString[cdata->curMask.AckT]);
-        } else {
-
-		sprintf(buff,
-			"%-28s %-28s %-40.40s %-12s %-16s\n",
-			cdata->name,cdata->description,cdata->value,
-			alhAlarmStatusString[cdata->curStat],
-			alhAlarmSeverityString[cdata->curSevr]);
-		} 
-
+    if (_xml_flag) /* Use XML-ish entries which are easier to parse. SNS */
+    {
+        if (!_description_field_flag)
+        { 
+            if (_global_flag)
+                sprintf(buff,
+                    "<pv>%s</pv> <value>%s</value> <status>%s</status> <severity>%s</severity> <status-noack>%s</status-noack> <severity-noack>%s</severity-noack>",
+                    cdata->name, cdata->value,
+                    alhAlarmStatusString[cdata->curStat],
+                    alhAlarmSeverityString[cdata->curSevr],
+                    alhAlarmSeverityString[cdata->unackSevr],
+                    ackTransientsString[cdata->curMask.AckT]);
+            else
+                sprintf(buff,
+                    "<pv>%s</pv> <value>%s</value> <status>%s</status> <severity>%s</severity>",
+                    cdata->name, cdata->value,
+                    alhAlarmStatusString[cdata->curStat],
+                    alhAlarmSeverityString[cdata->curSevr]);
+        }
+        else
+        {     /* _description_field_flag is ON */
+            if (_global_flag)
+                sprintf(buff,
+                    "<pv>%s</pv> <desc>%s</desc> <value>%s</value> <status>%s</status> <severity>%s</severity> <status-noack>%s</status-noack> <severity-noack>%s</severity-noack>",
+                    cdata->name,cdata->description,cdata->value,
+                    alhAlarmStatusString[cdata->curStat],
+                    alhAlarmSeverityString[cdata->curSevr],
+                    alhAlarmSeverityString[cdata->unackSevr],
+                    ackTransientsString[cdata->curMask.AckT]);
+            else
+                sprintf(buff,
+                    "<pv>%s</pv> <desc>%s</desc> <value>%s</value> <status>%s</status> <severity>%s</severity>",
+                    cdata->name,cdata->description,cdata->value,
+                    alhAlarmStatusString[cdata->curStat],
+                    alhAlarmSeverityString[cdata->curSevr]);
+        }
     }
-
-	filePrintf(fl,buff,ptimeofdayAlarm,messageCode);
+    else /* Original, non-XMLish format */
+    {
+        if (!_description_field_flag)
+        {
+            if (_global_flag)
+                sprintf(buff, "%-28s %-12s %-16s %-12s %-5s %-40.40s\n",
+                        cdata->name,
+                        alhAlarmStatusString[cdata->curStat],
+                        alhAlarmSeverityString[cdata->curSevr],
+                        alhAlarmSeverityString[cdata->unackSevr],
+                        ackTransientsString[cdata->curMask.AckT],
+                        cdata->value);
+            else
+                sprintf(buff, "%-28s %-12s %-16s %-40.40s\n",
+                        cdata->name,
+                        alhAlarmStatusString[cdata->curStat],
+                        alhAlarmSeverityString[cdata->curSevr],
+                        cdata->value);
+        }
+        else
+        {   /* _description_field_flag is ON */
+            if (_global_flag)
+                sprintf(buff, "%-28s %-28s %-40.40s %-12s %-16s %-12s %-5s\n",
+                cdata->name,cdata->description,cdata->value,
+                alhAlarmStatusString[cdata->curStat],
+                alhAlarmSeverityString[cdata->curSevr],
+                alhAlarmSeverityString[cdata->unackSevr],
+                ackTransientsString[cdata->curMask.AckT]);
+            else
+                sprintf(buff, "%-28s %-28s %-40.40s %-12s %-16s\n",
+                cdata->name,cdata->description,cdata->value,
+                alhAlarmStatusString[cdata->curStat],
+                alhAlarmSeverityString[cdata->curSevr]);
+        }
+    }
+    filePrintf(fl,buff,ptimeofdayAlarm,messageCode);
 }
 
 
@@ -259,8 +295,8 @@ void alLogOpModMessage(int messageCode,GCLINK* gclink,const char* fmt,...)
 
       if (!gcdata) return;
       cmlog_logmsg(cmlog,
-	    2,	           /* verbosity */
-	    0,	           /* dummy severity */
+        2,               /* verbosity */
+        0,	           /* dummy severity */
 	    messageCode,    /* code */
 	    "Opmod",             /* facility */
 	    "device=%s message=%s text=%s domain=%s",
@@ -270,13 +306,15 @@ void alLogOpModMessage(int messageCode,GCLINK* gclink,const char* fmt,...)
 	    (alhArea ? alhArea->blinkString : "N/A"));
     }
 #endif
-    if(text[strlen(text)-1] == '\n') text[strlen(text)-1]= '\0';
-    if(text[strlen(text)-1] == '\n') text[strlen(text)-1]= '\0';
 
-	if (!alhArea || !alhArea->blinkString || !gcdata){
-		sprintf(buff," %s \n",text);
+	if (!alhArea || !alhArea->blinkString){
+		sprintf(buff,"%s",text);
 	} else {
-		sprintf(buff,"%s: %s: %s\n",alhArea->blinkString,gcdata->name,text);
+		if (!gcdata){
+			sprintf(buff,"%s: : %s",alhArea->blinkString,text);
+		} else {
+			sprintf(buff,"%s: %s:  %s",alhArea->blinkString,gcdata->name,text);
+		}
 	}
 
 	filePrintf(fo,buff,NULL,messageCode);
@@ -322,10 +360,10 @@ void alLogOpModAckMessage(int messageCode,GCLINK* gclink,const char* fmt,...)
 		sprintf(buff," : : %s \n",text);
 	} else {
 		if (!gcdata){
-			sprintf(buff,"%s: : %s %-16s\n",alhArea->blinkString,text,
+			sprintf(buff,"%s: : %s %-16s",alhArea->blinkString,text,
 				alhAlarmSeverityString[gcdata->curSevr]);
 		} else {
-			sprintf(buff,"%s: %s:  %s %-16s\n",alhArea->blinkString,gcdata->name,text,
+			sprintf(buff,"%s: %s:  %s %-16s",alhArea->blinkString,gcdata->name,text,
 				alhAlarmSeverityString[gcdata->curSevr]);
 		}
 	}
@@ -339,7 +377,7 @@ void alLogOpModAckMessage(int messageCode,GCLINK* gclink,const char* fmt,...)
  ***********************************************************************/
 void alLogNotSaveStart(int not_save_time)
 {
-	sprintf(buff,"Stop log start  during %d min\n",not_save_time);
+	sprintf(buff,"Stop log start  during %d min",not_save_time);
 	filePrintf(fl,buff,NULL,STOP_LOGGING_ALARM);
 }
 
@@ -348,7 +386,7 @@ void alLogNotSaveStart(int not_save_time)
  ***********************************************************************/
 void alLogNotSaveFinish()
 {
-	sprintf(buff,"Stop log finish\n");
+	sprintf(buff,"Stop log finish");
 	filePrintf(fl,buff,NULL,STOP_LOGGING_ALARM);
 }
 
@@ -360,7 +398,7 @@ save all recordName if someone acknowledges group)
 
 void alLog2DBAckChan (char *name)
 {
-	sprintf(buff,"Ack Channel--- %-28s\n",name);
+	sprintf(buff,"Ack Channel--- %-28s",name);
 	filePrintf(fo,buff,NULL,ACK_GROUP);  /* update the file */	
 }
 
@@ -370,7 +408,7 @@ save all recordName if someone acknowledges group)
  ***********************************************************************/
 void alLog2DBMask (char *name)
 {
-	sprintf(buff,"Group Mask ID --- %-28s\n",name);
+	sprintf(buff,"Group Mask ID --- %-28s",name);
 	filePrintf(fo,buff,NULL,CHANGE_MASK_GROUP);  /* update the file */	
 }
 
@@ -400,10 +438,10 @@ int filePrintf(FILE *fPointer,char *buf,time_t *ptime,int typeOfRecord)
 {
   int ret=0;
   int status;
-  static char bufSave[512];
+  static char bufSave[1024];
   static char DBbuff[1024];
   struct tm *tms;
-  char buf_tmp[32];
+  char buf_tmp[1024];
   time_t timeofday;
 
   if(!fPointer) return (-1);
@@ -454,14 +492,21 @@ int filePrintf(FILE *fPointer,char *buf,time_t *ptime,int typeOfRecord)
   /*________________________ end for AlLog dated ______________________ */
 
   /* Time format (like  "09-Feb-1999 12:21:12"): */
-
-  sprintf(buf_tmp,"%-.2d-%-3s-%-.4d %-.2d:%-.2d:%-.2d",
-	  tms->tm_mday,digit2month[tms->tm_mon],1900+tms->tm_year,
-	  tms->tm_hour,tms->tm_min,tms->tm_sec);
-  buf_tmp[20]=0;
-
-  sprintf(bufSave,"%-20s : %s",buf_tmp,buf);
-
+    if (_xml_flag)
+    {
+        sprintf(buf_tmp,"<date>%-.2d-%-3s-%-.4d</date> <time>%-.2d:%-.2d:%-.2d</time>",
+                tms->tm_mday,digit2month[tms->tm_mon],1900+tms->tm_year,
+                tms->tm_hour,tms->tm_min,tms->tm_sec);
+        sprintf(bufSave,"<entry>%s %s</entry>\n",buf_tmp,buf);
+    }
+    else
+    {
+        sprintf(buf_tmp,"%-.2d-%-3s-%-.4d %-.2d:%-.2d:%-.2d",
+                tms->tm_mday,digit2month[tms->tm_mon],1900+tms->tm_year,
+                tms->tm_hour,tms->tm_min,tms->tm_sec);
+        buf_tmp[20]=0;
+        sprintf(bufSave,"%-20s : %s\n",buf_tmp,buf);
+    }
 	if (alarmLogFileMaxRecords&&(fPointer==fl)) 
 	  {
 	    if (alarmLogFileOffsetBytes != ftell(fl))

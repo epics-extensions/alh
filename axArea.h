@@ -94,6 +94,8 @@ typedef struct  areaLink{
 	Widget           currentAlarmForm;
 	Widget           currentAlarm[10];
 	char             currentAlarmString[10][128];
+	int              w;
+	int              h;
 } ALINK;
 
 typedef struct _menu_item {
