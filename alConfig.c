@@ -527,7 +527,7 @@ int context,int caConnect,struct mainGroup *pmainGroup)
 
 	if (strncmp(&buf[1],"FORCEPV_CALC ",13)==0) { /*FORCEPV_CALC*/
 		FORCEPV_CALC* pcalc;
-		int status=0;
+		long status=0;
 		short err=0;
 
 		if (!gcdata->pforcePV) gcdata->pforcePV=(FORCEPV*)calloc(1,sizeof(FORCEPV));
