@@ -118,6 +118,9 @@ typedef struct fplistTag {
 static fplistPtr g_head;
 
 #define MAXCONFIGFILELINE 1023
+#ifdef WIN32
+#define strtok_r strtok_s
+#endif
 
 static void readFile (
   fplistPtr cur,

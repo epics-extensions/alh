@@ -40,6 +40,9 @@ extern int notsave;
 
 static char *g_popupCmdString;
 static Widget g_pum = NULL;
+#ifdef WIN32
+#define strtok_r strtok_s
+#endif
 
 /******************************************************
   spawn a new related prcess if command is not null
