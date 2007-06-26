@@ -1007,7 +1007,8 @@ void alForcePVSetNotConnected(FORCEPV* pforcePV,char* name)
 void forcePVUpdateFields(GCLINK* gclink,FORCEPV* pfPV,int context)
 {
 	FORCEPV* pforcePV;
-	int i,status=0;
+	int i=0;
+	long status=0;
 	short err=0;
 	short disabledHold;
 	FORCEPV_CALC* pcalc;
@@ -1265,7 +1266,7 @@ static void forcePVCalcPerform(GCLINK* gclink,int linktype,int forcePVChanged)
 	FORCEPV_CALC* pcalc=gclink->pgcData->pforcePV->pcalc;
 	int i;
 	double calcValue=0;
-	int status =0;
+	long status =0;
 	char buff1[6];
 	char buff2[20];
 
