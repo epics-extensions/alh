@@ -89,7 +89,6 @@ ifeq ($(I_WANT_CDEV),YES)
   USR_CXXFLAGS      += -I$(CDEV_INC)
 
   PROD_LIBS_DEFAULT += caService cdev
-  PROD_LIBS_DEFAULT += caService cdev ca Com
   cdev_DIR = $(CDEV_LIB)
   caService_DIR = $(CDEV_LIB)
 
@@ -101,7 +100,7 @@ endif
 
   alh_SRCS         += alCaCdev.cc
 else
-  PROD_LIBS += ca Com
+  PROD_LIBS += ca
 
   alh_SRCS         += alCA.c
 endif
@@ -188,8 +187,5 @@ RCS_WIN32 += alh.rc
 include $(TOP)/configure/RULES
 
 alh.res:../alh.ico
-
-alh$(OBJ):../version.h
-awAct$(OBJ):../version.h
-awAlh$(OBJ):../version.h
+alh.res:../version.h
 
