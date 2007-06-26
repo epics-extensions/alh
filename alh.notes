@@ -546,3 +546,7 @@ Tue Jun 26 10:27:36 CDT 2007  ALH_1_2_22
 	set maximum config file line length to 1023
 	added code to recursively display contents of configuration include 
 	  files
+
+Tue Jun 26 14:16:33 CDT 2007 ALH_1_2_23
+	Return val for calcPerform/postfix changed to long to match prototype
+	For WIN32 set strtok_r to strtok_s
