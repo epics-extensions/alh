@@ -25,7 +25,7 @@ ifeq ($(OS_CLASS), Darwin)
 GCC_OPT_YES = -O2
 endif
 
-HOST_OPT=NO
+#HOST_OPT=NO
 #DEBUGCMD = purify -first-only -chain-length=40 -max_threads=256 \
            -always-use-cache-dir -cache-dir=$(shell $(PERL) $(TOP)/config/fullPathName.pl .)
 #DEBUGCMD = purify -first-only -chain-length=40 -max_threads=256 \
