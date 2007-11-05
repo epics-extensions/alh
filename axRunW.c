@@ -450,7 +450,7 @@ static void changeTreeColor(Widget widget,Pixel color)
 {
     int i;
     Widget *children;
-    Cardinal numChildren;
+    Cardinal numChildren = 0;
 	char *name;
 
 	if (!widget || !color) return;
