@@ -1,0 +1,1968 @@
+<!doctype html>
+<HTML>
+<TITLE>Alarm Handler User's Guide</TITLE>
+<BODY>
+
+<h1 align=center style='text-align:center'><a
+name="chapter_1"></a>Chapter 1: Preface</h1>
+
+<h2><a name="pgfId_695974"></a>Purpose of Document</h2>
+
+<p style='margin-left:.5in'>This document presents a
+description of the functions provided by the Alarm Handler (ALH) and describes
+its graphical user interface. The purpose of this guide is to explain how to
+use and configure the Alarm Handler.</p>
+
+<h2><a name="pgfId_694953"></a>Audience</h2>
+
+<p style='margin-left:.5in'>This guide is written
+for individuals who wish to use and understand the Alarm Handler, namely
+accelerator operators and accelerator physicists.</p>
+
+<h2><a name="pgfId_694788"></a>Background/Environment</h2>
+
+<p style='margin-left:.5in'>The Alarm Handler is
+part of the Experimental Physics and Industrial Control System 
+EPICS) co-developed by Los Alamos National Laboratory
+and Argonne National Laboratory. EPICS consists of a set of software components
+and tools with which application developers and designers can create an
+extremely flexible control system that minimizes the need for custom coding and
+helps ensure uniform operator interfaces. The Alarm Handler is one of the EPICS
+control system tools.</p>
+
+<h2><a name="pgfId_695229"></a>EPICS Control System Perspective</h2>
+
+<p style='margin-left:.5in'>The Alarm Handler
+provides an interface between an operator and the EPICS control system
+database. The database is the interface
+between instrumentation hardware and all the EPICS control system software
+tools. This database is distributed throughout a network on I/O Controllers and
+contains records that are used to transfer information to and from the attached
+instrumentation to the Alarm Handler and other EPICS software tools.</p>
+
+<p style='margin-left:.5in'>Database records are
+made up of fields of various types. Scan fields specify under what
+circumstances a record will be processed. Convert fields determine how to
+convert a raw signal to/from engineering units. Device fields are used to
+specify the software interface to the device. Operator display fields specify
+how to display the record value. Processing fields are used by the run-time
+code for processing the record. There are also alarm
+fields that are used to specify conditions for alarm and to determine if the
+record is in an alarm state. Most fields are accessible throughout the network
+by means of the channel access interface
+software layer by specifying the record name and the field name. All monitoring
+and control operations are performed through the database.</p>
+
+<h2><a name="pgfId_696039"></a>Alarm Fields</h2>
+
+<p style='margin-left:.5in'>Each record in the
+database includes fields for specifying the record's current alarm condition.
+There are two parts to this alarm condition: the alarm status and the severity
+of that alarm status. Alarm status and severity values are set and checked
+whenever a record is processed. When a new condition is detected, a routine is
+called to send a message to each process monitoring this record. The Alarm
+Handler is one of these processes. </p>
+
+<p style='margin-left:.5in'>Each database record also includes two fields for
+specifying the record's current alarm acknowledgment state. The unacknowledged
+severity field is the highest severity value of unacknowledged alarms, and the
+acknowledge transients field specifies whether transient alarms need to be
+acknowledged. A transient alarm is when the record enters alarm state and then
+returns to normal before the alarm is acknowledged. When any change to these
+fields is detected, a routine is called to send a message to each process
+monitoring this record. </p>
+
+<p style='margin-left:.5in'>The Alarm Handler filters alarm messages and
+displays alarms to the operator hierarchically. The alarm configuration
+structure defined in the alarm configuration file is used to determine this
+hierarchical display. The Alarm Handler brings alarms to the operator's
+attention, logs the alarms, allows the operator to acknowledge alarms, and
+gives the operator guidance on handling of specific alarms.</p>
+
+<h2><a name="pgfId_695766"></a>Document Organization</h2>
+
+<p style='margin-left:.5in'><a href="#chapter_1">Chapter
+1</a> is this Preface describing the users guide. <a href="#chapter_2">Chapter
+2</a> is an Introduction to the Alarm Handler and describes the scope of the
+tool and explains some Alarm Handler terminology. <a href="#chapter_3">Chapter
+3</a> explains how to invoke the Alarm Handler and describes the command line
+options. The Main Window is explained in <a href="#chapter_4">Chapter 4</a> and
+<a href="#chapter_5">Chapter 5</a> contains a description all Main Window menu
+functions. The content of an alarm configuration file is described in <a
+href="#chapter_6">Chapter 6</a>. An index of terms is available at the end of
+the document. Using the alarm configuration mode will be explained in Chapter 7
+of a future version of this document.</p>
+
+<HR>
+
+<h1 align=center style='text-align:center'>
+<a name="chapter_2"></a>Chapter 2: Introduction</h1>
+
+<h2><a name="pgfId_698700"></a>What is the Alarm Handler?</h2>
+
+<h3 style='margin-left:.5in'>Definition</h3>
+
+<p style='margin-left:.5in'>The
+Alarm Handler is an interactive graphical application
+used primarily by accelerator operators and physicists to display and monitor
+EPICS database alarm states. It serves as an interface between an operator and
+the EPICS database and it communicates with the database using channel access
+function calls. The user interface for the Alarm Handler contains a
+hierarchical display of an alarm configuration structure allowing both high
+level and detailed views of the alarm configuration structure in one window.</p>
+
+<h3 style='margin-left:.5in'>Availability</h3>
+
+<p style='margin-left:.5in'>The alarm handler is a
+Motif and X11 Window based application written in C language, and it runs on
+Unix, Linux, and Windows 95/NT hosts. The Alarm Handler source code is
+available via WWW as an EPICS extension.</p>
+
+<h2><a name="pgfId_696087"></a>Purpose of the Alarm Handler</h2>
+
+<p style='margin-left:.5in'>The Alarm Handler monitors
+alarm conditions of EPICS database records. The primary responsibilities of the
+Alarm Handler (ALH) are to:</p>
+
+<ul type=disc>
+ <ul type=circle>
+  <li>Bring alarms to the operator's attention. </li>
+  <li>Provide the operator guidance for handling of specific alarms </li>
+  <li>Allow the operator to globally acknowledge alarms. </li>
+  <li>Provide a graphical view of current database alarms </li>
+  <li>Provide for logging alarms and display of the logged alarm history </li>
+ </ul>
+</ul>
+
+<h2><a name="pgfId_696669"></a>System Requirements</h2>
+
+<p style='margin-left:.5in'>The Alarm Handler currently requires either 
+an IBM personal computer with Windows 95/NT and Hummingbird's
+Exceed software or a workstation running a Unix type operating system with X
+Windows and Motif Version 1.2 or above. The Alarm Handler also requires the
+global alarm acknowledgment in EPICS base Version 3.11 or above.</p>
+
+<h2><a name="pgfId_697562"></a>Alarm Handler Terminology </h2>
+
+<h3 style='margin-left:.5in'>Alarm</h3>
+
+<p style='margin-left:.5in'>An unexpected change of
+state for an EPICS database record. Examples of alarm conditions are:</p>
+
+<ul type=disc>
+ <ul type=circle>
+  <li>Deviations from tolerance band </li>
+  <li>Software or Hardware errors </li>
+  <li>Loss of communication to hardware or linked records </li>
+ </ul>
+</ul>
+
+<p style='margin-left:.5in'>There are two parts to
+an alarm: the alarm status and the severity of that alarm status. Alarm status
+and severity are set and checked whenever a record is processed. When a change
+is detected, a routine is called which sends a message to each process
+monitoring this record. The Alarm Handler may be one of these processes. </p>
+
+<h3 style='margin-left:.5in'>Alarm Severity</h3>
+
+<p style='margin-left:.5in'>The SEVR alarm field in
+an EPICS database record specifies the severity of an alarm state. Currently
+the alarm severity can take one of the following four values:</p>
+
+<p style='margin-left:2.0in'>NO_ALARM, MINOR, MAJOR,
+INVALID</p>
+
+<h3 style='margin-left:.5in'>Alarm Status </h3>
+
+<p style='margin-left:.5in'>Each EPICS database
+record has a STAT alarm field that specifies the alarm state of the database
+record. Currently the status field can take one of more than 20 values, some of
+which are:</p>
+
+<p style='margin-left:1.5in'>READ, WRITE, HIHI,
+HIGH, LOW, LOLO, STATE, COS, COMM, ...</p>
+
+<h3 style='margin-left:.5in'>Alarm Channels</h3>
+
+<p style='margin-left:.5in'>The Alarm Handler
+displays alarms for an arbitrary set of channels. Each Alarm Channel refers to
+a specific EPICS database record.</p>
+
+<h3 style='margin-left:.5in'>Alarm Groups</h3>
+
+<p style='margin-left:.5in'>The Alarm Handler
+provides a grouping mechanism so that related channels can be grouped together.
+An Alarm Group consists of a named set of lower level groups and/or database
+channels.</p>
+
+<h3 style='margin-left:.5in'>Error State</h3>
+
+<p style='margin-left:.5in'>An Alarm Channel will be considered in an error
+state if there is a loss of communication between the Alarm Handler and the
+channel or if a channel access exception or other error occurs on the channel. </p>
+
+<h3 style='margin-left:.5in'>Local / Global Mode</h3>
+
+<p style='margin-left:.5in'>The alarm handler can execute in either a local or
+global mode. Global mode means that unacknowledged severity and acknowledge transients
+states will be determined by the current value of the fields in an EPICS
+database record. Local mode means that the unacknowledged severity and
+acknowledge transients states are local alh settings. Command line options
+determine the execution mode with local mode being the default setting. There
+is no way to change between local and global mode during execution. </p>
+
+<h3 style='margin-left:.5in'>Passive / Active State</h3>
+
+<p style='margin-left:.5in'>The alarm handler can execute
+in either a passive (monitor) or active (modify) state. Passive state means
+that the alarm handler does not allow alarm acknowledgment and does not allow
+changes to acknowledge transients settings. There will be no
+channel access puts when executing in a passive state. The passive/active
+execution state is determined by a command line option with active state being
+the default and there is no way to change the current state during execution.</p>
+
+<h3 style='margin-left:.5in'>Alarm Acknowledgment</h3>
+
+<p style='margin-left:.5in'>In Global Mode the Alarm
+Handler reads all ACKT and ACKS fields of the configured Alarm Channels:
+the Alarm Handler starts with
+the complete memory of still unacknowledged alarms. These alarms will have to
+be acknowledged, even if some may not be active anymore. (If a channel's ACKT
+field is set, any transient alarm will be latched and has to be acknowledged
+later on.) Global Mode also makes the Alarm Handler write alarm
+acknowledgements into the channels using Channel Access, i.e. all other Alarm
+Handlers in Global Mode will receive an alarm acknowledgment. Usually, all
+Alarm Handlers in the Control Room will run in Global Mode, so that any alarm
+has to be acknowledged only on one of the Alarm Handlers.</p>
+
+<p style='margin-left:.5in'>In Local Mode, the Alarm Handler starts without
+reading open acknowledgements from the channels, all alarm acknowledgements
+made will be valid only for this instance of the Alarm Handler. Usually, Alarm
+Handlers outside of the Control Room will run in Local Mode. </p>
+
+<h2><a name="pgfId_696541"></a>Alarm Handler Windows</h2>
+
+<p style='margin-left:.5in'>The Alarm Handler display consists of two types of
+windows, a runtime window and a Main Window. While the Alarm Handler is
+executing, the runtime window is always displayed.</p>
+
+<h3 style='margin-left:.5in'>Runtime Window</h3>
+
+<p style='margin-left:.5in'>The runtime window is a
+small icon like window that contains a single button containing the name of the
+alarm configuration main Alarm Group. The color
+of this button is used to show the highest alarm severity of any outstanding
+alarms. Beeping and blinking of the button is
+used to show the presence of unacknowledged alarms. Pressing the runtime window
+button will open the Alarm Handler Main Window or, if already open, bring the
+Main Window to the top of the window stack. The Close or Quit item on the
+window manager menu allows the user to exit
+the Alarm Handler.</p>
+
+<h3 style='margin-left:.5in'>Main Window</h3>
+
+<p style='margin-left:.5in'>The Alarm Handler Main
+Window is divided into three parts: a menu bar, an alarm configuration display
+area, and a message area.</p>
+
+<p style='margin-left:.5in'>On the
+menu bar, there are selections for pull-down menu
+items that perform all the functions of the Alarm Handler.</p>
+
+<p style='margin-left:.5in'>The alarm configuration
+display area is divided into two major parts: an alarm configuration tree
+structure display and an Alarm Group contents
+display. The current alarm configuration tree structure appears in the first
+area, and a list of the contents of the currently selected Alarm Group from the
+alarm configuration tree structure appears in the second area.
+Color is used to show alarm severity. A single
+character severity code is also provided for
+an operator with a monochrome display.</p>
+
+
+<p style='margin-left:.5in'>The
+message area displays the name of the current
+configuration file and has indicators to show definitions of the summary alarms
+fields for the currently open alarm configuration file.</p>
+
+<h2><a name="pgfId_692043"></a>Alarm Handler Files</h2>
+
+<p style='margin-left:.5in'>There are three files
+used by the alarm handler while it is executing. They are the
+alarm configuration file, the
+alarm log file, and the operation modification log file.</p>
+
+<h3 style='margin-left:.5in'>Alarm Configuration File</h3>
+
+<p style='margin-left:.5in'>The
+alarm configuration file is the only file used as
+input to the Alarm Handler. This file defines the Alarm Group structure and
+takes data in a flexible input format. The alarm configuration
+file specifies the Alarm Groups, Alarm Channels, channel masks, hierarchy of
+Alarm Groups, and other configuration information. The format and contents of
+the alarm configuration file are described in <a href="#chapter_6">Chapter 6</a>.</p>
+
+<p style='margin-left:.5in'>The user can specify the
+desired alarm configuration file using a file selection window at Alarm Handler
+start-up, or on the command line.</p>
+
+<h3 style='margin-left:.5in'>Alarm Log File</h3>
+
+<p style='margin-left:.5in'>The Alarm Log output file contains a log of alarm
+state changes. For each change of alarm state, channel access connection state,
+and read/write access state, the date, time, channel name and current state
+values are recorded. The alarm log file is an ASCII file that can be displayed
+on any terminal or sent to a printer.</p>
+
+<h3 style='margin-left:.5in'>Operation Modification Log File</h3>
+
+<p style='margin-left:.5in'>The Operation
+Modification Log output file contains a log of alarm acknowledgments and
+changes the user has made to the current alarm handler configuration. For each
+operator modification the date, time and description of the operator's
+modification are recorded.</p>
+
+<HR>
+
+<h1 align=center style='text-align:center'><a
+name="chapter_3"></a>Chapter 3: Starting ALH</h1>
+
+
+<h2>Path Requirements<a name="pgfId_679120"></a></h2>
+
+<p style='margin-left:.5in'>Before invoking the
+Alarm Handler for the first time, the path
+to the executable and configuration files
+must be established. Contact your EPICS administrator to find the locations of
+the Alarm Handler executable, <i> alh</i>, and your site's Alarm Handler
+configuration input files.</p>
+
+<h2><a name="pgfId_699316"></a>Environment Variable</h2>
+
+<p style='margin-left:.5in'>The optional environment
+variable <i>ALARMHANDLER </i>can be used to point
+the Alarm Handler to a desired working directory. If <i>ALARMHANDLER</i> is not
+set, the current working directory is assumed. If the alarm configuration file
+resides on a different directory
+(e.g. /<i>home<i>/</i>cs</i>/<i>appl</i>/<i>ah</i>/<i>dev</i>)
+from the current working directory, under UNIX <i>ALARMHANDLER</i>
+can be set to point to the desired path by issuing the UNIX c shell command:</p>
+
+<p style='margin-left:2.0in'>setenv ALARMHANDLER /home/cs/appl/ah/dev</p>
+
+<p style='margin-left:.5in'>The user must have read
+and write privileges in this directory.</p>
+
+<h2><a name="pgfId_699228"></a>Command Line Syntax </h2>
+
+<p style='margin-left:.5in'>Once the path is properly
+set, invoke the Alarm Handler by executing the command:</p>
+
+<p style='margin-left:2.0in'>alh</p>
+
+<p style='margin-left:.5in'>This command displays a
+file selection box in which to specify an alarm configuration file name. The
+default path for files is the directory defined by the ALARMHANDLER environment
+variable or the current directory and the default alarm handler output file
+names are <i>ALH</i>-<i>default</i>.<i>alhAlarm and ALH-default.alhOpmod</i> .
+If there is an alarm configuration file in the current directory with the name
+ALH-default.alhConfig, it will be used as the input configuration file.</p>
+
+<p style='margin-left:.5in'>The Alarm Handler
+command has several options and a usage
+message similar to the table below will be displayed if you enter: &quot;alh
+-help&quot;. </p>
+
+<p style='margin-left:3.0in'>alh [OPTIONS] [Xoptions] [configfile] </p>
+
+<p style='margin-left:.5in'>The alarm handler options are:</p>
+
+<p>
+<table border=1 cellspacing=1 cellpadding=0 width=600 style='width:548.25pt;
+ mso-cellspacing:.7pt;mso-padding-alt:0in 0in 0in 0in'>
+ <tr>
+  <td>-a alarmlogfile</td>
+  <td> Alarm log filename [ALH-default.alhAlarm </td>
+ </tr>
+ <tr>
+  <td>-aCM</td>
+  <td>Alarm log using CMLOG</td>
+ </tr>
+ <tr>
+  <td>-B</td>
+  <td>Message Broadcast System</td>
+ </tr>
+ <tr>
+  <td>-c</td>
+  <td>Alarm Configuration Tool mode</td>
+ </tr>
+ <tr>
+  <td>-caputackt</td>
+  <td>Caput the config file ackt settings to channels
+  (if global and active)</td>
+ </tr>
+ <tr>
+  <td>-D</td>
+  <td>Disable alarm and opMod log output</td>
+ </tr>
+ <tr>
+  <td>-debug</td>
+  <td>Debug output will be sent to stdout</td>
+ </tr>
+ <tr>
+  <td>-desc_field</td>
+  <td>Put DESC field text on alarm log lines</td>
+ </tr>
+ <tr>
+  <td>-f filedir</td>
+  <td>Directory for alarm configuration files [.]</td>
+ </tr>
+ <tr>
+  <td>-filter f-opt</td>
+  <td>
+  Set alarm display filter with f-opt being one of [nau]
+  <br>n[0]: no filter
+  <br>a[ctive]: show only active alarms
+  <br>u[nack]: show only unacknowledged alarms
+  </td>
+ </tr>
+ <tr>
+  <td>-global</td>
+  <td>Global mode (channel ACKS and ACKT fields)</td>
+ </tr>
+ <tr>
+  <td>-help</td>
+  <td>Print usage text to stdout</td>
+ </tr>
+ <tr>
+  <td>-L</td>
+  <td>Use Locking System</td>
+ </tr>
+ <tr>
+  <td>-l logdir</td>
+  <td>Directory for log files [.]</td>
+ </tr>
+ <tr>
+  <td>-m maxrecords</td>
+  <td>Alarm log file maximum records [2000]</td>
+ </tr>
+ <tr>
+  <td>-mainwindow </td>
+  <td>Start with Main Window </td>
+ </tr>
+ <tr>
+  <td>-noerrorpopup</td>
+  <td>Do not display error popup window (errors are logged)</td>
+ </tr>
+ <tr>
+  <td>-O key</td>
+  <td>Log to database (Oracle)</td>
+ </tr>
+ <tr>
+  <td>-o opmodlogfile </td>
+  <td>Opmod log filename [ALH-default.alhOpmod]</td>
+  </td>
+ </tr>
+ <tr>
+  <td>-oCM</td>
+  <td>OpMod log using CMLOG</td>
+ </tr>
+ <tr>
+  <td>-P key</td>
+  <td>Print to TCP printer</td>
+ </tr>
+ <tr>
+  <td>-S</td>
+  <td>Passive state (no ca_puts to ACKS and ACKT fields and severity PV)</td>
+ </tr>
+ <tr>
+  <td>-s </td>
+  <td>Silent execution (no alarm beeping)</td>
+ </tr>
+ <tr>
+  <td>-T</td>
+  <td>Alarm Log Dated output files</td>
+ </tr>
+ <tr>
+  <td>-v, -version</td>
+  <td>Print version number</td>
+ </tr>
+</table>
+</p>
+
+
+<h2>Default Settings </h2>
+
+<p style='margin-left:.5in'>The default settings for
+ALH (Alarm Handler) are as follows:</p>
+
+<ul type=disc>
+ <ul type=circle>
+  <li>Local mode </li>
+  <li>Active state </li>
+  <li>Alarm log file maximum records 2000 </li>
+  <li>Directory for files: ALARMHANDLER if defined else current directory </li>
+  <li>Alarm Configuration File: ALH-default.alhConfig </li>
+  <li>Alarm Log File: ALH-default.alhAlarm </li>
+  <li>Operator Modification Log File: ALH-default.opmod </li>
+  <li>Save New Configuration File: ALH-new.alhConfig </li>
+  <li>Beeping Status: On </li>
+  <li>Severity for Beeping: Minor (i.e. any non-zero severity)</li>
+ </ul>
+</ul>
+
+<h2><a name="pgfId_699460"></a>Command Line Option Descriptions</h2>
+
+<h3 style='margin-left:.5in'>Alarm Configuration File</h3>
+
+<p style='margin-left:.5in'>The '<i> configfile</i>
+' option specifies which alarm configuration input file is to be used. The
+default is no configuration file and a file selection window is displayed.</p>
+
+<h3 style='margin-left:.5in'>Alarm Log File</h3>
+
+<p style='margin-left:.5in'>The '<i>-a alarmlogfile</i>
+' option specifies the name of the alarm log file. The default name is
+ALH-default.alhAlarm.</p>
+
+<h3 style='margin-left:.5in'>Log alarms into CMLOG system</h3>
+
+<p style='margin-left:.5in'>The <i>'-aCM'</i> option enables alarm logging into
+a CMLOG system. The default is not to use CMLOG. (Note: This option is only available
+if the Alarm Handler is compiled with CMLOG support.)</p>
+
+<h3 style='margin-left:.5in'>Message Broadcast System</h3>
+
+<p style='margin-left:.5in'>The '<i>-B</i>' option enables an operator to send
+messages using message broadcasting. The default is no message broadcasting.
+When this option is specified a send message menu item appears on the Main
+Window menu, and a message input dialog popup appears when the menu item is
+selected. The operator can then type in a message that will be sent to other
+alh processes when OK is pressed. A popup dialog box containing a sent message
+will appear when an Alarm Handler process receives a message.</p>
+
+<h3 style='margin-left:.5in'>Configuration Tool Mode</h3>
+
+<p style='margin-left:.5in'>The '<i>-c</i> ' option causes the Alarm Handler to
+enter the Alarm Configuration Tool mode. The default is to bring up Alarm
+Handler mode. The Alarm Configuration Tool mode is used for creating and
+editing alarm configuration files. Documentation for this mode will be added to
+this guide later. </p>
+
+<h3 style='margin-left:.5in'>Write Configuration File ACKT Settings on Startup</h3>
+
+<p style='margin-left:.5in'>The '<i> -caputackt</i>
+' option specifies that the Alarm Handler should write the alarm configuration
+file ACKT values using channel access puts to the EPICS database records when
+the Alarm Handler reads the configuration file. The default is not to write the
+alarm configuration file ACKT values.</p>
+
+<h3 style='margin-left:.5in'>Disable Writing</h3>
+
+<p style='margin-left:.5in'>The ' <i>-D</i> ' option
+allows running the Alarm Handler without creating and/or modifying the alarm
+log and alarm opmod files. This is useful if one alh process runs without this
+option, creating and modifying some fixed named alarm log files and all other
+alh process specifying the same file names run with the -D option which does
+not allow them to overwrite the alarm log files. </p>
+
+<h3 style='margin-left:.5in'>Debug output</h3>
+
+<p style='margin-left:.5in'>The <i>'-debug'</i> option specifies that debugging
+output should be printed to stdout. The default is not to print debug output.</p>
+
+<h3 style='margin-left:.5in'>Description field</h3>
+
+<p style='margin-left:.5in'>The <i>'-desc_field'</i> option specifies that .DESC
+field text should be printed on alarmLog output lines. The default
+is not to print .DESC field text.</p>
+
+<h3 style='margin-left:.5in'>Directory for All Files</h3>
+
+<p style='margin-left:.5in'>The <i>'-f filedir '</i>
+option specifies the directory for the Alarm Handler input and output files.
+The default location is the current working directory. </p>
+
+<h3 style='margin-left:.5in'>Set Alarm Display Filter</h3>
+
+<p style='margin-left:.5in'>The <i>'-filter f-opt'</i> option sets the initial
+alarm display filter for the Alarm Handler (see <a href="#DisplayFilter">-&gt;&gt;Menu
+Functions-&gt;Setup Menu-&gt;Display Filter</a>). `f-opt' may be one of `n[o]'
+(for no filter), `a[ct]' (show active alarms) or `u[nack]' (show only
+unacknowledged alarms). Default is `no', i.e. all Alarm Groups
+and channels in the current configuration will be displayed. This
+option is particularly useful in combination with `-mainwindow' to start Alarm
+Handlers from operator panels.</p>
+
+<h3 style='margin-left:.5in'>Global Mode</h3>
+
+<p style='margin-left:.5in'>The <i>'-global'</i> options specifies that
+the alarm handler should run in a global mode. In global mode an Alarm
+Channel's unacknowledged severity and it's acknowledge transients state will be
+determined by the current value of the EPICS database record's ACKS and ACKT
+field settings. In local mode, the default mode, the unacknowledged severity
+and acknowledge transients settings are local to the alarm handler. </p>
+
+<h3 style='margin-left:.5in'>Help</h3>
+
+<p style='margin-left:.5in'>The <i>'-help'</i> option will print alh command
+usage text to stdout. </p>
+
+<h3 style='margin-left:.5in'>Locking System</h3>
+
+<p style='margin-left:.5in'>The <i>'-L'</i> option activates a file locking
+system (based on lockf(), i.e. NFS-safe) making sure that only one of multiple
+Alarm Handlers with enabled log writing has access to the log. If the `master'
+(i.e. actively logging) process dies, another Alarm Handler will seamlessly
+take over logging. Default is not to use this locking mechanism.</p>
+
+<h3 style='margin-left:.5in'>Directory for Log Files</h3>
+
+<p style='margin-left:.5in'>The <i>'-l logdir'</i>
+option specifies the location of the alarm log file and the operation
+modification log file. The default location is the current working directory. </p>
+
+<h3 style='margin-left:.5in'>Maximum Alarm Log Records</h3>
+
+<p style='margin-left:.5in'>The '<i>-m maxrecords'</i> option allows the user
+to specify the maximum number of records that the alarm handler will allow in
+the alarm log file. If this number of records is reached, new records
+will overwrite old alarm records. The default number of records is 2000.
+Specifying zero means the file can have an unlimited number of records.</p>
+
+<h3 style='margin-left:.5in'>Start with Main Window </h3>
+
+<p style='margin-left:.5in'>The <i>`-mainwindow'</i> option makes the Alarm
+Handler start with the Main Window instead of the Runtime Window. This is
+useful in conjunction with the `-filter f-opt' option to start Alarm Handlers
+from operator panels. The default is to start with the Runtime Window.</p>
+
+<h3 style='margin-left:.5in'>Do not use Popup Boxes for Displaying Errors</h3>
+
+<p style='margin-left:.5in'>The `-<i>noerrorpopup'</i> option tells the Alarm
+Handler not to use popup boxes for displaying errors. This is useful for Alarm
+Handlers running as overhead displays (and no mouse attached to handle popups).
+The default is to use popups.</p>
+
+<h3 style='margin-left:.5in'>Database</h3>
+
+<p style='margin-left:.5in'>The <i>'-O key'</i> means that the alarm
+handler should send log messages to a database (Oracle).</p>
+
+<h3 style='margin-left:.5in'>OpMod Log File</h3>
+
+<p style='margin-left:.5in'>The -<i>'o opmodlogfile'</i> option specifies the
+location of the operation modification log file. The default location is the
+current working directory. </p>
+
+<h3 style='margin-left:.5in'>Log Operator Modifications into CMLOG system</h3>
+
+<p style='margin-left:.5in'>The <i>'-oCM'</i> option enables opmod logging into
+a CMLOG system. The default is not to use CMLOG. (Note: This option is only
+available if the Alarm Handler is compiled with CMLOG support.)</p>
+
+<h3 style='margin-left:.5in'>TCP Printing</h3>
+
+<p style='margin-left:.5in'>The <i>'-P'</i> option
+allows simultaneously printing of new alarms to the log file and to a TCP
+printer (socket connection). The user must specify all three printer values: <i>'Name:port:colorModel</i>
+' (where colorModel is mono,hp_color,...). Currently the printing is done
+asynchronously by adding an additional task &quot;alh_printer&quot;. (This
+option is still under construction and will use pipes in the future) </p>
+
+<h3 style='margin-left:.5in'>Silent Mode</h3>
+
+<p style='margin-left:.5in'>The <i>'-s'</i>
+option specifies that alh should start executing in a silent mode with no
+beeping when alarms are present. Setup menu items can be used to change the
+startup silence status.</p>
+
+<h3 style='margin-left:.5in'>Passive Mode</h3>
+
+<p style='margin-left:.5in'>Specifying this <i>'-S'</i>
+option means that the alh will execute in a passive (monitor) mode. This
+means that alh can not send channel access acknowledgment of alarms and can not
+do channel access puts to the acknowledge transients fields and cannot write to
+the severity process variable. It is useful for a non-operator alh user.</p>
+
+<h3 style='margin-left:.5in'>AlarmLogDated</h3>
+
+<p style='margin-left:.5in'>With the <i>'-T'</i>
+option, alarmLog file names will have &quot;date&quot; extensions like
+YYYY-MM-DD, and log files are automatically switched at midnight. For this
+option, there is a Main Window menu browser that is displayed after pressing
+View-&quot;Alarm Log File Window&quot;. This browser allows searches in the
+AlarmLogFile and find all alarms inside of [t1,t2]-diapason containing some
+&lt;String&gt;.</p>
+
+<h3 style='margin-left:.5in'>Print Version</h3>
+
+<p style='margin-left:.5in'>The <i>'-v'</i>
+or <i>'-version'</i> option specifies that the
+Alarm Handler version number should be printed to stdout.</p>
+
+<h3 style='margin-left:.5in'>Xoptions</h3>
+
+<p style='margin-left:.5in'>When executing on Unix,
+the <i>'alh'</i> command line accepts all X options such as '<i>-bg color_name</i>'
+and '<i>-fg color_name'</i> and <i>'-geometry geom_spec'</i></p>
+
+<h2><a name="pgfId_694637"></a>Configuration File Selection Window </h2>
+
+<p style='margin-left:.5in'>If the Alarm
+Configuration file is not specified on the command line, a file selection
+window is presented so the user can select the desired Alarm Configuration file</p>
+
+<p style='margin-left:.5in'><img border=0
+width=320 height=396 id="_x0000_i1029" src=images/alhOpenFileDialog.gif></p>
+
+<p style='margin-left:.5in'>There are several ways
+to select the directory using this window:</p>
+
+<ul type=disc>
+ <ul type=circle>
+  <li><i>Double-click</i> on the appropriate <i>Directories</i>
+      entry. </li>
+  <li><i>Type</i> the directory name in the <i>Filter</i> window and click on <i>Filter</i> . </li>
+  <li><i>Type</i> the directory name in the <i>Selection</i>
+      window and <i>click </i>on <i>OK</i> . </li>
+ </ul>
+</ul>
+
+<p style='margin-left:.5in'>Once in the appropriate directory, there are
+several ways to select the desired file:</p>
+
+<ul type=disc>
+ <ul type=circle>
+  <li>Double-click on the appropriate <i>Files</i> entry. </li>
+  <li>Click on the appropriate <i>Files</i> entry and click on <i>OK</i> . </li>
+  <li>Type the file name in the <i>Selection</i> window and click on <i>OK</i> . </li>
+ </ul>
+</ul>
+
+<p style='margin-left:.5in'><i>Cancel</i> ends the
+Alarm Handler session.</p>
+
+<p style='margin-left:.5in'><i>Help</i> has not been
+implemented in this release.</p>
+
+<h2><a name="pgfId_700771"></a>Runtime Window </h2>
+
+<p style='margin-left:.5in'>Once an Alarm
+Configuration file has been selected, the Runtime window is displayed which
+appears on the user's screen as a small icon like window. This window contains
+a button labeled with the name of the Alarm Configuration file's Main Alarm
+Group.</p>
+
+<p style='margin-left:.5in'><img border=0 width=255
+height=62 id="_x0000_i1030" src=images/alhRunWindow.gif></p>
+
+<p style='margin-left:.5in'>The
+color of the button indicates the highest outstanding
+alarm severity level in the active alarm configuration.:</p>
+
+<ul type=disc>
+ <ul type=circle>
+  <li>White: Invalid Alarm </li>
+  <li>Red: Major Alarm </li>
+  <li>Yellow: Minor Alarm </li>
+  <li>Background color: NO Alarm </li>
+ </ul>
+</ul>
+
+<p style='margin-left:.5in'>There will be beeping and
+the button will blink to indicate the presence of unacknowledged alarms.</p>
+
+<h3 style='margin-left:.5in'>Exiting the Alarm Handler</h3>
+
+<p style='margin-left:.5in'>To exit the Alarm Handler,
+use the Window Manager Menu on
+the Runtime Window and choose the <i>Close</i> menu item.</p>
+
+<p style='margin-left:.5in'><img border=0 width=244
+height=218 id="_x0000_i1031" src=images/alhMotifMenu.gif></p>
+
+<p style='margin-left:.5in'>This will bring up the
+Alarm Handler Exit dialog window.</p>
+
+<p style='margin-left:.5in'><img border=0 width=242
+height=134 id="_x0000_i1032" src=images/alhExitDialog.gif></p>
+
+<p style='margin-left:.5in'>Click on <i>OK</i> to exit the Alarm Handler.</p>
+
+<p style='margin-left:.5in'>Click on <i>Cancel</i>
+to return to the Alarm Handler.</p>
+
+<p style='margin-left:.5in'><i>Help</i> has not been
+implemented in this release.</p>
+
+<h3 style='margin-left:.5in'>Displaying the Main Window</h3>
+
+<p style='margin-left:.5in'>Click the Runtime window
+button to open the Alarm Handler Main window or, if the Main window is already
+open, clicking the button will bring the Main window to the top of the window
+stack. This window contains the hierarchy of Alarm Groups and Alarm Channels
+(Process Variables) being monitored. The left half of the window
+contains the tree-structure of the Alarm Group, and the right side contains the
+contents of the selected Alarm Group. This window will be discussed in detail
+in the next chapter.</p>
+
+<p style='margin-left:.5in'><img border=0 width=650 height=353 id="_x0000_i1033"
+src=images/alhMainWindowNoAlarms.gif></p>
+
+<HR>
+
+<h1 align=center style='text-align:center'><a name="pgfId_696811"></a><a
+name="chapter_4"></a>Chapter 4: Main Window</h1>
+
+<h2><a name="pgfId_694627"></a>Main Window Description</h2>
+
+<p style='margin-left:.5in'>When the Runtime Window button is clicked, the Main Alarm
+Handler window. is displayed. The Alarm Handler Main Window is divided into two
+major parts: an alarm configuration tree structure display and an Alarm Group
+Contents display. This window also contains a menu
+bar and a message area.</p>
+
+<p style='margin-left:.5in'><img border=0 width=650 height=363 id="_x0000_i1035"
+src=images/alhMainWindowAlarms.gif></p>
+
+<p style='margin-left:.5in'>This window shows the
+hierarchy of Alarm Groups and Alarm Channels (EPICS database records)
+being monitored. The left half of the
+window contains the tree-structure display of
+Alarm Groups, and the right side displays the contents of the tree-structure
+display's currently selected Alarm Group.</p>
+
+<h3 style='margin-left:.5in'>Menu Bar</h3>
+
+<p style='margin-left:.5in'>The Alarm Window menu
+bar provides menu selections for all the functions of the alarm handler and
+also gives users a second way to access some functions.</p>
+
+<h3 style='margin-left:.5in'>Alarm Configuration Tree Structure Display</h3>
+
+<p style='margin-left:.5in'>The current alarm configuration
+tree structure of Alarm Groups
+is graphically displayed as Group Summary Lines which are
+described in <a href="#pgfId_696904">Group Summary Line</a>. Buttons on the tree
+structure display allow the user to expand or deflate the alarm configuration
+tree structure.</p>
+
+<p style='margin-left:.5in'>Each group name in the
+configuration tree structure is displayed on a separate line. The following
+items appear in each group line of the tree structure display.</p>
+
+ <ul type=disc>
+ <ul type=circle>
+  <li>Single character color coded acknowledgment button </li>
+  <li>Single character color coded severity code </li>
+  <li>Group name selection button </li>
+  <li>Optional subgroups arrow button </li>
+  <li>Optional guidance button </li>
+  <li>Optional related process button </li>
+  <li>Current mask summary </li>
+  <li>Optional Group Beep Severity character </li>
+  <li>Alarm severity summary </li>
+ </ul>
+ </ul>
+
+<p style='margin-left:.5in'>The configuration tree
+structure display has a scrolling/paging facility and a display resize
+facility. This allows users to view an alarm configuration tree structure too
+large to display on one screen.</p>
+
+<h3 style='margin-left:.5in'>Alarm Group Contents Display</h3>
+
+<p style='margin-left:.5in'>The user will be able to
+choose any Alarm Group for display by pressing the Alarm Group name button from
+the configuration tree structure display. Selecting an Alarm Group will cause
+the Alarm Group contents display to show one level of the alarm subgroups and
+the Alarm Channels associated with the selected group.</p>
+
+<p style='margin-left:.5in'>The Alarm Group contents
+display for the currently selected Alarm Group contains
+group summary lines for each alarm subgroup followed
+by channel status lines for each Alarm Channel
+in the selected Alarm Group.</p>
+
+<p style='margin-left:.5in'>Each subgroup or channel
+name in the summary line is displayed with a color identifier indicating
+whether the name is an Alarm Group name or a channel name.</p>
+
+<p style='margin-left:.5in'>The Alarm Group display
+has a scrolling/paging facility to allow users to view an Alarm Group too large
+to display in one screen.</p>
+
+<p style='margin-left:.5in'>Each channel status line contains: </p>
+
+<ul type=disc>
+ <ul type=circle>
+  <li>Single character color coded acknowledgment button </li>
+  <li>Single character color coded severity code </li>
+  <li>Channel name selection button </li>
+  <li>Optional guidance button </li>
+  <li>Optional related process button </li>
+  <li>Current mask </li>
+  <li>Optional Channel Beep Severity character </li>
+  <li>Current status and severity </li>
+  <li>Highest unacknowledged severity </li>
+ </ul>
+</ul>
+
+<h3 style='margin-left:.5in'>Message Area</h3>
+
+<p style='margin-left:.5in'>The message area shows
+the current execution mode (local or global), the current execution state (passive
+or active), the name of the current configuration file. It also contains
+buttons to silence alarms, and explanatory descriptions of the mask
+abbreviation codes and status data which appear in the group summary and
+channel status lines.</p>
+
+<p style='margin-left:.5in'>There are two Silence buttons which toggle beeping on or off.
+The Silence Current button turns off current
+alarm beeping until a new alarm occurs. The Silence
+One Hour button toggles on/off beeping of current and future alarms for one
+hour. When pushed in, beeping is turned off, when out, beeping is on. Beeping
+occurs only when there are unacknowledged alarms.</p>
+
+
+<h2><a name="pgfId_696904"></a>Group Summary Line</h2>
+
+<p style='margin-left:.5in'>This display line
+summarizes the status of all alarms for the group named in this line and all
+lower level groups. The group summary display consists of the following items:</p>
+
+<h3 style='margin-left:.5in'>Acknowledgment Button</h3>
+
+<p style='margin-left:.5in'>A one-character
+acknowledgment button is activated only if an
+unacknowledged alarm is present for the group and the alarm handler is
+executing in active (modify) state. This button is color-coded
+representing the highest severity unacknowledged alarm as follows:</p>
+
+<ul type=disc>
+ <ul type=circle>
+  <li>White: V - Invalid Alarm </li>
+  <li>Red: R - Major Alarm </li>
+  <li>Yellow: Y - Minor Alarm </li>
+  <li>Background color - No Alarm </li>
+ </ul>
+</ul>
+
+<p style='margin-left:.5in'>This button describes
+the highest severity of unacknowledged alarms for this group and all associated
+subgroups.</p>
+
+<p style='margin-left:.5in'>Clicking on this button
+while alh is executing in active state will send channel access alarm
+acknowledgments to all Alarm Channels
+associated with the group. It has the same effect as individually
+acknowledging each channel in an unacknowledged alarm state.</p>
+
+<h3 style='margin-left:.5in'>Single Character Severity Code</h3>
+
+<p style='margin-left:.5in'>A one-character severity
+display code. It is present only if at least one channel associated with the
+group is in alarm or in an error state. It is color-coded
+and represents the highest severity outstanding alarm as follows:</p>
+
+<ul type=disc>
+ <ul type=circle>
+  <li>White: E -  Error state </li>
+  <li>White: V - Invalid Alarm </li>
+  <li>Red: R - Major Alarm </li>
+  <li>Yellow: Y - Minor Alarm </li>
+ </ul>
+</ul>
+
+<p style='margin-left:.5in'>The code shows the
+highest severity unacknowledged alarm for this group and all it's subgroups.</p>
+
+<h3 style='margin-left:.5in'>Group Name Selection Button </h3>
+
+<p style='margin-left:.5in'>ALH allows the operator
+to choose any Alarm Group by selecting the Group Name button on the
+group summary line. The result is to display one level of the contents
+associated with the selected group. This group also becomes the currently
+selected group.</p>
+
+<h3 style='margin-left:.5in'>Current Mask Summary</h3>
+
+<p style='margin-left:.5in'>The Current Mask Summary
+Display is a five character mask display. Each character is a&quot;-&quot; or
+one of the following:</p>
+
+<ul type=disc>
+ <ul type=circle>
+  <li>C: Cancel Alarm </li>
+  <li>D: Disable Alarm </li>
+  <li>A: NoAck Alarm  or  H: NoAck 1hr Timer Active</li>
+  <li>T: NoAck Transient Alarm </li>
+  <li>L: NoLog Alarm </li>
+ </ul>
+</ul>
+
+<p style='margin-left:.5in'>Mask values are described
+in <a href="#masks">Alarm Channel Mask</a>. If the current mask for any channel
+connected with this group or any subgroup has the above mask condition set, the
+corresponding character is displayed, otherwise the character &quot;-&quot; is
+displayed. For example the string &quot;--A--&quot;
+means that at least one channel has the NoAck mask set
+and that no channels have any other masks set.</p>
+
+<h3 style='margin-left:.5in'>Alarm Severity Summary Counts</h3>
+
+<p style='margin-left:.5in'>The alarm summary count
+display shows the total number of channels in alarm and in an error state for
+this group and all its subgroups. This summary consists of a set of five
+fields:</p>
+
+<p style='margin-left:2.0in'>(ERROR, INVALID, MAJOR,
+MINOR, NOALARM)</p>
+
+<p style='margin-left:.5in'>Each field value
+indicates the total number of channel alarms with the specified severity in the
+associated group and all it's subgroups.</p>
+
+<p style='margin-left:.5in'>&nbsp;</p>
+
+<h2><a name="pgfId_698170"></a>Alarm Channel Status Line</h2>
+
+<p style='margin-left:.5in'>The channel status
+display is a line appearing on an Alarm Group Contents Window containing the
+following items:</p>
+
+<h3 style='margin-left:.5in'>Acknowledgment
+Button</h3>
+
+<p style='margin-left:.5in'>A one character
+acknowledgment button. It is activated only if an unacknowledged alarm is
+present for the channel and the alarm handler is executing in active (modify)
+state. It is color coded, and represents the
+highest severity unacknowledged alarm as follows:</p>
+
+<ul type=disc>
+ <ul type=circle>
+  <li>White E - Error state </li>
+  <li>White: V - Invalid Alarm </li>
+  <li>Red: R - Major Alarm </li>
+  <li>Yellow: Y - Minor Alarm </li>
+  <li>Background color - No Alarm </li>
+ </ul>
+</ul>
+
+<p style='margin-left:.5in'>Clicking on this button
+while alh is executing in active state will send a channel access alarm
+acknowledgments to the Alarm Channel. A warning popup dialog with the message
+that alarm acknowledgment is not allowed in passive state will appear if the
+alarm handler is executing in passive (monitor) state.</p>
+
+
+<h3 style='margin-left:.5in'>Severity Code</h3>
+
+<p style='margin-left:.5in'>The severity code
+character is present only if the channel is in alarm or in an error state. In this
+case, it is a color coded letter which represents the severity of the alarm as
+follows:</p>
+
+<ul type=disc>
+ <ul type=circle>
+  <li>White: E - Error state </li>
+  <li>White: V - Invalid Alarm </li>
+  <li>Red: R - Major Alarm </li>
+  <li>Yellow: Y - Minor Alarm </li>
+  <li>Background color - No Alarm</li>
+ </ul>
+</ul>
+
+<h3 style='margin-left:.5in'>>Channel Name Button</h3>
+
+<p style='margin-left:.5in'>This button contains the
+database record name associated with the channel. The button is color coded in
+gray so that an operator can easily distinguish channels from groups. Selecting
+this button makes the channel the currently selected item.</p>
+
+<h3 style='margin-left:.5in'>>Current Mask</h3>
+
+<p style='margin-left:.5in'>The mask field contains
+a five-character display showing the settings of the channel's current mask.
+Each character is either a &quot;-&quot; or one of the following:</p>
+
+<ul type=disc>
+ <ul type=circle>
+  <li>C: Cancel </li>
+  <li>D: Disable Alarm </li>
+  <li>A: NoAck Alarm </li>
+  <li>T: NoAck Transient Alarm </li>
+  <li>L: NoLog Alarm </li>
+ </ul>
+</ul>
+
+<p style='margin-left:.5in'>Masks are described in
+<a href="#masks">Alarm Channel Mask</a></p>
+
+<h3 style='margin-left:.5in'>Alarm Status and Severity</h3>
+
+<p style='margin-left:.5in'>Following the current
+mask characters are the channel's current alarm status and severity and the
+highest unacknowledged alarm severity. Current status and severity is present
+only if the channel is in an alarm state. Highest unacknowledged alarm severity
+is present only if an unacknowledged alarm is present.</p>
+
+<HR>
+<h1 align=center style='text-align:center'><a
+name="chapter_5"></a>Chapter 5: Menu Functions</h1>
+
+
+<h2><a name="pgfId_705308"></a>Main Window Menu Bar</h2>
+
+<p style='margin-left:.5in'>The Main Window menu bar
+contains five pull-down menu items: File, Action, View, Setup, and Help.</p>
+
+<h2><a name="pgfId_695563"></a>File Menu Commands</h2>
+
+<p style='margin-left:.5in'>The File menu has three
+command items: Open, Save As, and Close.</p>
+
+<p style='margin-left:.5in'><img border=0 width=161 height=74 id="_x0000_i1037"
+src=images/alhFileMenu.gif></p>
+
+<h3 style='margin-left:.5in'>Open</h3>
+
+<p style='margin-left:.5in'>To open an existing alh configuration file, use the
+&quot;File Open&quot; menu item.</p>
+
+<p style='margin-left:.5in'><img border=0 width=320
+height=396 id="_x0000_i1038" src=images/alhOpenFileDialog.gif></p>
+
+<p style='margin-left:.5in'>This brings up a
+standard file selection dialog, which allows
+the user to move around an existing directory structure to find the file to
+open.</p>
+
+<p style='margin-left:.5in'>To aid the user, the
+file selection box initially displays all files in the directory which end in
+&quot;.alhConfig&quot;.</p>
+
+<h3 style='margin-left:.5in'>Save As</h3>
+
+<p style='margin-left:.5in'>The &quot;
+Save As&quot; menu item, allows the user to save the
+current alarm configuration structure and current alarm configuration settings
+to a new or existing file. A dialog appears which prompts the user to supply
+the name of a file to write to. If the user gives the name of an existing file,
+another popup dialog will give a warning and ask the user if the existing file
+can be overwritten.</p>
+
+<p style='margin-left:.5in'><img border=0 width=320
+height=396 id="_x0000_i1039" src=images/alhSaveFileDialog.gif></p>
+
+<h3 style='margin-left:.5in'>Close</h3>
+
+<p style='margin-left:.5in'>Selecting the Close item
+on the File menu can close the alh Main Window. This Main Window can be
+redisplayed again with a mouse click on the runtime window button.</p>
+
+<h2><a name="pgfId_695564"></a>Action Menu Commands</h2>
+
+<p style='margin-left:.5in'>The Action Menu provides
+selections which affect the currently selected Alarm Group or Channel. The
+action selections &quot;Acknowledge Alarm&quot;, &quot;Display Guidance&quot;,
+and &quot;Start Related Process&quot; can also be accomplished by clicking
+buttons on the tree structure or group contents display.</p>
+
+<p style='margin-left:.5in'><img border=0 
+id="_x0000_i1040" src=images/alhActionMenu.gif></p>
+
+<h3 style='margin-left:.5in'>Acknowledge Alarm</h3>
+
+<p style='margin-left:.5in'>Alarm acknowledgment is
+only allowed while the alarm handler is executing in active (modify) state. The
+Alarm Handler user can acknowledge an alarm for the currently selected Alarm
+Group or Channel by selecting the &quot;Acknowledge Alarm&quot; item on the
+Action menu. Selecting this item for an Alarm Group acknowledges all Alarm
+Channels associated with the group. It has the same effect as acknowledging
+each channel individually.</p>
+
+<p style='margin-left:.5in'>When executing in global mode the Alarm Handler
+performs an alarm acknowledgment by sending a channel access alarm acknowledgment
+command to the channel and logging the alarm acknowledgement to the operator
+modification log file. The alarm acknowledgment indicators (color, blinking,
+and beeping) will change only after a channel access alarm event with the
+modified unacknowledged severity is received. Other executing alarm handler
+processes and other EPICS tools monitoring alarm events will also receive this
+alarm event.</p>
+
+<p style='margin-left:.5in'>When executing in local mode the alarm
+acknowledgment indicators (color, blinking and beeping) and the local unacknowledged
+severity level setting will change to reflect a local alarm acknowledgment and
+the alarm acknowledgement will be logged to the operator modification log file.</p>
+
+<h3 style='margin-left:.5in'>Display Guidance</h3>
+
+<p style='margin-left:.5in'>When &quot;Display&nbsp;
+Guidance&quot; is selected, associated guidance text
+lines for a selected Alarm Channel or Alarm Group will be displayed. Guidance
+text is intended to suggest possible reasons why this group or channel might
+alarm and actions that might remove the alarm condition. This menu item is
+inactive if guidance information is not available for the currently selected
+Alarm Group or Alarm Channel.</p>
+
+<p style='margin-left:.5in'><img border=0 width=480
+height=142 id="_x0000_i1041" src=images/alhGuidance.gif></p>
+
+<p style='margin-left:.5in'>The guidance text
+display is a popup window displaying lines of ascii text if text was specified
+in the alarm configuration file. If a URL address was specified in the
+configuration file, Netscape will be invoked and display the text at the
+specified URL address.</p>
+
+<h3 style='margin-left:.5in'>Start Related Process</h3>
+
+<p style='margin-left:.5in'>Selecting &quot;Start
+Related Process&quot; will initiate execution of an Alarm Group or Alarm
+Channel's related process which was specified in the alarm configuration file.
+This item will be inactive if a related process was not specified for the
+currently selected Alarm Group or Alarm Channel.</p>
+
+<h3 style='margin-left:.5in'>Force Process Variable</h3>
+
+<p style='margin-left:.5in'>This item displays a
+dialog box that allows the operator to change values of the Force Process
+Variable. The Force Process Variable is described in a later chapter. The user
+can change the name of the Force PV, the values of the Force Process Variable
+which will cause the Alarm Channel masks to be set and reset, and the actual
+mask the Force Process Variable will force on the group. The user can also
+disable and enable the Force PV. The force value must be set to a value different
+than the reset value.</p>
+
+<p style='margin-left:.5in'><img border=0 
+id="_x0000_i1042" src=images/alhForcePVDialog.gif></p>
+
+<p style='margin-left:.5in'>There are four action
+buttons on this dialog box: Apply, Cancel, Dismiss, and Help. The Apply button
+will accept and apply the user entered changes. The Cancel button will discard
+the user entered changes in this dialog box and reset them to the original
+values. The Dismiss button will close this popup dialog, and the Help button
+will display a Force PV help information dialog.</p>
+
+<h3 style='margin-left:.5in'>Force Mask</h3>
+
+<p style='margin-left:.5in'>Selecting &quot;Force
+Mask&quot; will popup a dialog box which allows the operator to change the mask
+for the currently selected group or channel. Changing a group mask will
+actually change the mask of all Alarm Channels
+within that group. Three masks are displayed: 1) the current mask,
+2) the reset mask, valid for Alarm Channels only, which is the mask specified
+in the alarm configuration file, and 3) the mask to force, which the user
+defines by pressing one or more of the 5 state buttons below the mask.</p>
+
+<p style='margin-left:.5in'>.<img border=0
+width=359 height=257 id="_x0000_i1043" src=images/alhForceMask.gif>
+</p>
+
+<p style='margin-left:.5in'>The mask to be used for
+forcing (5 characters) may be any combination of -,C,D,A,T,L</p>
+
+<p style='margin-left:.5in'>There are four action
+buttons on this dialog box: Apply, Reset, Dismiss and Help. The Apply button will
+set the mask of all the Alarm Channels
+within this group to the mask as shown in the Mask line. The Reset
+button will reset the mask of each channel within this group to its own default
+mask defined in the alarm configuration file. The Dismiss button will cancel
+the force mask option and close the dialog window. The Help button will give
+force mask help information.</p>
+
+<h3 style='margin-left:.5in'>Modify Mask Settings</h3>
+
+<p style='margin-left:.5in'>This menu item allows
+the operator to force or reset a specific bit of the current mask. For example,
+if the operator chooses &quot;Add&quot; in the &quot;Add/Cancel Alarms&quot;
+line then the Add/Cancel field of the current mask for all channels in the
+group are forced into the &quot;Add&quot; event state. Similarly choosing
+&quot;Cancel&quot; cancels the channel access add event state for all the
+channels. If &quot;Reset&quot; is chosen, the Add/Cancel field of the current
+mask for each channel in the group reverts to the default state defined in the
+active configuration file. Mask values are described in a later chapter.</p>
+
+<p style='margin-left:.5in'><img border=0 width=382
+height=236 id="_x0000_i1044" src=images/alhModifyMaskDialog.gif></p>
+  
+<h3 style='margin-left:.5in'>Beep Severity</h3>
+
+<p style='margin-left:.5in'>This menu item gives the operator the
+ability to change the beep severity on individual
+channels or groups. A beep severity indicator will appear
+after the mask on the group (highest existing) and channel lines.
+The beep severity indicators are E=error, V=invalid, R=major, Y=minor.
+Beep Severity can be changed to MINOR, MAJOR, INVALID, or ERROR.
+If beep severity is set to MINOR,then MINOR, MAJOR,
+INVALID, and ERROR unacknowledged alarms will cause beeping. The -s command line
+option, silent execution, will override all menu and config file beep severity
+settings. </p>
+
+<p style='margin-left:.5in'><img border=0 
+id="_x0000_i1044a" src=images/alhSetBeepSeverityPopup.gif></p>
+   
+<h3 style='margin-left:.5in'>NoAck for One Hour</h3>
+
+<p style='margin-left:.5in'>This menu item gives the operator the
+ability to set the noAck mask field of a group or channel to
+No Acknowlegment Necessary for one hour and have it automatically
+set to the reset value (config file value) after the hour expires.
+An "H" will be put into the noAck position of the mask on the group
+or channel line during the noAck hour. When a no-Ack timer is created,
+it will cancel any existing timers in any subgroups and channels.
+When a timer expires it will not reset any subgroups or channels that
+have an existing (i.e.  more recent) timer. </p>
+
+<p style='margin-left:.5in'><img border=0 
+id="_x0000_i1044a" src=images/alhModifyNoAckMaskPopup.gif></p>
+   
+<h3 style='margin-left:.5in'>Message Broadcasting</h3>
+
+<p style='margin-left:.5in'>The &quot;Send Message&quot; menu item allows alarm
+handler operators to send and receive messages to other alarm handler
+operators. A message input dialog popup appears when the &quot;Send
+Message&quot; menu item is selected. The operator can then type in a message
+that will be sent to other alh processes when OK is pressed. A popup message
+dialog containing the sent message will appear on other Alarm Handler processes
+when they receive the message.</p>
+
+<p style='margin-left:.5in'><img border=0 width=277 height=154 id="_x0000_i1045"
+src=images/alhSendMessage.gif></p>
+
+<p style='margin-left:.5in'><img border=0 width=483 height=202 id="_x0000_i1046"
+src=images/alhMessage.gif></p>
+
+<h2><a name="pgfId_709762"></a>View Menu Commands</h2>
+
+<p style='margin-left:.5in'>The View menu allows the
+user to change the view of Alarm Groups
+in the current alarm configuration tree structure display. This
+menu also provides options for viewing the current working configuration file,
+alarm log file, and operation modification file in scrolled windows.</p>
+
+<p style='margin-left:.5in'><img border=0 width=336
+height=243 id="_x0000_i1047" src=images/alhViewMenu.gif></p>
+
+<p style='margin-left:.5in'>The View menu allows
+viewing of logged events while they take place. A user can simultaneously view
+both the alarm log file and the operator modification log files. When View is
+chosen, the sub-menu is presented.</p>
+
+<h3 style='margin-left:.5in'>Expand One Level</h3>
+
+<p style='margin-left:.5in'>The user selects this
+menu item to expand a collapsed the currently selected Alarm Group to
+graphically display one level of its alarm subgroups on the alarm configuration
+tree display.</p>
+
+<h3 style='margin-left:.5in'>Expand Branch</h3>
+
+<p style='margin-left:.5in'>The user can choose this
+item to expand the currently selected collapsed Alarm Group in the alarm
+configuration tree display to graphically show all levels of its subgroups on
+the alarm configuration tree structure display.</p>
+
+<h3 style='margin-left:.5in'>Expend All</h3>
+
+<p style='margin-left:.5in'>The user uses this menu
+item to expand all collapsed groups in the configuration tree structure display
+to graphically show all the groups and subgroups in the current alarm
+configuration.</p>
+
+<h3 style='margin-left:.5in'>Collapse Branch</h3>
+
+<p style='margin-left:.5in'>The operator selects
+this item to collapse the currently selected expanded group in the alarm configuration
+tree to remove all its groups and subgroups from the graphical tree display.</p>
+
+<h3 style='margin-left:.5in'>Current Alarm History Window</h3>
+
+<p style='margin-left:.5in'>The operator chooses
+this menu item to continuously display the current alarm history a display
+window containing the 10 most recent alarms. This display will be updated as
+alarms occur.</p>
+
+<p style='margin-left:.5in'><img border=0 width=650
+height=246 id="_x0000_i1048" src=images/alhCurrentAlarmHistory.gif></p>
+
+<h3 style='margin-left:.5in'>Configuration File</h3>
+
+<p style='margin-left:.5in'>Selecting
+&quot;Configuration File&quot; brings up a scrolled window that displays the
+contents of the current configuration file.</p>
+
+<p style='margin-left:.5in'><img border=0 width=650
+height=346 id="_x0000_i1049" src=images/alhConfigurationFile.gif></p>
+
+<h3 style='margin-left:.5in'>Start CMLOG Log Browser</h3>
+
+<p style='margin-left:.5in'>Selecting this menu item will
+invoke a separate CMLOG browser process that allows
+browsing all records logged to the CMLOG system.</p>
+
+<h3 style='margin-left:.5in'>Alarm Log File Window</h3>
+
+<p style='margin-left:.5in'>Selecting &quot;Alarm
+Log File&quot; brings up a scrolled window displaying time stamped alarm events
+in the alarm log file. Any new alarms logged into the alarm log file appear
+simultaneously in this window.</p>
+
+<p style='margin-left:.5in'><img border=0 width=650
+height=381 id="_x0000_i1050" src=images/alhAlarmLogFile.gif></p>
+
+<p style='margin-left:.5in'>The date and time, Alarm
+Channel name, alarm status, alarm severity, and channel value are displayed
+when the Alarm Handler is executing in local mode. The highest unacknowledged
+severity and the acknowledge transients field values are also logged if the
+Alarm Handler is executing in global mode.</p>
+
+<h3 style='margin-left:.5in'>Browser for Alarm Log</h3>
+
+<p style='margin-left:.5in'><img border=0  width=650 id="_x0000_i1051"
+src=images/alhBrowserAlarmLog.gif></p>
+
+<h3 style='margin-left:.5in'>Operation Log File Window</h3>
+
+<p style='margin-left:.5in'>Selecting
+&quot;Operation Log File&quot; brings up a scrolled window showing the current
+content of the Operation Modification Log file. This file contains a log of
+time stamped operator configuration modification events. Any newly logged
+operation events appear simultaneously in this window.
+The top level Alarm Group name appears on each log line.
+</p>
+
+<p style='margin-left:.5in'><img border=0 
+id="_x0000_i1052" src=images/alhOperModFile.gif></p>
+
+<p style='margin-left:.5in'>ALH does not allow an
+operator to view a log file that exceeds 1 Megabyte. When the log file exceeds
+1 Megabyte, a new log file must be used in order for an operator to be able to
+view the log process within the ALH.</p>
+
+<h3 style='margin-left:.5in'>Browser for Operation Log</h3>
+
+<p style='margin-left:.5in'><img border=0 width=650 height=301 id="_x0000_i1053"
+src=images/alhBrowserOpMod.gif></p>
+
+<h3 style='margin-left:.5in'>Group/Channel Properties Window</h3>
+
+<p style='margin-left:.5in'>The Alarm Handler allows
+the operator to display all the current configuration settings for any selected
+Alarm Group or Alarm Channel.</p>
+
+<p style='margin-left:.5in'><img border=0
+width=478 height=664 id="_x0000_i1054" src=images/alhProperties.gif> </p>
+
+<h2><a name="pgfId_718325"></a>Setup Menu </h2>
+
+<p style='margin-left:.5in'>The Setup menu provides
+the option of overriding initial settings for the alarm configuration, the
+alarm log, and the operation modification files.When this menu is selected, the
+Setup sub-menu, is presented</p>
+
+<p style='margin-left:.5in'>If one of the file
+options is chosen, a file selection dialog popup window appears and the
+operator is allowed to choose a new file. The operation of the file selection
+box is described in
+<a href="#pgfId_694637">Configuration File Selection Window</a>.
+ The file selection changes are always logged in the
+operation modification file.</p>
+
+<p style='margin-left:.5in'><img border=0 width=245
+height=108 id="_x0000_i1055" src=images/alhSetupMenu.gif></p>
+
+<h3 style='margin-left:.5in'><a name=DisplayFilter></a>Display Filter</h3>
+
+<p style='margin-left:.5in'>The user is allowed to
+set an alarm filter to display active alarms only. When the filter is set to
+Active Alarms Only, only those groups or channels with an outstanding alarm
+will be displayed. When the filter is set to Unacknowldged Alarms Only, only those
+groups or channels with an outstanding unacknowledged alarm will be displayed.
+When the selection is set to No Filter, all Alarm Groups
+and Alarm Channels in the current configuration will be available for display.</p>
+
+<h3 style='margin-left:.5in'>ALH Beep Severity</h3>
+
+<p style='margin-left:.5in'>The operator can specify
+the beep condition. The beep condition is the minimum alarm unacknowledged severity
+necessary for beeping. The default startup value is MINOR, or a startup severity can
+be specified in the alarm configuration file. The ALH Beep Severity can be changed to
+MINOR, MAJOR, or INVALID. If the beep condition is set to MINOR,then MINOR, MAJOR,
+INVALID, and ERROR unacknowledged alarms will cause beeping. The -s command line
+option, silent execution, will override all menu and config file beep severity
+settings. </p>
+
+<p style='margin-left:.5in'><img border=0 width=76
+height=61 id="_x0000_i1056" src=images/alhBeepSeverity.gif></p>
+
+<h3 style='margin-left:.5in'>New Alarm Log File</h3>
+
+<p style='margin-left:.5in'>The alarm log file contains
+the log of alarm changes of states. The Alarm Handler allows the operator to
+specify an alarm log file name that differs from the current setting. If it
+does not exist, it will be automatically created. All new alarm state changes
+will be logged to this file.</p>
+
+<h3 style='margin-left:.5in'>New Operation Modification Log File</h3>
+
+<p style='margin-left:.5in'>The Alarm Handler allows
+the operator to specify an operation modification log file that differs from
+the current setting. If it does not exist, it will be automatically created by
+ALH. All subsequent operation changes will be logged to this new operation
+modification file.</p>
+
+<h2><a name="marker_718330"></a><a name="pgfId_696889"></a>Help Menu</h2>
+
+<p style='margin-left:.5in'>The Help menu item
+will display this &quot;Alarm Handler User Guide&quot;
+when selected. </p>
+
+<p style='margin-left:.5in'>When the About menu item is chosen,
+information about the current version of the alarm handler
+is displayed.</p>
+
+<HR>
+
+<h1 align=center style='text-align:center'><a name="chapter_6">
+</a>Chapter 6: Alarm Configuration File</h1>
+
+<h2><a name="pgfId_689941"></a>Configuration File Description</h2>
+
+<p style='margin-left:.5in'>The alarm configuration
+file is the file used as input to the Alarm Handler. This file defines the
+Alarm Group structure and takes data in a flexible input format. The alarm configuration
+file, which can be prepared via any text editor, defines a complete Alarm Group
+structure composed of subgroups and channels. The arrangement of channels and
+subgroups follow the standard tree structure. The subgroups always terminate at
+channels. The only input format constraint is that the definitions must be in
+hierarchical order. That is, after a group is defined in the configuration file
+as belonging to a parent group, all its subgroups and channels must be defined
+in the configuration file before a new group belonging to the same parent group
+can be defined. There can be only one top-level group (main group) and this
+group must have NULL as the parent group name. For each group or channel, a set
+of input specifications is used to define special events to be taken care of at
+start-up time.</p>
+
+<h2><a name="pgfId_692527"></a>File Name</h2>
+
+<p style='margin-left:.5in'>When opening a new configuration file,
+&quot;.alhConfig&quot; will be used as the default suffix.
+The default file name for the alarm configuration file is
+ALH-default.alhConfig.</p>
+
+<h2><a name="pgfId_692528"></a>Input Format</h2>
+
+<p style='margin-left:.5in'>The configuration file
+statements for a given group or channel takes flexible input format which can
+consist of the following items:</p>
+
+<p style='margin-left:1.5in'>GROUP parentName GroupName<br>
+$HEARTBEATPV heartbeatPVName &lt;value&gt; &lt;seconds&gt;<br>
+CHANNEL parentName ChannelName &lt;mask&gt;<br>
+INCLUDE parentName fileName<br>
+$ACKPV ackPVName ackValue<br>
+$FORCEPV forcePVName forceMask &lt;forceValue&gt; &lt;resetValue&gt;<br>
+$FORCEPV    CALC  forceMask &lt;forceValue&gt; &lt;resetValue&gt; <br>
+$FORCEPV_CALC   &lt;expression&gt;<br>
+$FORCEPV_CALC_A   &lt;PVNameA&gt; <br>
+... <br>
+$FORCEPV_CALC_F   &lt;PVNameF&gt; <br>
+$SEVRPV sevrPVName<br>
+$GUIDANCE <br>
+$END<br>
+$GUIDANCE urlAddress<br>
+$ALIAS anyValidTextString<br>
+$COMMAND anyValidCommand<br>
+$SEVRCOMMAND severityChangeValue anyValidCommand<br>
+$STATCOMMAND alarmStatusStringValue anyValidCommand<br>
+$ALARMCOUNTFILTER inputCount inputSeconds <br>
+$BEEPSEVERITY ALHbeepSeverity<br>
+$BEEPSEVR GroupOrChannelBeepSeverity</p>
+
+<p style='margin-left:.5in'>Input syntax notes:</p>
+
+<ul TYPE=circle>
+<ul type=disc>
+<li>The fields enclosed in &lt;&gt; are optional.</li>
+<li>Blanks can be used to separate the fields for improved readability.</li>
+<li>The GROUP or CHANNEL line must be first line in a set.</li>
+<li>Lines starting with &quot;#&quot; are comments.</li>
+<li>Lines starting with &quot;$&quot; are optional.</li>
+<li>The [$GUIDANCE ... $END] must be entered as a set
+if text guidance is present. </li>
+</ul>
+</ul>
+
+<h3 style='margin-left:.5in'><u>Heartbeat Process Variable</u></h3>
+
+<p style='margin-left:.5in'>The line starting with $HEARTBEATPV is optional.
+It is required only when a user wants a monitored pv to show weather or not
+ALH is running. If the $HEARTBEATPV line is present, ALH will do CA puts of
+the specified value to the specified pv at the specified rate (in seconds). 
+The heartbeatPVName must be an existing PV in the EPICS database and can be
+specified as &lt;channel_name&gt;.&lt;field_name&gt;.
+</p>
+
+<h3 style='margin-left:.5in'><u>Group or Channel</u></h3>
+
+<p style='margin-left:.5in'>A set of group or channel lines must appear
+in the alarm configuration file. These lines define the Alarm
+Group structure. The first line is the top level Alarm Group definition. 
+There can be only one top-level Alarm Group and this Alarm Group must have
+NULL as the parent group name. Group or Channel lines must start with the
+keyword GROUP or CHANNEL. The GroupName is the name of a user specified
+Alarm Group. The ChannelName must be the name of a specific record defined 
+in an EPICS database. The length of a GroupName or ChannelName must not
+exceed 28 characters.  The parentName is the name of the parent Alarm
+Group. There is no restriction on the number of group definitions. </p>
+
+<p style='margin-left:1.0in'>GROUP parentName GroupName</p>
+
+<p style='margin-left:.5in'>The channel &lt;mask&gt; is optional and defaults to no
+mask (i.e. -----). It is required only for a channel with a non default mask
+setting. The detailed description of mask settings is given in 
+<a href="#masks">Alarm Channel Mask</a> in this Chapter.</p>
+
+<p style='margin-left:1.0in'>CHANNEL parentName ChannelName &lt;mask&gt; </p>
+
+<h3 style='margin-left:.5in'><u>Include File</u></h3>
+
+<p style='margin-left:.5in'>The line starting with
+INCLUDE allows a user to designate, within his alarm configuration file, the
+name of another alarm configuration file to be read by the Alarm Handler at
+runtime. The main Alarm Group of the designated file will become a child group
+of the parentName group specified on the INCLUDE line.</p>
+
+<p style='margin-left:1.0in'>INCLUDE parentName fileName </p>
+
+<h3 style='margin-left:.5in'><u>Acknowledge Process Variable</u></h3>
+
+<p style='margin-left:.5in'>The line starting with $ACKPV is optional.
+It is required only when a user wants to write a user specified value
+(ackValue) to an acknowledge process variable (ackPVName) when a
+channel's alarm is acknowledged.  The acknowledge Process variable
+must be defined in the IOC database and is specified as
+&lt;record_name&gt;.&lt;field_name&gt;. Whenever the channel's alarm is
+acknowledged, the acknowledge value (ackValue) is written to the
+acknowledge process variable via a channel access put (ca_put) request. 
+Writes to an acknowledge process variable are done only when the alarm
+handler is in global active mode.
+</p>
+
+<p style='margin-left:1.0in'>$ACKPV ackPVName ackValue</p>
+
+<h3 style='margin-left:.5in'><u>Force Process Variable</u></h3>
+
+<p style='margin-left:.5in'>The lines starting with
+$FORCEPV are optional. They are required only when a user wants to let ALH automate
+changing an alarm group or channel's mask values by monitoring an EPICS database
+process variable or by monitoring the value of a calulated expression based on PV values.</p>
+
+<p style='margin-left:.5in'>
+The first method is to monitor a single EPICS database process variable.
+Only only one input line is required.  This line defines the forcePVName (process
+variable to be monitored), forceMask, forceValue, and resetValue. The forcePVName
+must be an existing PV in the EPICS database and can be specified as
+&lt;channel_name&gt;.&lt;field_name&gt;. Whenever the value of the force process
+variable changes to be the same as the forceValue, the Alarm Group or Channel
+mask will be set to the forceMask. For an Alarm Group, this means that masks of
+all the channels in the group and its subgroups are set to the forceMask.
+Whenever the value of the force process variable changes to be the same as the
+resetValue, these channel masks are set to their default values. The forceValue
+must be different from the resetValue. The default setting is forceValue = 1,
+and resetValue = 0. A "NE" can be used in the resetValue field to reset the
+masks when the value of the force process variable no longer equals the force value.
+Alarm Handler menu items exist which allow the  user to enable/disable the Force PV,
+change the name of the Force PV, and  change the Force Process Variable values.
+The force PV test uses type double for forceValue, resetValue and pv value. 
+</p>
+
+<p style='margin-left:1.0in'>$FORCEPV forcePVName forceMask &lt;forceValue&gt;
+&lt;resetValue&gt; </p>
+
+<p style='margin-left:.5in'>
+The second method is to monitor the value of a calculated expression. This
+requires multiple Force PV CALC input lines to define the expression.
+This CALC facility allows algebraic, relational, and logical
+operations on up to 6 pv values. The result of the expression
+is compared to the forcePV forceValue and resetValue to determine
+whether or not to set group/channel masks.
+</p>
+
+<p style='margin-left:.5in'>
+To specify a forcpePV calculation expression in the alhConfig
+file you create the $FORCEPV record as before but you specify
+"CALC" instead of a PV name. Then you add a new $FORCEPV_CALC
+line in which you specify the calculation expression in a
+manner similar to the calc record expression. In fact alh
+uses the same code as the calc record to evaluate the
+expression. You specify the expression using A, B, ... instead
+of the pvnames. Then you add $FORCEPV_CALC_A through
+$FORCEPV_CALC_F lines to specify the pv names.  (You can also
+specify constant values on these lines.)
+The Alarm Handler ForcePV dialog window allows users to specify 
+or change the ForcePV CALC data.
+</p>
+
+<p style='margin-left:.5in'>
+An example of the alhConfig file lines for a calculation
+forcePV is
+</p>
+
+<p style='margin-left:1.0in'>
+                $FORCEPV    CALC  ---TL 18.321 NE <br>
+                $FORCEPV_CALC  A+B+C <br>
+                $FORCEPV_CALC_A  jba:alh5 <br>
+                $FORCEPV_CALC_B  jba:alh6 <br>
+                $FORCEPV_CALC_C  5.321 <br>
+
+</p>
+
+<p style='margin-left:0.5in'>
+The expression is evaluated using type "double" for all pv
+values and constants.
+</p>
+
+
+
+<h3 style='margin-left:.5in'><u>Severity Process Variable</u></h3>
+
+<p style='margin-left:.5in'>The line starting with
+$SEVRPV is optional. It is required only when a user wants to write the
+severity value of a group or channel to a process variable. The sevrPVName must
+be defined in the IOC database and is specified as
+&lt;channel_name&gt;.&lt;field_name&gt;. Whenever the group or channel severity
+changes, the new severity value is written to the severity process variable via
+a channel access put (ca_put) request. Writes to a severity process variable 
+are done only when the alarm handler is in global active mode.
+The value -1 is written to the servrity PV when the group or channel is disabled.
+</p>
+
+<p style='margin-left:1.0in'>$SEVRPV sevrPVName </p>
+
+<h3 style='margin-left:.5in'><u>Guidance</u></h3>
+
+<p style='margin-left:.5in'>The lines starting with
+$GUIDANCE are optional. They are required only when a user wants to display
+alarm guidance information for a group or channel. The $GUIDANCE line may be
+followed by a set of ascii guidance text lines with an $END line to terminate
+the guidance text, or alternatively, the
+$GUIDANCE line may contain a url address.</p>
+
+<p style='margin-left:1.0in'>$GUIDANCE </p>
+<p style='margin-left:1.0in'>  &lt;text lines&gt; </p>
+<p style='margin-left:1.0in'>$END </p>
+
+<p style='margin-left:.5in'>or</p>
+
+<p style='margin-left:1.0in'>$GUIDANCE urlAddress </p>
+
+<h3 style='margin-left:.5in'><u>Alias</u></h3>
+
+<p style='margin-left:.5in'>The line starting with
+$ALIAS is optional. It is required when it is desired that the alarm handler
+display the specified alias text string in places where it would normally
+display the Alarm Group or Alarm Channel name.</p>
+
+<p style='margin-left:1.0in'>$ALIAS&nbsp;&nbsp; anyValidTextString </p>
+
+<h3 style='margin-left:.5in'><u>Related Command</u></h3>
+
+<p style='margin-left:.5in'>The line starting with $COMMAND
+is optional. It is required only when a user wants to provide the feature of
+starting a related process for this group or channel. The related process will
+be invoked when the alh operator clicks on the Process button in the alarm
+handler Main Window display.</p>
+
+<p style='margin-left:1.0in'>$COMMAND&nbsp;&nbsp; anyValidCommandSyntax </p>
+
+<h3 style='margin-left:.5in'><u>Severity Command</u></h3>
+
+<p style='margin-left:.5in'>The line starting with
+$SEVRCOMMAND is optional. It is required if a process should be invoked when
+the alarm severity value for a group or channel changes. A single group or
+channel may have multiple $SEVRCOMMAND lines. This line defines the change in
+the severity necessary to start the process and defines the process to be
+started.</p>
+
+<p style='margin-left:.5in'>Valid severity change values are -</p>
+
+<p style='margin-left:1.0in'>UP_INVALID, UP_MAJOR,
+UP_MINOR, UP_ANY, DOWN_MAJOR, DOWN_MINOR, DOWN_NO_ALARM, DOWN_ANY, UP_ALARM</p>
+
+<h3 style='margin-left:.5in'><u>Status Command</u></h3>
+
+<p style='margin-left:.5in'>The line starting with
+$STATCOMMAND is optional and valid only for an Alarm Channel. It is required
+only when the alarm handler should start a process when the channel alarm
+status becomes a specified value. A single channel may have multiple
+$STATCOMMAND lines. This line defines the status value necessary to start the
+process and defines the process to be started. Valid alarm status string values
+can be found in the EPICS base alarmString.h header file.</p>
+
+<p style='margin-left:.5in'>Example alarm status string values are -</p>
+
+<p style='margin-left:1.0in'>NO_ALARM, READ, WRITE,
+HIHI, HIGH, READ_ACCESS, LOLO, LOW, STATE, COS, COMM, WRITE_ACCESS, TIMEOUT,
+HWLIMIT, CALC, SCAN, LINK, SOFT, BAD_SUB, UDF, DISABLE, SIMM</p>
+
+<h3 style='margin-left:.5in'><u>Alarm Count Filter</u></h3>
+
+<p style='margin-left:.5in'>The line starting with $ALARMCOUNTFILTER is
+optional. It is required only when the alarm handler should filter the
+registration of alarms for a channel. This line defines the alarm
+count and seconds required for alarm registration. To register as an alarm, a
+channel must remain in an alarm state for more than inputSeconds seconds or the
+channel must enter into an alarm state from a no-alarm state more than
+inputCount times within inputSeconds seconds.</p>
+
+<p style='margin-left:1.0in'>$ALARMCOUNTFILTER inputCount inputSeconds </p>
+
+<h3 style='margin-left:.5in'><u>Beep Severity</u></h3>
+
+<p style='margin-left:.5in'>The line starting with
+$BEEPSEVERITY is optional. It is required only when the alarm handler should
+filter the beeping if alarms are present. This line defines the minimum
+severity level required for beeping. Beeping will not occur when the highest
+outstanding severity is less than the specified severity. Valid severity 
+values are MINOR, MAJOR, INVALID, and ERROR.</p>
+
+<p style='margin-left:1.0in'>$BEEPSEVERITY severity </p>
+
+<h2>Sample Configuration File</h2>
+
+<p style='margin-left:.5in'>
+The following listing shows a simple example of an alarm configuration file. <br>
+</p>
+
+<p style='margin-left:1.0in'>
+GROUP NULL MAIN<br>
+$COMMAND medm /home/phoebos/USER/appl/example.adl <br>
+$GUIDANCE<br>
+Line 1 of guidance information about main group<br>
+Line 2 guidance.<br>
+Line 3 guidance.<br>
+$END <br>
+<br>
+GROUP MAIN AAA<br>
+$COMMAND medm /home/phoebos/USER/appl/example2.adl <br>
+$SERVPV SEVR:AI <br>
+$FORCEPV FORCE:AI -D---<br>
+CHANNEL AAA rai_2000<br>
+CHANNEL AAA rai_2001<br>
+<br>
+GROUP MAIN BBB<br>
+CHANNEL BBB rbi_000<br>
+CHANNEL BBB rbi_2000<br>
+<br>
+GROUP MAIN CCC<br>
+CHANNEL CCC rbo_000<br>
+CHANNEL MAIN rbo_001<br>
+</p>
+
+<p style='margin-left:.5in'>In this example, the
+first group is named MAIN. The MAIN group contains three subgroups ( AAA, BBB,
+and CCC) and one channel (rbo-001). The AAA subgroup contains two channels:
+rai_2000 and rai_2001. The BBB subgroup contains the two channels: rbi_000 and
+rbi_2000. The CCC subgroup contains only one channel: rbo_000. </p>
+
+<p style='margin-left:.5in'>In
+this example the default mask &quot;-----&quot; is used for every channel. That
+is, no masks are specified on the group and channel lines. </p>
+
+<p style='margin-left:.5in'>In above example,
+$COMMAND and $GUIDANCE options are specified for the MAIN group. The $GUIDANCE
+option allows the user to display guidance text in a popup window when the MAIN
+group guidance button is pressed. The $COMMAND line option allows a user to
+start the display manager, medm, by pressing the MAIN group's related proccess
+button. </p>
+
+<p style='margin-left:.5in'>In above example, the
+$COMMAND, $FORCEPV, and $SEVRPV options are specified for the AAA group. This
+$COMMAND option allows a user to open an xterm window from the start related
+process button on the AAA group line. The $FORCEPV option tells alh to add an
+automatic force mask event for group AAA. If the value of process variable
+FORCE:AI becomes 1, then the mask of all the channels in this group will be set
+to the forceMask, &quot;-D---&quot;. If the value of process variable FORCE:AI
+becomes 0, then the mask of all the channels in this group will be reset to
+their default mask values. The $SEVRPV option tells alh to record the alarm
+severity of group AAA to the process variable SEVR:AI.</p>
+
+<p style='margin-left:.5in'>&nbsp;</p>
+
+<h2><a name="pgfId_694545"><a name=masks>Alarm Channel Mask</a></a></h2>
+
+<p style='margin-left:.5in'>Associated with each
+Alarm Channel are two five bit masks (default and current). The current mask
+can be changed by force commands or by force process variables. The default
+mask is defined in the alarm configuration file. A reset command forces all
+associated masks to return to the default values.</p>
+
+<p style='margin-left:.5in'>The definition for each
+bit in the mask value follows:<br>
+&nbsp;</p>
+
+<h3 style='margin-left:.5in'>Add/Cancel Alarm</h3>
+
+<p style='margin-left:.5in'> This mask bit determines if
+a channel access add event is active. Add/Cancel means that a ca_add_event
+is/isn't active. If ca_add_event is not active for a channel, the IOC will not
+send alarm events to the alarm handler for that channel.</p>
+
+<p style='margin-left:.5in'>&quot; C&quot; means
+cancel and &quot;-&quot; denotes add.</p>
+
+<h3 style='margin-left:.5in'>Enable/Disable Alarm</h3>
+
+<p style='margin-left:.5in'>Alarms aren't/are
+ignored by the alarm handler. Disabling an alarm has the effect of no display
+and NoAck. If an alarm is disabled the alarm status and severity are not
+displayed. Thus, even though a ca_add_event is in effect, the channel always
+appears to the operator to be in the NO_ALARM state. Alarm change of states
+will, however, still be logged unless NoLog is in effect.</p>
+
+<p style='margin-left:.5in'>
+When a pv is enabled after it has been disabled for a while and the pv is
+not in alarm state but there are unacknowledged transient alarms
+and the alarm handler is running in global mode, an automatic
+acknowledgement is sent when the pv is enabled and the auto acknowledgement
+is logged in the opMod file if the alarm handler is running in global mode.
+</p>
+
+<p style='margin-left:.5in'>&quot; D&quot; means
+alarm disabled.</p>
+
+<h3 style='margin-left:.5in'>Ack/NoAck</h3>
+
+<p style='margin-left:.5in'>The operator is/isn't
+required to acknowledge alarms.</p>
+
+<p style='margin-left:.5in'>&quot; A&quot; means
+alarm acknowledgment is not required.</p>
+
+<h3 style='margin-left:.5in'>Ack/NoAck Transient Alarms</h3>
+
+<p style='margin-left:.5in'>The operator is/isn't required
+to acknowledge transient alarms. A transient alarm is one that enters alarm
+state and then returns to normal before the operator can acknowledge the alarm.
+</p>
+
+<p style='margin-left:.5in'>&quot; T&quot; means acknowledgment of transient
+alarms is not required.</p>
+
+<h3 style='margin-left:.5in'>Log/No Log Alarms</h3>
+
+<p style='margin-left:.5in'>Alarms will/won't be
+logged. </p>
+
+<p style='margin-left:.5in'>&quot; L&quot; means no alarm logging .</p>
+
+
+<HR>
+
+</body>
+
+</html>
