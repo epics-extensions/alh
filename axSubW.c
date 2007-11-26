@@ -105,9 +105,9 @@ void setLineRoutine(void *area,struct subWindow *subWindow,int program)
 void markSelectedWidget(struct subWindow *subWindow,Widget newWidget)
 {
 	static Pixel armColor=0;
-	static Pixel backgroundColor;
-	static Pixel bottomShadowColor;
-	static Pixel topShadowColor;
+	static Pixel backgroundColor=0;
+	static Pixel bottomShadowColor=0;
+	static Pixel topShadowColor=0;
 	Widget       oldWidget;
 
 	oldWidget = subWindow->selectionWidget;
@@ -241,8 +241,8 @@ struct subWindow *createSubWindow(void *area)
 ****************************************************/
 void createSubWindowWidgets(struct subWindow *subWindow,Widget parent)
 {
-	Pixel          color;
-	Dimension      width;
+	Pixel          color=0;
+	Dimension      width=0;
 
 	/* Create a Form for sevr indicators and scrollbar */
 	subWindow->form_vsb = XtVaCreateWidget("form_vsb",
