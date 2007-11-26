@@ -555,4 +555,6 @@ Mon Nov  5 15:56:00 CST 2007
 	Bug fix. Initialized numChildren to zero in case the resource XmNnumChildren
 	is not defined for some Widgets.
 
+Mon Nov 26 10:11:55 CST 2007
+	Put ALH User's Guide under CVS control in alh subdirectory documentation.
 
