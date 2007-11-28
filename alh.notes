@@ -457,7 +457,7 @@ Tue Aug 10 10:48:18 CDT 2004 ALH_1_2_19beta1
 	Popup error msg for invalid SEVRPV, FORCEPV, ACKPV, HEARTBEATPV input
 
 Fri Oct 29 14:54:00 CDT 2004  ALH_1_2_19beta2
-	Set main window background color grey if Silence For One Hour is active.
+	Set main window background color pink if Silence For One Hour is active.
 
 Tue Apr  5 10:06:27 CDT 2005
 	Added "ALH" to popup dialogs and added timestamp to popup error dialog.
@@ -498,7 +498,7 @@ Tue Jun 26 10:27:36 CDT 2007  ALH_1_2_22
 	Added xml flag. Log file is more XML-ish
 
 	alLog.c, file.c - sinclair
-	added format specifier
+	added format specifier -xml
 
 	awAlh.c, awView.c - sinclair
 	modified code associated with clipboard copy operation
@@ -557,4 +557,5 @@ Mon Nov  5 15:56:00 CST 2007
 
 Mon Nov 26 10:11:55 CST 2007
 	Put ALH User's Guide under CVS control in alh subdirectory documentation.
+	Updated User's Guide with SNS changes. (see entry of Jun 26).
 
