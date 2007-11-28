@@ -115,7 +115,7 @@ level and detailed views of the alarm configuration structure in one window.</p>
 
 <p style='margin-left:.5in'>The alarm handler is a
 Motif and X11 Window based application written in C language, and it runs on
-Unix, Linux, and Windows 95/NT hosts. The Alarm Handler source code is
+Unix, Linux, and Windows 98/XP hosts. The Alarm Handler source code is
 available via WWW as an EPICS extension.</p>
 
 <h2><a name="pgfId_696087"></a>Purpose of the Alarm Handler</h2>
@@ -337,7 +337,9 @@ must be established. Contact your EPICS administrator to find the locations of
 the Alarm Handler executable, <i> alh</i>, and your site's Alarm Handler
 configuration input files.</p>
 
-<h2><a name="pgfId_699316"></a>Environment Variable</h2>
+<h2><a name="pgfId_699316"></a>Environment Variables</h2>
+
+<h3 style='margin-left:.5in'>ALARMHANDLER</h3>
 
 <p style='margin-left:.5in'>The optional environment
 variable <i>ALARMHANDLER </i>can be used to point
@@ -348,10 +350,19 @@ resides on a different directory
 from the current working directory, under UNIX <i>ALARMHANDLER</i>
 can be set to point to the desired path by issuing the UNIX c shell command:</p>
 
-<p style='margin-left:2.0in'>setenv ALARMHANDLER /home/cs/appl/ah/dev</p>
+<p style='margin-left:1.0in'>setenv ALARMHANDLER /home/cs/appl/ah/dev</p>
 
 <p style='margin-left:.5in'>The user must have read
 and write privileges in this directory.</p>
+
+<h3 style='margin-left:.5in'>ALHMAINFONT</h3>
+
+<p style='margin-left:.5in'>
+The environment variable ALHMAINFONT may be used to set the Runtime Window button font
+e.g. </p>
+
+<p style='margin-left:1.0in'>export ALHMAINFONT='-*-utopia-bold-r-normal--0-720-75-75-p-0-*-*'</p>
+
 
 <h2><a name="pgfId_699228"></a>Command Line Syntax </h2>
 
@@ -486,6 +497,10 @@ message similar to the table below will be displayed if you enter: &quot;alh
  <tr>
   <td>-v, -version</td>
   <td>Print version number</td>
+ </tr>
+ <tr>
+  <td>-xml</td>
+  <td>Use XML-ish format for log files</td>
  </tr>
 </table>
 </p>
@@ -701,6 +716,12 @@ AlarmLogFile and find all alarms inside of [t1,t2]-diapason containing some
 or <i>'-version'</i> option specifies that the
 Alarm Handler version number should be printed to stdout.</p>
 
+<h3 style='margin-left:.5in'>XML-ish Log Files</h3>
+
+<p style='margin-left:.5in'>The <i>'-xml'</i>
+option specifies that the Alarm Handler log files should be written in 
+Extensible Markup Language (XML).</p>
+
 <h3 style='margin-left:.5in'>Xoptions</h3>
 
 <p style='margin-left:.5in'>When executing on Unix,
@@ -749,10 +770,12 @@ implemented in this release.</p>
 <h2><a name="pgfId_700771"></a>Runtime Window </h2>
 
 <p style='margin-left:.5in'>Once an Alarm
-Configuration file has been selected, the Runtime window is displayed which
-appears on the user's screen as a small icon like window. This window contains
-a button labeled with the name of the Alarm Configuration file's Main Alarm
-Group.</p>
+Configuration file has been selected, the Runtime Window is displayed
+on the user's screen as a small icon like window. This window contains
+one button labeled with the name of the Alarm Configuration file's Main Alarm
+Group (or the Main Alarm Group's alias if it was defined) followed by the 
+group's Current Mask Summary characters if the mask contains characters
+other than "-".</p>
 
 <p style='margin-left:.5in'><img border=0 width=255
 height=62 id="_x0000_i1030" src=images/alhRunWindow.gif></p>
@@ -923,13 +946,14 @@ The Silence Current button turns off current
 alarm beeping until a new alarm occurs. The Silence
 One Hour button toggles on/off beeping of current and future alarms for one
 hour. When pushed in, beeping is turned off, when out, beeping is on. Beeping
-occurs only when there are unacknowledged alarms.</p>
+occurs only when there are unacknowledged alarms. The main window background
+color is changed to pink when Silence One Hour is active.</p>
 
 
 <h2><a name="pgfId_696904"></a>Group Summary Line</h2>
 
 <p style='margin-left:.5in'>This display line
-summarizes the status of all alarms for the group named in this line and all
+summarizer the status of all alarms for the group named in this line and all
 lower level groups. The group summary display consists of the following items:</p>
 
 <h3 style='margin-left:.5in'>Acknowledgment Button</h3>
@@ -985,6 +1009,17 @@ to choose any Alarm Group by selecting the Group Name button on the
 group summary line. The result is to display one level of the contents
 associated with the selected group. This group also becomes the currently
 selected group.</p>
+
+<p style='margin-left:.5in'>
+ALH allows drag and drop of the alarm group name text associated with the 
+Group Name Selection Button. This may be used to view the alarm group name 
+when an alias is displayed. The user should hold down the middle (second) 
+mouse button when the mouse cursor is positioned over a Group Name Button. 
+A text box containing the alarm group name will appear. When the user moves 
+the mouse with the mouse button still depressed, the box will follow the mouse 
+around until the user finally releases the button. The alarm group name text
+will then be dropped into the release location which must be a valid drop 
+location.</p>
 
 <h3 style='margin-left:.5in'>Current Mask Summary</h3>
 
@@ -1075,14 +1110,26 @@ follows:</p>
  </ul>
 </ul>
 
-<h3 style='margin-left:.5in'>>Channel Name Button</h3>
+<h3 style='margin-left:.5in'>Channel Name Button</h3>
 
-<p style='margin-left:.5in'>This button contains the
-database record name associated with the channel. The button is color coded in
-gray so that an operator can easily distinguish channels from groups. Selecting
-this button makes the channel the currently selected item.</p>
+<p style='margin-left:.5in'>This button contains the database record name
+associated with the channel or the alias text if an alias is defined for this
+channel. The button is color coded in gray so that an operator can easily 
+distinguish channels from groups. Selecting this button makes the channel 
+the currently selected item.</p>
 
-<h3 style='margin-left:.5in'>>Current Mask</h3>
+<p style='margin-left:.5in'>
+ALH allows drag and drop of the record name text associated with the Channel
+Name Selection Button. This may be used to view the database record name 
+when an alias is displayed. The user should hold down the middle (second) 
+mouse button when the mouse cursor is positioned over a Channel Name Button. 
+A text box containing the record name will appear. When the user moves 
+the mouse with the mouse button still depressed, the box will follow the mouse 
+around until the user finally releases the button. The alarm channel name text
+will then be dropped into the release location which must be a valid drop 
+location.</p>
+
+<h3 style='margin-left:.5in'>Current Mask</h3>
 
 <p style='margin-left:.5in'>The mask field contains
 a five-character display showing the settings of the channel's current mask.
@@ -1392,7 +1439,8 @@ height=246 id="_x0000_i1048" src=images/alhCurrentAlarmHistory.gif></p>
 
 <p style='margin-left:.5in'>Selecting
 &quot;Configuration File&quot; brings up a scrolled window that displays the
-contents of the current configuration file.</p>
+contents of the current configuration file. If INCLUDE lines are present
+the contents of the included files are recursively displayed.</p>
 
 <p style='margin-left:.5in'><img border=0 width=650
 height=346 id="_x0000_i1049" src=images/alhConfigurationFile.gif></p>
@@ -1472,7 +1520,7 @@ box is described in
 operation modification file.</p>
 
 <p style='margin-left:.5in'><img border=0 width=245
-height=108 id="_x0000_i1055" src=images/alhSetupMenu.gif></p>
+height=128 id="_x0000_i1055" src=images/alhSetupMenu.gif></p>
 
 <h3 style='margin-left:.5in'><a name=DisplayFilter></a>Display Filter</h3>
 
@@ -1769,15 +1817,28 @@ display the Alarm Group or Alarm Channel name.</p>
 
 <p style='margin-left:1.0in'>$ALIAS&nbsp;&nbsp; anyValidTextString </p>
 
-<h3 style='margin-left:.5in'><u>Related Command</u></h3>
+<h3 style='margin-left:.5in'><u>Related Commands</u></h3>
 
 <p style='margin-left:.5in'>The line starting with $COMMAND
 is optional. It is required only when a user wants to provide the feature of
-starting a related process for this group or channel. The related process will
-be invoked when the alh operator clicks on the Process button in the alarm
-handler Main Window display.</p>
+starting a related process for this group or channel. 
+When the alh operator clicks on a Process Button for an alarm group or channel 
+in the alarm handler Main Window display one of two things occurs.
+If there was a single related process specified on the $COMMAND line for the
+group or channel, that process is invoked.  If multiple processes were 
+specified on the $COMMAND line, a popup menu of the related process
+names appears and the related process selected by the user is invoked.
+</p>
 
+<p style='margin-left:.5in'> A single command is specified as follows: </p>
 <p style='margin-left:1.0in'>$COMMAND&nbsp;&nbsp; anyValidCommandSyntax </p>
+
+<p style='margin-left:.5in'> Multiple commands are specified with command 
+names and command strings separated by exclamation points, "!", using the 
+following syntax</p>
+<p style='margin-left:1.0in'>$COMMAND&nbsp;&nbsp; 
+cmd 1 name!cmd 1 string!cmd 2 name!cmd 2 string!...cmd n name!cmd n string
+</p>
 
 <h3 style='margin-left:.5in'><u>Severity Command</u></h3>
 

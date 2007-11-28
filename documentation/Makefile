@@ -1,10 +1,7 @@
 # Makefile for generating published alhUserGuide files
 
-#HTMLDOC = "D:/Program Files/htmldoc/htmldoc.exe"
-#HTMLDOC = "/home/phoebus/ANJ/tools/htmldoc-1.8.6/htmldoc/htmldoc"
-#HTMLDOC = "/home/phoebus/ANJ/tools/htmldoc-1.8.23/htmldoc/htmldoc"
-HTMLDOC = "/home/phoebus/ANJ/tools/htmldoc/htmldoc/htmldoc"
-WEBSITE = /net/epics/Public/asd/controls/epics/EpicsDocumentation/ExtensionsManuals/AlarmHandler
+HTMLDOC = "/home/phoebus/ANJ/bin/htmldoc"
+WEBSITE = /net/epics/Public/epics/EpicsDocumentation/ExtensionsManuals/AlarmHandler
 
 VERSION = 1.2.16
 
@@ -51,11 +48,6 @@ alhUserGuide.pdf: $(FILES) Makefile
 ALHUserGuide.html: $(FILES) Makefile
 	rm -rf $@
 	$(HTMLDOC) $(HTMLOPTS) -f $@ $(FILES)
-
-#alhUserGuide: $(FILES) Makefile
-#	rm -rf $@
-#	mkdir $@
-#	$(HTMLDOC) $(HTMLOPTS) -d $@ $(FILES)
 
 %.gz: %
 	rm -f $@
