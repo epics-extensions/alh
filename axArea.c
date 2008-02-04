@@ -94,7 +94,7 @@ int tearOff, MenuItem *items, XtPointer user_data)
 	    XmNsubMenuId,   PullDown,
 	    XmNlabelString, str,
 	    XmNmnemonic,    menu_mnemonic,
-	    NULL);
+	    (XtPointer)NULL);
 	XmStringFree(str);
 
 # if 0    /* DO NOT Use TEAROFF FEATURE. TORNOFF MENUS CANNOT BE CLOSED */
@@ -500,7 +500,7 @@ void createMainWindowWidgets(ALINK *area)
 	    XmNrightAttachment,        XmATTACH_FORM,
 	    XmNorientation,            XmHORIZONTAL,
 	    XmNuserData,               (XtPointer)area,
-	    NULL);
+	    (XtPointer)NULL);
 
 	/* Add scale valueChanged Callback */
 	XtAddCallback(area->scale, XmNvalueChangedCallback, (XtCallbackProc)scale_callback, area);
@@ -521,7 +521,7 @@ void createMainWindowWidgets(ALINK *area)
 	    XmNtopWidget,              area->scale,
 	    XmNleftAttachment,         XmATTACH_POSITION,
 	    XmNleftPosition,           1,
-	    NULL);
+	    (XtPointer)NULL);
 
 	/* Create group alarm decoder label for the messageArea */
 	area->label_mask = XtVaCreateManagedWidget(
@@ -979,7 +979,7 @@ int num_buttons)
 		    XmNrightPosition,        TIGHTNESS*i + (TIGHTNESS-1),
 		    XmNshowAsDefault,        i == 2,
 		    XmNdefaultButtonShadowThickness, 1,
-		    NULL);
+		    (XtPointer)NULL);
 		if (actions[i].callback)
 			XtAddCallback(widget, XmNactivateCallback,
 			    actions[i].callback, actions[i].data);

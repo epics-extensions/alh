@@ -126,7 +126,7 @@ void createRuntimeWindow(ALINK *area)
 		    XmNmarginWidth, (short)5,
 		    XmNmarginHeight, (short)5,
 		    XmNresizePolicy, XmRESIZE_NONE,
-		    NULL);
+		    (XtPointer)NULL);
 
 		if (!ALH_pixmap) axMakePixmap(area->runtimeForm);
 
@@ -137,7 +137,7 @@ void createRuntimeWindow(ALINK *area)
 		    XmNiconName,            area->blinkString,
 		    XmNallowShellResize,    TRUE,
 		    XmNuserData,            (XtPointer)area,
-		    NULL);
+		    (XtPointer)NULL);
 
 		/* Modify the window manager menu "close" callback */
 		{
@@ -174,11 +174,11 @@ void createRuntimeWindow(ALINK *area)
 		    XmNbottomAttachment,       XmATTACH_FORM,
 		    XmNleftAttachment,         XmATTACH_FORM,
 		    XmNrightAttachment,        XmATTACH_FORM,
-		XmNactivateCallback,       NULL,
+		XmNactivateCallback,       (XtPointer)NULL,
 		    XmNuserData,               (XtPointer)area,
 		    XmNlabelString,            str,
 		    XmNfontList,               fontList,
-		    NULL);
+		    (XtPointer)NULL);
 		XmStringFree(str);
 
 		XtAddCallback(area->blinkButton,XmNactivateCallback,

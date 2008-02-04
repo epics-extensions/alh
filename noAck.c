@@ -219,7 +219,7 @@ static void noAckCreateDialog(ALINK *area)
 	    XmNsashWidth,        1,
 	    XmNsashHeight,       1,
 	    XmNuserData,         area,
-	    NULL);
+	    (XtPointer)NULL);
 
 	form = XtVaCreateWidget("control_area",
 	    xmFormWidgetClass, noAckDialog,

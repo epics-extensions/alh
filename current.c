@@ -95,7 +95,7 @@ void currentAlarmHistoryWindow(ALINK *area,Widget menuButton)
 		    XmNleftAttachment,         XmATTACH_FORM,
 		    XmNleftOffset,             5,
 		    XmNuserData,               menuButton,
-		    NULL);
+		    (XtPointer)NULL);
 		XtAddCallback(button, XmNactivateCallback,
 		    (XtCallbackProc)closeCurrentCallback,
 		    area->currentAlarmForm);

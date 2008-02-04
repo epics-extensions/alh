@@ -560,7 +560,7 @@ static void propCreateDialog(ALINK *area)
 	    XmNsashWidth,  1,
 	    XmNsashHeight, 1,
 	    XmNuserData,   area,
-	    NULL);
+	    (XtPointer)NULL);
 
 	(void)XtVaCreateWidget("control_area", xmRowColumnWidgetClass, propDialog, NULL);
 	form = XtVaCreateWidget("control_area", xmFormWidgetClass, propDialog, NULL);

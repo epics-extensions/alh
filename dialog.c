@@ -100,7 +100,7 @@ String title,String pattern,String directory)
 	    XmNdialogTitle,   Xtitle,
 	    XmNdirectory,     Xdirectory,
 	    XmNpattern,       Xpattern,
-	    NULL);
+	    (XtPointer)NULL);
 
 	XmStringFree(Xtitle);
 	XmStringFree(Xpattern);
@@ -172,7 +172,7 @@ void createDialog(Widget parent,int dialogType,char *message1,char *message2)
 	    XmNdialogType,  dialogType,
 	    XmNdialogTitle, string2,
 	    XmNmessageString, string,
-	    NULL);
+	    (XtPointer)NULL);
 	XmStringFree(str);
 	XmStringFree(str1);
 	XmStringFree(str2);
@@ -245,7 +245,7 @@ XtCallbackProc okCallback,XtPointer okParm,XtPointer userParm)
 	    XmNdialogType,  dialogType,
 	    XmNdialogTitle, str3,
 	    XmNmessageString, str2,
-	    NULL);
+	    (XtPointer)NULL);
 	XmStringFree(str);
 	XmStringFree(str2);
 

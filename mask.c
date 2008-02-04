@@ -240,7 +240,7 @@ static void maskCreateDialog(ALINK *area)
 	    XmNrightAttachment, XmATTACH_POSITION,
 	    XmNrightPosition,   (TIGHTNESS*(num_buttons+3) - 1)/2,
 	    XmNrecomputeSize,   True,
-	    NULL);
+	    (XtPointer)NULL);
 
 	nameTextW = XtVaCreateManagedWidget("nameTextW",
 	    xmLabelGadgetClass, form,

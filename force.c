@@ -345,7 +345,7 @@ static void forcePVCreateDialog(ALINK *area)
 	    XmNsashWidth,  1,
 	    XmNsashHeight, 1,
 	    XmNuserData,   area,
-	    NULL);
+	    (XtPointer)NULL);
 
 	form = XtVaCreateWidget("control_area", 
 	    xmFormWidgetClass, forcePVDialog,
@@ -419,7 +419,7 @@ static void forcePVCreateDialog(ALINK *area)
 	    XmNtopAttachment,          XmATTACH_WIDGET,
 	    XmNtopWidget,              forcePVnameLabel,
 	    XmNleftAttachment,         XmATTACH_FORM,
-	    NULL);
+	    (XtPointer)NULL);
 
 	XtAddCallback(forcePVnameTextW, XmNactivateCallback,
 	    (XtCallbackProc)XmProcessTraversal, (XtPointer)XmTRAVERSE_NEXT_TAB_GROUP);
@@ -605,7 +605,7 @@ static void forcePVCreateDialog(ALINK *area)
 			XmNrightAttachment,         XmATTACH_POSITION,
 			XmNrightPosition,           50,
 #endif
-		    NULL);
+		    (XtPointer)NULL);
 	
 		prev = forcePVCalcPVTextW[i];
 	

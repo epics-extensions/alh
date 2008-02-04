@@ -1068,7 +1068,7 @@ static void alhViewBrowserCallback(Widget widget,XtPointer item,XtPointer cbs)
 		    XmNdialogTitle,   Xtitle,
 		    XmNdirMask,    Xpattern,
                     XmNfileTypeMask,		XmFILE_REGULAR,
-		    NULL);
+		    (XtPointer)NULL);
 		XtManageChild(dialog);
 		XmStringFree(Xpattern);
 		XmStringFree(Xtitle);
@@ -1459,7 +1459,7 @@ void awRowWidgets(struct anyLine *line,void *area)
 		    XmNorientation,              XmHORIZONTAL,
 		    XmNmarginHeight,             0,
 		    XmNmarginWidth,              0,
-		    NULL);
+		    (XtPointer)NULL);
 		nextX = 0;
 
 		XtVaGetValues(parent,XmNbackground,&backgroundColor,NULL);
@@ -1548,7 +1548,7 @@ void awRowWidgets(struct anyLine *line,void *area)
 		    XmNx,                      nextX,
 		    XmNy,                      2,
 		    XmNbackground,             backgroundColor,
-		    NULL);
+		    (XtPointer)NULL);
 		if (line->linkType == GROUP && sllFirst(&(glink->subGroupList))){
 			XtManageChild(wline->arrow);
 			if ( isTreeWindow(area,subWindow) ) {
@@ -1794,7 +1794,7 @@ void awUpdateRowWidgets(struct anyLine *line)
 	    XmNbackground,            &bg,
 	    XmNlabelString,           &strOld,
 	    XmNsensitive,             &sensitiveOld,
-	    NULL);
+	    (XtPointer)NULL);
 
 	if (line->unackSevr == FALSE) {
 		if (sensitiveOld == TRUE)

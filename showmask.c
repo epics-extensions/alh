@@ -304,7 +304,7 @@ ALINK    *area;
 	    XmNrightAttachment, XmATTACH_POSITION,
 	    XmNrightPosition,   50,
 	    XmNrecomputeSize,   True,
-	    NULL);
+	    (XtPointer)NULL);
 
 	nameTextW = XtVaCreateManagedWidget("nameTextW",
 	    xmLabelGadgetClass, form,

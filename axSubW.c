@@ -119,7 +119,7 @@ void markSelectedWidget(struct subWindow *subWindow,Widget newWidget)
 		    XmNarmColor,         &armColor,
 		    XmNtopShadowColor,   &topShadowColor,
 		    XmNbottomShadowColor,&bottomShadowColor,
-		    NULL);
+		    (XtPointer)NULL);
 
 		XtVaSetValues(oldWidget,
 		    XmNbackground,       armColor,
@@ -135,7 +135,7 @@ void markSelectedWidget(struct subWindow *subWindow,Widget newWidget)
 		    XmNarmColor,         &armColor,
 		    XmNtopShadowColor,   &topShadowColor,
 		    XmNbottomShadowColor,&bottomShadowColor,
-		    NULL);
+		    (XtPointer)NULL);
 
 		XtVaSetValues(newWidget, 
 		    XmNbackground,       armColor,
@@ -369,7 +369,7 @@ void adjustScrollBar(struct subWindow *subWindow)
 		    subWindow->viewConfigCount),
 		    XmNsliderSize,    Mmax(subWindow->viewRowCount, 1),
 		    XmNpageIncrement, Mmax(subWindow->viewRowCount-1, 1),
-		    NULL);
+		    (XtPointer)NULL);
 
 		/* manage/unmanage scrollbar */
 		if ( subWindow->viewConfigCount <= subWindow->viewRowCount ){
