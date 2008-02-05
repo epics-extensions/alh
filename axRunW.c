@@ -210,7 +210,7 @@ void createRuntimeWindow(ALINK *area)
 
 	icon_update(area->blinkButton);
 	
-	mask.Cancel = mask.Disable = mask.Ack = mask.AckT = mask.Log = 0;
+	mask.Unused = mask.Cancel = mask.Disable = mask.Ack = mask.AckT = mask.Log = 0;
 	for ( i=0; i<ALARM_NMASK; i++ ) {
 	  if ( i == ALARMCANCEL ) {
 	    mask.Cancel = ( area->pmainGroup->p1stgroup->pgroupData->mask[i] > 0 );
@@ -417,7 +417,6 @@ XmAnyCallbackStruct *call_data)
 {
 	static XtIntervalId intervalId = 0;
 	int seconds = 3600;
-    Boolean getState;
 
 	psetup.silenceOneHour = psetup.silenceOneHour?FALSE:TRUE;
 	if (psetup.silenceOneHour) {

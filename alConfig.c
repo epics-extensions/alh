@@ -778,7 +778,8 @@ void alWriteConfig(char *filename,struct mainGroup *pmainGroup)
 	if (!fw) return;
 	if (psetup.beepSevr > 1)
 		fprintf(fw,"$BEEPSEVERITY  %s\n",alhAlarmSeverityString[psetup.beepSevr]);
-	alWriteGroupConfig(fw,(SLIST *)&(pmainGroup->p1stgroup));
+	/*alWriteGroupConfig(fw,(SLIST *)&(pmainGroup->p1stgroup));*/
+	alWriteGroupConfig(fw,(SLIST *)pmainGroup);
 	fclose(fw);
 }
 

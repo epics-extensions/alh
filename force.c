@@ -327,7 +327,7 @@ static void forcePVCreateDialog(ALINK *area)
 	forcePVWindow->area = (void *)area;
 
 	forcePVDialogShell = XtVaCreatePopupShell("Force Process Variable",
-	    transientShellWidgetClass, area->toplevel, NULL, 0);
+	    transientShellWidgetClass, area->toplevel, NULL);
 
 	/* Modify the window manager menu "close" callback */
 	{
@@ -461,13 +461,14 @@ static void forcePVCreateDialog(ALINK *area)
 	    NULL);
 
 	for (i = 0; i < ALARM_NMASK; i++){
+		long ilong=i;
 		forceMaskToggleButtonW[i] = XtVaCreateManagedWidget(maskFields[i],
 		    xmToggleButtonGadgetClass, rowcol3,
 		    XmNmarginHeight,     0,
 		    XmNuserData,         (XtPointer)forcePVmaskStringLabelW,
 		    NULL);
 		XtAddCallback(forceMaskToggleButtonW[i], XmNvalueChangedCallback,
-		    (XtCallbackProc)forcePVMaskChangeCallback, (XtPointer)i);
+		    (XtCallbackProc)forcePVMaskChangeCallback, (XtPointer)ilong);
 	}
 
 	XtManageChild(rowcol3);
@@ -663,7 +664,7 @@ static void forcePVCreateDialog(ALINK *area)
 static void forcePVMaskChangeCallback(Widget widget, XtPointer calldata,
 XtPointer cbs)
 {
-	int index=(int)calldata;
+	int index=(long)calldata;
 	char *mask;
 	Widget maskWidget;
 	XmString string;

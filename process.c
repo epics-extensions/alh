@@ -132,6 +132,7 @@ static void relprocmenu_cb (
 
 char buf[1023+1], *tk, *ctx;
 int i;
+int indexi = (long) index;
 
   strncpy( buf, g_popupCmdString, 1023 );
   buf[1023] = 0;
@@ -142,7 +143,7 @@ int i;
   while ( tk ) {
     tk = strtok_r( NULL, "!\n", &ctx );
     if ( tk ) {
-      if ( i == (int) index ) {
+      if ( i == indexi ) {
         processSpawn_callback( w, tk, call_data );
         return;
       }
@@ -164,7 +165,6 @@ void relatedProcess_callback(void *widget,GCLINK *link,void *cbs)
 	Widget pdm, pb;
         Arg args[10];
 	XmString str;
-	unsigned short x, y;
         Window root, child;
         int rootX, rootY, winX, winY;
         unsigned int mask;
@@ -218,12 +218,13 @@ void relatedProcess_callback(void *widget,GCLINK *link,void *cbs)
 
               if ( tk ) {
 
+                long ilong = i;
                 str = XmStringCreateLocalized( tk );
                 pb = XtVaCreateManagedWidget( "pb", xmPushButtonWidgetClass,
                  g_pum, XmNlabelString, str, NULL );
                 XmStringFree( str );
                 XtAddCallback( pb, XmNactivateCallback, relprocmenu_cb,
-                 (XtPointer) i );
+                 (XtPointer)ilong );
 
 	        i++;
 

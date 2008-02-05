@@ -275,8 +275,9 @@ ALINK    *area;
 	    beepSevrToggleButtonW[i] = XmCreateToggleButtonGadget (radiobox,
 			 (char *)alhAlarmSeverityString[i+1], NULL, 0);
 		XtVaSetValues(beepSevrToggleButtonW[i], XmNuserData, area, NULL);
+		long ii=i+1;
 		XtAddCallback(beepSevrToggleButtonW[i], XmNvalueChangedCallback,
-		    beepSevrChangeCallback, (XtPointer)(i+1));
+		    beepSevrChangeCallback, (XtPointer)ii);
 		XtManageChild(beepSevrToggleButtonW[i]);
 
 	}
@@ -332,7 +333,7 @@ static void beepSevrHelpCallback(Widget widget,XtPointer calldata,XtPointer cbs)
 ******************************************************/
 static void beepSevrChangeCallback(Widget widget,XtPointer calldata,XtPointer cbs)
 {
-	int beepSevr=(int)calldata;
+	int beepSevr=(long)calldata;
     ALINK *area;
 	struct gcData *pgcData;
 	GCLINK *link;

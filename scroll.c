@@ -264,6 +264,7 @@ void fileViewWindow(Widget w,int option,Widget menuButton)
 	FILE *fp = NULL;             /* Pointer to open file.  */
 	char filename[120];
 	int operandFile=0;
+	long operandFileLong;
 	Arg al[20];
 	int ac;
 	XmString str=NULL;
@@ -387,8 +388,9 @@ void fileViewWindow(Widget w,int option,Widget menuButton)
 			    XmNdeleteResponse, XmDO_NOTHING, NULL);
 			WM_DELETE_WINDOW = XmInternAtom(XtDisplay(XtParent(app_shell)),
 			    "WM_DELETE_WINDOW", False);
+			operandFileLong=operandFile;
 			XmAddWMProtocolCallback(XtParent(app_shell),WM_DELETE_WINDOW,
-			    (XtCallbackProc)closeFileViewShell, (XtPointer)operandFile);
+			    (XtCallbackProc)closeFileViewShell, (XtPointer)operandFileLong);
 		}
 
 		switch (option) {
@@ -417,9 +419,10 @@ void fileViewWindow(Widget w,int option,Widget menuButton)
 		ac++;
 		button = XtCreateManagedWidget("Close",xmPushButtonWidgetClass,
 		    app_shell, al, ac);
+		operandFileLong=operandFile;
 		XtAddCallback(button, XmNactivateCallback,
 		    (XtCallbackProc)closeFileViewWindow_callback,
-		    (XtPointer) operandFile);
+		    (XtPointer) operandFileLong);
 
 		previous = button;
 		/* create file name widget */
@@ -575,9 +578,11 @@ caddr_t call_data)
 *****************************************************************/
 void updateLog(int fileIndex,char *string)
 {
+#if 0
 	struct stat statbuf;         /* Information on a file. */
 	FILE *fp = NULL;             /* Pointer to open file   */
 	char filename[120];
+#endif
 	char *tmp;
 
 	int stringLength = strlen(string);
@@ -664,13 +669,14 @@ void updateLog(int fileIndex,char *string)
 *****************************************************************/
 void updateAlarmLog(int fileIndex,char *string)
 {
+    updateLog(fileIndex,string);
+
+#if 0
 	char   str[MAX_STRING_LENGTH];
 	int stringLength = strlen(string);
 	int startPosition,endPosition;
 	int pos=0;
 
-    updateLog(fileIndex,string);
-#if 0
 	if (viewTextWidget[fileIndex] == NULL) return;
 
 	XtVaGetValues(viewTextWidget[fileIndex], XmNcursorPosition, &pos, NULL); 
@@ -719,6 +725,7 @@ void browser_fileViewWindow(Widget w,int option,Widget menuButton)
 	FILE *fp = NULL;             /* Pointer to open file.  */
 	char filename[120];
 	int operandFile=0;
+	long operandFileLong;
 	/* definitions for search widgets: */
 	Arg al[20];
 	int ac;
@@ -849,8 +856,9 @@ void browser_fileViewWindow(Widget w,int option,Widget menuButton)
 			    XmNdeleteResponse, XmDO_NOTHING, NULL);
 			WM_DELETE_WINDOW = XmInternAtom(XtDisplay(XtParent(app_shell)),
 			    "WM_DELETE_WINDOW", False);
+			operandFileLong = operandFile;
 			XmAddWMProtocolCallback(XtParent(app_shell),WM_DELETE_WINDOW,
-			    (XtCallbackProc)closeFileViewShell, (XtPointer)operandFile);
+			    (XtCallbackProc)closeFileViewShell, (XtPointer)operandFileLong);
 		}
 		switch (option) {
 		case ALARM_FILE:
@@ -875,9 +883,10 @@ void browser_fileViewWindow(Widget w,int option,Widget menuButton)
 		ac++;
 		button = XtCreateManagedWidget("Close",xmPushButtonWidgetClass,
 		    app_shell, al, ac);
+		operandFileLong = operandFile;
 		XtAddCallback(button, XmNactivateCallback,
 		    (XtCallbackProc)closeFileViewWindow_callback,
-		    (XtPointer) operandFile);
+		    (XtPointer) operandFileLong);
 
 		previous = button;
 		/* create file name widget */
@@ -1126,9 +1135,10 @@ void browser_fileViewWindow(Widget w,int option,Widget menuButton)
 			    xmPushButtonWidgetClass,rowcol2, NULL);
 			XtAddCallback(showButton,XmNactivateCallback,showSelectedCallback,app_shell);
 
+			long optionLong=option;
 			showAllButton=XtVaCreateManagedWidget("Show Current File",
 			    xmPushButtonWidgetClass,rowcol2, NULL);
-			XtAddCallback(showAllButton, XmNactivateCallback,showAllCallback,(XtPointer)option);
+			XtAddCallback(showAllButton, XmNactivateCallback,showAllCallback,(XtPointer)optionLong);
 
 			XtManageChild(rowcol2);
 			previous = rowcol2;   
@@ -1231,7 +1241,8 @@ void browser_fileViewWindow(Widget w,int option,Widget menuButton)
 **************************************************************************/
 static void showAllCallback(Widget w,XtPointer client_data,XtPointer call_data)
 {
-	switch ((int)client_data) {
+        int index = (long)client_data;
+	switch (index) {
 	case ALARM_FILE:
 		XmTextSetString(browserWidget,
 	    		(char *)viewFileString[ALARM_FILE]);

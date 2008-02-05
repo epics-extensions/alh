@@ -244,9 +244,6 @@ char *pasteData;
 char **value = (char**) value_return;
 XSelectionRequestEvent* req;
 Display* d = XtDisplay( w );
-Atom* targetP;
-Atom* std_targets;
-unsigned long std_length;
 
   if ( *selection != XA_PRIMARY ) {
     return FALSE;
@@ -730,7 +727,7 @@ static MenuItem action_menuNew[] = {
 static void alhFileCallback(Widget widget,XtPointer calldata,XtPointer cbs)
 {
 	ALINK      *area;
-	int item=(int)calldata;
+	int item=(long)calldata;
 
 	XtVaGetValues(widget, XmNuserData, &area, NULL);
 
@@ -801,7 +798,7 @@ static void alhFileCallback(Widget widget,XtPointer calldata,XtPointer cbs)
 
 static void alhActionCallback(Widget widget,XtPointer calldata,XtPointer cbs)
 {
-	int item=(int)calldata;
+	int item=(long)calldata;
 	ALINK               *area;
 	Widget               parent;
 	GCLINK              *link;
@@ -939,7 +936,7 @@ static void alhActionCallback(Widget widget,XtPointer calldata,XtPointer cbs)
 ******************************************************/
 static void alhViewCallback(Widget widget,XtPointer calldata,XtPointer cbs)
 {
-	int item=(int)calldata;
+	int item=(long)calldata;
 	ALINK   *area;
 	void   *link;
 	struct subWindow *treeWindow;
@@ -1026,7 +1023,7 @@ static void alhViewBrowserCallback(Widget widget,XtPointer item,XtPointer cbs)
 	ALINK   *area;
 	Widget dialog;
 	XmString Xpattern,Xtitle,Xcurrentdir;
-        int ch = (int) item;
+        int ch = (long) item;
 	switch ( ch )
 	  {
 	  case MENU_VIEW_ALARMLOG:
@@ -1118,7 +1115,7 @@ static void messBroadcast(Widget widget,XtPointer item,XtPointer cbs)  /* Albert
     Widget dialog, text_w;
     ALINK   *area;
     static struct messBroadcastData mBD;
-    int itemi = (int) item;
+    int itemi = (long) item;
 
     XtVaGetValues(widget, XmNuserData, &area, NULL);
 
@@ -1321,7 +1318,7 @@ XtUnmanageChild(w);
 ******************************************************/
 static void alhSetupCallback( Widget widget, XtPointer calldata, XtPointer cbs)
 {
-	int item=(int)calldata;
+	int item=(long)calldata;
 	ALINK      *area;
 
 
@@ -1396,7 +1393,7 @@ static void alhSetupCallback( Widget widget, XtPointer calldata, XtPointer cbs)
 ******************************************************/
 static void alhHelpCallback(Widget widget,XtPointer calldata,XtPointer cbs)
 {
-	int item=(int)calldata;
+	int item=(long)calldata;
 	ALINK  *area;
 
 	XtVaGetValues(widget, XmNuserData, &area, NULL);

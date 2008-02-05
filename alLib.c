@@ -1130,7 +1130,7 @@ static void alUpdateGroupMask(CLINK *clink,int index,int op)
 
 	  if ( ok ) {
 	
-	    mask.Cancel = mask.Disable = mask.Ack = mask.AckT = mask.Log = 0;
+	    mask.Unused = mask.Cancel = mask.Disable = mask.Ack = mask.AckT = mask.Log = 0;
 	    for ( i=0; i<ALARM_NMASK; i++ ) {
 	      if ( i == ALARMCANCEL ) {
 	        mask.Cancel = ( top->pgroupData->mask[i] > 0 );

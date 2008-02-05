@@ -88,7 +88,10 @@ static void propUpdateDialogWidgets(struct propWindow *propWindow);
 static void propMaskChangeCallback( Widget widget,XtPointer calldata,XtPointer cbs);
 static void propEditableDialogWidgets(ALINK *area);
 static GCLINK *propCreateClone(GCLINK *link,int linkType);
+
+#if 0
 static void propDeleteClone(GCLINK *link,int linkType);
+#endif
 
 /******************************************************
   propUpdateDialog
@@ -542,7 +545,7 @@ static void propCreateDialog(ALINK *area)
 	propWindow->area = (void *)area;
 
 	propDialogShell = XtVaCreatePopupShell("Alarm Handler Properties",
-	    transientShellWidgetClass, area->toplevel, NULL, 0);
+	    transientShellWidgetClass, area->toplevel, NULL);
 
 	/* Modify the window manager menu "close" callback */
 	{
@@ -664,13 +667,14 @@ static void propCreateDialog(ALINK *area)
 		    NULL);
 
 		for (i = 0; i < ALARM_NMASK; i++){
+			long ilong=i;
 			alarmMaskToggleButtonW[i] = XtVaCreateManagedWidget(maskFields[i],
 			    xmToggleButtonGadgetClass, rowcol,
 			    XmNmarginHeight,     0,
 			    XmNuserData,         (XtPointer)alarmMaskStringLabelW,
 			    NULL);
 			XtAddCallback(alarmMaskToggleButtonW[i], XmNvalueChangedCallback,
-			    (XtCallbackProc)propMaskChangeCallback, (XtPointer)i);
+			    (XtCallbackProc)propMaskChangeCallback, (XtPointer)ilong);
 		}
 
 		XtManageChild(rowcol);
@@ -1324,7 +1328,7 @@ static void propCreateDialog(ALINK *area)
 ******************************************************/
 static void propMaskChangeCallback( Widget widget,XtPointer calldata,XtPointer cbs)
 {
-	int index=(int)calldata;
+	int index=(long)calldata;
 	char *mask;
 	Widget maskWidget;
 	XmString string;
@@ -1819,6 +1823,7 @@ static void propEditableDialogWidgets(ALINK  *area)
 	return;
 }
 
+#if 0
 /******************************************************
   propDeleteClone
 ******************************************************/
@@ -1868,6 +1873,7 @@ static void propDeleteClone(GCLINK *link,int linkType)
 	free(pgcData);
 	free(link);
 }
+#endif
 
 /******************************************************
   propCreateClone

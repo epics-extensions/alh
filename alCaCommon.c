@@ -196,9 +196,9 @@ void registerCA(void *dummy, int fd, int opened)
 	struct FDLIST *cur,*next;
 	int found;
 #ifdef WIN32
-	int alhInputMask=XtInputReadWinsock;
+	#define alhInputMask XtInputReadWinsock
 #else
-	int alhInputMask=XtInputReadMask;
+	#define alhInputMask XtInputReadMask
 #endif
 
 	/* Branch depending on whether the fd is opened or closed */

@@ -223,7 +223,7 @@ Widget actCreateMenu(Widget parent,XtPointer user_data)
 static void actFileCallback(Widget widget, XtPointer calldata, XtPointer cbs)
 {
 	ALINK  *area;
-	int item=(int)calldata;
+	int item=(long)calldata;
 
 	XtVaGetValues(widget, XmNuserData, &area, NULL);
 
@@ -329,7 +329,7 @@ static void actFileCallback(Widget widget, XtPointer calldata, XtPointer cbs)
 ******************************************************/
 static void actEditCallback(Widget widget, XtPointer calldata, XtPointer cbs)
 {
-	int item=(int)calldata;
+	int item=(long)calldata;
 	ALINK  *area;
 	GCLINK *link;
 	GCLINK *next;
@@ -552,7 +552,7 @@ static void actEditCallback(Widget widget, XtPointer calldata, XtPointer cbs)
 ******************************************************/
 static void actInsertCallback(Widget widget, XtPointer calldata, XtPointer cbs)
 {
-	int item=(int)calldata;
+	int item=(long)calldata;
 	ALINK   *area;
 	GCLINK   *link;
 	int linkType;
@@ -611,7 +611,7 @@ static void actInsertCallback(Widget widget, XtPointer calldata, XtPointer cbs)
 ******************************************************/
 static void actViewCallback(Widget widget, XtPointer calldata, XtPointer cbs)
 {
-	int item=(int)calldata;
+	int item=(long)calldata;
 	ALINK   *area;
 	void   *link;
 	struct subWindow *treeWindow;
@@ -673,7 +673,7 @@ static void actViewCallback(Widget widget, XtPointer calldata, XtPointer cbs)
 ******************************************************/
 static void actHelpCallback(Widget widget, XtPointer calldata, XtPointer cbs)
 {
-	int item=(int)calldata;
+	int item=(long)calldata;
 	ALINK  *area;
 
 	XtVaGetValues(widget, XmNuserData, &area, NULL);

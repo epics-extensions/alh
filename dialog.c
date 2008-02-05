@@ -37,7 +37,9 @@ static Widget warningbox = NULL;
 /* function prototypes */
 static void killWidget(Widget w, XtPointer clientdata, XtPointer calldata);
 static void killDialog(Widget w, XtPointer clientdata, XtPointer calldata);
+#if 0
 static void logMessageString(Widget w, XtPointer clientdata, XtPointer calldata);
+#endif
 
 
 /******************************************************
@@ -353,6 +355,7 @@ void fatalErrMsg(const char *fmt, ...)
 	if (warningbox) XtAddCallback(warningbox,XmNokCallback,exit_quit,NULL);
 }
 
+#if 0
 /******************************************************
   Static callback routine for logging a widget's messageString to opMod log file
 ******************************************************/
@@ -381,6 +384,7 @@ static void logMessageString(Widget w, XtPointer clientdata, XtPointer calldata)
 	XmStringFreeContext(context);
     XtFree(tag);
 }
+#endif
 
 /******************************************************
   Static callback routine for destroying a widget 

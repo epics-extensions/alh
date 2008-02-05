@@ -275,9 +275,10 @@ static void maskCreateDialog(ALINK *area)
 			    j != num_buttons-1? XmATTACH_POSITION : XmATTACH_FORM,
 			    XmNrightPosition,        TIGHTNESS*(j+3) + (TIGHTNESS-1),
 			    NULL);
+			long index=maskItem[i].choice[j].index;
 			XtAddCallback(pushButtonW, XmNactivateCallback,
 			    (XtCallbackProc)maskActivateCallback,
-			    (XtPointer)maskItem[i].choice[j].index);
+			    (XtPointer)index);
 			if (_passive_flag && i == ALARMACKT ) { /* ACKT */
 				XtVaSetValues(pushButtonW, XmNsensitive, FALSE, NULL);
 			}
@@ -351,7 +352,7 @@ XtPointer cbs)
 static void maskActivateCallback(Widget widget,XtPointer calldata,
 XtPointer cbs)
 {
-	int index=(int)calldata;
+	int index=(long)calldata;
 	ALINK *area;
 	void *link;
 	int maskid,maskno;

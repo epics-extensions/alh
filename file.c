@@ -506,8 +506,9 @@ int programId,Widget widget)
 		fileSelectionBox = widget;
 		/* Display file selection box  */
 		if ( XtIsShell(widget)) {
+			long fileTypeLong=fileType;
 			fileSelectionBox = createFileDialog(widget,
-			    (void *)fileSetupCallback, (XtPointer)fileType,
+			    (void *)fileSetupCallback, (XtPointer)fileTypeLong,
 			    (void *)exit_quit,(XtPointer)FALSE,
 			    (XtPointer)NULL,
 			    fileTypeString, (String)pattern, dir);
