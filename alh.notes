@@ -559,3 +559,5 @@ Mon Nov 26 10:11:55 CST 2007
 	Put ALH User's Guide under CVS control in alh subdirectory documentation.
 	Updated User's Guide with SNS changes. (see entry of Jun 26).
 
+Tue Feb  5 10:19:30 CST 2008 ALH_1_2_24
+	Portability changes for 64bit builds.
