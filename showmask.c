@@ -418,7 +418,7 @@ ALINK    *area;
 		if (_passive_flag && i == ALARMACKT ) {
 			XtVaSetValues(alarmMaskToggleButtonW[i], XmNsensitive, FALSE, NULL);
 		}
-		long ilong=i;
+		XtPointer ilong=i;
 		XtAddCallback(alarmMaskToggleButtonW[i], XmNvalueChangedCallback,
 		    (XtCallbackProc)forceMaskChangeCallback, (XtPointer)ilong);
 	}
@@ -458,7 +458,7 @@ ALINK    *area;
 ******************************************************/
 static void forceMaskChangeCallback(Widget widget,XtPointer calldata,XtPointer cbs)
 {
-	int index=(long)calldata;
+	long index=(long)calldata;
 	char *mask;
 	Widget maskWidget;
 	XmString string;
