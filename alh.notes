@@ -561,3 +561,7 @@ Mon Nov 26 10:11:55 CST 2007
 
 Tue Feb  5 10:19:30 CST 2008 ALH_1_2_24
 	Portability changes for 64bit builds.
+
+Wed Aug 13 14:34:23 CDT 2008
+	Added callback procedures to the file selection dialogs to be called  when 
+        the window manager protocol WM_DELETE_WINDOW is received.

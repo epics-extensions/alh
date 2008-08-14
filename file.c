@@ -22,6 +22,10 @@
 #include <stdio.h>
 #include <signal.h>
 #include <errno.h>
+
+#include <Xm/Protocols.h>
+#include <Xm/AtomMgr.h>
+
 #include "alh.h"
 
 #ifdef HAVE_SYSV_IPC
@@ -285,6 +289,7 @@ void exit_quit(Widget w, XtPointer clientdata, XtPointer calldata)
 		free(area);
 	}
 	XtDestroyWidget(topLevelShell);
+	XtDestroyWidget(w);
 	XFreeFont(display,font_info);
 #ifndef WIN32
 	if(_lock_flag)  {
@@ -512,6 +517,11 @@ int programId,Widget widget)
 			    (void *)exit_quit,(XtPointer)FALSE,
 			    (XtPointer)NULL,
 			    fileTypeString, (String)pattern, dir);
+			Atom WM_DELETE_WINDOW;
+			WM_DELETE_WINDOW = XmInternAtom(XtDisplay(fileSelectionBox),
+			    "WM_DELETE_WINDOW", False);
+			XmAddWMProtocolCallback(XtParent(fileSelectionBox),WM_DELETE_WINDOW,
+			    (XtCallbackProc)exit_quit,(XtPointer)FALSE );
 		}
 
 		/* Display file error dialog */

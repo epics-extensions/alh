@@ -24,6 +24,8 @@
 #include <Xm/Xm.h>
 #include <Xm/MessageB.h>
 #include <Xm/FileSB.h>
+#include <Xm/Protocols.h>
+#include <Xm/AtomMgr.h>
 
 #include "ax.h"
 
@@ -58,7 +60,8 @@ String title,String pattern,String directory)
 	static void *oldCancel=NULL;
 	static XtPointer oldOkParm = 0;
 	static XtPointer oldCancelParm = 0;
-    char file_sel[]="file_sel";
+	char file_sel[]="file_sel";
+	Atom WM_DELETE_WINDOW;
 
 	/* parent = 0 means we want to unmanage the fileSelectdialog */
 	if (!parent){
@@ -82,6 +85,8 @@ String title,String pattern,String directory)
 		XtVaSetValues(fileselectdialog,
 		    XmNallowShellResize, FALSE,
 		    NULL);
+		WM_DELETE_WINDOW = XmInternAtom(XtDisplay(fileselectdialog),
+		    "WM_DELETE_WINDOW", False);
 		XtAddCallback(fileselectdialog,XmNhelpCallback,
 		    (XtCallbackProc)helpCallback,(XtPointer)NULL);
 	} else {
@@ -90,6 +95,8 @@ String title,String pattern,String directory)
 		    (XtCallbackProc)oldOk     ,(XtPointer)oldOkParm);
 		if (oldCancel) XtRemoveCallback(fileselectdialog,XmNcancelCallback,
 		    (XtCallbackProc)oldCancel ,(XtPointer)oldCancelParm);
+		if (oldCancel) XmRemoveWMProtocolCallback(XtParent(fileselectdialog),
+		    WM_DELETE_WINDOW,(XtCallbackProc)oldCancel,(XtPointer)oldCancelParm );
 	}
 
 	Xtitle=XmStringCreateLtoR(title,XmSTRING_DEFAULT_CHARSET);
@@ -112,6 +119,9 @@ String title,String pattern,String directory)
 	    (XtCallbackProc)okCallback, (XtPointer)okParm);
 	XtAddCallback(fileselectdialog,XmNcancelCallback,
 	    (XtCallbackProc)cancelCallback,(XtPointer)cancelParm);
+	XmAddWMProtocolCallback(XtParent(fileselectdialog),WM_DELETE_WINDOW,
+	    (XtCallbackProc)cancelCallback,(XtPointer)cancelParm );
+
 	oldOk = okCallback;
 	oldCancel = cancelCallback;
 	oldOkParm = okParm;
