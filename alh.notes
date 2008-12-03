@@ -569,4 +569,4 @@ Wed Aug 13 14:34:23 CDT 2008
 Mon Aug 18 15:59:03 CDT 2008
 	Added usage of a BROWSER environmant variable which defines the browser
 	command (used to display the ALH User's Guide when Help is selected).
-
+        Removed Xp from need libraries for linux builds.
