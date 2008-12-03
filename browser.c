@@ -92,7 +92,8 @@ int callBrowser(char *url)
 		netscapew=findNetscapeWindow();
 		/* If no window found, exec Netscape */
 		if(!netscapew) {
-			envstring=getenv("NETSCAPEPATH");
+			envstring=getenv("BROWSER");
+			if(!envstring) envstring=getenv("NETSCAPEPATH");
 			if(!envstring) {
 				sprintf(command,"%s -install '%s' &",NETSCAPEPATH,url);
 			}
@@ -111,7 +112,8 @@ int callBrowser(char *url)
 	}
 	/* Netscape window is valid, send url via -remote */
 	/*   (Use -id for speed) */
-	envstring=getenv("NETSCAPEPATH");
+	envstring=getenv("BROWSER");
+	if(!envstring) envstring=getenv("NETSCAPEPATH");
 	if(!envstring) {
 		sprintf(command,"%s -id 0x%x -remote 'openURL(%s)' &",
 		    NETSCAPEPATH,(unsigned int)netscapew,url);
