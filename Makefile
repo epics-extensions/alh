@@ -168,7 +168,7 @@ endif
 
 PROD_LIBS += Com
 PROD_LIBS_DEFAULT += Xmu Xm Xt X11
-PROD_LIBS_Linux +=  Xmu Xm Xt X11 Xp
+PROD_LIBS_Linux +=  Xmu Xm Xt X11
 PROD_LIBS_Darwin +=  Xmu Xm Xt X11
 
 PROD_LIBS_WIN32 += $(EXCEED_XLIBS)
@@ -182,7 +182,6 @@ Xmu_DIR = $(X11_LIB)
 Xm_DIR = $(MOTIF_LIB)
 Xt_DIR = $(X11_LIB)
 X11_DIR = $(X11_LIB)
-Xp_DIR = $(MOTIF_LIB)
 
 RCS_WIN32 += alh.rc
 
