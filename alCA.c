@@ -467,6 +467,12 @@ static void alCaNewAlarmEvent(struct event_handler_args args)
 	int ackt, acks;
 	char value[MAX_STRING_SIZE];
 
+	if (args.status != ECA_NORMAL) {
+		errMsg("alCaNewAlarmEvent failed: Return status: %s "
+		" for PV %s\n",ca_message(args.status),ca_name(args.chid));
+		return;
+	}
+
 	stat = ((struct dbr_stsack_string *) args.dbr)->status;
 	sevr = ((struct dbr_stsack_string *) args.dbr)->severity;
 	acks = ((struct dbr_stsack_string *) args.dbr)->acks;
@@ -485,15 +491,7 @@ static void alCaNewAlarmEvent(struct event_handler_args args)
 
 	strcpy(value, ((struct dbr_stsack_string *) args.dbr)->value);
 
-	switch (args.status) {
-	case ECA_NORMAL:
-		alNewEvent(stat, sevr, acks, ackt, value, args.usr);
-		break;
-	default:
-		errMsg("alCaNewAlarmEvent failed: Return status: %s "
-		" for PV %s\n",ca_message(args.status),ca_name(args.chid));
-		break;
-	}
+	alNewEvent(stat, sevr, acks, ackt, value, args.usr);
 }
 
 /*********************************************************************
