@@ -1025,7 +1025,7 @@ void forcePVUpdateFields(GCLINK* gclink,FORCEPV* pfPV,int context)
 
 	/* temporarily disable forcePV */
 	disabledHold=pforcePV->disabled;
-	pforcePV->disabled=YES;
+	pforcePV->disabled=1;
 
 	if (pforcePV->forceValue != pfPV->forceValue) pforcePV->forceValue=pfPV->forceValue;
 	if (pforcePV->resetValue != pfPV->resetValue) pforcePV->resetValue=pfPV->resetValue;
