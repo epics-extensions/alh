@@ -18,6 +18,7 @@
  *
  */
 
+#include <stdlib.h>
 #include "alh.h"
 
 /* Audio device not implemented */
@@ -27,6 +28,7 @@
 ******************************************************/
 int alBeep(Display *displayBB)
 {
+	/* system("play /path/to/beep.wav"); */
 	XBell(displayBB,0);
 	return 0;
 }
