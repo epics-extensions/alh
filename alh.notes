@@ -574,3 +574,6 @@ Mon Aug 18 15:59:03 CDT 2008
 Thu Oct 15 09:44:40 CDT 2009  ALH_1_2_25
 	Removed usage of YES macro for build with base R3.14.11.
 	Added comment in alAudio.c to uncomment/modify for alarm sounds.
+
+Tue Oct 27 15:17:33 CDT 2009
+	Changes to avoid compile warning messages.
