@@ -107,7 +107,7 @@ typedef struct _menu_item {
 	void (*callback)( Widget,XtPointer,XtPointer);  /* routine to call; NULL if note */
 	XtPointer    callback_data; /* client_data for callback() */
 	struct _menu_item *subitems; /* pullright menu items, if not NULL */
-	short  initial_state; /* initial state of toggleButton/toggleButtonGadget menu items */
+	Boolean  initial_state; /* initial state of toggleButton/toggleButtonGadget menu items */
 } MenuItem;
 
 #endif /* INCaxAreah */

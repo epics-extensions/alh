@@ -169,7 +169,7 @@ void setupConfig(char *filename,int program,ALINK *areaOld)
 	XmString    str;
 	SNODE *proot;
 	static int firstTime = TRUE;
-	int beepSevrOld;
+	short beepSevrOld;
 	int holdToBeConnectedCount;
 
 	/* initialize channel access */
@@ -411,7 +411,7 @@ void createMainWindowWidgets(ALINK *area)
 	XmString    str;
 	char   *app_name;
 	char   *title_str;
-	int len = 0;
+	uint len = 0;
 	Widget label_executionMode;
 
 	if (area->toplevel) return;
