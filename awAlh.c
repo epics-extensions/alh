@@ -269,11 +269,11 @@ Display* d = XtDisplay( w );
   if (*target == XA_TARGETS(d)) {
 
     Atom* targetP;
-    Atom* std_targets;
+    caddr_t std_targets;
     unsigned long std_length;
 
     XmuConvertStandardSelection( w, req->time, selection, target, type_return,
-     (XPointer*) &std_targets, &std_length, format_return );
+      &std_targets, &std_length, format_return );
 
     *value =
      (char*) XtMalloc( sizeof(Atom) * ( (unsigned) std_length + 5 ) );
