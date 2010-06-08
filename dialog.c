@@ -85,8 +85,6 @@ String title,String pattern,String directory)
 		XtVaSetValues(fileselectdialog,
 		    XmNallowShellResize, FALSE,
 		    NULL);
-		WM_DELETE_WINDOW = XmInternAtom(XtDisplay(fileselectdialog),
-		    "WM_DELETE_WINDOW", False);
 		XtAddCallback(fileselectdialog,XmNhelpCallback,
 		    (XtCallbackProc)helpCallback,(XtPointer)NULL);
 	} else {
@@ -95,6 +93,8 @@ String title,String pattern,String directory)
 		    (XtCallbackProc)oldOk     ,(XtPointer)oldOkParm);
 		if (oldCancel) XtRemoveCallback(fileselectdialog,XmNcancelCallback,
 		    (XtCallbackProc)oldCancel ,(XtPointer)oldCancelParm);
+		WM_DELETE_WINDOW = XmInternAtom(XtDisplay(fileselectdialog),
+		    "WM_DELETE_WINDOW", False);
 		if (oldCancel) XmRemoveWMProtocolCallback(XtParent(fileselectdialog),
 		    WM_DELETE_WINDOW,(XtCallbackProc)oldCancel,(XtPointer)oldCancelParm );
 	}
@@ -119,6 +119,8 @@ String title,String pattern,String directory)
 	    (XtCallbackProc)okCallback, (XtPointer)okParm);
 	XtAddCallback(fileselectdialog,XmNcancelCallback,
 	    (XtCallbackProc)cancelCallback,(XtPointer)cancelParm);
+	WM_DELETE_WINDOW = XmInternAtom(XtDisplay(fileselectdialog),
+	    "WM_DELETE_WINDOW", False);
 	XmAddWMProtocolCallback(XtParent(fileselectdialog),WM_DELETE_WINDOW,
 	    (XtCallbackProc)cancelCallback,(XtPointer)cancelParm );
 
