@@ -577,3 +577,6 @@ Thu Oct 15 09:44:40 CDT 2009  ALH_1_2_25
 
 Tue Oct 27 15:17:33 CDT 2009
 	Changes to avoid compile warning messages.
+
+Fri Jul  9 15:14:24 CDT 2010
+	Master/slave locking bug fix from Andreas Luedeke.
