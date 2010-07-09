@@ -114,8 +114,9 @@ unsigned long broadcastMessDelay=2000; /*(msec) periodic mess testing. Albert */
 int _lock_flag=0;                /* Flag for locking. Albert                  */
 char lockFileName[250];          /* FN for lock file. Albert                  */
 int lockFileDeskriptor;          /* FD for lock file. Albert                  */
-unsigned long lockDelay=1000;    /* (msec) periodical masterStatus testing.   */
-int masterFlag=1;                /* am I master for write operations? Albert  */  
+unsigned long lockDelay=20000;   /* (msec) periodical masterStatus testing.   */
+int masterFlag=0;                /* am I master for write operations? Albert  */  
+                                 /* changed from 1 to 0. Stadler */
 void masterTesting();            /* periodical calback of masterStatus testing*/
 extern Widget blinkToplevel;     /* for locking status marking                */
 char masterStr[64],slaveStr[64]; /* titles of Master/Slave +- printer/database*/
@@ -292,11 +293,20 @@ void exit_quit(Widget w, XtPointer clientdata, XtPointer calldata)
 	XtDestroyWidget(w);
 	XFreeFont(display,font_info);
 #ifndef WIN32
-	if(_lock_flag)  {
-	  lockf(lockFileDeskriptor,F_ULOCK, 0L); /* Albert */
+	if (masterFlag) {
+	  lockf(lockFileDeskriptor,F_ULOCK, 0L);
 	  if (lockTimeoutId) {
 	    XtRemoveTimeOut(lockTimeoutId);
 	  }
+	}
+	if(_lock_flag)  {
+	  /* Moved to above part. Stadler
+
+	  lockf(lockFileDeskriptor,F_ULOCK, 0L);
+	  if (lockTimeoutId) {
+	    XtRemoveTimeOut(lockTimeoutId);
+	  }
+	  */
 	if(_message_broadcast_flag)  {
 	  lockf(messBroadcastDeskriptor, F_ULOCK, 0L); /* Albert */
 	  if (broadcastMessTimeoutId) {
@@ -1148,11 +1158,14 @@ char *argv[];
 void masterTesting()
 {
 #ifndef WIN32
-        if ( lockf(lockFileDeskriptor, F_TLOCK, 0L) < 0 ) {
+  /* Added "return" if masterFlag is set. Stadler */
+  if (masterFlag)
+	return;
+  if ( lockf(lockFileDeskriptor, F_TLOCK, 0L) < 0 ) {
 	  if ((errno == EAGAIN || errno == EACCES )) {
-	      masterFlag=0;
-	      if(DEBUG) fprintf(stderr,"I'm slave;lockFileDeskriptor=%d\n",lockFileDeskriptor);
-	      XtVaSetValues(blinkToplevel,XmNtitle,slaveStr,NULL);
+	    masterFlag=0;
+	    if(DEBUG) fprintf(stderr,"I'm slave;lockFileDeskriptor=%d\n",lockFileDeskriptor);
+	    XtVaSetValues(blinkToplevel,XmNtitle,slaveStr,NULL);
 	  }
 	  else {
 	    perror("lockf Error!!!!"); /* Albert exit ?????? */
@@ -1162,7 +1175,7 @@ void masterTesting()
 	  {
 	    masterFlag=1;
 	    if(DEBUG) fprintf(stderr,"I'm master;lockFileDeskriptor=%d\n",lockFileDeskriptor);
-            XtVaSetValues(blinkToplevel,XmNtitle,masterStr,NULL);
+	    XtVaSetValues(blinkToplevel,XmNtitle,masterStr,NULL);
 	  }
 	
 	lockTimeoutId = XtAppAddTimeOut(appContext, lockDelay,(XtTimerCallbackProc)masterTesting , NULL);
