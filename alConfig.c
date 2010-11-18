@@ -422,7 +422,8 @@ int context,int caConnect,struct mainGroup *pmainGroup)
 	float rate =1.0;
 	float rateIn;
 	char *str;
-	int i,len;
+	int i;
+	size_t len;
 	int rtn;
 
 	/* config optional lines */
@@ -607,13 +608,12 @@ int context,int caConnect,struct mainGroup *pmainGroup)
 
 		} else {
 	        print_error(buf,"Invalid $SEVRPV Line");
-        }
+		}
 
 		return;
 	}
 
 	if (strncmp(&buf[1],"COMMAND",7)==0) { /*COMMAND*/
-		int len;
 
 		if (gcdata->command) return;
 		sscanf(buf,"%20s",command);
@@ -627,7 +627,6 @@ int context,int caConnect,struct mainGroup *pmainGroup)
 	}
 
 	if (strncmp(&buf[1],"SEVRCOMMAND",11)==0) { /*SEVRCOMMAND*/
-		int len;
 
 		sscanf(buf,"%20s",command);
 		len = strlen(command);
@@ -640,7 +639,6 @@ int context,int caConnect,struct mainGroup *pmainGroup)
 	}
 
 	if (strncmp(&buf[1],"STATCOMMAND",11)==0) { /*STATCOMMAND*/
-		int len;
 
 		if(context!=CHANNEL) {
 			print_error(buf,"Logic error: STATCOMMAND: Context not a channel");
@@ -659,7 +657,6 @@ int context,int caConnect,struct mainGroup *pmainGroup)
 	}
 
 	if (strncmp(&buf[1],"ALIAS",5)==0) { /*ALIAS*/
-		int len;
 
 		if (gcdata->alias) return;
 		sscanf(buf,"%20s",command);
@@ -702,7 +699,6 @@ int context,int caConnect,struct mainGroup *pmainGroup)
 	}
 
 	if (strncmp(&buf[1],"GUIDANCE",8)==0) { /*GUIDANCE*/
-		int len;
 
 		sscanf(buf,"%20s",command);
 		len = strlen(command);
@@ -982,7 +978,7 @@ static void alConfigTreePrint(FILE *fw,GLINK *glink,char *treeSym)
 	struct groupData *gdata;
 	struct chanData *cdata;
 	SNODE	*pt;
-	int length;
+	size_t length;
 
 	int symSize = 3;
 	static char symMiddle[]="+--";
@@ -1161,7 +1157,7 @@ void getStringSevrCommandList(ELLLIST *pList,char **pstr)
 	char *str;
 	struct sevrCommand *sevrCommand;
 	ELLNODE *pt;
-	int i;
+	size_t i;
 
 	pt = ellFirst(pList);
 	i=0;
@@ -1272,7 +1268,7 @@ void getStringStatCommandList(ELLLIST *pList,char **pstr)
 	char *str;
 	struct statCommand *statCommand;
 	ELLNODE *pt;
-	int i;
+	size_t i;
 
 	pt = ellFirst(pList);
 	i=0;

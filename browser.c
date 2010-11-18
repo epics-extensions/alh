@@ -242,7 +242,7 @@ int callBrowser(char *url)
 	static int first=1;
 	static char *ComSpec;
 	char command[BUFSIZ];
-	int status;
+	intptr_t status;
 
 	/* Handle quit */
 	if(!strcmp(url,"quit")) {

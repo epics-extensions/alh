@@ -437,6 +437,7 @@ Parameters: 1) filePointer
 int filePrintf(FILE *fPointer,char *buf,time_t *ptime,int typeOfRecord)
 {
   int ret=0;
+  int status;
   static char bufSave[1024];
   static char DBbuff[1024];
   struct tm *tms;
@@ -512,7 +513,7 @@ int filePrintf(FILE *fPointer,char *buf,time_t *ptime,int typeOfRecord)
 	      fseek(fl,alarmLogFileOffsetBytes,SEEK_SET);
 	    if (alarmLogFileOffsetBytes >= alarmLogFileStringLength*alarmLogFileMaxRecords) {
 	      rewind(fl);
-	      truncateFile(psetup.logFile,alarmLogFileOffsetBytes);
+	      status=truncateFile(psetup.logFile,alarmLogFileOffsetBytes);
 	      alarmLogFileOffsetBytes = 0;
 	    }
 	  } 

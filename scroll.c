@@ -90,7 +90,7 @@ char *Strncat(
 
 static int viewFileUsedLength[N_LOG_FILES];        /* used length of file. */
 static int viewFileMaxLength[N_LOG_FILES];        /* max length of file. */
-static unsigned char *viewFileString[N_LOG_FILES];    /* contents of file. */
+static char *viewFileString[N_LOG_FILES];    /* contents of file. */
 
 static Widget viewTextWidget[N_LOG_FILES] = {0,0,0};        /* view text widget */
 static Widget browserWidget;
@@ -144,7 +144,7 @@ int i, l;
         *size += strlen(line) + *depth * 3;
 
         if ( *size+10 > *max ) {
-          *max = *size + 0.5 * *size;
+          *max = (int)(*size + 0.5 * *size);
           buf = (char *) XtRealloc( buf, *max );
         }
 
@@ -186,7 +186,7 @@ int i, l;
                 *size += strlen("----------------------------\n") +
                  *depth * 3;
                 if ( *size+10 > *max ) {
-                  *max = *size + 0.5 * *size;
+                  *max = (int)(*size + 0.5 * *size);
                   buf = (char *) XtRealloc( buf, *max );
                 }
                 for ( i=0; i<*depth; i++ ) strcat( buf, "   " );
@@ -194,7 +194,7 @@ int i, l;
                 readFile( new, buf, max, size, depth );
                 *size += strlen("----------------------------\n") + *depth * 3;
                 if ( *size+10 > *max ) {
-                  *max = *size + 0.5 * *size;
+                  *max = (int)(*size + 0.5 * *size);
                   buf = (char *) XtRealloc( buf, *max );
                 }
                 for ( i=0; i<*depth; i++ ) strcat( buf, "   " );
@@ -291,7 +291,7 @@ void fileViewWindow(Widget w,int option,Widget menuButton)
 		viewFileUsedLength[option] = 0;
 		viewFileMaxLength[option] = 0;
 
-		XtFree((char *)viewFileString[option]);
+		XtFree(viewFileString[option]);
 		viewFileString[option]=NULL;
 		XtUnmanageChild(app_shell);
 
@@ -317,8 +317,8 @@ void fileViewWindow(Widget w,int option,Widget menuButton)
 	/* allocate space for the file string */
 	viewFileMaxLength[operandFile] = MAX(INITIAL_FILE_LENGTH,
 	    2*viewFileUsedLength[operandFile]);
-	viewFileString[operandFile] = (unsigned char *)
-	    XtCalloc(1,(unsigned)viewFileMaxLength[operandFile]);
+	viewFileString[operandFile] = (char *)
+	    XtCalloc(1,viewFileMaxLength[operandFile]);
 	if(!viewFileString[operandFile]) { 
 	  XtVaSetValues(menuButton, XmNset, FALSE, NULL);
 	  createDialog(XtParent(w),XmDIALOG_ERROR,"no free memory","");
@@ -515,7 +515,7 @@ void fileViewWindow(Widget w,int option,Widget menuButton)
 	XmStringFree(str);
 
 	/* add the file string to the text widget */
-	XmTextSetString(viewTextWidget[operandFile], (char *)viewFileString[operandFile]);
+	XmTextSetString(viewTextWidget[operandFile], viewFileString[operandFile]);
 
 	if (operandFile == ALARM_FILE && alarmLogFileOffsetBytes ) {
 		XtVaSetValues(viewTextWidget[operandFile],
@@ -550,7 +550,7 @@ static void closeFileViewShell(Widget w,int operandFile,caddr_t call_data)
 	viewFileUsedLength[operandFile] = 0;
 	viewFileMaxLength[operandFile] = 0;
 
-	XtFree((char *)viewFileString[operandFile]);
+	XtFree(viewFileString[operandFile]);
 	viewFileString[operandFile]=NULL;
 }
 
@@ -568,7 +568,7 @@ caddr_t call_data)
 	viewFileMaxLength[operandFile] = 0;
 
 
-	XtFree((char *)viewFileString[operandFile]);
+	XtFree(viewFileString[operandFile]);
 	viewFileString[operandFile]=NULL;
 	XtUnmanageChild(XtParent(w));
 }
@@ -610,16 +610,16 @@ void updateLog(int fileIndex,char *string)
 		/* string doesn't fit - reallocate to get enough room */
 		viewFileMaxLength[fileIndex] = MAX(INITIAL_FILE_LENGTH,
 		    2*viewFileMaxLength[fileIndex]);
-		tmp = (char *)XtCalloc(1,(unsigned)viewFileMaxLength[fileIndex]);
+		tmp = (char *)XtCalloc(1,viewFileMaxLength[fileIndex]);
 		strcpy(tmp,(const char *)viewFileString[fileIndex]);
-		XtFree((char *)viewFileString[fileIndex]);
-		viewFileString[fileIndex] = (unsigned char*)tmp;
+		XtFree(viewFileString[fileIndex]);
+		viewFileString[fileIndex] = (char*)tmp;
 
 		if (viewFileUsedLength[fileIndex] + stringLength  <= 
 	   	 viewFileMaxLength[fileIndex]) {
 
 			/* string fits, insert */
-			strcat((char *)viewFileString[fileIndex],string);
+			strcat(viewFileString[fileIndex],string);
 			viewFileUsedLength[fileIndex] = viewFileUsedLength[fileIndex] + 
 			    stringLength;
 			XmTextReplace(viewTextWidget[fileIndex],oldUsedLength,
@@ -651,7 +651,7 @@ void updateLog(int fileIndex,char *string)
 		    "updateLog: unable to close file %s.\n",filename);
 
 		/* add the file string to the text widget */
-		XmTextSetString(viewTextWidget[fileIndex], (char *)viewFileString[fileIndex]);
+		XmTextSetString(viewTextWidget[fileIndex], viewFileString[fileIndex]);
 #endif
 
 	}
@@ -688,9 +688,9 @@ void updateAlarmLog(int fileIndex,char *string)
 	    viewFileMaxLength[fileIndex])
 	{
 		/* put string at end */
-		strcat((char *)viewFileString[fileIndex],string);
+		strcat(viewFileString[fileIndex],string);
 		viewFileUsedLength[fileIndex] = viewFileUsedLength[fileIndex] + stringLength;
-		XmTextSetString(viewTextWidget[fileIndex], (char *)viewFileString[fileIndex]);
+		XmTextSetString(viewTextWidget[fileIndex], viewFileString[fileIndex]);
 
 	} else 
 	{
@@ -726,6 +726,7 @@ void browser_fileViewWindow(Widget w,int option,Widget menuButton)
 	char filename[120];
 	int operandFile=0;
 	long operandFileLong;
+	long optionLong;
 	/* definitions for search widgets: */
 	Arg al[20];
 	int ac;
@@ -757,7 +758,7 @@ void browser_fileViewWindow(Widget w,int option,Widget menuButton)
 		viewFileUsedLength[option] = 0;
 		viewFileMaxLength[option] = 0;
 
-		XtFree((char *)viewFileString[option]);
+		XtFree(viewFileString[option]);
 		viewFileString[option]=NULL;
 		XtUnmanageChild(app_shell);
 		XtVaSetValues(menuButton, XmNset, FALSE, NULL);
@@ -803,8 +804,8 @@ void browser_fileViewWindow(Widget w,int option,Widget menuButton)
 	if (alarmLogFileMaxRecords)
 	     viewFileMaxLength[operandFile] = alarmLogFileStringLength*alarmLogFileMaxRecords;
 
-	viewFileString[operandFile] = (unsigned char *)
-	    XtCalloc(1,(unsigned)viewFileMaxLength[operandFile]);
+	viewFileString[operandFile] = (char *)
+	    XtCalloc(1,viewFileMaxLength[operandFile]);
 
 	if(!viewFileString[operandFile]) { 
 	  XtVaSetValues(menuButton, XmNset, FALSE, NULL);
@@ -1135,7 +1136,7 @@ void browser_fileViewWindow(Widget w,int option,Widget menuButton)
 			    xmPushButtonWidgetClass,rowcol2, NULL);
 			XtAddCallback(showButton,XmNactivateCallback,showSelectedCallback,app_shell);
 
-			long optionLong=option;
+			optionLong=option;
 			showAllButton=XtVaCreateManagedWidget("Show Current File",
 			    xmPushButtonWidgetClass,rowcol2, NULL);
 			XtAddCallback(showAllButton, XmNactivateCallback,showAllCallback,(XtPointer)optionLong);
@@ -1227,7 +1228,7 @@ void browser_fileViewWindow(Widget w,int option,Widget menuButton)
 	XmStringFree(str);
 
 	/* add the file string to the text widget */
-	XmTextSetString(browserWidget, (char *)viewFileString[operandFile]);
+	XmTextSetString(browserWidget, viewFileString[operandFile]);
 		XtVaSetValues(browserWidget,
 		    XmNcursorPosition,  alarmLogFileOffsetBytes+1,
 		    NULL);
@@ -1245,11 +1246,11 @@ static void showAllCallback(Widget w,XtPointer client_data,XtPointer call_data)
 	switch (index) {
 	case ALARM_FILE:
 		XmTextSetString(browserWidget,
-	    		(char *)viewFileString[ALARM_FILE]);
+	    		viewFileString[ALARM_FILE]);
 		break;
 	case OPMOD_FILE:
 		XmTextSetString(browserWidget,
-	    		(char *)viewFileString[OPMOD_FILE]);
+	    		viewFileString[OPMOD_FILE]);
 		break;
 	}
 

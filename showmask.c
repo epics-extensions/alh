@@ -20,6 +20,11 @@
 **********************************************************************/
 
 #include <stdlib.h>
+#include <stdio.h>
+/* If not MS Visual C++ or MS Visual C++ is 2010 or later  */
+#if !defined(_MSC_VER) || _MSC_VER >= 1600
+#include <stdint.h>
+#endif
 
 #include <Xm/Xm.h>
 #include <Xm/Form.h>
@@ -236,6 +241,7 @@ ALINK    *area;
 	Widget currentMaskLabel, currentMaskStringLabelW;
 	Widget resetMaskLabel, resetMaskStringLabelW;
 	int i;
+        intptr_t iptr;
 	XmString string;
 	static ActionAreaItem mask_items[] = {
 		         { "Apply",   forceMaskApplyCallback,   NULL    },
@@ -418,9 +424,9 @@ ALINK    *area;
 		if (_passive_flag && i == ALARMACKT ) {
 			XtVaSetValues(alarmMaskToggleButtonW[i], XmNsensitive, FALSE, NULL);
 		}
-		XtPointer ilong=i;
+                iptr=i;
 		XtAddCallback(alarmMaskToggleButtonW[i], XmNvalueChangedCallback,
-		    (XtCallbackProc)forceMaskChangeCallback, (XtPointer)ilong);
+		    (XtCallbackProc)forceMaskChangeCallback, (XtPointer)iptr);
 	}
 
 	XtManageChild(rowcol);

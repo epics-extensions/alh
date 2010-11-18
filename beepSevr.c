@@ -272,10 +272,10 @@ ALINK    *area;
     radiobox = XmCreateRadioBox (beepSevrFrameW, "radiobox", NULL, 0);
 
 	for (i = 0; i < ALH_ALARM_NSEV-1; i++){
+		long ii=i+1;
 	    beepSevrToggleButtonW[i] = XmCreateToggleButtonGadget (radiobox,
 			 (char *)alhAlarmSeverityString[i+1], NULL, 0);
 		XtVaSetValues(beepSevrToggleButtonW[i], XmNuserData, area, NULL);
-		long ii=i+1;
 		XtAddCallback(beepSevrToggleButtonW[i], XmNvalueChangedCallback,
 		    beepSevrChangeCallback, (XtPointer)ii);
 		XtManageChild(beepSevrToggleButtonW[i]);

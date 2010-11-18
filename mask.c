@@ -262,6 +262,7 @@ static void maskCreateDialog(ALINK *area)
 		    XmNtopOffset,        10,
 		    NULL);
 		for (j = 0; j < num_buttons; j++){
+			long index=maskItem[i].choice[j].index;
 			pushButtonW = XtVaCreateManagedWidget(
 			    maskItem[i].choice[j].label,
 			    xmPushButtonWidgetClass, form,
@@ -275,7 +276,6 @@ static void maskCreateDialog(ALINK *area)
 			    j != num_buttons-1? XmATTACH_POSITION : XmATTACH_FORM,
 			    XmNrightPosition,        TIGHTNESS*(j+3) + (TIGHTNESS-1),
 			    NULL);
-			long index=maskItem[i].choice[j].index;
 			XtAddCallback(pushButtonW, XmNactivateCallback,
 			    (XtCallbackProc)maskActivateCallback,
 			    (XtPointer)index);

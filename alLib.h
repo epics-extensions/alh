@@ -55,7 +55,7 @@ typedef struct countFilter {
 	short  ackt;		/* acknowledge transients? */
 	char   value[MAX_STRING_SIZE];	/* channel value from CA */
 	int    countIndex;
-	int    alarmTime;
+	time_t alarmTime;
 	time_t *alarmTimeHistory;
 	void  *clink;
 	XtIntervalId timeoutId;

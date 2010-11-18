@@ -34,9 +34,11 @@ void awUpdateRowWidgets(line)                 Update line widgets
 
 #include <stdlib.h>
 #include <stdio.h>
+#ifndef CYGWIN32
 #ifndef WIN32
 #include <unistd.h>
 #include <pwd.h>
+#endif
 #endif
 #include <errno.h>
 #include <sys/types.h>
@@ -337,7 +339,7 @@ static Boolean cvt (
 Display *d;
 struct anyLine *line;
 Atom MOTIF_DROP;
-int l;
+size_t l;
 char *dragData;
 
   d = XtDisplay( w );
@@ -566,6 +568,7 @@ Widget alhCreateMenu(Widget parent,XtPointer user_data)
 		         {NULL},
 		     	};
 	/* Albert Kagarmanov new */
+#ifndef CYGWIN32
 #ifndef WIN32
 	static MenuItem setup_broadcast_mess_menu[] = {
 		         { "Common Message",      PushButtonGadgetClass, 'C', NULL, NULL,
@@ -580,6 +583,7 @@ Widget alhCreateMenu(Widget parent,XtPointer user_data)
 		         {NULL},
 		     	};
 
+#endif
 #endif
 /* end Albert Kagarmanov new */
 /* ******************************************** Albert1 : ************************************ */
@@ -601,9 +605,11 @@ static MenuItem action_menuNew[] = {
 		         { "NoAck for One Hour ...",  ToggleButtonGadgetClass, 'N', "Ctrl<Key>N", "Ctrl+N",
 		             alhActionCallback, (XtPointer)MENU_ACTION_NOACKTIMER, (MenuItem *)NULL, 0 },
 			 /* Albert1 For MESSAGE BROADCAST: */
+#ifndef CYGWIN32
 #ifndef WIN32
 		         { "Send Message ...",  PushButtonGadgetClass, 'B', "Ctrl<Key>B", "Ctrl+B",
 		             0, 0, (MenuItem *)setup_broadcast_mess_menu, 0 },
+#endif
 #endif
 		         {NULL},
 		     	};
@@ -1098,6 +1104,7 @@ XmSelectionBoxCallbackStruct *call_data)
 	XtUnmanageChild(w);
 }
 
+#ifndef CYGWIN32
 #ifndef WIN32
 struct messBroadcastData
 {
@@ -1311,6 +1318,7 @@ XtUnmanageChild(w);
  lockf(messBroadcastDeskriptor, F_ULOCK, 0L);
 }
 
+#endif
 #endif
  
 /******************************************************

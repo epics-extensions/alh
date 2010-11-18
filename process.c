@@ -50,7 +50,7 @@ static Widget g_pum = NULL;
 void processSpawn_callback(Widget w,char *command,void * call_data)
 {
 	char buff[MAX_STRING_LENGTH +2];
-	int l;
+	size_t l;
 	int status;
 #ifdef WIN32
 	static int first=1;

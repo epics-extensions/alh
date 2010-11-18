@@ -166,6 +166,7 @@ static void propUpdateDialogWidgets(struct propWindow *propWindow)
 	MASK mask;
 	Pixel textBackground;
 	Pixel textBackgroundNS;
+	size_t ii=0;
 
 	if (programId != ALH) textBackground = bg_pixel[3];
 	else textBackground = bg_pixel[0];
@@ -444,14 +445,13 @@ static void propUpdateDialogWidgets(struct propWindow *propWindow)
 	     Guidance Text
 	     --------------------------------- */
 	pt = sllFirst(&(link->GuideList));
-	i=0;
 	while (pt) {
 		guideLink = (struct guideLink *)pt;
-		i += strlen(guideLink->list);
-		i += 1;
+		ii += strlen(guideLink->list);
+		ii += 1;
 		pt = sllNext(pt);
 	}
-	str = (char*)calloc(i+1,sizeof(char));
+	str = (char*)calloc(ii+1,sizeof(char));
 	pt = sllFirst(&(link->GuideList));
 	while (pt) {
 		guideLink = (struct guideLink *)pt;

@@ -19,6 +19,7 @@
 **********************************************************************/
 
 #define DEBUG_CALLBACKS 0
+#define MIN_MULTICLICK_INTERVAL 500
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -52,6 +53,8 @@ XFontStruct *font_info;
 
 int main(int argc,char *argv[])
 {
+
+	int interval=0;
 	/* OS specific initialization */
 #ifdef WIN32
 	HCLXmInit();
@@ -70,6 +73,13 @@ int main(int argc,char *argv[])
 		XtWarning("cannot open display");
 		exit(-1);
 	}
+
+        interval = XtGetMultiClickTime(display);
+printf("Original MultiClickTime=%d\n",interval);
+        if (interval < MIN_MULTICLICK_INTERVAL) XtSetMultiClickTime(display,MIN_MULTICLICK_INTERVAL);
+        interval = XtGetMultiClickTime(display);
+printf("New MultiClickTime=%d\n",interval);
+
 
 	XtAppSetWarningMsgHandler(appContext,
 	    (XtErrorMsgHandler)trapExtraneousWarningsHandler);

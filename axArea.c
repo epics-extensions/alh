@@ -411,7 +411,7 @@ void createMainWindowWidgets(ALINK *area)
 	XmString    str;
 	char   *app_name;
 	char   *title_str;
-	uint len = 0;
+	size_t len = 0;
 	Widget label_executionMode;
 
 	if (area->toplevel) return;

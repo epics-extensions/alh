@@ -92,7 +92,7 @@ static void treeView(GLINK *glink,int command,char *treeSym,int (*viewFilter)())
 	SNODE	*pt;
 	int	 subcommand;
 	int	 oldViewCount=0;
-	int length;
+	size_t length;
 	static char symMiddle={
 		0x15	};
 	static char symContinue={
