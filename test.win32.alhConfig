@@ -22,6 +22,12 @@ This is more guidance for Group1.SubGroup1.
 $END
 CHANNEL  Group1.SubGroup1  jba:Example5 -----
 CHANNEL  Group1.SubGroup1  jba:Example6 -----
+GROUP    Group1.SubGroup1  Group1.SubSubGroup1
+CHANNEL  Group1.SubSubGroup1  jba:Example11 -----
+CHANNEL  Group1.SubSubGroup1  jba:Example12 -----
+GROUP    Group1.SubGroup1  Group1.SubSubGroup2
+CHANNEL  Group1.SubSubGroup2  jba:Example13 -----
+CHANNEL  Group1.SubSubGroup2  jba:Example14 -----
 GROUP    Group1   Group1.SubGroup2
 $GUIDANCE
 This is the text guidance for Group1.SubGroup2.
