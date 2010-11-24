@@ -75,10 +75,8 @@ int main(int argc,char *argv[])
 	}
 
         interval = XtGetMultiClickTime(display);
-printf("Original MultiClickTime=%d\n",interval);
         if (interval < MIN_MULTICLICK_INTERVAL) XtSetMultiClickTime(display,MIN_MULTICLICK_INTERVAL);
         interval = XtGetMultiClickTime(display);
-printf("New MultiClickTime=%d\n",interval);
 
 
 	XtAppSetWarningMsgHandler(appContext,
