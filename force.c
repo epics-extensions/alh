@@ -1157,9 +1157,10 @@ void forcePVUpdateFields(GCLINK* gclink,FORCEPV* pfPV,int context)
 	pforcePV->disabled=pfPV->disabled;
         updateDisabledForcePVCount(area,(int)(pforcePV->disabled-disabledHold));
 
-	if (pforcePV->name && strcmp(pforcePV->name,"CALC")==0)
+	if (pforcePV->name && strcmp(pforcePV->name,"CALC")==0) {
+                pforcePV->currentValue = -999;
 		forcePVCalcPerform(gclink,context,1);
-	else {
+	} else {
 		holdValue=pforcePV->currentValue;
 		pforcePV->currentValue = -999;
 		forcePVNewValueEvent(gclink,(short)context,holdValue);
