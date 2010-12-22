@@ -1181,13 +1181,12 @@ static void alUpdateGroupMask(CLINK *clink,int index,int op)
 	      labelStr[80] = 0;
 
 	    }
-
-	    str = XmStringCreateSimple(labelStr);
-	    XtVaSetValues(areaTop->blinkButton,
-	     XmNlabelString, str,
-	     NULL);
-	    XmStringFree(str);
-
+            if (areaTop->blinkButton) {
+	      str = XmStringCreateSimple(labelStr);
+	      XtVaSetValues(areaTop->blinkButton,
+	        XmNlabelString, str, NULL);
+	      XmStringFree(str);
+	    }
 	  }
 
 	}
@@ -1407,7 +1406,6 @@ void alChangeChanMask(CLINK *clink,MASK mask)
 		clink->modified = 1;
 		clink->pmainGroup->modified = TRUE;
 	}
-
 
 
 }
