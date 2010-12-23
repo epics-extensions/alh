@@ -71,10 +71,10 @@ static struct beepsetup {
     short          balance;
     short          beepSource;
     unsigned char *beep;
-    unsigned long  beepLength;
+    size_t         beepLength;
     char          *beepFileName;
     unsigned char *beepFileData;
-    unsigned long  beepFileLength;
+    size_t         beepFileLength;
 } audioSetup={NULL,NULL,AUDIO_DEFAULT_OUTPUT,AUDIO_CHANNELS_STEREO,
               8000,50,BEEP_AUDIO_SOURCE_INTERNAL,0,0,0,0,0} ;
 
@@ -518,9 +518,9 @@ static int audioSetupNewFilename(Widget widget, char *string)
 {
     char         * filename;
     char         * plast;
-    int            filenameSize;
+    size_t         filenameSize;
     unsigned long  fileSize;
-    unsigned long  beepLength;
+    size_t         beepLength;
     FILE         * fp;
     unsigned char* beep;
 
