@@ -19,6 +19,10 @@
  */
 
 #include <stdlib.h>
+
+#include <X11/Xlib.h>
+#include <X11/XKBlib.h>
+
 #include "alh.h"
 
 /* Audio device not implemented */
@@ -29,7 +33,7 @@
 int alBeep(Display *displayBB)
 {
 	/* system("play /path/to/beep.wav"); */
-	XBell(displayBB,0);
+	XkbBell(displayBB,None,0,None);
 	return 0;
 }
 
