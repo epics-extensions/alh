@@ -1227,7 +1227,7 @@ fclose(fp);
 if(!amIsender) 
   {
     createDialog(w,XmDIALOG_INFORMATION,"\nBROADCAST MESSAGE:\n",messBuff);
-    XBell(XtDisplay(w),50);
+    alBeep(XtDisplay(w));
   }
 if(strncmp(messBuff,reloadMBString+2,strlen(reloadMBString)-3 )==0) {
 

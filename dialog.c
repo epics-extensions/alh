@@ -326,9 +326,9 @@ void errMsg(const char *fmt, ...)
 		warningboxMessages += 1;
 		XtManageChild(warningbox);
 	} else {
-		XBell(display,50); 
-		XBell(display,50); 
-		XBell(display,50);
+		alBeep(display);
+		alBeep(display);
+		alBeep(display);
 		cstring=XmStringCreateLtoR(lstring,XmSTRING_DEFAULT_CHARSET);
 		nargs=0;
 		XtSetArg(args[nargs],XmNtitle,"ALH Warning"); 
