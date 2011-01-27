@@ -31,6 +31,9 @@
 #include <signal.h>
 #include <stropts.h>
 
+#include <X11/Xlib.h>
+#include <X11/XKBlib.h>
+
 #include <Xm/Xm.h>
 #include <Xm/AtomMgr.h>
 #include <Xm/Form.h>
@@ -251,10 +254,10 @@ void alBeep(Display *displayBB)
     percent = 100;
 
     if (audioSetup.port==AUDIO_NONE){
-        XBell(displayBB,percent);
+        XkbBell(displayBB,None,percent,None);
     } else {
         if (alAudioBeep()){
-            XBell(displayBB,percent);
+            XkbBell(displayBB,None,percent,None);
         }
     }
 }
