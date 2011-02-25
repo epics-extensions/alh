@@ -328,7 +328,7 @@ void fileViewWindow(Widget w,int option,Widget menuButton)
 	/* read the file string */
 	if ((fp = fopen(filename, "r")) == NULL) {
 		XtVaSetValues(menuButton, XmNset, FALSE, NULL);
-		fprintf(stderr,"fileViewWindow: file %s not found\n",filename);
+		errMsg("Cannot open file view: file %s not found\n",filename);
 		return;             /* bail out if no file found */
 	}
 
@@ -347,8 +347,10 @@ void fileViewWindow(Widget w,int option,Widget menuButton)
 	}
 
 	clearerr(fp);
-	if (fclose(fp)) fprintf(stderr,
-		"fileViewWindow: unable to close file %s.\n",filename);
+	if (fclose(fp)) {
+                fprintf(stderr, "fileViewWindow: unable to close file %s.\n",filename);
+                errMsg("Error: unable to close file %s.\n",filename);
+        }
 
 	/*  create view window dialog */
 	if (!app_shell) {
@@ -643,12 +645,15 @@ void updateLog(int fileIndex,char *string)
 		/* read the file string */
 		if ((fp = fopen(filename, "r")) == NULL) {
 			fprintf(stderr,"updateLog: file %s open error.\n",filename);
+			errMsg("Error opening file  %s\n",filename);
 			return;                /* bail out if no file found */
 		}
 		fread(viewFileString[fileIndex], sizeof(char), 
 		    viewFileUsedLength[fileIndex], fp);
-		if (fclose(fp)) fprintf(stderr, 
-		    "updateLog: unable to close file %s.\n",filename);
+		if (fclose(fp)) {
+                    fprintf(stderr, "updateLog: unable to close file %s.\n",filename);
+                    errMsg("Error closing file %s\n",filename);
+                }
 
 		/* add the file string to the text widget */
 		XmTextSetString(viewTextWidget[fileIndex], viewFileString[fileIndex]);
@@ -779,8 +784,7 @@ void browser_fileViewWindow(Widget w,int option,Widget menuButton)
 			}
 #endif
 		if ((fp = fopen(filename, "r")) == NULL) {
-			sprintf(sbuf, "fileViewWindow: Can't open file %s\n",filename);
-			createDialog(w,XmDIALOG_WARNING,sbuf," ");
+                        errMsg("Can't open file %s\n",filename);
 			fprintf(stderr, "Can't open file %s\n",filename);
 			return;
 		}
