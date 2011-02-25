@@ -137,10 +137,10 @@ char *displayName;
 
 #endif
 
-int filePrintf(FILE *fPointer,char *buf,time_t *ptime,int typeOfRecord);
+static int filePrintf(FILE *fPointer,char *buf,time_t *ptime,int typeOfRecord);
 #ifdef HAVE_SYSV_IPC
-int write2MQ(int, char *);
-int write2msgQ(int, char *);
+static int write2MQ(int, char *);
+static int write2msgQ(int, char *);
 #endif
 
 #ifdef CMLOG
@@ -239,7 +239,7 @@ void alLogAlarmMessage(time_t *ptimeofdayAlarm,int messageCode,CLINK* clink,cons
         if (!_description_field_flag)
         {
             if (_global_flag)
-                sprintf(buff, "%-28s %-12s %-16s %-12s %-5s %-40.40s\n",
+                sprintf(buff, "%-28s %-12s %-16s %-12s %-5s %-40.40s",
                         cdata->name,
                         alhAlarmStatusString[cdata->curStat],
                         alhAlarmSeverityString[cdata->curSevr],
@@ -247,7 +247,7 @@ void alLogAlarmMessage(time_t *ptimeofdayAlarm,int messageCode,CLINK* clink,cons
                         ackTransientsString[cdata->curMask.AckT],
                         cdata->value);
             else
-                sprintf(buff, "%-28s %-12s %-16s %-40.40s\n",
+                sprintf(buff, "%-28s %-12s %-16s %-40.40s",
                         cdata->name,
                         alhAlarmStatusString[cdata->curStat],
                         alhAlarmSeverityString[cdata->curSevr],
@@ -256,14 +256,14 @@ void alLogAlarmMessage(time_t *ptimeofdayAlarm,int messageCode,CLINK* clink,cons
         else
         {   /* _description_field_flag is ON */
             if (_global_flag)
-                sprintf(buff, "%-28s %-28s %-40.40s %-12s %-16s %-12s %-5s\n",
+                sprintf(buff, "%-28s %-28s %-40.40s %-12s %-16s %-12s %-5s",
                 cdata->name,cdata->description,cdata->value,
                 alhAlarmStatusString[cdata->curStat],
                 alhAlarmSeverityString[cdata->curSevr],
                 alhAlarmSeverityString[cdata->unackSevr],
                 ackTransientsString[cdata->curMask.AckT]);
             else
-                sprintf(buff, "%-28s %-28s %-40.40s %-12s %-16s\n",
+                sprintf(buff, "%-28s %-28s %-40.40s %-12s %-16s",
                 cdata->name,cdata->description,cdata->value,
                 alhAlarmStatusString[cdata->curStat],
                 alhAlarmSeverityString[cdata->curSevr]);
@@ -357,7 +357,7 @@ void alLogOpModAckMessage(int messageCode,GCLINK* gclink,const char* fmt,...)
 #endif
 
 	if (!alhArea || !alhArea->blinkString){
-		sprintf(buff," : : %s \n",text);
+		sprintf(buff," : : %s",text);
 	} else {
 		if (!gcdata){
 			sprintf(buff,"%s: : %s %-16s",alhArea->blinkString,text,
@@ -434,7 +434,7 @@ Parameters: 1) filePointer
 
 ***********************************************************************/
 
-int filePrintf(FILE *fPointer,char *buf,time_t *ptime,int typeOfRecord)
+static int filePrintf(FILE *fPointer,char *buf,time_t *ptime,int typeOfRecord)
 {
   int ret=0;
   int status;
@@ -446,7 +446,7 @@ int filePrintf(FILE *fPointer,char *buf,time_t *ptime,int typeOfRecord)
 
   if(!fPointer) return (-1);
 
-  if((!masterFlag) && (fPointer==fl)) return (0);
+  if ((_lock_flag && !masterFlag) && (fPointer==fl)) return (0);
   if(_message_broadcast_flag && notsave && (fPointer==fl) ) return (0);
 
   if (ptime == NULL)             /* Current time */
@@ -518,11 +518,12 @@ int filePrintf(FILE *fPointer,char *buf,time_t *ptime,int typeOfRecord)
 	    }
 	  } 
 
-
   ret=fprintf(fPointer,"%s",bufSave);
 
   if (ret<0 && !_read_only_flag)  {
     fprintf(stderr,"Can't write '%s' to file=%s!!!\n",
+	    bufSave,(fPointer==fl)?"LOGfile":"OpModFile" ); 
+    errMsg("Error writing '%s' to file=%s!!!\n",
 	    bufSave,(fPointer==fl)?"LOGfile":"OpModFile" ); 
   }
 
@@ -579,7 +580,7 @@ return (ret);
 ***********************************************************************/
 
 #ifdef HAVE_SYSV_IPC
-int write2MQ(int mq,char *message)
+static int write2MQ(int mq,char *message)
 {
   char buf[256];
   static int lostFlag=0;
@@ -645,7 +646,7 @@ int write2MQ(int mq,char *message)
 }
 
 
-int write2msgQ(int mq, char *mes)
+static int write2msgQ(int mq, char *mes)
 {
   if (msgsnd(mq,mes,strlen(mes),IPC_NOWAIT /* 0*/) == -1 )
     {
