@@ -141,7 +141,7 @@ int i, l;
       result = fgets( line, MAXCONFIGFILELINE, cur->f );
       if ( result ) {
 
-        *size += strlen(line) + *depth * 3;
+        *size += (int)strlen(line) + *depth * 3;
 
         if ( *size+10 > *max ) {
           *max = (int)(*size + 0.5 * *size);
@@ -168,7 +168,7 @@ int i, l;
 		if ( psetup.configDir ) {
                   strncpy( incFile, psetup.configDir, 1023 );
 		  incFile[1023] = 0;
-		  l = strlen( incFile );
+		  l = (int)strlen( incFile );
 		  if ( l > 0 ) {
 		    if ( incFile[l-1] != '/' ) {
 		      Strncat( incFile, "/", 1023 );
@@ -183,7 +183,7 @@ int i, l;
 		incFile[1023] = 0;
                 new->f = fopen( incFile, "r" );
 		(*depth)++;
-                *size += strlen("----------------------------\n") +
+                *size += (int)strlen("----------------------------\n") +
                  *depth * 3;
                 if ( *size+10 > *max ) {
                   *max = (int)(*size + 0.5 * *size);
@@ -192,7 +192,7 @@ int i, l;
                 for ( i=0; i<*depth; i++ ) strcat( buf, "   " );
                 strcat( buf, "----------------------------\n" );
                 readFile( new, buf, max, size, depth );
-                *size += strlen("----------------------------\n") + *depth * 3;
+                *size += (int)strlen("----------------------------\n") + *depth * 3;
                 if ( *size+10 > *max ) {
                   *max = (int)(*size + 0.5 * *size);
                   buf = (char *) XtRealloc( buf, *max );
@@ -587,7 +587,7 @@ void updateLog(int fileIndex,char *string)
 #endif
 	char *tmp;
 
-	int stringLength = strlen(string);
+	int stringLength = (int)strlen(string);
 	int oldUsedLength = viewFileUsedLength[fileIndex];
 
 
@@ -722,8 +722,8 @@ void browser_fileViewWindow(Widget w,int option,Widget menuButton)
 	static Widget opmod_shell=NULL;
 	Widget app_shell=NULL,title=0,button,button1;
 	Widget previous;
-	char sbuf[120];
 #ifndef WIN32
+	char sbuf[120];
 	DIR *directory;
 #endif
 	struct stat statbuf;         /* Information on a file. */
@@ -1358,7 +1358,7 @@ XtPointer call_data)
   XChangeWindowAttributes(display,XtWindow((Widget)client_data),CWCursor,&attrs);
   XFlush(display);
   
-  len=strlen(FSnameshort)-10;   /*  length of name without "extension" */
+  len=(int)strlen(FSnameshort)-10;   /*  length of name without "extension" */
 #ifndef WIN32
   while((rdr=readdir(directory))) 
     {
@@ -1576,7 +1576,7 @@ XtPointer call_data)
 	}
 	XmTextSetHighlight(text_w,positionSearch,positionSearch+lenSearch, 
 	    XmHIGHLIGHT_NORMAL);
-	lenSearch=strlen(search_pat);
+	lenSearch=(int)strlen(search_pat);
 	positionSearch = XmTextGetCursorPosition(text_w);
 	for(p=&string[positionSearch+1];(p=strchr((const char *)p,*search_pat));p++)
 		if (!strncmp(p, search_pat, lenSearch)) {
@@ -1624,7 +1624,7 @@ XtPointer call_data)
 	}
 	XmTextSetHighlight(text_w,positionSearch,positionSearch+lenSearch, 
 	    XmHIGHLIGHT_NORMAL);
-	lenSearch=strlen(search_pat);
+	lenSearch=(int)strlen(search_pat);
 	if((positionSearch=XmTextGetCursorPosition(text_w))>0)
 	{
 		for (p = &string[positionSearch-1]; p >= string; p--)

@@ -100,7 +100,7 @@ Else if you're  master-alh-process  -- the same
 			errMsg("processSpawn_callback: Cannot find command processor\n");
 			return;
 		}
-		status = _spawnl(_P_DETACH, ComSpec, ComSpec, "/C", buff, NULL);
+		status = (int)_spawnl(_P_DETACH, ComSpec, ComSpec, "/C", buff, NULL);
 #else
 		sprintf(buff,"%s &",command);
 		status=system(buff);
