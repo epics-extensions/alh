@@ -56,8 +56,10 @@ int main(int argc,char *argv[])
 
 	int interval=0;
 	/* OS specific initialization */
+#ifdef HCLXMINIT
 #ifdef WIN32
 	HCLXmInit();
+#endif
 #endif
 #ifdef HP_UX
         _main();
