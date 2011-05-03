@@ -588,3 +588,9 @@ Fri Jul  9 15:14:24 CDT 2010 ALH_1_2_26
 	window string. Alh may be started with main window only (-mainwindow).
 	Removed references to Alarm Configuration Tool in ALH Users Manual.
 
+Fri Feb 25 14:23:01 CST 2011 ALH_1_2_27
+	Use alBeep instead of calling XBell directly. Changed call to XBell
+	to call to XkbBell. Portability changes. alLog.c: Added static qualifier 
+	to local routines. Remove extra carrige return in alarm log output. 
+	Check for _lock_flag also when checking masterFlag.
+
