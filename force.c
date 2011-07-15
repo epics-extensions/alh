@@ -358,8 +358,7 @@ static void forcePVCreateDialog(ALINK *area)
 	    xmLabelGadgetClass, form,
 	    XmNalignment,       XmALIGNMENT_END,
 	    XmNtopAttachment,   XmATTACH_FORM,
-	    XmNrightAttachment, XmATTACH_POSITION,
-	    XmNrightPosition,   50,
+	    XmNleftAttachment,  XmATTACH_FORM,
 	    XmNrecomputeSize,   True,
 	    NULL);
 
@@ -367,8 +366,9 @@ static void forcePVCreateDialog(ALINK *area)
 	    xmLabelGadgetClass, form,
 	    XmNalignment,       XmALIGNMENT_BEGINNING,
 	    XmNtopAttachment,   XmATTACH_FORM,
-	    XmNleftAttachment,  XmATTACH_POSITION,
-	    XmNleftPosition,    50,
+	    XmNleftAttachment,  XmATTACH_WIDGET,
+	    XmNleftWidget,      nameLabelW,
+	    XmNrightAttachment,  XmATTACH_FORM,
 	    XmNrecomputeSize,   True,
 	    NULL);
 
@@ -404,8 +404,8 @@ static void forcePVCreateDialog(ALINK *area)
 	    xmLabelGadgetClass, form2,
 	    XmNlabelString,            string,
 	    XmNtopAttachment,          XmATTACH_WIDGET,
-        XmNtopWidget,              forcePVdisabledToggleButton,
-		XmNtopOffset,              10,
+	    XmNtopWidget,              forcePVdisabledToggleButton,
+	    XmNtopOffset,              10,
 	    NULL);
 	XmStringFree(string);
 
@@ -413,12 +413,12 @@ static void forcePVCreateDialog(ALINK *area)
 	    xmTextFieldWidgetClass, form2,
 	    XmNspacing,                0,
 	    XmNmarginHeight,           0,
-	    XmNcolumns,                30,
 	    XmNmaxLength,              PVNAME_SIZE,
 	    XmNbackground,             textBackground,
 	    XmNtopAttachment,          XmATTACH_WIDGET,
 	    XmNtopWidget,              forcePVnameLabel,
 	    XmNleftAttachment,         XmATTACH_FORM,
+	    XmNrightAttachment,        XmATTACH_FORM,
 	    (XtPointer)NULL);
 
 	XtAddCallback(forcePVnameTextW, XmNactivateCallback,
@@ -491,8 +491,8 @@ static void forcePVCreateDialog(ALINK *area)
 	    XmNbackground,             textBackground,
 	    XmNtopAttachment,          XmATTACH_WIDGET,
 	    XmNtopWidget,              prev,
-	    XmNleftAttachment,         XmATTACH_WIDGET,
-	    XmNleftWidget,             forcePVforceValueLabel,
+	    XmNleftAttachment,         XmATTACH_POSITION,
+	    XmNleftPosition,           40,
 	    NULL);
 
 	XtAddCallback(forcePVforceValueTextW, XmNactivateCallback,
@@ -516,8 +516,8 @@ static void forcePVCreateDialog(ALINK *area)
 	    XmNbackground,             textBackground,
 	    XmNtopAttachment,          XmATTACH_WIDGET,
 	    XmNtopWidget,              forcePVforceValueTextW,
-	    XmNleftAttachment,         XmATTACH_WIDGET,
-	    XmNleftWidget,             forcePVresetValueLabel,
+	    XmNleftAttachment,         XmATTACH_POSITION,
+	    XmNleftPosition,           40,
 	    NULL);
 
 	XtAddCallback(forcePVresetValueTextW, XmNactivateCallback,
@@ -595,17 +595,17 @@ static void forcePVCreateDialog(ALINK *area)
 		    xmTextFieldWidgetClass, form3,
 		    XmNspacing,                0,
 		    XmNmarginHeight,           0,
-		    XmNcolumns,                30,
 		    XmNmaxLength,              PVNAME_SIZE,
 		    XmNbackground,             textBackground,
 		    XmNtopAttachment,          XmATTACH_WIDGET,
 		    XmNtopWidget,              prev,
+#if 0
 		    XmNleftAttachment,         XmATTACH_WIDGET,
 		    XmNleftWidget,             forcePVCalcPVLabel[i],
-#if 0
-			XmNrightAttachment,         XmATTACH_POSITION,
-			XmNrightPosition,           50,
 #endif
+		    XmNleftAttachment,         XmATTACH_POSITION,
+		    XmNleftPosition,           10,
+		    XmNrightAttachment,         XmATTACH_FORM,
 		    (XtPointer)NULL);
 	
 		prev = forcePVCalcPVTextW[i];
