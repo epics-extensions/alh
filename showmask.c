@@ -307,17 +307,17 @@ ALINK    *area;
 	    xmLabelGadgetClass, form,
 	    XmNalignment,       XmALIGNMENT_END,
 	    XmNtopAttachment,   XmATTACH_FORM,
-	    XmNrightAttachment, XmATTACH_POSITION,
-	    XmNrightPosition,   50,
+	    XmNleftAttachment,  XmATTACH_FORM,
 	    XmNrecomputeSize,   True,
-	    (XtPointer)NULL);
+	    NULL);
 
 	nameTextW = XtVaCreateManagedWidget("nameTextW",
 	    xmLabelGadgetClass, form,
 	    XmNalignment,       XmALIGNMENT_BEGINNING,
+	    XmNtopAttachment,   XmATTACH_FORM,
 	    XmNleftAttachment,  XmATTACH_WIDGET,
 	    XmNleftWidget,      nameLabelW,
-	    XmNrightAttachment,  XmATTACH_NONE,
+	    XmNrightAttachment, XmATTACH_FORM,
 	    XmNrecomputeSize,   True,
 	    NULL);
 
