@@ -174,11 +174,11 @@ void createRuntimeWindow(ALINK *area)
 		    XmNbottomAttachment,       XmATTACH_FORM,
 		    XmNleftAttachment,         XmATTACH_FORM,
 		    XmNrightAttachment,        XmATTACH_FORM,
-		XmNactivateCallback,       (XtPointer)NULL,
+		    XmNactivateCallback,       (XtPointer)NULL,
 		    XmNuserData,               (XtPointer)area,
 		    XmNlabelString,            str,
 		    XmNfontList,               fontList,
-		    (XtPointer)NULL);
+		    NULL);
 		XmStringFree(str);
 
 		XtAddCallback(area->blinkButton,XmNactivateCallback,
