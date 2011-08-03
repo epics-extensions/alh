@@ -39,6 +39,8 @@ static String fallbackResources[] = {
 	         "*scale.value: 50",
 	         "*scale.highlightOnEnter: FALSE",
 	         "*scale.scaleMultiple: 5",
+	         "*CurrentTitle.fontList: 7x14",
+	         "*CurrentAlarm.fontList: 7x14",
 	         "*treeSym.fontList: 12x24",
 	         "*XmCascadeButtonGadget.fontList: 8x13",
 	         "*XmCascadeButtonWidget.fontList: 8x13",
