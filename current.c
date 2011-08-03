@@ -55,6 +55,7 @@ void currentAlarmHistoryWindow(ALINK *area,Widget menuButton)
 	Atom   WM_DELETE_WINDOW;
 	int    i;
 	char   *app_name;
+	XmString xstr;
 
 	if (!area->currentAlarmForm) {
 		app_name = (char*) calloc(1,strlen(programName)+6);
@@ -103,21 +104,24 @@ void currentAlarmHistoryWindow(ALINK *area,Widget menuButton)
 		previous = button;
 
 		/* add title line */
-		title = XtVaCreateManagedWidget(
-		    "    TIME_STAMP        PROCESS_VARIABLE_NAME        "
-		    "STATUS     SEVERITY   VALUE       ",
+		xstr = XmStringCreateSimple(
+		    "    TIME_STAMP       PROCESS_VARIABLE_NAME          "
+		    "STATUS     SEVERITY   VALUE       ");
+		title = XtVaCreateManagedWidget("CurrentTitle",
 		    xmLabelGadgetClass,        area->currentAlarmForm,
+		    XmNlabelString,            xstr,
 		    XmNtopAttachment,          XmATTACH_FORM,
 		    XmNtopOffset,              10,
 		    XmNleftAttachment,         XmATTACH_WIDGET,
 		    XmNleftWidget,             button,
 		    XmNrightAttachment,        XmATTACH_FORM,
 		    NULL);
+		XmStringFree(xstr);
 
 		/* create 10 label widgets  */
 		for ( i=0;i<10;i++){
 
-			area->currentAlarm[i] = XtVaCreateManagedWidget( "-----",
+			area->currentAlarm[i] = XtVaCreateManagedWidget( "CurrentAlarm",
 			    xmLabelGadgetClass,        area->currentAlarmForm,
 			    XmNmarginHeight,           1,
 			    XmNalignment,              XmALIGNMENT_BEGINNING,
@@ -186,7 +190,7 @@ char value[],int stat,int sevr)
   if ( !area ) return;
 	n = area->currentAlarmIndex;
 	sprintf(area->currentAlarmString[n],
-		"  %-24s :  %-28s %-10s %-10s %s",
+		"  %-24s %-31.31s %-10.10s %-10.10s %s",
 		ctime(ptimeofday),
 		name,
 		alhAlarmStatusString[stat],
@@ -194,6 +198,7 @@ char value[],int stat,int sevr)
 		value);
 	n = (n+1)%10;
 	area->currentAlarmIndex = n;
+
 }
 
 /******************************************************************
