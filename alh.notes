@@ -594,3 +594,10 @@ Fri Feb 25 14:23:01 CST 2011 ALH_1_2_27
 	to local routines. Remove extra carrige return in alarm log output. 
 	Check for _lock_flag also when checking masterFlag.
 
+Tue Jul 26 13:56:13 CDT 2011 ALH_1_2_28
+	Changed code to allow up to 99 chars in group, channel, and pv names.
+	Modified Current Alarm Histroy Window to use 7x14 fixed font and to 
+	truncate long channel names to 31 characters. Fixed formating bug in 
+	error messagelogs. Modified main windows and popup Action dialogs to
+	allow long group/channel names and pv names.  Other minor changes.
+
