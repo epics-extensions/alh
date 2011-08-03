@@ -281,6 +281,7 @@ void alLogOpModMessage(int messageCode,GCLINK* gclink,const char* fmt,...)
     va_list vargs;
     static char text[1024];  /* DANGER: Fixed buffer size */
     struct gcData *gcdata=NULL;
+    size_t len;
 
     if (gclink) gcdata = gclink->pgcData;
 
@@ -306,6 +307,8 @@ void alLogOpModMessage(int messageCode,GCLINK* gclink,const char* fmt,...)
 	    (alhArea ? alhArea->blinkString : "N/A"));
     }
 #endif
+        len = strlen(text);
+        if (text[len-1] == '\n' ) text[len-1]=' ';
 
 	if (!alhArea || !alhArea->blinkString){
 		sprintf(buff,"%s",text);
