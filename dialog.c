@@ -201,7 +201,7 @@ void createActionDialog(Widget parent,int dialogType,char *message1,
 XtCallbackProc okCallback,XtPointer okParm,XtPointer userParm)
 {
 	static Widget         dialog = 0; /* make it static for reuse */
-	XmString              str,str1,str2,str3;
+	XmString              str,str2;
 	static XtCallbackProc oldOkCallback = 0;
 	static XtPointer      oldOkParm = 0;
 
@@ -226,36 +226,33 @@ XtCallbackProc okCallback,XtPointer okParm,XtPointer userParm)
 
 	switch(dialogType) {
 	case XmDIALOG_WARNING:
-		str = XmStringCreateSimple("WarningDialog");
+		str = XmStringCreateSimple("ALH WarningDialog");
 		break;
 	case XmDIALOG_ERROR:
-		str = XmStringCreateSimple("ErrorDialog");
+		str = XmStringCreateSimple("ALH ErrorDialog");
 		break;
 	case XmDIALOG_INFORMATION:
-		str = XmStringCreateSimple("InformationDialog");
+		str = XmStringCreateSimple("ALH InformationDialog");
 		break;
 	case XmDIALOG_MESSAGE:
-		str = XmStringCreateSimple("MessageDialog");
+		str = XmStringCreateSimple("ALH MessageDialog");
 		break;
 	case XmDIALOG_QUESTION:
-		str = XmStringCreateSimple("QuestionDialog");
+		str = XmStringCreateSimple("ALH QuestionDialog");
 		break;
 	case XmDIALOG_WORKING:
-		str = XmStringCreateSimple("WorkingDialog");
+		str = XmStringCreateSimple("ALH WorkingDialog");
 		break;
 	default:
-		str = XmStringCreateSimple("InformationDialog");
+		str = XmStringCreateSimple("ALH InformationDialog");
 		break;
 	}
-
-	str1 = XmStringCreateLtoR("ALH ",XmFONTLIST_DEFAULT_TAG);
-	str3 = XmStringConcat(str1,str);
 
 	str2=XmStringCreateLtoR(message1,XmSTRING_DEFAULT_CHARSET);
 	XtVaSetValues(dialog,
 	    XmNuserData,      userParm,
 	    XmNdialogType,  dialogType,
-	    XmNdialogTitle, str3,
+	    XmNdialogTitle, str,
 	    XmNmessageString, str2,
 	    (XtPointer)NULL);
 	XmStringFree(str);
