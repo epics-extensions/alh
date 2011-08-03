@@ -93,7 +93,7 @@ typedef struct  areaLink{
 	int              currentAlarmIndex;
 	Widget           currentAlarmForm;
 	Widget           currentAlarm[10];
-	char             currentAlarmString[10][128];
+	char             currentAlarmString[10][228];
 	int              w;
 	int              h;
 } ALINK;
