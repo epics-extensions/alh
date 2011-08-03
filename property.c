@@ -582,17 +582,12 @@ static void propCreateDialog(ALINK *area)
 	    xmTextFieldWidgetClass, form,
 	    XmNspacing,          0,
 	    XmNmarginHeight,     0,
-/*
-	    XmNcolumns,         30,
-	    XmNrecomputeSize,   True,
-*/
 	    XmNmaxLength,       PVNAME_SIZE,
 	    XmNbackground,      textBackground,
 	    XmNtopAttachment,   XmATTACH_FORM,
 	    XmNleftAttachment,  XmATTACH_WIDGET,
 	    XmNleftWidget,      nameLabelW,
-	    XmNrightAttachment,  XmATTACH_POSITION,
-	    XmNrightPosition,    50,
+	    XmNrightAttachment, XmATTACH_FORM,
 	    NULL);
 
 	XtAddCallback(nameTextW, XmNactivateCallback,
@@ -685,7 +680,8 @@ static void propCreateDialog(ALINK *area)
 	     --------------------------------- */
 	countFilterFrame = XtVaCreateManagedWidget("countFilterFrame",
 	    xmFrameWidgetClass, form,
-	    XmNtopAttachment,   XmATTACH_FORM,
+	    XmNtopAttachment,   XmATTACH_WIDGET,
+	    XmNtopWidget,       nameTextW,
 	    XmNrightAttachment, XmATTACH_FORM,
 	    XmNleftAttachment,  XmATTACH_POSITION,
 	    XmNleftPosition,    50,
@@ -769,7 +765,7 @@ static void propCreateDialog(ALINK *area)
 	frame2 = XtVaCreateManagedWidget("frame2",
 	    xmFrameWidgetClass, form,
 	    XmNtopAttachment,   XmATTACH_WIDGET,
-	    XmNtopWidget,       prev,
+	    XmNtopWidget,       form1,
 	    XmNleftAttachment,  XmATTACH_FORM,
 	    XmNrightAttachment,  XmATTACH_FORM,
 	    NULL);
@@ -803,13 +799,15 @@ static void propCreateDialog(ALINK *area)
 	    xmTextFieldWidgetClass, form2,
 	    XmNspacing,                0,
 	    XmNmarginHeight,           0,
-	    XmNcolumns,                30,
+/*
 	    XmNmaxLength,              PVNAME_SIZE,
+*/
 	    XmNbackground,             textBackground,
 	    XmNtopAttachment,          XmATTACH_WIDGET,
 	    XmNtopWidget,              forcePVLabel,
 	    XmNleftAttachment,         XmATTACH_WIDGET,
 	    XmNleftWidget,             forcePVnameLabel,
+	    XmNrightAttachment,        XmATTACH_FORM,
 	    NULL);
 
 	XtAddCallback(forcePVnameTextW, XmNactivateCallback,
@@ -826,7 +824,9 @@ static void propCreateDialog(ALINK *area)
 	XmStringFree(string);
 	prev = forcePVForceMaskLabel;
 
+/*
 	string = XmStringCreateSimple("-----");
+*/
 	forcePVForceMaskStringLabelW = XtVaCreateManagedWidget("forcePVmaskStringLabelW",
 	    xmLabelGadgetClass, form2,
 	    XmNlabelString,            string,
@@ -835,7 +835,9 @@ static void propCreateDialog(ALINK *area)
 	    XmNleftAttachment,         XmATTACH_WIDGET,
 	    XmNleftWidget,             forcePVForceMaskLabel,
 	    NULL);
+/*
 	XmStringFree(string);
+*/
 
 	string = XmStringCreateSimple("    Force Value ");
 	forcePVforceValueLabel = XtVaCreateManagedWidget("forcePVvalue",
@@ -890,14 +892,14 @@ static void propCreateDialog(ALINK *area)
 	    (XtCallbackProc)XmProcessTraversal, (XtPointer)XmTRAVERSE_NEXT_TAB_GROUP);
 
 	frame3 = XtVaCreateManagedWidget("frame3",
-	    xmFrameWidgetClass, form2,
+	    xmFrameWidgetClass, form,
 	    XmNtopAttachment,   XmATTACH_WIDGET,
 	    XmNtopWidget,       forcePVforceValueTextW,
 	    XmNleftAttachment,  XmATTACH_FORM,
 	    XmNrightAttachment,  XmATTACH_FORM,
 	    NULL);
 
-	form3 = XtVaCreateWidget("form2",
+	form3 = XtVaCreateWidget("form3",
 	    xmFormWidgetClass, frame3,
 	    XmNspacing,          0,
 	    XmNmarginHeight,     0,
@@ -926,8 +928,6 @@ static void propCreateDialog(ALINK *area)
 	    xmTextFieldWidgetClass, form3,
 	    XmNspacing,                0,
 	    XmNmarginHeight,           0,
-	    XmNcolumns,                40,
-	    XmNmaxLength,              100,
 	    XmNbackground,             textBackground,
 	    XmNtopAttachment,          XmATTACH_FORM,
 	    XmNleftAttachment,         XmATTACH_WIDGET,
@@ -985,12 +985,8 @@ static void propCreateDialog(ALINK *area)
 		    XmNlabelString,            string,
 		    XmNtopAttachment,          XmATTACH_WIDGET,
 		    XmNtopWidget,              prev,
-			XmNleftAttachment,         XmATTACH_POSITION,
-			XmNleftPosition,           50,
-/*
-		    XmNleftAttachment,         XmATTACH_WIDGET,
-		    XmNleftWidget,             forcePVCalcPVTextW[i-6],
-*/
+		    XmNleftAttachment,         XmATTACH_POSITION,
+		    XmNleftPosition,           50,
 		    NULL);
 		XmStringFree(string);
 	
@@ -998,8 +994,6 @@ static void propCreateDialog(ALINK *area)
 		    xmTextFieldWidgetClass, form3,
 		    XmNspacing,                0,
 		    XmNmarginHeight,           0,
-		    XmNcolumns,                30,
-		    XmNmaxLength,              PVNAME_SIZE,
 		    XmNbackground,             textBackground,
 		    XmNtopAttachment,          XmATTACH_WIDGET,
 		    XmNtopWidget,              prev,
@@ -1029,7 +1023,7 @@ static void propCreateDialog(ALINK *area)
 	    xmLabelGadgetClass, form,
 	    XmNlabelString,            string,
 	    XmNtopAttachment,          XmATTACH_WIDGET,
-	    XmNtopWidget,              frame2,
+	    XmNtopWidget,              frame3,
 	    XmNleftAttachment,         XmATTACH_FORM,
 	    NULL);
 	XmStringFree(string);
@@ -1042,7 +1036,7 @@ static void propCreateDialog(ALINK *area)
 	    XmNmaxLength,              10,
 	    XmNbackground,             textBackground,
 	    XmNtopAttachment,          XmATTACH_WIDGET,
-	    XmNtopWidget,              frame2,
+	    XmNtopWidget,              frame3,
 	    XmNleftAttachment,         XmATTACH_WIDGET,
 	    XmNleftWidget,             beepSeverityLabel,
 	    NULL);
@@ -1786,6 +1780,7 @@ void *area;
 static void propEditableDialogWidgets(ALINK  *area)
 {
 	struct propWindow *propWindow;
+	int i;
 
 	propWindow = (struct propWindow *)area->propWindow;
 
@@ -1798,6 +1793,10 @@ static void propEditableDialogWidgets(ALINK  *area)
 		XtVaSetValues(propWindow->forcePVnameTextW,XmNeditable, FALSE, NULL);
 		XtVaSetValues(propWindow->forcePVforceValueTextW,XmNeditable, FALSE, NULL);
 		XtVaSetValues(propWindow->forcePVresetValueTextW,XmNeditable, FALSE, NULL);
+		XtVaSetValues(propWindow->forcePVCalcExpressionTextW,XmNeditable, FALSE, NULL);
+		for (i=0;i<NO_OF_CALC_PVS;i++){
+			XtVaSetValues(propWindow->forcePVCalcPVTextW[i],XmNeditable, FALSE, NULL);
+		}
 		XtVaSetValues(propWindow->aliasTextW,XmNeditable, FALSE, NULL);
 		XtVaSetValues(propWindow->processTextW,XmNeditable, FALSE, NULL);
 		XtVaSetValues(propWindow->sevrProcessTextW,XmNeditable, FALSE, NULL);
@@ -1813,6 +1812,10 @@ static void propEditableDialogWidgets(ALINK  *area)
 		XtVaSetValues(propWindow->forcePVnameTextW,XmNeditable, TRUE, NULL);
 		XtVaSetValues(propWindow->forcePVforceValueTextW,XmNeditable, TRUE, NULL);
 		XtVaSetValues(propWindow->forcePVresetValueTextW,XmNeditable, TRUE, NULL);
+		XtVaSetValues(propWindow->forcePVCalcExpressionTextW,XmNeditable, TRUE, NULL);
+		for (i=0;i<NO_OF_CALC_PVS;i++){
+			XtVaSetValues(propWindow->forcePVCalcPVTextW[i],XmNeditable, TRUE, NULL);
+		}
 		XtVaSetValues(propWindow->aliasTextW,XmNeditable, TRUE, NULL);
 		XtVaSetValues(propWindow->processTextW,XmNeditable, TRUE, NULL);
 		XtVaSetValues(propWindow->sevrProcessTextW,XmNeditable, TRUE, NULL);
