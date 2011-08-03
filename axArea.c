@@ -47,9 +47,9 @@
 #include "ax.h"
 
 Pixmap ALH_pixmap;
-char *silenceString[] = {"Off","On"};
-const char *executionStateString[] = {"Active","Passive"};
-char *disabledForcePVCountString[] = {" ","Disabled forcePVs:"};
+static char *silenceString[] = {"Off","On"};
+static const char *executionStateString[] = {"Active","Passive"};
+static char *disabledForcePVCountString[] = {" ","Disabled forcePVs:"};
 
 /* global variables */
 extern int _global_flag;
