@@ -237,10 +237,6 @@ static void maskCreateDialog(ALINK *area)
 	    xmLabelGadgetClass, form,
 	    XmNtopAttachment,   XmATTACH_FORM,
 	    XmNleftAttachment,  XmATTACH_FORM,
-/*
-	    XmNrightAttachment, XmATTACH_POSITION,
-	    XmNrightPosition,   (TIGHTNESS*(num_buttons+3) - 1)/2,
-*/
 	    XmNrecomputeSize,   True,
 	    (XtPointer)NULL);
 
@@ -248,7 +244,6 @@ static void maskCreateDialog(ALINK *area)
 	    xmLabelGadgetClass, form,
 	    XmNleftAttachment,  XmATTACH_WIDGET,
 	    XmNleftWidget,      nameLabelW,
-	    XmNrightAttachment, XmATTACH_FORM,
 	    XmNrecomputeSize,   True,
 	    NULL);
 
