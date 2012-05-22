@@ -135,6 +135,8 @@ int use_CMLOG_opmod = 0;
 #endif
 
 int _xml_flag = 0;           /* Use XML-ish log format. SNS */
+int _mask_color_flag = 0;    /* SLS (Andreas Luedeke): if channel/group mask disables sound, then change bg color of mask */
+                             /* this helps to quickly check for all disabled channels, e.g. before an application restart */
 
 extern int DEBUG;
 
@@ -148,13 +150,15 @@ struct command_line_data
 {
 	char* configDir;
 	char* logDir;
+	char* lockFileBase;  /* Andreas Luedeke */
+	char* soundFile;     /* Andreas Luedeke */
 	char* configFile;
 	char* logFile;
 	char* opModFile;
 	int alarmLogFileMaxRecords;
 };
 static struct command_line_data commandLine = { 
-	NULL,NULL,NULL,NULL,NULL,0};
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,0};
 
 #define PARM_DEBUG					0
 #define PARM_ACT					1
@@ -182,6 +186,9 @@ static struct command_line_data commandLine = {
 #define PARM_ALARM_FILTER			23
 #define PARM_DESC_FIELD			    24
 #define PARM_XML                    25
+#define PARM_LOCK_FILE				26
+#define PARM_SOUND_FILE				27
+#define PARM_NOACK_MASK_COLOR       28
 struct parm_data
 {
 	char* parm;
@@ -207,9 +214,11 @@ static struct parm_data ptable[] = {
  		{ "-global", 7,			PARM_GLOBAL },
 		{ "-help", 5,			PARM_HELP },
 		{ "-L", 2,				PARM_LOCK },				/* Albert */
+		{ "-Lfile", 6,		    PARM_LOCK_FILE }, /* Andreas Luedeke */
 		{ "-l", 2,				PARM_LOG_DIR },
 		{ "-mainwindow", 11,	PARM_MAIN_WINDOW },
 		{ "-m", 2,				PARM_ALARM_LOG_MAX },
+		{ "-maskcolor", 10,	    PARM_NOACK_MASK_COLOR },
 		{ "-noerrorpopup", 13,	PARM_NO_ERROR_POPUP },
 		{ "-O", 2,				PARM_DATABASE },			/* Albert */
 #ifdef CMLOG
@@ -219,6 +228,7 @@ static struct parm_data ptable[] = {
 		{ "-P", 2,				PARM_PRINTER },
 		{ "-S", 2,				PARM_PASSIVE },
 		{ "-s", 2,				PARM_SILENT },
+		{ "-p", 2,				PARM_SOUND_FILE },
 		{ "-T", 2,				PARM_DATED },
 		{ "-v", 2,				PARM_VERSION },
 		{ "-version", 8,		PARM_VERSION },
@@ -585,8 +595,8 @@ int programId,Widget widget)
 			if(_lock_flag)                              /* Albert */
 			  {
 			    FILE *fp;
-			    strcpy(lockFileName,psetup.configFile);
-			    strcat(lockFileName,".LOCK");
+			    strcpy(lockFileName,psetup.lockFileBase);  /* Andreas Luedeke */
+			    strcat(lockFileName,".LOCK");              /* allow lock to be generated outside logdir */
 			    if (!(fp=fopen(lockFileName,"a")))
 			      {
 				perror("Can't open locking file for a");
@@ -964,6 +974,35 @@ static int getCommandLineParms(int argc, char** argv)
                     _xml_flag=1;
                     finished=1;
                     break;
+ 				case PARM_LOCK_FILE: /* Andreas Luedeke: place .LOCK file in special directory */
+                   if(++i>=argc) parm_error=1;
+                   else
+                   {
+                       if(argv[i][0]=='-') parm_error=2;
+                       else
+                       {
+                           commandLine.lockFileBase=argv[i];
+                           finished=1;
+                       }
+                   }
+                   break;
+               case PARM_SOUND_FILE: /* Andreas Luedeke: WAV file as alarm sound (implemented for Linux with "play") */
+                   if(++i>=argc) parm_error=1;
+                   else
+                   {
+                       if(argv[i][0]=='-') parm_error=2;
+                       else
+                       {
+                           strncpy(psetup.soundFile,argv[i],NAMEDEFAULT_SIZE-1);
+                           finished=1;
+                       }
+                   }
+                   break;
+               case PARM_NOACK_MASK_COLOR: /* Andreas Luedeke: if channel/group mask disables sound, then change bg color of mask */
+                    _mask_color_flag=1;
+                    finished=1;
+                    break;
+
 				default:
 					parm_error=1;
 					break;
@@ -1012,7 +1051,7 @@ if(_DB_call_flag&&!_lock_flag)
 		return 1;
 	}
     
-    if (_xml_flag)    puts ("XML!"); else puts("no XML!");
+    if (_xml_flag)    puts ("XML!");
     
 	return 0;
 }
@@ -1045,15 +1084,18 @@ static void printUsage(char *pgm)
 	fprintf(stderr,"  -global          Global mode (acks and ackt fields) \n");
 	fprintf(stderr,"  -help            Print usage\n");
 	fprintf(stderr,"  -L               Locking system\n");
+  	fprintf(stderr,"  -Lfile lockfile  Directory for lock files [configdir]\n"); /* Andreas Luedeke */
 	fprintf(stderr,"  -l logdir        Directory for log files [.]\n");
 	fprintf(stderr,"  -m maxrecords    Alarm log file max records [2000]\n");
 	fprintf(stderr,"  -mainwindow      Start with main window\n");
+	fprintf(stderr,"  -maskcolor       Print mask colored when channel/group contains silencing flag\n");
 	fprintf(stderr,"  -noerrorpopup    Do not display error popup window (errors are logged).\n");
 	fprintf(stderr,"  -O key           Database call\n");
 	fprintf(stderr,"  -o opmodlogfile  OpMod log filename ["DEFAULT_OPMOD"]\n");
 #ifdef CMLOG		
 	fprintf(stderr,"  -oCM             OpMod log using CMLOG\n");
 #endif			
+    fprintf(stderr,"  -p sound         Use wave data from file <sound> instead of alarm beep (OS dependent)\n");
 	fprintf(stderr,"  -P key           Print to TCP printer\n");
 	fprintf(stderr,"  -S               Passive (no caputs - acks field, ackt field, sevrpv)\n");
 	fprintf(stderr,"  -s               Silent (no alarm beeping)\n");
@@ -1161,6 +1203,14 @@ char *argv[];
 	}
 	if (DEBUG == 1 ) printf("\nConfig File is %s \n", psetup.configFile);
 	fileSetup(psetup.configFile,NULL,FILE_CONFIG,programId,widget);
+    
+	/* ----- initialize and setup lock file ----- */
+	if (commandLine.lockFileBase)  /* Andreas Luedeke */
+		strncpy(psetup.lockFileBase,commandLine.lockFileBase,NAMEDEFAULT_SIZE-1);
+	else 
+		strncpy(psetup.lockFileBase,psetup.configFile,NAMEDEFAULT_SIZE-1);
+
+	if (DEBUG == 1 ) printf("\nLock File is %s.LOCK \n", psetup.lockFileBase);
 
 
 }

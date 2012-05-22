@@ -584,20 +584,29 @@ Fri Jul  9 15:14:24 CDT 2010 ALH_1_2_26
 	Portablility changes.
 	Bug fix: set current value to -999 to recalculate and test the force pv
 	expression after user changes are Applied from the ForcePV dialog box.
-	Core dump bug fix: Test for existance before trying to modify runtime 
+	Core dump bug fix: Test for existance before trying to modify runtime
 	window string. Alh may be started with main window only (-mainwindow).
 	Removed references to Alarm Configuration Tool in ALH Users Manual.
 
 Fri Feb 25 14:23:01 CST 2011 ALH_1_2_27
 	Use alBeep instead of calling XBell directly. Changed call to XBell
-	to call to XkbBell. Portability changes. alLog.c: Added static qualifier 
-	to local routines. Remove extra carrige return in alarm log output. 
+	to call to XkbBell. Portability changes. alLog.c: Added static qualifier
+	to local routines. Remove extra carrige return in alarm log output.
 	Check for _lock_flag also when checking masterFlag.
 
-Tue Jul 26 13:56:13 CDT 2011 ALH_1_2_28
+Tue Jul 26 13:56:13 CDT 2011
 	Changed code to allow up to 99 chars in group, channel, and pv names.
-	Modified Current Alarm Histroy Window to use 7x14 fixed font and to 
-	truncate long channel names to 31 characters. Fixed formating bug in 
+	Modified Current Alarm Histroy Window to use 7x14 fixed font and to
+	truncate long channel names to 31 characters. Fixed formating bug in
 	error messagelogs. Modified main windows and popup Action dialogs to
-	allow long group/channel names and pv names.  Other minor changes.
+	allow long group/channel names and pv names.
+
+Tue May 22 16:29:19 CDT 2012 ALH_1_2_28
+	Added following changes and command line options by Andreas Luedeke
+	Changed silenced bg color from lightpink to blue
+	Add file name to config file open error message.
+	-p sound: use wave file for sound instead of alarm beep (OS dependent)
+	-maskcolor: Print mask colored when channel/group contains silencing flag
+		makes it easier to find all canceled/disabled/noAck channels.
+	-Lfile: lockfile Directory for lock files [configdir]
 

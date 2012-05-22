@@ -40,7 +40,8 @@ static XtIntervalId blinkTimeoutId = (XtIntervalId)0;
 static char *bg_color[] = {"lightblue","yellow","red","white","white","grey"};
 
 static char *channel_bg_color = "lightblue";
-static char *silenced_bg_color = "lightpink";
+static char *silenced_bg_color = "blue";
+static char *noack_bg_color = "blue";
 
 
 /* global variabless */
@@ -49,9 +50,11 @@ extern Display *display;
 extern struct setup psetup;
 extern char *programName;
 extern Pixmap ALH_pixmap;
+extern int _mask_color_flag;
 Pixel bg_pixel[ALH_ALARM_NSEV];
 Pixel channel_bg_pixel;
 Pixel silenced_bg_pixel;
+Pixel noack_bg_pixel;
 const char *bg_char[] = {" ", "Y", "R", "V", "E"," " };
 
 /* forward declarations */
@@ -425,8 +428,11 @@ XmAnyCallbackStruct *call_data)
 		    (XtTimerCallbackProc)silenceOneHourReset,
 		    (XtPointer)area);
 		XmChangeColor(area->messageArea,silenced_bg_pixel);
-		changeTreeColor(area->treeWindowForm,silenced_bg_pixel);
-		changeTreeColor(area->groupWindowForm,silenced_bg_pixel);
+        if (!_mask_color_flag) {
+            changeTreeColor(area->treeWindowForm,silenced_bg_pixel);
+		    changeTreeColor(area->groupWindowForm,silenced_bg_pixel);
+        }
+       
 		changeTreeColor(area->scale,silenced_bg_pixel);
 		alLogOpModMessage(0,0,"Silence One Hour set to TRUE");
 	} else {
@@ -435,9 +441,11 @@ XmAnyCallbackStruct *call_data)
 			intervalId = 0;
 		}
 		XmChangeColor(area->messageArea,bg_pixel[0]);
-		changeTreeColor(area->treeWindowForm,bg_pixel[0]);
-		changeTreeColor(area->groupWindowForm,bg_pixel[0]);
-		changeTreeColor(area->scale,bg_pixel[0]);
+        if (!_mask_color_flag) {
+            changeTreeColor(area->treeWindowForm,bg_pixel[0]);
+		    changeTreeColor(area->groupWindowForm,bg_pixel[0]);
+        }
+        changeTreeColor(area->scale,bg_pixel[0]);
 		alLogOpModMessage(0,0,"Silence One Hour set to FALSE");
 	}
 }
@@ -527,6 +535,7 @@ void pixelData(Widget iconBoard)
 
 	channel_bg_pixel = COLOR(dsply,channel_bg_color);
     silenced_bg_pixel = COLOR(dsply,silenced_bg_color);
+    noack_bg_pixel = COLOR(dsply,noack_bg_color);
 
 	/* retrieve the background color of the iconBoard */
 	XtVaGetValues(iconBoard, XmNbackground, &bg_pixel[0], NULL);

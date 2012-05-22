@@ -119,8 +119,9 @@ int caConnect)
 
 	fp = fopen(filename,"r");
 	if(fp==NULL) {
-		snprintf(buf,MAX_STRING_LENGTH-1,"Could not open Alarm Configuration File: %s",filename);
-		perror(buf);
+                snprintf(buf,MAX_STRING_LENGTH-1,
+                    "Could not open Alarm Configuration File: %s",filename);
+                perror(buf);
 		exit(-1);
 	}
 

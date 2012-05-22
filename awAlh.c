@@ -134,6 +134,7 @@ extern char alhVersionString[100];
 extern char *bg_char[];
 extern Pixel bg_pixel[];
 extern Pixel channel_bg_pixel;
+extern Pixel noack_bg_pixel;
 extern struct setup psetup;
 extern Widget versionPopup;
 extern int _message_broadcast_flag; /* messages sending flag. Albert1*/
@@ -146,6 +147,7 @@ extern int max_not_save_time;
 extern int amIsender;
 extern int DEBUG;
 extern int _main_window_flag;
+extern int _mask_color_flag;
 char FS_filename[128]; /* Filename      for FSBox. Albert*/
 
 struct UserInfo {
@@ -1445,8 +1447,9 @@ void awRowWidgets(struct anyLine *line,void *area)
 	Position nextX;
 	Dimension width;
 	Widget parent;
-	Pixel backgroundColor;
-
+	Pixel backgroundColor=1;
+        Pixel bgMask;
+        
 	subWindow=line->pwindow;
 	parent = ((struct subWindow *)subWindow)->drawing_area;
 	wline=(WLINE *)line->wline;
@@ -1599,6 +1602,8 @@ void awRowWidgets(struct anyLine *line,void *area)
 			nextX = nextX + width + 3;
 		}
 
+                /* A.Luedeke : Added color when mask is silencing: 'C', 'D', 'A' or 'H' */
+                if (_mask_color_flag&&(line->mask[1]!='-'||line->mask[2]!='-'||line->mask[3]!='-')) {bgMask=noack_bg_pixel;} else {bgMask=bg_pixel[0];} /* A.L.: added color */
 		str = XmStringCreateSimple(line->mask);
 		wline->mask = XtVaCreateManagedWidget("mask",
 		    xmLabelWidgetClass,        wline->row_widget,
@@ -1610,6 +1615,11 @@ void awRowWidgets(struct anyLine *line,void *area)
 		XmStringFree(str);
 		XtVaGetValues(wline->mask,XmNwidth,&width,NULL);
 		nextX = nextX + width + 3;
+#if  XmVersion && XmVersion >= 1002
+		XmChangeColor(wline->mask,bgMask); /* A.L.: added color */
+#else
+		XtVaSetValues(wline->mask,XmNbackground,bgMask,NULL); /* A.L.: added color */
+#endif
 
 		str = XmStringCreateSimple(line->highestBeepSevrString);
 		wline->highestbeepsevr = XtVaCreateManagedWidget("highestbeepsevr",
@@ -1790,6 +1800,8 @@ void awUpdateRowWidgets(struct anyLine *line)
 	XmString str;
 	WLINE *wline;
 	Pixel bg;
+        Pixel bgMask;
+        Pixel backgroundColor;
 	XmString strOld;
 	Boolean sensitiveOld;
 
@@ -1852,13 +1864,23 @@ void awUpdateRowWidgets(struct anyLine *line)
 
 	XtVaGetValues(wline->mask,
 	    XmNlabelString,           &strOld,
+            XmNbackground,            &backgroundColor,
 	    NULL);
 
 	str = XmStringCreateSimple(line->mask);
-	if (!XmStringCompare(str,strOld))
+        /* A.Luedeke : Added color when mask is silencing: 'C', 'D', 'A' or 'H' */
+
+        if (_mask_color_flag&&(line->mask[1]!='-'||line->mask[2]!='-'||line->mask[3]!='-')) {bgMask=noack_bg_pixel;} else {bgMask=bg_pixel[0];} /* A.L.: added color */
+	if (!XmStringCompare(str,strOld)) {
 		XtVaSetValues(wline->mask,
 		    XmNlabelString,            str,
 		    NULL);
+#if  XmVersion && XmVersion >= 1002
+		XmChangeColor(wline->mask,bgMask); /* A.L.: added color */
+#else
+		XtVaSetValues(wline->mask,XmNbackground,bgMask,NULL); /* A.L.: added color */
+#endif
+        }
 	XmStringFree(str);
 	XmStringFree(strOld);
 

@@ -80,6 +80,9 @@ int callBrowser(char *url)
 		}
 		return 3;
 	}
+#ifdef USE_HTMLVIEW
+	sprintf(command,"htmlview %s &",url);
+#else /* #ifndef USE_HTMLVIEW */
 	/* Set handler to ignore possible BadWindow error */
 	/*   (Would prefer a routine that tells if the window is defined) */
 	oldhandler=XSetErrorHandler(ignoreXError);
@@ -100,13 +103,13 @@ int callBrowser(char *url)
 			else {
 				sprintf(command,"%s -install '%s' &",envstring,url);
 			}
-#if DEBUG
+  #if DEBUG
 			printf("execute(before): cmd=%s\n",command);
-#endif	    
+  #endif	    
 			status=execute(command);
-#if DEBUG
+  #if DEBUG
 			printf("execute(after): cmd=%s status=%d\n",command,status);
-#endif	    
+  #endif	    
 			return 1;
 		}
 	}
@@ -122,6 +125,7 @@ int callBrowser(char *url)
 		sprintf(command,"%s -id 0x%x -remote 'openURL(%s)' &",
 		    envstring,(unsigned int)netscapew,url);
 	}
+#endif 
 #if DEBUG
 	printf("execute(before): cmd=%s\n",command);
 #endif    

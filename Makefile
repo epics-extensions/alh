@@ -157,7 +157,7 @@ alh_DB_SRCS = alh_DB.c
 
 alh_printer_SRCS = printer.c
 
-PROD_HOST_DEFAULT = alh alh_printer
+PROD_HOST_DEFAULT = alh alh_printer  alh_DB
 PROD_HOST_WIN32 = alh
 
 WIN32_RUNTIME=MD

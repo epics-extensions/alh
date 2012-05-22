@@ -23,9 +23,9 @@
 
 #define ALH_VERSION       1
 #define ALH_REVISION      2
-#define ALH_MODIFICATION 27
+#define ALH_MODIFICATION 28
 
-#define ALH_VERSION_STRING "ALH Version 1.2.27"
+#define ALH_VERSION_STRING "ALH Version 1.2.28"
 
 #define ALH_CREDITS_STRING  \
           "Developed at Argonne National Laboratory\n\n" \
@@ -33,6 +33,8 @@
           "         Mark Anderson, Marty Kraimer,\n" \
           "         and Albert Kagarmanov\n\n" \
           "(With SNS modifications as of 3/07 by\n" \
-          "John Sinclair and Kay Kasemir)\n\n"
+          "John Sinclair and Kay Kasemir)\n" \
+          "(With PSI modifications as of May 2012 by\n" \
+          "Andreas Luedeke)\n\n"
 
 #endif /* INCversionh */
