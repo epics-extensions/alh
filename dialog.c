@@ -181,7 +181,10 @@ void createDialog(Widget parent,int dialogType,char *message1,char *message2)
 	string2 = XmStringConcat(str3,str);
 
 	XtVaSetValues(dialog,
+#ifndef WIN32 
+            /* 6/2012 Xming hangs when dialogType is set */
 	    XmNdialogType,  dialogType,
+#endif
 	    XmNdialogTitle, string2,
 	    XmNmessageString, string,
 	    (XtPointer)NULL);
@@ -251,7 +254,10 @@ XtCallbackProc okCallback,XtPointer okParm,XtPointer userParm)
 	str2=XmStringCreateLtoR(message1,XmSTRING_DEFAULT_CHARSET);
 	XtVaSetValues(dialog,
 	    XmNuserData,      userParm,
+#ifndef WIN32 
+            /* 6/2012 Xming hangs when dialogType is set */
 	    XmNdialogType,  dialogType,
+#endif
 	    XmNdialogTitle, str,
 	    XmNmessageString, str2,
 	    (XtPointer)NULL);
@@ -332,7 +338,11 @@ void errMsg(const char *fmt, ...)
 		nargs++;
 		XtSetArg(args[nargs],XmNmessageString,cstring); 
 		nargs++;
+#ifndef WIN32
 		warningbox=XmCreateWarningDialog(topLevelShell,"warningMessage",
+#else
+		warningbox=XmCreateMessageDialog(topLevelShell,"warningMessage",
+#endif
 		    args,nargs);
 		XmStringFree(cstring);
 		XtDestroyWidget(XmMessageBoxGetChild(warningbox,XmDIALOG_CANCEL_BUTTON));
