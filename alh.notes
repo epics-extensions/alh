@@ -610,3 +610,6 @@ Tue May 22 16:29:19 CDT 2012 ALH_1_2_28
 		makes it easier to find all canceled/disabled/noAck channels.
 	-Lfile: lockfile Directory for lock files [configdir]
 
+Thu Jun 21 15:26:50 CDT 2012 ALH_1_2_29
+	Changed silenced and noack bg color from blue to lightpink.
+	Modified popup dialogs for WIN32 to allow use with Xming X server.
