@@ -603,7 +603,7 @@ Tue Jul 26 13:56:13 CDT 2011
 
 Tue May 22 16:29:19 CDT 2012 ALH_1_2_28
 	Added following changes and command line options by Andreas Luedeke
-	Changed silenced bg color from lightpink to blue
+ 	Changed silenced bg color from lightpink to blue
 	Add file name to config file open error message.
 	-p sound: use wave file for sound instead of alarm beep (OS dependent)
 	-maskcolor: Print mask colored when channel/group contains silencing flag
