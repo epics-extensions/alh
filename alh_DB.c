@@ -81,7 +81,6 @@ int DBMsgQId;
 int DBMsgQKey;
 int port;
 int bytes=250;
-int socket;
 
 	if (argc != 4) {
 	  fprintf(stderr,"usage:%s TCPName TCPport Key\n",argv[0]);
@@ -99,10 +98,10 @@ int socket;
 	  fprintf(stderr,"msgQ with key=%d is OK\n",DBMsgQKey);
 	  if (msgctl(DBMsgQId,IPC_STAT,&infoBuf) != 1)
 	    {
-	      fprintf(stderr,"owner = %d.%d, perms = %04o, max bytes = %d\n",
+	      fprintf(stderr,"owner = %d.%d, perms = %04o, max bytes = %ld\n",
 		      infoBuf.msg_perm.uid,infoBuf.msg_perm.gid,
 		      infoBuf.msg_perm.mode,infoBuf.msg_qbytes);
-	      fprintf(stderr,"%d msgs = %d bytes on queue\n",
+	      fprintf(stderr,"%ld msgs = %ld bytes on queue\n",
 		      infoBuf.msg_qnum, infoBuf.msg_cbytes);
 	    }
 	  else {perror("msgctl()");  exit(1);}
@@ -177,8 +176,6 @@ xdr_DBSend(xdrs, objp)
 	register XDR *xdrs;
 	DBSend *objp;
 {
-
-	register long *buf;
 
 	if (!xdr_string(xdrs, &objp->msg, ~0))
 		return (FALSE);
