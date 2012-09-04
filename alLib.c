@@ -57,7 +57,8 @@ char *Strncat(
   /* max must be >= 0 and no more than stringsize - 1 */
   /* for char string[10];       max must be <= 9 */
 
-size_t l, newMax;
+int newMax;
+size_t l;
 char *s;
 
   l = strlen( dest );
