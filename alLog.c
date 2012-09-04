@@ -91,12 +91,16 @@ struct setup psetup = {         /* initial files & beeping setup */
 	    "",    /* alarm log file name */
 	    "",    /* opMod log file name */
 	    "",    /* save config file name */
+	    "",    /* sound wav file name */
+	    "",    /* lock files basename */
 	    0,     /* silenceForever */
 	    0,     /* silenceOneHour */
 	    0,     /* silenceCurrent */
 	    1,     /* 1,2,3,4,5 */
 	    0,     /* system highest  sevr */
 	    0,     /* system highest unack sevr */
+            0,     /* system highest unack sevr >= beep sevr */
+            0,     /* new unack sevr after beep sevr tests */
 	    0,     /* config files directory */
 	    0};    /* log files directory */
 
