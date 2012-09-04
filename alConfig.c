@@ -185,7 +185,7 @@ struct mainGroup *pmainGroup)
 
 	parent_link = *pglink;
 
-	rtn = sscanf(buf,"%20s%32s%32s",command,parent,name);
+	rtn = sscanf(buf,"%20s%64s%64s",command,parent,name);
 
 	if(rtn!=3) {
 		print_error(buf,"Invalid GROUP command");
@@ -257,7 +257,7 @@ struct mainGroup *pmainGroup)
 
 	if (pglink) parent_link = *pglink;
 
-	rtn = sscanf(buf,"%20s%32s%s",command,parent,name);
+	rtn = sscanf(buf,"%20s%64s%s",command,parent,name);
 
 	if(rtn!=3) {
 		print_error(buf,"Invalid INCLUDE command");
@@ -447,7 +447,7 @@ int context,int caConnect,struct mainGroup *pmainGroup)
     if (strncmp(&buf[1],"HEARTBEATPV",11)==0) { /*HEARTBEATPV*/
 
 		if (pmainGroup->heartbeatPV.name) return;
-        rtn = sscanf(buf,"%20s%32s%f%d",command,name,&rateIn,&valueIn);
+        rtn = sscanf(buf,"%20s%64s%f%d",command,name,&rateIn,&valueIn);
         if(rtn>=2) {
         	if(rtn>=3) rate = rateIn;
 	        if(rtn>=4) value = valueIn;
@@ -494,7 +494,7 @@ int context,int caConnect,struct mainGroup *pmainGroup)
 		if (gcdata->pforcePV && gcdata->pforcePV->name) return;
 		if (!gcdata->pforcePV) gcdata->pforcePV=(FORCEPV*)calloc(1,sizeof(FORCEPV));
 		dbl=0.0;
-		rtn = sscanf(buf,"%20s%32s%6s%lf%9s",command,name,mask,&dbl,string);
+		rtn = sscanf(buf,"%20s%64s%6s%lf%9s",command,name,mask,&dbl,string);
 		if(rtn>=3) alSetMask(mask,&(gcdata->pforcePV->forceMask));
 		if (rtn >= 4) gcdata->pforcePV->forceValue = dbl;
 		else gcdata->pforcePV->forceValue=1;
@@ -601,7 +601,7 @@ int context,int caConnect,struct mainGroup *pmainGroup)
 	if (strncmp(&buf[1],"SEVRPV",6)==0) { /*SEVRPV*/
 
 		if(strcmp(gcdata->sevrPVName,"-") != 0) return;
-		rtn = sscanf(buf,"%20s%32s",command,name);
+		rtn = sscanf(buf,"%20s%64s",command,name);
 		if(rtn>=2) {
 			gcdata->sevrPVName = (char *)calloc(1,strlen(name)+1);
 			strcpy(gcdata->sevrPVName,name);
