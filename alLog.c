@@ -141,7 +141,7 @@ char *displayName;
 
 #endif
 
-static int filePrintf(FILE *fPointer,char *buf,time_t *ptime,int typeOfRecord);
+static int filePrintf(int fileType,char *buf,time_t *ptime,int typeOfRecord);
 #ifdef HAVE_SYSV_IPC
 static int write2MQ(int, char *);
 static int write2msgQ(int, char *);
@@ -273,7 +273,7 @@ void alLogAlarmMessage(time_t *ptimeofdayAlarm,int messageCode,CLINK* clink,cons
                 alhAlarmSeverityString[cdata->curSevr]);
         }
     }
-    filePrintf(fl,buff,ptimeofdayAlarm,messageCode);
+    filePrintf(ALARM_FILE,buff,ptimeofdayAlarm,messageCode);
 }
 
 
@@ -324,7 +324,7 @@ void alLogOpModMessage(int messageCode,GCLINK* gclink,const char* fmt,...)
 		}
 	}
 
-	filePrintf(fo,buff,NULL,messageCode);
+	filePrintf(OPMOD_FILE,buff,NULL,messageCode);
 }
 
 
@@ -375,7 +375,7 @@ void alLogOpModAckMessage(int messageCode,GCLINK* gclink,const char* fmt,...)
 		}
 	}
 
-	filePrintf(fo,buff,NULL,messageCode);
+	filePrintf(OPMOD_FILE,buff,NULL,messageCode);
 }
 
 
@@ -385,7 +385,7 @@ void alLogOpModAckMessage(int messageCode,GCLINK* gclink,const char* fmt,...)
 void alLogNotSaveStart(int not_save_time)
 {
 	sprintf(buff,"Stop log start  during %d min",not_save_time);
-	filePrintf(fl,buff,NULL,STOP_LOGGING_ALARM);
+	filePrintf(ALARM_FILE,buff,NULL,STOP_LOGGING_ALARM);
 }
 
 /***********************************************************************
@@ -394,7 +394,7 @@ void alLogNotSaveStart(int not_save_time)
 void alLogNotSaveFinish()
 {
 	sprintf(buff,"Stop log finish");
-	filePrintf(fl,buff,NULL,STOP_LOGGING_ALARM);
+	filePrintf(ALARM_FILE,buff,NULL,STOP_LOGGING_ALARM);
 }
 
 /***********************************************************************
@@ -406,7 +406,7 @@ save all recordName if someone acknowledges group)
 void alLog2DBAckChan (char *name)
 {
 	sprintf(buff,"Ack Channel--- %-28s",name);
-	filePrintf(fo,buff,NULL,ACK_GROUP);  /* update the file */	
+	filePrintf(OPMOD_FILE,buff,NULL,ACK_GROUP);  /* update the file */	
 }
 
 /***********************************************************************
@@ -416,7 +416,7 @@ save all recordName if someone acknowledges group)
 void alLog2DBMask (char *name)
 {
 	sprintf(buff,"Group Mask ID --- %-28s",name);
-	filePrintf(fo,buff,NULL,CHANGE_MASK_GROUP);  /* update the file */	
+	filePrintf(OPMOD_FILE,buff,NULL,CHANGE_MASK_GROUP);  /* update the file */	
 }
 
 
@@ -441,7 +441,7 @@ Parameters: 1) filePointer
 
 ***********************************************************************/
 
-static int filePrintf(FILE *fPointer,char *buf,time_t *ptime,int typeOfRecord)
+static int filePrintf(int fileType,char *buf,time_t *ptime,int typeOfRecord)
 {
   int ret=0;
   int status;
@@ -451,10 +451,10 @@ static int filePrintf(FILE *fPointer,char *buf,time_t *ptime,int typeOfRecord)
   char buf_tmp[1024];
   time_t timeofday;
 
-  if(!fPointer) return (-1);
+  if(!fileType) return (-1);
 
-  if ((_lock_flag && !masterFlag) && (fPointer==fl)) return (0);
-  if(_message_broadcast_flag && notsave && (fPointer==fl) ) return (0);
+  if ((_lock_flag && !masterFlag) && (fileType==ALARM_FILE)) return (0);
+  if(_message_broadcast_flag && notsave && (fileType==ALARM_FILE) ) return (0);
 
   if (ptime == NULL)             /* Current time */
     {
@@ -514,7 +514,7 @@ static int filePrintf(FILE *fPointer,char *buf,time_t *ptime,int typeOfRecord)
         buf_tmp[20]=0;
         sprintf(bufSave,"%-20s : %s\n",buf_tmp,buf);
     }
-	if (alarmLogFileMaxRecords&&(fPointer==fl)) 
+	if (alarmLogFileMaxRecords&&(fileType==ALARM_FILE)) 
 	  {
 	    if (alarmLogFileOffsetBytes != ftell(fl))
 	      fseek(fl,alarmLogFileOffsetBytes,SEEK_SET);
@@ -525,28 +525,30 @@ static int filePrintf(FILE *fPointer,char *buf,time_t *ptime,int typeOfRecord)
 	    }
 	  } 
 
-  ret=fprintf(fPointer,"%s",bufSave);
+  if (fileType==ALARM_FILE) ret=fprintf(fl,"%s",bufSave);
+  if (fileType==OPMOD_FILE) ret=fprintf(fo,"%s",bufSave);
 
   if (ret<0 && !_read_only_flag)  {
     fprintf(stderr,"Can't write '%s' to file=%s!!!\n",
-	    bufSave,(fPointer==fl)?"LOGfile":"OpModFile" ); 
+	    bufSave,(fileType==ALARM_FILE)?"LOGfile":"OpModFile" ); 
     errMsg("Error writing '%s' to file=%s!!!\n",
-	    bufSave,(fPointer==fl)?"LOGfile":"OpModFile" ); 
+	    bufSave,(fileType==ALARM_FILE)?"LOGfile":"OpModFile" ); 
   }
 
-  if (alarmLogFileMaxRecords&&(fPointer==fl)){
+  if (alarmLogFileMaxRecords&&(fileType==ALARM_FILE)){
 	if (!alarmLogFileOffsetBytes) alarmLogFileStringLength=ftell(fl);
     alarmLogFileOffsetBytes = ftell(fl);
   }
 
-  fflush(fPointer);
+  if (fileType==ALARM_FILE) fflush(fl);
+  if (fileType==OPMOD_FILE) fflush(fo);
 
   
-  if(fPointer==fl)        updateAlarmLog(ALARM_FILE,bufSave);
-  else if (fPointer==fo)  updateLog     (OPMOD_FILE,bufSave);
-  else fprintf(stderr,"\nBad fPointer for writing\n");
+  if(fileType==ALARM_FILE)        updateAlarmLog(ALARM_FILE,bufSave);
+  else if (fileType==OPMOD_FILE)  updateLog     (OPMOD_FILE,bufSave);
+  else fprintf(stderr,"\nBad file type for writing\n");
   
-  if( (_printer_flag) && (fPointer==fl) &&printerMsgQId ) 
+  if( (_printer_flag) && (fileType==ALARM_FILE) &&printerMsgQId ) 
     {
       sprintf(DBbuff,"%d %d %s %s",ALARM_LOG_DB, typeOfRecord+1,buf_tmp,buff); 
 #ifdef HAVE_SYSV_IPC
@@ -556,13 +558,13 @@ static int filePrintf(FILE *fPointer,char *buf,time_t *ptime,int typeOfRecord)
   
   if(_DB_call_flag && DBMsgQId ) 
     { 
-      if (fPointer==fo) /* write into AlarmOp Database */ 
+      if (fileType==OPMOD_FILE) /* write into AlarmOp Database */ 
 	{
 	  if(typeOfRecord ==0) return(ret);
 	  sprintf(DBbuff,"%d %d %s %s %s %s %s %s %s",OP_MOD_DB,typeOfRecord,applicationName,
 		  deviceName,userID.loginid,userID.myhostname,userID.displayName,buf_tmp,buff);
 	}
-      else if (fPointer==fl) /* write into AlarmLOG Database */ 
+      else if (fileType==ALARM_FILE) /* write into AlarmLOG Database */ 
 	{
 	  if(typeOfRecord ==0) return(ret);
 	  sprintf(DBbuff,"%d %d %s %s %s %s %s %s %s", ALARM_LOG_DB, typeOfRecord,applicationName,
@@ -570,7 +572,7 @@ static int filePrintf(FILE *fPointer,char *buf,time_t *ptime,int typeOfRecord)
 	}
       else 
 	{
-          fprintf(stderr,"\nBad fPointer for writing\n"); 
+          fprintf(stderr,"\nBad file type for writing\n"); 
 	  return (ret);
 	}
 #ifdef HAVE_SYSV_IPC
