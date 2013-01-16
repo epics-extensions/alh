@@ -51,10 +51,13 @@
 extern int kill(pid_t, int);     /* May not be defined for strict ANSI */
 
 int callBrowser(char *url);
-static Window checkNetscapeWindow(Window w);
 static int execute(char *s);
+
+#if !defined(USE_XDGOPEN) && !defined(USE_HTMLVIEW)
+static Window checkNetscapeWindow(Window w);
 static Window findNetscapeWindow(void);
 static int ignoreXError(Display *display, XErrorEvent *xev);
+#endif
 
 /* Global variables */
 extern Display *display;
@@ -65,12 +68,9 @@ int callBrowser(char *url)
 /* url is the URL that the browser is to display  */
 /*   or "quit" to terminate the browser           */
 {
-	int (*oldhandler)(Display *, XErrorEvent *);
-	static Window netscapew=(Window)0;
 	static pid_t pid=0;
 	int status;
 	char command[BUFSIZ];
-	char *envstring;
 
 	/* Handle quit */
 	if(!strcmp(url,"quit")) {
@@ -80,9 +80,14 @@ int callBrowser(char *url)
 		}
 		return 3;
 	}
-#ifdef USE_HTMLVIEW
-	sprintf(command,"htmlview %s &",url);
+#if defined USE_XDGOPEN
+	sprintf(command,"xdg-open %s &",url);
+#elif defined USE_HTMLVIEW
+ 	sprintf(command,"htmlview %s &",url);
 #else /* #ifndef USE_HTMLVIEW */
+	int (*oldhandler)(Display *, XErrorEvent *);
+	static Window netscapew=(Window)0;
+	char *envstring;
 	/* Set handler to ignore possible BadWindow error */
 	/*   (Would prefer a routine that tells if the window is defined) */
 	oldhandler=XSetErrorHandler(ignoreXError);
@@ -135,6 +140,8 @@ int callBrowser(char *url)
 #endif    
 	return 2;
 }
+
+#if !defined(USE_XDGOPEN) && !defined(USE_HTMLVIEW)
 /**************************** checkNetscapeWindow ************************/
 static Window checkNetscapeWindow(Window w)
 /* Checks if this window is the Netscape window and returns the window
@@ -164,6 +171,9 @@ static Window checkNetscapeWindow(Window w)
 	if(version) XFree((void *)version);
 	return wfound;
 }
+#endif 
+
+
 /**************************** execute ************************************/
 static int execute(char *s)
 /* From O'Reilly, Vol. 1, p. 438 */
@@ -186,6 +196,8 @@ static int execute(char *s)
 	signal(SIGQUIT,qstat);
 	return(status);
 }
+
+#if !defined(USE_XDGOPEN) && !defined(USE_HTMLVIEW)
 /**************************** findNetscapeWindow *************************/
 static Window findNetscapeWindow(void)
 {
@@ -219,6 +231,7 @@ static int ignoreXError(Display *display, XErrorEvent *xev)
 #endif    
 	return 0;
 }
+#endif	/* if !defined(USE_XDGOPEN) && !defined(USE_HTMLVIEW) */
 
 #else     /*ifndef WIN32 */
 /*************************************************************************/
