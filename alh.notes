@@ -618,3 +618,9 @@ Wed Aug 29 16:32:14 CDT 2012 ALH_1_2_30
 	Increased size of group and channel config file input fields. Portability 
 	changes. Bug fix in initialization of psetup. Change darwin default to
 	HAVE_SYSV_IPC.
+
+Thu Nov 29 15:13:46 CST 2012 ALH_1_2_31
+	Added code to browser.c (from <wart@kobold.org>) and Makefile to use 
+        xdg-open on Linux systems to open an url from alh if the compiler macro 
+	USE_XDGOPEN was defined during the build.
+	Fixed bugs in AlarmLogDated (-T option) code.
