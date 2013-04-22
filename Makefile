@@ -56,9 +56,6 @@ ifeq ($(DEBUG), YES)
   USR_CCFLAGS   += -DDEBUG
 endif
 
-# Use xdg-open on Linux for launching a web page from alh
-browser_CPPFLAGS_Linux += -DUSE_XDGOPEN
-
 Linux_CPPFLAGS += -D_SVID_SOURCE -D_BSD_SOURCE
 printer_CPPFLAGS += $($(OS_CLASS)_CPPFLAGS)
 file_CPPFLAGS += $($(OS_CLASS)_CPPFLAGS)
