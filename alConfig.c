@@ -230,7 +230,7 @@ struct mainGroup *pmainGroup)
 		parent_link = parent_link->parent;
 
 	if(parent_link==NULL) {
-		print_error(buf,"Can not find parent");
+		print_error(buf,"Cannot find parent");
 		return;
 	}
 
@@ -364,7 +364,7 @@ int caConnect,struct mainGroup *pmainGroup)
 		parent_link = parent_link->parent;
 
 	if(parent_link==NULL) {
-		print_error(buf,"Can not find parent");
+		print_error(buf,"Cannot find parent");
 		return;
 	}
 
