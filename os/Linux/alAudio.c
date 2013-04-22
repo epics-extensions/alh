@@ -18,6 +18,9 @@
  *
  */
 
+#include <X11/Xlib.h>
+#include <X11/XKBlib.h>
+
 #include "alh.h"
 #include <stdlib.h>
 
@@ -34,9 +37,8 @@ int alBeep(Display *displayBB)
         strcat(cmd,psetup.soundFile);
 	system(cmd);
     } else {
-        XBell(displayBB,0);
+        XkbBell(displayBB,None,0,None);
     }
     return 0;
 }
-
 
