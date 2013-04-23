@@ -624,3 +624,10 @@ Thu Nov 29 15:13:46 CST 2012 ALH_1_2_31
         xdg-open on Linux systems to open an url from alh if the compiler macro 
 	USE_XDGOPEN was defined during the build.
 	Fixed bugs in AlarmLogDated (-T option) code.
+
+Mon Apr 22 11:05:07 CDT 201
+	Modified text in 2 error messages. Changed alarm bell function from Xbell
+	to XkbBell. Used more modern tools to open default browser. Changed 
+	silenced background color back to blue.
+
+
