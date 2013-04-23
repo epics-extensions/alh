@@ -118,9 +118,14 @@ void awUpdateRowWidgets(line)                 Update line widgets
 #define MENU_SETUP_FILTER_NONE	10503
 #define MENU_SETUP_FILTER_ACTIVE	10504
 #define MENU_SETUP_FILTER_UNACK 	10505
-#define MENU_SETUP_SILENCE_FOREVER	10506
-#define MENU_SETUP_ALARMLOG		10507
-#define MENU_SETUP_OPMOD		10508
+#define MENU_SETUP_SILENCE_INTERVAL_5	10506
+#define MENU_SETUP_SILENCE_INTERVAL_10	10507
+#define MENU_SETUP_SILENCE_INTERVAL_15	10509
+#define MENU_SETUP_SILENCE_INTERVAL_30	10510
+#define MENU_SETUP_SILENCE_INTERVAL_60	10511
+#define MENU_SETUP_SILENCE_FOREVER	10512
+#define MENU_SETUP_ALARMLOG		10513
+#define MENU_SETUP_OPMOD		10514
 
 #define MENU_ACTION_BEEP_MINOR	10500
 #define MENU_ACTION_BEEP_MAJOR	10501
@@ -130,6 +135,7 @@ void awUpdateRowWidgets(line)                 Update line widgets
 #define MENU_HELP_ABOUT	10906
 
 /* external variables */
+extern Pixel silenced_bg_pixel;
 extern char alhVersionString[100];
 extern char *bg_char[];
 extern Pixel bg_pixel[];
@@ -660,6 +666,20 @@ static MenuItem action_menuNew[] = {
 		         {NULL},
 		     	};
 
+	static MenuItem setup_silence_interval_menu[] = {
+		         { "5 minutes",      PushButtonGadgetClass, 0, NULL, NULL,
+		             alhSetupCallback, (XtPointer)MENU_SETUP_SILENCE_INTERVAL_5,  (MenuItem *)NULL, 0 },
+		         { "10 minutes",      PushButtonGadgetClass, 0, NULL, NULL,
+		             alhSetupCallback, (XtPointer)MENU_SETUP_SILENCE_INTERVAL_10,  (MenuItem *)NULL, 0 },
+		         { "15 minutes",      PushButtonGadgetClass, 0, NULL, NULL,
+		             alhSetupCallback, (XtPointer)MENU_SETUP_SILENCE_INTERVAL_15,  (MenuItem *)NULL, 0 },
+		         { "30 minutes",      PushButtonGadgetClass, 0, NULL, NULL,
+		             alhSetupCallback, (XtPointer)MENU_SETUP_SILENCE_INTERVAL_30,  (MenuItem *)NULL, 0 },
+		         { "1 hour",      PushButtonGadgetClass, 0, NULL, NULL,
+		             alhSetupCallback, (XtPointer)MENU_SETUP_SILENCE_INTERVAL_60,  (MenuItem *)NULL, 0 },
+		         {NULL},
+		     	};
+
 	static MenuItem setup_filter_menu[] = {
 		         { "No filter",      PushButtonGadgetClass, 'N', NULL, NULL,
 		             alhSetupCallback, (XtPointer)MENU_SETUP_FILTER_NONE,  (MenuItem *)NULL, 0 },
@@ -679,6 +699,8 @@ static MenuItem action_menuNew[] = {
 		         { "Audio Setup...",       ToggleButtonGadgetClass, 'D', NULL, NULL,
 		             alhAudioSetupCallback, NULL,  (MenuItem *)NULL, 0 },
 #endif
+		         { "Select silence interval...",PushButtonGadgetClass, 'S', NULL, NULL,
+		                               0, 0,    (MenuItem *)setup_silence_interval_menu, 0 },
 		         { "Silence Forever",  ToggleButtonGadgetClass, 'S', NULL, NULL,
 		             alhSetupCallback, (XtPointer)MENU_SETUP_SILENCE_FOREVER,(MenuItem *)NULL, 0 },
 		         { "New Alarm Log File Name...",  PushButtonGadgetClass, 'L', NULL, NULL,
@@ -1330,7 +1352,7 @@ static void alhSetupCallback( Widget widget, XtPointer calldata, XtPointer cbs)
 {
 	int item=(long)calldata;
 	ALINK      *area;
-
+	XmString silence_string;
 
 	XtVaGetValues(widget, XmNuserData, &area, NULL);
 
@@ -1367,6 +1389,66 @@ static void alhSetupCallback( Widget widget, XtPointer calldata, XtPointer cbs)
 
 		psetup.beepSevr = INVALID_ALARM;
 		changeBeepSeverityText(area);
+		break;
+
+	case MENU_SETUP_SILENCE_INTERVAL_5:
+
+		if (area->silenceMinutes != 5) {
+			area->silenceMinutes=5;
+			silenceSelectedMinutesReset(area);
+		}
+		silence_string = XmStringCreateLocalized ("Silence 5 minutes");
+		XtVaSetValues(area->silenceSelectedMinutes, XmNlabelString, silence_string, NULL);
+		XmStringFree (silence_string);
+		alLogOpModMessage(0,0,"Silence interval set to 5 minutes");
+		break;
+
+	case MENU_SETUP_SILENCE_INTERVAL_10:
+
+		if (area->silenceMinutes != 10) {
+			area->silenceMinutes=10;
+			silenceSelectedMinutesReset(area);
+		}
+		silence_string = XmStringCreateLocalized ("Silence 10 minutes");
+		XtVaSetValues(area->silenceSelectedMinutes, XmNlabelString, silence_string, NULL);
+		XmStringFree (silence_string);
+		alLogOpModMessage(0,0,"Silence interval set to 10 minutes");
+		break;
+
+	case MENU_SETUP_SILENCE_INTERVAL_15:
+
+		if (area->silenceMinutes != 15) {
+			area->silenceMinutes=15;
+			silenceSelectedMinutesReset(area);
+		}
+		silence_string = XmStringCreateLocalized ("Silence 15 minutes");
+		XtVaSetValues(area->silenceSelectedMinutes, XmNlabelString, silence_string, NULL);
+		XmStringFree (silence_string);
+		alLogOpModMessage(0,0,"Silence interval set to 15 minutes");
+		break;
+
+	case MENU_SETUP_SILENCE_INTERVAL_30:
+
+		if (area->silenceMinutes != 30) {
+			area->silenceMinutes=30;
+			silenceSelectedMinutesReset(area);
+		}
+		silence_string = XmStringCreateLocalized ("Silence 30 minutes");
+		XtVaSetValues(area->silenceSelectedMinutes, XmNlabelString, silence_string, NULL);
+		XmStringFree (silence_string);
+		alLogOpModMessage(0,0,"Silence interval set to 30 minutes");
+		break;
+
+	case MENU_SETUP_SILENCE_INTERVAL_60:
+
+		if (area->silenceMinutes != 60) {
+			area->silenceMinutes=60;
+			silenceSelectedMinutesReset(area);
+		}
+		silence_string = XmStringCreateLocalized ("Silence 1 hour");
+		XtVaSetValues(area->silenceSelectedMinutes, XmNlabelString, silence_string, NULL);
+		XmStringFree (silence_string);
+		alLogOpModMessage(0,0,"Silence interval set to 1 hour");
 		break;
 
 	case MENU_SETUP_SILENCE_FOREVER:
@@ -1477,7 +1559,7 @@ void awRowWidgets(struct anyLine *line,void *area)
 			if ( glink->pgroupData->treeSym) {
 				str = XmStringCreateSimple(glink->pgroupData->treeSym);
 				wline->treeSym = XtVaCreateManagedWidget("treeSym",
-				    xmLabelGadgetClass,        wline->row_widget,
+				    xmLabelWidgetClass,        wline->row_widget,
 				    XmNlabelString,            str,
 				    XmNmarginHeight,           0,
 				    NULL);
@@ -1555,7 +1637,7 @@ void awRowWidgets(struct anyLine *line,void *area)
 		    XmNuserData,               (XtPointer)area,
 		    XmNx,                      nextX,
 		    XmNy,                      2,
-		    XmNbackground,             backgroundColor,
+		 /*   XmNbackground,             backgroundColor,*/
 		    (XtPointer)NULL);
 		if (line->linkType == GROUP && sllFirst(&(glink->subGroupList))){
 			XtManageChild(wline->arrow);
@@ -1575,7 +1657,7 @@ void awRowWidgets(struct anyLine *line,void *area)
 		    XmNmarginHeight,           0,
 		    XmNuserData,               (XtPointer)line->alias,
 		    XmNx,                      nextX,
-		    XmNbackground,             backgroundColor,
+		/*    XmNbackground,             backgroundColor,*/
 		    NULL);
 
 		if (guidanceExists(link)) {
@@ -1591,7 +1673,7 @@ void awRowWidgets(struct anyLine *line,void *area)
 		    XmNmarginHeight,           0,
 		    XmNuserData,               (XtPointer)area,
 		    XmNx,                      nextX,
-		    XmNbackground,             backgroundColor,
+		  /*  XmNbackground,             backgroundColor, */
 		    NULL);
 
 		if (alProcessExists(link) ){
@@ -1610,7 +1692,7 @@ void awRowWidgets(struct anyLine *line,void *area)
 		    XmNlabelString,            str,
 		    XmNx,                      nextX,
 		    XmNy,                      2,
-		    XmNbackground,             backgroundColor,
+	/*	    XmNbackground,             backgroundColor,*/
 		    NULL);
 		XmStringFree(str);
 		XtVaGetValues(wline->mask,XmNwidth,&width,NULL);
@@ -1639,13 +1721,19 @@ void awRowWidgets(struct anyLine *line,void *area)
 		    XmNlabelString,            str,
 		    XmNx,                      nextX,
 		    XmNy,                      2,
-		    XmNbackground,             backgroundColor,
+/*		    XmNbackground,             backgroundColor, */
 		    NULL);
 		XmStringFree(str);
 		XtVaGetValues(wline->message,XmNwidth,&width,NULL);
 		nextX = nextX + width + 3;
 
 		awUpdateRowWidgets(line);
+
+                if (psetup.silenceSelectedMinutes) {
+                    changeTreeColor(wline->row_widget,silenced_bg_pixel);
+                } else {
+                    changeTreeColor(wline->row_widget,bg_pixel[0]);
+                }
 
 		XtManageChild(wline->row_widget);
 	}

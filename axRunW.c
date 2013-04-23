@@ -15,6 +15,7 @@
 /* axRunW.c */
 
 #include <stdlib.h>
+#include <stdio.h>
 
 #include <Xm/Xm.h>
 #include <Xm/AtomMgr.h>
@@ -63,8 +64,7 @@ static void axExitArea_callback(Widget w,ALINK *area,XmAnyCallbackStruct *call_d
 static void blinking(XtPointer pointer, XtIntervalId *id);
 static void createMainWindow_callback(Widget w,ALINK *area,XmAnyCallbackStruct *call_data);
 static void icon_update(Widget blinkButton);
-static void silenceOneHourReset(void *area);
-static void changeTreeColor(Widget widget,Pixel color);
+
 char *Strncat(
   char *dest,
   const char *src,
@@ -209,7 +209,7 @@ void createRuntimeWindow(ALINK *area)
 
 	/* reinitialize silence beep */
 	silenceCurrentReset(area);
-	silenceOneHourReset(area);
+	silenceSelectedMinutesReset(area);
 
 	icon_update(area->blinkButton);
 	
@@ -351,7 +351,7 @@ static void blinking(XtPointer pointer, XtIntervalId *id)
 			XmChangeColor(blinkButton,blinkPixel);
 		}
 		if (!psetup.silenceForever &&
-		    !psetup.silenceOneHour && 
+		    !psetup.silenceSelectedMinutes && 
 		    !psetup.silenceCurrent && 
 		    (psetup.highestUnackBeepSevr >= psetup.beepSevr)) {
 
@@ -389,13 +389,13 @@ void silenceCurrentReset(void *area)
 }
 
 /***********************************************
- reset silenceOneHourReset
+ reset silenceSelectedMinutesReset
 ************************************************/
-static void silenceOneHourReset(void *area)
+void silenceSelectedMinutesReset(void *area)
 {
-	if (psetup.silenceOneHour) {
-		XmToggleButtonGadgetSetState(((ALINK*)area)->silenceOneHour,FALSE,FALSE);
-		silenceOneHour_callback(((ALINK*)area)->silenceOneHour,area,NULL);
+	if (psetup.silenceSelectedMinutes) {
+		XmToggleButtonGadgetSetState(((ALINK*)area)->silenceSelectedMinutes,FALSE,FALSE);
+		silenceSelectedMinutes_callback(((ALINK*)area)->silenceSelectedMinutes,area,NULL);
 	}
 }
 
@@ -413,47 +413,46 @@ XmAnyCallbackStruct *call_data)
 }
 
 /***************************************************
- silenceOneHour button toggle callback
+ silenceSelectedMinutes button toggle callback
 ****************************************************/
-void silenceOneHour_callback(Widget w,ALINK* area,
+void silenceSelectedMinutes_callback(Widget w,ALINK* area,
 XmAnyCallbackStruct *call_data)
 {
 	static XtIntervalId intervalId = 0;
-	int seconds = 3600;
+	int seconds = 60*area->silenceMinutes;
 
-	psetup.silenceOneHour = psetup.silenceOneHour?FALSE:TRUE;
-	if (psetup.silenceOneHour) {
+	psetup.silenceSelectedMinutes = psetup.silenceSelectedMinutes?FALSE:TRUE;
+	if (psetup.silenceSelectedMinutes) {
 		intervalId = XtAppAddTimeOut(appContext,
 		    (unsigned long)(1000*seconds),
-		    (XtTimerCallbackProc)silenceOneHourReset,
+		    (XtTimerCallbackProc)silenceSelectedMinutesReset,
 		    (XtPointer)area);
 		XmChangeColor(area->messageArea,silenced_bg_pixel);
-        if (!_mask_color_flag) {
-            changeTreeColor(area->treeWindowForm,silenced_bg_pixel);
-		    changeTreeColor(area->groupWindowForm,silenced_bg_pixel);
-        }
-       
+		if (!_mask_color_flag) {
+			changeTreeColor(area->treeWindowForm,silenced_bg_pixel);
+			changeTreeColor(area->groupWindowForm,silenced_bg_pixel);
+		}
 		changeTreeColor(area->scale,silenced_bg_pixel);
-		alLogOpModMessage(0,0,"Silence One Hour set to TRUE");
+		alLogOpModMessage(0,0,"Silence Selected Minutes set to TRUE");
 	} else {
 		if (intervalId) {
 			XtRemoveTimeOut(intervalId);
 			intervalId = 0;
 		}
 		XmChangeColor(area->messageArea,bg_pixel[0]);
-        if (!_mask_color_flag) {
-            changeTreeColor(area->treeWindowForm,bg_pixel[0]);
-		    changeTreeColor(area->groupWindowForm,bg_pixel[0]);
-        }
-        changeTreeColor(area->scale,bg_pixel[0]);
-		alLogOpModMessage(0,0,"Silence One Hour set to FALSE");
+		if (!_mask_color_flag) {
+			changeTreeColor(area->treeWindowForm,bg_pixel[0]);
+			changeTreeColor(area->groupWindowForm,bg_pixel[0]);
+		}
+		changeTreeColor(area->scale,bg_pixel[0]);
+		alLogOpModMessage(0,0,"Silence Selected Minutes set to FALSE");
 	}
 }
 
 /***************************************************
  changeTreeColor
 ****************************************************/
-static void changeTreeColor(Widget widget,Pixel color)
+void changeTreeColor(Widget widget,Pixel color)
 {
     int i;
     Widget *children;

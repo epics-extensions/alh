@@ -70,7 +70,9 @@ void createRuntimeWindow( ALINK *area);
 void silenceCurrentReset(void *area);
 void silenceCurrent_callback( Widget w, ALINK* area, XmAnyCallbackStruct *call_data);
 void silenceForeverChangeState( ALINK *area);
-void silenceOneHour_callback( Widget w, ALINK* area, XmAnyCallbackStruct *call_data);
+void silenceSelectedMinutes_callback( Widget w, ALINK* area, XmAnyCallbackStruct *call_data);
+void changeTreeColor(Widget widget,Pixel color);
+void silenceSelectedMinutesReset(void *area);
 
 
 /********************************************************************

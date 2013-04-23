@@ -184,7 +184,7 @@ struct setup {
 	char soundFile[NAMEDEFAULT_SIZE];       /* sound wav file name */
 	char lockFileBase[NAMEDEFAULT_SIZE];    /* lock files basename */
 	short silenceForever;                   /* 1 - beepoff forever is true */
-	short silenceOneHour;                   /* 1 - beepoff one hour is true */
+	short silenceSelectedMinutes;             /* 1 - beepoff selected minutes is true */
 	short silenceCurrent;                   /* 1 - current beep on  0 - off */
 	short beepSevr;                 /* 1,2,3,4,5 */
 	short highestSevr;              /* system highest  sevr */

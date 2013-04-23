@@ -27,6 +27,7 @@
 #include <Xm/CascadeBG.h>
 #include <Xm/Form.h>
 #include <Xm/LabelG.h>
+#include <Xm/PanedW.h>
 #include <Xm/Protocols.h>
 #include <Xm/PushB.h>
 #include <Xm/PushBG.h>
@@ -596,9 +597,9 @@ void createMainWindowWidgets(ALINK *area)
 	    NULL);
 	XmStringFree(str);
 
-
-	/* Create a Silence One Hour Toggle Button in the messageArea */
-	area->silenceOneHour = XtVaCreateManagedWidget("SilenceOneHour",
+	/* Create a Silence Selected Minutes Toggle Button in the messageArea */
+	area->silenceMinutes = 60;
+	area->silenceSelectedMinutes = XtVaCreateManagedWidget("Silence 1 hour",
 	    xmToggleButtonGadgetClass, area->messageArea,
 	    XmNtopAttachment,          XmATTACH_WIDGET,
 	    XmNtopWidget,              area->scale,
@@ -607,10 +608,10 @@ void createMainWindowWidgets(ALINK *area)
 	    NULL);
 
 	/* Create a Silence Current Toggle Button in the messageArea */
-	area->silenceCurrent = XtVaCreateManagedWidget("SilenceCurrent",
+	area->silenceCurrent = XtVaCreateManagedWidget("Silence current",
 	    xmToggleButtonGadgetClass, area->messageArea,
 	    XmNtopAttachment,          XmATTACH_WIDGET,
-	    XmNtopWidget,              area->silenceOneHour,
+	    XmNtopWidget,              area->silenceSelectedMinutes,
 	    XmNrightAttachment,        XmATTACH_FORM,
 	    XmNuserData,               (XtPointer)area,
 	    NULL);
@@ -667,8 +668,8 @@ void createMainWindowWidgets(ALINK *area)
 	    NULL);
 	XmStringFree(str);
 
-	XtAddCallback(area->silenceOneHour, XmNvalueChangedCallback,
-	    (XtCallbackProc)silenceOneHour_callback,area);
+	XtAddCallback(area->silenceSelectedMinutes, XmNvalueChangedCallback,
+	    (XtCallbackProc)silenceSelectedMinutes_callback,area);
 
 	XtAddCallback(area->silenceCurrent, XmNvalueChangedCallback,
 	    (XtCallbackProc)silenceCurrent_callback,area);

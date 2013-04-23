@@ -53,7 +53,7 @@ typedef struct  areaLink{
 	Widget           label_groupAlarm;
 	Widget           label_channelAlarm;
 	Widget           label_mask;
-	Widget           silenceOneHour;
+	Widget           silenceSelectedMinutes;
 	Widget           silenceCurrent;
 	Widget           silenceForever;
 	Widget           silenceForeverLabel;
@@ -96,6 +96,8 @@ typedef struct  areaLink{
 	char             currentAlarmString[10][228];
 	int              w;
 	int              h;
+	/* ----- Silence minutes info ----- */
+	int              silenceMinutes;
 } ALINK;
 
 typedef struct _menu_item {

@@ -630,4 +630,11 @@ Mon Apr 22 11:05:07 CDT 201
 	to XkbBell. Used more modern tools to open default browser. Changed 
 	silenced background color back to blue.
 
+Tue Apr 23 10:57:01 CDT 2013
+	SilenceOneHour feature changed: Added setup/select_silence_interval menu
+	item with interval selections 5, 10, 15, 30, 60 minutes. SilenceOneHour 
+        button text now shows selected interval (default is 1 hour). Pressing 
+	silence button on message window will silence beeps for selected time 
+        interval. Changing interval selection will terminate an existing silence
+	interval.
 
