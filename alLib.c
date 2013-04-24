@@ -48,6 +48,7 @@ static void alNewAlarmProcess(int stat,int sev, int acks,int ackt,
 void alSetAckTChan(CLINK *clink,int ackt);
 short alHighestBeepSeverity(int sevr[ALH_ALARM_NSEV], int beepSevr);
 static void alSetBeepSevCount(GLINK* glink,int beepSevr,int oldBeepSevr);
+static void alAlarmFilterReset(CLINK *clink);
 
 char *Strncat(
   char *dest,
@@ -579,23 +580,14 @@ static void alarmCountFilter_callback(XtPointer cd, XtIntervalId *id)
 {
 	COUNTFILTER *countFilter=(COUNTFILTER *)cd;
 	time_t alarmTime;
-    int j;
 
 #if DEBUG_CALLBACKS
-	{
-		static int n=0;
-
-		printf("alarmCountFilter_callback: n=%d\n",n++);
-	}
+	{ static int n=0; printf("alarmCountFilter_callback: n=%d\n",n++); }
 #endif
 	alarmTime = countFilter->alarmTime;
 	countFilter->alarmTime=0;
 	countFilter->timeoutId=0;
-    /* reset alarm count filter when new alarm is processed */
-    if (countFilter->inputCount){
-        for (j=0;j<=2*(countFilter->inputCount)-1;j++){countFilter->alarmTimeHistory[j]=0;}
-    }
-    countFilter->countIndex=0;
+        alAlarmFilterReset(countFilter->clink);
 	alNewAlarmProcess(countFilter->stat,countFilter->sev,
 	    countFilter->acks,countFilter->ackt,
 	    countFilter->value,countFilter->clink,alarmTime);
@@ -669,7 +661,7 @@ void alNewEvent(int stat,int sevr,int acks,int acktCA,char *value,CLINK *clink)
 void alNewAlarmFilter(int stat,int sev,int acks,int ackt,char *value,CLINK *clink)
 {
 	struct chanData *cdata;
-	int sevr_prev, i, j;
+	int sevr_prev, i;
 	time_t alarmTime;
 	COUNTFILTER *countFilter;
 
@@ -694,8 +686,8 @@ void alNewAlarmFilter(int stat,int sev,int acks,int ackt,char *value,CLINK *clin
 		return;
 	}
 
- 	/* Process if inputCount or inputSeconds is zero */
-        if (countFilter->inputSeconds==0 || countFilter->inputCount==0) {
+ 	/* Process if inputSeconds is zero */
+        if (countFilter->inputSeconds==0 ) {
 		alNewAlarmProcess(stat,sev,acks,ackt,value,clink,alarmTime);
 		return;
 	}
@@ -727,8 +719,10 @@ void alNewAlarmFilter(int stat,int sev,int acks,int ackt,char *value,CLINK *clin
     }
 
 
-    /* process changes in acks and ackt and if no timeout then add timeout */
     if ( cdata->curSevr!=0 && sev==0 ){
+      if ( countFilter->inputCount != -1 ) {
+
+        /* if inputCount not -1 process changes in acks and ackt and add timeout */
         alNewAlarmProcess(cdata->curStat,cdata->curSevr,acks,ackt,value,clink,alarmTime);
         if (countFilter->timeoutId==0) {
             countFilter->timeoutId = XtAppAddTimeOut(appContext,
@@ -736,23 +730,23 @@ void alNewAlarmFilter(int stat,int sev,int acks,int ackt,char *value,CLINK *clin
                 alarmCountFilter_callback,(XtPointer)countFilter);
             countFilter->alarmTime=alarmTime;
         }
+      } else {
+
+        /* if inputCount is -1 dont start a timeout, reset filter and process new alarm state*/
+        alAlarmFilterReset(clink);
+        alNewAlarmProcess(stat,sev,acks,ackt,value,clink,alarmTime);
+      }
     }
 
     /* check in/out alarm count within time interval*/
+    if ( countFilter->inputCount > 0 ) {
     if ( (sevr_prev==0 && sev!=0) || (sevr_prev!=0 && sev==0)){
         i = countFilter->countIndex;
          if ( !countFilter->alarmTimeHistory || 
              (countFilter->alarmTimeHistory[i] &&
              (((int)difftime(alarmTime,countFilter->alarmTimeHistory[i]))<=countFilter->inputSeconds))){
-            /* reset alarm count filter when new alarm is processed */
-            if (countFilter->inputCount){
-                for (j=0;j<=2*(countFilter->inputCount)-1;j++){countFilter->alarmTimeHistory[j]=0;}
-            }
-            if (countFilter->timeoutId){
-                XtRemoveTimeOut(countFilter->timeoutId);
-                countFilter->timeoutId=0;
-            }
-            countFilter->countIndex=0;
+
+            alAlarmFilterReset(clink);
             alNewAlarmProcess(stat,sev,acks,ackt,value,clink,alarmTime);
         } else {
             countFilter->alarmTimeHistory[i] = alarmTime;
@@ -762,7 +756,36 @@ void alNewAlarmFilter(int stat,int sev,int acks,int ackt,char *value,CLINK *clin
             }
         }
     }
+    }
 }
+
+
+/*********************************************************** 
+     alNewAlarmFilterReset
+************************************************************/
+void alAlarmFilterReset(CLINK *clink)
+{
+    COUNTFILTER *countFilter;
+    struct chanData *cdata;
+    int j;
+
+    if (clink == NULL ) return;
+    cdata = clink->pchanData;
+    if (cdata == NULL ) return;
+    countFilter = cdata->countFilter;
+    if (countFilter == NULL ) return;
+
+    /* reset alarm count filter when new alarm is processed */
+    countFilter->countIndex=0;
+    if (countFilter->inputCount){
+        for (j=0;j<=2*(countFilter->inputCount)-1;j++){countFilter->alarmTimeHistory[j]=0;}
+    }
+    if (countFilter->timeoutId){
+        XtRemoveTimeOut(countFilter->timeoutId);
+        countFilter->timeoutId=0;
+    }
+}
+
 
 /*********************************************************** 
      alNewAlarmProcess

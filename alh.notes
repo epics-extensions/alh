@@ -638,3 +638,9 @@ Tue Apr 23 10:57:01 CDT 2013
         interval. Changing interval selection will terminate an existing silence
 	interval.
 
+Wed Apr 24 16:11:47 CDT 2013
+	Added two more 'ALARMCOUNTFILTER counts seconds' filters.  If counts is
+	zero, counts is not used in determining alarm/no-alarm state. Seconds only
+	are used for a channel going in and out of alarm. If counts is -1, seconds
+	only are used for channel going from no-alarm to alarm state. Change in
+	channel from alarm to no-alarm state is not filtered.
