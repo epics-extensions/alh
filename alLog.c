@@ -201,6 +201,7 @@ void alLogAlarmMessage(time_t *ptimeofdayAlarm,int messageCode,CLINK* clink,cons
         (alhArea ? alhArea->blinkString : "N/A"),
         cdata->value);
 #endif
+
     if (_xml_flag) /* Use XML-ish entries which are easier to parse. SNS */
     {
         if (!_description_field_flag)
@@ -362,7 +363,6 @@ void alLogOpModAckMessage(int messageCode,GCLINK* gclink,const char* fmt,...)
         (alhArea ? alhArea->blinkString : "N/A"));
     }
 #endif
-
 	if (!alhArea || !alhArea->blinkString){
 		sprintf(buff," : : %s",text);
 	} else {
@@ -475,9 +475,10 @@ static int filePrintf(int fileType,char *buf,time_t *ptime,int typeOfRecord)
 	  
 	  psetup.logFile[strlen(psetup.logFile) - 11] = 0;
 	  strncat(psetup.logFile, buf_tmp, strlen(buf_tmp));
-	  fclose(fl);
+	  if (fl) fclose(fl);
 	  fl = fopen(psetup.logFile,"a");
-	  fclose(fl);
+	  if (fl) fclose(fl);
+          fl=0;
 	  if(_read_only_flag)  fl = fopen(psetup.logFile,"r");
 	  else if (_lock_flag) fl = fopen(psetup.logFile,"a");
 	  else fl = fopen(psetup.logFile,"r+");
@@ -485,9 +486,9 @@ static int filePrintf(int fileType,char *buf,time_t *ptime,int typeOfRecord)
 	  /* The same with psetup.opModFile: */
 	  psetup.opModFile[strlen(psetup.opModFile) - 11] = 0;
 	  strncat(psetup.opModFile, buf_tmp, strlen(buf_tmp));
-	  fclose(fo);
+	  if (fo) fclose(fo);
 	  fo = fopen(psetup.opModFile,"a");
-	  fclose(fo);
+	  if (fo) fclose(fo);
 	  if(_read_only_flag)  fo = fopen(psetup.opModFile,"r");
 	  else if (_lock_flag) fo = fopen(psetup.opModFile,"a");
 	  else fo = fopen(psetup.opModFile,"r+");
@@ -514,8 +515,12 @@ static int filePrintf(int fileType,char *buf,time_t *ptime,int typeOfRecord)
         buf_tmp[20]=0;
         sprintf(bufSave,"%-20s : %s\n",buf_tmp,buf);
     }
-	if (alarmLogFileMaxRecords&&(fileType==ALARM_FILE)) 
-	  {
+
+    /* Write into Alarm log file*/
+
+
+    if (fileType==ALARM_FILE) {
+	if (alarmLogFileMaxRecords && fl) {
 	    if (alarmLogFileOffsetBytes != ftell(fl))
 	      fseek(fl,alarmLogFileOffsetBytes,SEEK_SET);
 	    if (alarmLogFileOffsetBytes >= alarmLogFileStringLength*alarmLogFileMaxRecords) {
@@ -523,33 +528,36 @@ static int filePrintf(int fileType,char *buf,time_t *ptime,int typeOfRecord)
 	      status=truncateFile(psetup.logFile,alarmLogFileOffsetBytes);
 	      alarmLogFileOffsetBytes = 0;
 	    }
-	  } 
+	} 
+        if (!fl) ret=0;
+        else ret=fprintf(fl,"%s",bufSave);
+        if (ret<0 && !_read_only_flag)  {
+            fprintf(stderr,"Can't write '%s' to file=%s!!!\n", bufSave,"LOGfile"); 
+            errMsg("Error writing '%s' to file=%s!!!\n", bufSave,"LOGfile"); 
+        }
+        if (alarmLogFileMaxRecords && fl){
+            if (!alarmLogFileOffsetBytes) alarmLogFileStringLength=ftell(fl);
+            alarmLogFileOffsetBytes = ftell(fl);
+        }
+        if (fl) fflush(fl);
+        updateAlarmLog(ALARM_FILE,bufSave);
+    }
 
-  if (fileType==ALARM_FILE) ret=fprintf(fl,"%s",bufSave);
-  if (fileType==OPMOD_FILE) ret=fprintf(fo,"%s",bufSave);
+    /* Write into Op Mod log file*/
 
-  if (ret<0 && !_read_only_flag)  {
-    fprintf(stderr,"Can't write '%s' to file=%s!!!\n",
-	    bufSave,(fileType==ALARM_FILE)?"LOGfile":"OpModFile" ); 
-    errMsg("Error writing '%s' to file=%s!!!\n",
-	    bufSave,(fileType==ALARM_FILE)?"LOGfile":"OpModFile" ); 
-  }
-
-  if (alarmLogFileMaxRecords&&(fileType==ALARM_FILE)){
-	if (!alarmLogFileOffsetBytes) alarmLogFileStringLength=ftell(fl);
-    alarmLogFileOffsetBytes = ftell(fl);
-  }
-
-  if (fileType==ALARM_FILE) fflush(fl);
-  if (fileType==OPMOD_FILE) fflush(fo);
-
+    else if (fileType==OPMOD_FILE) {
+        if (!fo) ret=0;
+        else ret=fprintf(fo,"%s",bufSave);
+        if (ret<0 && !_read_only_flag)  {
+            errMsg("Error writing '%s' to file=%s!!!\n", bufSave,"OpModFile"); 
+        }
+        if (fo) fflush(fo);
+        updateLog(OPMOD_FILE,bufSave);
+    }
+    else fprintf(stderr,"\nBad file type for writing\n");
   
-  if(fileType==ALARM_FILE)        updateAlarmLog(ALARM_FILE,bufSave);
-  else if (fileType==OPMOD_FILE)  updateLog     (OPMOD_FILE,bufSave);
-  else fprintf(stderr,"\nBad file type for writing\n");
-  
-  if( (_printer_flag) && (fileType==ALARM_FILE) &&printerMsgQId ) 
-    {
+
+    if( (_printer_flag) && (fileType==ALARM_FILE) &&printerMsgQId ) {
       sprintf(DBbuff,"%d %d %s %s",ALARM_LOG_DB, typeOfRecord+1,buf_tmp,buff); 
 #ifdef HAVE_SYSV_IPC
       write2MQ(printerMsgQId, DBbuff);

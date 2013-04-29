@@ -200,40 +200,40 @@ struct parm_data
 
 static struct parm_data ptable[] = {
 #ifdef CMLOG
-		{ "-aCM", 4,			PARM_ALARM_LOG_CMLOG },
+		{ "-aCM", 4,		PARM_ALARM_LOG_CMLOG },
 #endif
-		{ "-a", 2,				PARM_ALARM_LOG_FILE },
- 		{ "-B", 2,				PARM_MESSAGE_BROADCAST },	/* Albert */
-		{ "-c", 2,				PARM_ACT },
- 		{ "-caputackt", 10,		PARM_CAPUT_ACK_TRANSIENTS },
-		{ "-D", 2,				PARM_READONLY },
-		{ "-debug", 6 ,			PARM_DEBUG },
-		{ "-desc_field", 11 ,		PARM_DESC_FIELD },
-		{ "-filter", 7,			PARM_ALARM_FILTER },
-		{ "-f", 2,				PARM_ALL_FILES_DIR },
- 		{ "-global", 7,			PARM_GLOBAL },
-		{ "-help", 5,			PARM_HELP },
-		{ "-L", 2,				PARM_LOCK },				/* Albert */
-		{ "-Lfile", 6,		    PARM_LOCK_FILE }, /* Andreas Luedeke */
-		{ "-l", 2,				PARM_LOG_DIR },
+		{ "-a", 2,		PARM_ALARM_LOG_FILE },
+ 		{ "-B", 2,		PARM_MESSAGE_BROADCAST },	/* Albert */
+		{ "-c", 2,		PARM_ACT },
+ 		{ "-caputackt", 10,	PARM_CAPUT_ACK_TRANSIENTS },
+		{ "-D", 2,		PARM_READONLY },
+		{ "-debug", 6 ,		PARM_DEBUG },
+		{ "-desc_field", 11 ,	PARM_DESC_FIELD },
+		{ "-f", 2,		PARM_ALL_FILES_DIR },
+		{ "-filter", 7,		PARM_ALARM_FILTER },
+ 		{ "-global", 7,		PARM_GLOBAL },
+		{ "-help", 5,		PARM_HELP },
+		{ "-L", 2,		PARM_LOCK },				/* Albert */
+		{ "-Lfile", 6,		PARM_LOCK_FILE }, /* Andreas Luedeke */
+		{ "-l", 2,		PARM_LOG_DIR },
+		{ "-m", 2,		PARM_ALARM_LOG_MAX },
 		{ "-mainwindow", 11,	PARM_MAIN_WINDOW },
-		{ "-m", 2,				PARM_ALARM_LOG_MAX },
-		{ "-maskcolor", 10,	    PARM_NOACK_MASK_COLOR },
+		{ "-maskcolor", 10,	PARM_NOACK_MASK_COLOR },
 		{ "-noerrorpopup", 13,	PARM_NO_ERROR_POPUP },
-		{ "-O", 2,				PARM_DATABASE },			/* Albert */
+		{ "-O", 2,		PARM_DATABASE },			/* Albert */
+		{ "-o", 2,		PARM_OPMOD_LOG_FILE },
 #ifdef CMLOG
-		{ "-oCM", 4,			PARM_OPMOD_LOG_CMLOG },
+		{ "-oCM", 4,		PARM_OPMOD_LOG_CMLOG },
 #endif
-		{ "-o", 2,				PARM_OPMOD_LOG_FILE },
-		{ "-P", 2,				PARM_PRINTER },
-		{ "-S", 2,				PARM_PASSIVE },
-		{ "-s", 2,				PARM_SILENT },
-		{ "-p", 2,				PARM_SOUND_FILE },
-		{ "-T", 2,				PARM_DATED },
-		{ "-v", 2,				PARM_VERSION },
-		{ "-version", 8,		PARM_VERSION },
-        { "-xml", 4,            PARM_XML },                 /* SNS */
- 		{ NULL,		-1,     -1 }};
+		{ "-p", 2,		PARM_SOUND_FILE },
+		{ "-P", 2,		PARM_PRINTER },
+		{ "-S", 2,		PARM_PASSIVE },
+		{ "-s", 2,		PARM_SILENT },
+		{ "-T", 2,		PARM_DATED },
+		{ "-v", 2,		PARM_VERSION },
+		{ "-version", 8,	PARM_VERSION },
+		{ "-xml", 4,            PARM_XML },                 /* SNS */
+ 		{ NULL,	-1,     -1 }};
 
 /* forward declarations */
 static void saveConfigFile_callback(Widget widget,char *filename,
@@ -243,7 +243,7 @@ static void fileSetup(char *filename,ALINK *area,int fileType,int programId,
 Widget widget);
 static int checkFilename(char *filename,int fileType);
 static int getCommandLineParms(int argc, char** argv);
-int getUserInfo();
+static int getUserInfo();
 
 /***************************************************
  exit and quit application
@@ -260,8 +260,8 @@ void exit_quit(Widget w, XtPointer clientdata, XtPointer calldata)
 	}
 
 	alLogOpModMessage(0,0,"Setup---Exit");
-	fclose(fl);
-	fclose(fo);
+	if (fl) { fclose(fl); fl=0; }
+	if (fo) { fclose(fo); fo=0; }
 	if (area && area->pmainGroup) proot = area->pmainGroup->p1stgroup;
 
 	/* 
@@ -418,7 +418,7 @@ static int checkFilename(char *filename,int fileType)
 		break;
 	}
 
-	fclose(tt);
+	if (tt) fclose(tt);
 	return 0;
 }
 
@@ -489,7 +489,9 @@ int programId,Widget widget)
 		strncat(filename, &buf[0], strlen(buf));
 	}
 	/* _______ End. Albert______________________________*/
+
 	error = checkFilename(filename,fileType);
+
 	if (error){
 		switch(fileType) {
 
@@ -536,7 +538,7 @@ int programId,Widget widget)
 	if (error){
 		fileSelectionBox = widget;
 		/* Display file selection box  */
-		if ( XtIsShell(widget)) {
+		if (widget &&  XtIsShell(widget)) {
 			long fileTypeLong=fileType;
 			Atom WM_DELETE_WINDOW;
 			fileSelectionBox = createFileDialog(widget,
@@ -573,15 +575,27 @@ int programId,Widget widget)
 			break;
 
 		case 4:
-			/*createDialog(fileSelectionBox,XmDIALOG_ERROR,filename," write error.");*/
-			fatalErrMsg("Write error for file %s.\n",filename);
+			errMsg("Error opening file %s\n",filename);
+		        switch(fileType) {
+		            case FILE_ALARMLOG:
+			        errMsg("WARNING: Continuing without Alarm Log file\n");
+			        break;
+		            case FILE_OPMOD:
+			        errMsg("WARNING: Continuing without OpMod Log file\n");
+			        break;
+		            default:
+			        break;
+		        }
+
+
 			break;
+
 		default:
 			break;
 		}
 	} else {
 		/* unmanage the fileSelection dialog */
-		if ( !XtIsShell(widget))
+		if (widget && !XtIsShell(widget))
 			createFileDialog(0,0,0,0,0,0,0,0,0);
 
 		switch(fileType) {
@@ -708,24 +722,26 @@ int programId,Widget widget)
 			break;
 
 		case FILE_ALARMLOG:
-			if (fo) alLogOpModMessage(0,0,"Setup Alarm Log File : %s",filename);
+			alLogOpModMessage(0,0,"Setup Alarm Log File : %s",filename);
 			strcpy(psetup.logFile,filename);
 			if (fl) fclose(fl); /* RO-flag. Albert */
 			if(_read_only_flag)  fl = fopen(psetup.logFile,"r");
 			else if((_time_flag)||(_lock_flag))  fl = fopen(psetup.logFile,"a");
 			else fl = fopen(psetup.logFile,"w+");
-			if (!fl) perror("CAN'T OPEN LOG FILE"); /* Albert */
+			if (!fl) perror("CAN'T OPEN ALARM LOG FILE"); /* Albert */
+			if (!fl) errMsg("CAN'T OPEN ALARM LOG FILE");
 			if (alarmLogFileMaxRecords) alarmLogFileOffsetBytes = 0;
 			break;
 
 		case FILE_OPMOD:
-			if (fo) alLogOpModMessage(0,0,"Setup OpMod File : %s",filename);
+			alLogOpModMessage(0,0,"Setup OpMod File : %s",filename);
 			strcpy(psetup.opModFile,filename);
 			if (fo) fclose(fo);
 			if(!_read_only_flag) fo=fopen(psetup.opModFile,"a");
 			/* RO-option. Albert */
 			else fo=fopen(psetup.opModFile,"r");
-			if (!fo) perror("CAN'T OPEN OP FILE"); /* Albert */
+			if (!fo) perror("CAN'T OPEN OPMOD LOG FILE"); /* Albert */
+			if (!fo) errMsg("CAN'T OPEN OPMOD LOG FILE");
 			break;
 
 		case FILE_SAVEAS:
@@ -758,7 +774,7 @@ XmAnyCallbackStruct *cbs)
 
 	XtVaGetValues(widget, XmNuserData, &area, NULL);
 
-	if (fo) alLogOpModMessage(0,0,"Setup Save New Config: %s",filename);
+	alLogOpModMessage(0,0,"Setup Save New Config: %s",filename);
 
 	if ( DEBUG == 1 )
 		printf("\nSaving Config File to %s \n", filename);
@@ -1119,6 +1135,7 @@ char *argv[];
 	char   logFile[NAMEDEFAULT_SIZE];
 	char   opModFile[NAMEDEFAULT_SIZE];
 	char   *name = NULL;
+
 	programId = ALH;
 	programName = (char *)calloc(1,4);
 	strcpy(programName,"alh");
@@ -1160,7 +1177,7 @@ char *argv[];
 		strncat(psetup.opModFile,opModFile,NAMEDEFAULT_SIZE-len);
 	}
 	if (DEBUG == 1 ) printf("\nOpMod File is %s \n", psetup.opModFile);
-	fileSetup(psetup.opModFile,NULL,FILE_OPMOD,programId,widget);
+	fileSetup(psetup.opModFile,NULL,FILE_OPMOD,programId,0);
 
 	/* ----- initialize and setup alarm log file ----- */
 	if (psetup.logDir) {
@@ -1181,7 +1198,7 @@ char *argv[];
 		strncat(psetup.logFile,logFile,NAMEDEFAULT_SIZE-len);
 	}
 	if (DEBUG == 1 ) printf("\nAlarmLog File is %s \n", psetup.logFile);
-	fileSetup(psetup.logFile,NULL,FILE_ALARMLOG,programId,widget);
+	fileSetup(psetup.logFile,NULL,FILE_ALARMLOG,programId,0);
 
 	/* ----- initialize and setup config file ----- */
 	if (psetup.configDir) {
@@ -1332,7 +1349,7 @@ exit_quit(NULL,NULL,NULL);
 /* signal(SIGINT,broadcastMess_exit_quit); Albert */
 }
 
-int getUserInfo()
+static int getUserInfo()
 {
 static char myhostname[256];
 static char loginid[16];        

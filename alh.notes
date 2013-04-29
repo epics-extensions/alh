@@ -644,3 +644,8 @@ Wed Apr 24 16:11:47 CDT 2013
 	are used for a channel going in and out of alarm. If counts is -1, seconds
 	only are used for channel going from no-alarm to alarm state. Change in
 	channel from alarm to no-alarm state is not filtered.
+
+Thu Apr 25 10:22:57 CDT 2013
+	Changed log file handling on alh startup. Now when error opening alarmLog or
+	opModLog file, an error message popup will be displayed and alh will continue
+	without the file. The file can be opened/created after startup via setup menu.
