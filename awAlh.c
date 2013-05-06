@@ -1232,7 +1232,6 @@ int type;
 	return;
           }
 
-    
     timeID=time(0L); 
     time_tmp=timeID;
 
@@ -1284,7 +1283,6 @@ int type;
     createDialog(ar->form_main,XmDIALOG_MESSAGE,"Broadcast Message: \n""\n""\n",buff);
 
     fclose(fp);	    
-    XtFree(string);
     amIsender=1;
     XtAppAddTimeOut(appContext,messBroadcastLockDelay,messBroadcastFileUnlock,NULL);
     
