@@ -3,7 +3,7 @@
 HTMLDOC = "/home/phoebus/ANJ/bin/solaris-sparc/htmldoc"
 WEBSITE = /net/epics/Public/epics/EpicsDocumentation/ExtensionsManuals/AlarmHandler
 
-VERSION = 1.2.16
+VERSION = 1.2.32
 
 # Content options:
 
@@ -56,7 +56,7 @@ ALHUserGuide.html: $(FILES) Makefile
 install: all
 	/bin/cp -f alhUserGuide.ps.gz $(WEBSITE)/alhUserGuide-$(VERSION).ps.gz
 	/bin/cp -f alhUserGuide.pdf $(WEBSITE)/alhUserGuide-$(VERSION).pdf
-	#/bin/cp -rf alhUserGuide $(WEBSITE)/alhUserGuide-$(VERSION)
+	/bin/cp -rf alhUserGuide $(WEBSITE)/alhUserGuide-$(VERSION)
 	rm -rf $(WEBSITE)/alhUserGuide-$(VERSION)
 	mkdir $(WEBSITE)/alhUserGuide-$(VERSION)
 	/bin/cp -rf . $(WEBSITE)/alhUserGuide-$(VERSION)

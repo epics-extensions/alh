@@ -115,7 +115,7 @@ level and detailed views of the alarm configuration structure in one window.</p>
 
 <p style='margin-left:.5in'>The alarm handler is a
 Motif and X11 Window based application written in C language, and it runs on
-Unix, Linux, and Windows 98/XP hosts. The Alarm Handler source code is
+Unix, Linux, and Windows 98/XP/.../8 hosts. The Alarm Handler source code is
 available via WWW as an EPICS extension.</p>
 
 <h2><a name="pgfId_696087"></a>Purpose of the Alarm Handler</h2>
@@ -137,7 +137,7 @@ Alarm Handler (ALH) are to:</p>
 <h2><a name="pgfId_696669"></a>System Requirements</h2>
 
 <p style='margin-left:.5in'>The Alarm Handler currently requires either 
-an IBM personal computer with Windows 95/NT and Hummingbird's
+an IBM personal computer with Windows 98/XP/.../8 and Hummingbird's
 Exceed software or a workstation running a Unix type operating system with X
 Windows and Motif Version 1.2 or above. The Alarm Handler also requires the
 global alarm acknowledgment in EPICS base Version 3.11 or above.</p>
@@ -306,6 +306,10 @@ the alarm configuration file are described in <a href="#chapter_6">Chapter 6</a>
 desired alarm configuration file using a file selection window at Alarm Handler
 start-up, or on the command line.</p>
 
+<p style='margin-left:.5in'>The user can change to a new alarm configuration
+file while the Alarm Handler is running by using the File/Open item on the 
+main window menu bar.</p>
+
 <h3 style='margin-left:.5in'>Alarm Log File</h3>
 
 <p style='margin-left:.5in'>The Alarm Log output file contains a log of alarm
@@ -345,7 +349,7 @@ configuration input files.</p>
 variable <i>ALARMHANDLER </i>can be used to point
 the Alarm Handler to a desired working directory. If <i>ALARMHANDLER</i> is not
 set, the current working directory is assumed. If the alarm configuration file
-resides on a different directory
+resides in a different directory
 (e.g. /<i>home<i>/</i>cs</i>/<i>appl</i>/<i>ah</i>/<i>dev</i>)
 from the current working directory, under UNIX <i>ALARMHANDLER</i>
 can be set to point to the desired path by issuing the UNIX c shell command:</p>
@@ -397,7 +401,7 @@ message similar to the table below will be displayed if you enter: &quot;alh
  </tr>
  <tr>
   <td>-aCM</td>
-  <td>Alarm log using CMLOG</td>
+  <td>Alarm log using CMLOG (if built using CMLOG)</td>
  </tr>
  <tr>
   <td>-B</td>
@@ -446,6 +450,10 @@ message similar to the table below will be displayed if you enter: &quot;alh
   <td>Use Locking System</td>
  </tr>
  <tr>
+  <td>-Lfile lockfile</td>
+  <td>Basename for .LOCK lock file</td>
+ </tr>
+ <tr>
   <td>-l logdir</td>
   <td>Directory for log files [.]</td>
  </tr>
@@ -456,6 +464,12 @@ message similar to the table below will be displayed if you enter: &quot;alh
  <tr>
   <td>-mainwindow </td>
   <td>Start with Main Window </td>
+ </tr>
+ <tr>
+  <td>-maskcolor </td>
+  <td>Print mask colored when channel/group contains silencing flag
+  <br>(makes it easier to find all canceled/disabled/noAck channels)
+</td>
  </tr>
  <tr>
   <td>-noerrorpopup</td>
@@ -477,6 +491,10 @@ message similar to the table below will be displayed if you enter: &quot;alh
  <tr>
   <td>-P key</td>
   <td>Print to TCP printer</td>
+ </tr>
+ <tr>
+  <td>-p file</td>
+  <td>Use wave file for sound instead of alarm beep (OS dependent)</td>
  </tr>
  <tr>
   <td>-S</td>
@@ -619,6 +637,13 @@ Alarm Handlers with enabled log writing has access to the log. If the `master'
 (i.e. actively logging) process dies, another Alarm Handler will seamlessly
 take over logging. Default is not to use this locking mechanism.</p>
 
+<h3 style='margin-left:.5in'>Locking File</h3>
+
+<p style='margin-left:.5in'>The <i>'-L lockfile'</i> option specifies a lock
+file directory with file name prefix. A ".LOCK" suffix will be appended. The 
+default is the configure filename with directory from the -f option or the 
+current working directory.
+
 <h3 style='margin-left:.5in'>Directory for Log Files</h3>
 
 <p style='margin-left:.5in'>The <i>'-l logdir'</i>
@@ -639,6 +664,13 @@ Specifying zero means the file can have an unlimited number of records.</p>
 Handler start with the Main Window instead of the Runtime Window. This is
 useful in conjunction with the `-filter f-opt' option to start Alarm Handlers
 from operator panels. The default is to start with the Runtime Window.</p>
+
+<h3 style='margin-left:.5in'>Colored Masks</h3>
+
+<p style='margin-left:.5in'>The <i>`-maskcolor'</i> option makes the Alarm
+display colored masks when the channel/group contains a silencing flag. This
+makes it easier to find all the canceled/disabled/noAck channels.
+</p>
 
 <h3 style='margin-left:.5in'>Do not use Popup Boxes for Displaying Errors</h3>
 
@@ -672,6 +704,13 @@ printer (socket connection). The user must specify all three printer values: <i>
 ' (where colorModel is mono,hp_color,...). Currently the printing is done
 asynchronously by adding an additional task &quot;alh_printer&quot;. (This
 option is still under construction and will use pipes in the future) </p>
+
+<h3 style='margin-left:.5in'>Wave File Sound</h3>
+
+<p style='margin-left:.5in'>The <i>'-p file'</i> option specifies that alh should
+play the specified wave sound file instead of alarm beeping. This option is
+available for Linux systems only.
+</p>
 
 <h3 style='margin-left:.5in'>Silent Mode</h3>
 
@@ -787,7 +826,7 @@ the button will blink to indicate the presence of unacknowledged alarms.</p>
 <h3 style='margin-left:.5in'>Exiting the Alarm Handler</h3>
 
 <p style='margin-left:.5in'>To exit the Alarm Handler,
-use the Window Manager Menu on
+click on the X in the window title bar or use the Window Manager Menu on
 the Runtime Window and choose the <i>Close</i> menu item.</p>
 
 <p style='margin-left:.5in'><img border=0 width=244
@@ -929,19 +968,20 @@ buttons to silence alarms, and explanatory descriptions of the mask
 abbreviation codes and status data which appear in the group summary and
 channel status lines.</p>
 
-<p style='margin-left:.5in'>There are two Silence buttons which toggle beeping on or off.
-The Silence Current button turns off current
-alarm beeping until a new alarm occurs. The Silence
-One Hour button toggles on/off beeping of current and future alarms for one
-hour. When pushed in, beeping is turned off, when out, beeping is on. Beeping
+<p style='margin-left:.5in'>
+There are two Silence buttons which toggle beeping on or off.  The Silence Current 
+button turns off current alarm beeping until a new alarm occurs. The Silence Interval 
+button toggles beeping of current and future alarms off for a specified interval.
+When pushed in, beeping is turned off, when out, beeping is toggled on. Beeping
 occurs only when there are unacknowledged alarms. The main window background
-color is changed to pink when Silence One Hour is active.</p>
+color is changed when beeping is turned off. Setup menu items can be used to 
+change the specified time interval.</p>
 
 
 <h2><a name="pgfId_696904"></a>Group Summary Line</h2>
 
 <p style='margin-left:.5in'>This display line
-summarizer the status of all alarms for the group named in this line and all
+summarizes the status of all alarms for the group named in this line and all
 lower level groups. The group summary display consists of the following items:</p>
 
 <h3 style='margin-left:.5in'>Acknowledgment Button</h3>
@@ -1204,7 +1244,9 @@ redisplayed again with a mouse click on the runtime window button.</p>
 selections which affect the currently selected Alarm Group or Channel. The
 action selections &quot;Acknowledge Alarm&quot;, &quot;Display Guidance&quot;,
 and &quot;Start Related Process&quot; can also be accomplished by clicking
-buttons on the tree structure or group contents display.</p>
+buttons on the tree structure or group contents display. The "Send Message" 
+item is present only when the Message Broadcasting option, &quot;-B&quot;, 
+is present on the command line.</p>
 
 <p style='margin-left:.5in'><img border=0 
 id="_x0000_i1040" src=images/alhActionMenu.gif></p>
@@ -1249,8 +1291,8 @@ height=142 id="_x0000_i1041" src=images/alhGuidance.gif></p>
 <p style='margin-left:.5in'>The guidance text
 display is a popup window displaying lines of ascii text if text was specified
 in the alarm configuration file. If a URL address was specified in the
-configuration file, Netscape will be invoked and display the text at the
-specified URL address.</p>
+configuration file, the default browser will be invoked and display the text 
+at the specified URL address.</p>
 
 <h3 style='margin-left:.5in'>Start Related Process</h3>
 
@@ -1362,9 +1404,11 @@ operators. A message input dialog popup appears when the &quot;Send
 Message&quot; menu item is selected. The operator can then type in a message
 that will be sent to other alh processes when OK is pressed. A popup message
 dialog containing the sent message will appear on other Alarm Handler processes
-when they receive the message.</p>
+when they receive the message. The &quot;Send Message&quot; menu item appears on
+the Action menu only if the  Message Broadcasting option, &quot;-B&quot;, is 
+present on the alh command line.</p>
 
-<p style='margin-left:.5in'><img border=0 width=277 height=154 id="_x0000_i1045"
+<p style='margin-left:.5in'><img border=0 width=300 height=154 id="_x0000_i1045"
 src=images/alhSendMessage.gif></p>
 
 <p style='margin-left:.5in'><img border=0 width=483 height=202 id="_x0000_i1046"
@@ -1388,24 +1432,22 @@ chosen, the sub-menu is presented.</p>
 
 <h3 style='margin-left:.5in'>Expand One Level</h3>
 
-<p style='margin-left:.5in'>The user selects this
-menu item to expand a collapsed the currently selected Alarm Group to
-graphically display one level of its alarm subgroups on the alarm configuration
-tree display.</p>
+<p style='margin-left:.5in'>The user selects this menu item to expand the 
+currently selected collapsed Alarm Group in the tree structure display to 
+graphically display one level of its alarm subgroups in the tree structure display.</p>
 
 <h3 style='margin-left:.5in'>Expand Branch</h3>
 
-<p style='margin-left:.5in'>The user can choose this
-item to expand the currently selected collapsed Alarm Group in the alarm
-configuration tree display to graphically show all levels of its subgroups on
-the alarm configuration tree structure display.</p>
+<p style='margin-left:.5in'>The user can choose this item to expand the 
+currently selected Alarm Group in the alarm configuration tree display to 
+graphically show all levels of its subgroups on the tree structure display.</p>
 
-<h3 style='margin-left:.5in'>Expend All</h3>
+<h3 style='margin-left:.5in'>Expand All</h3>
 
-<p style='margin-left:.5in'>The user uses this menu
-item to expand all collapsed groups in the configuration tree structure display
-to graphically show all the groups and subgroups in the current alarm
-configuration.</p>
+<p style='margin-left:.5in'>The user uses this menu item to expand or collapse 
+all groups in the alarm configuration tree structure display to graphically 
+show all the groups and subgroups on the current alarm configuration tree 
+structure display.</p>
 
 <h3 style='margin-left:.5in'>Collapse Branch</h3>
 
@@ -1515,10 +1557,13 @@ height=128 id="_x0000_i1055" src=images/alhSetupMenu.gif></p>
 <p style='margin-left:.5in'>The user is allowed to
 set an alarm filter to display active alarms only. When the filter is set to
 Active Alarms Only, only those groups or channels with an outstanding alarm
-will be displayed. When the filter is set to Unacknowldged Alarms Only, only those
+will be displayed. When the filter is set to Unacknowledged Alarms Only, only those
 groups or channels with an outstanding unacknowledged alarm will be displayed.
 When the selection is set to No Filter, all Alarm Groups
 and Alarm Channels in the current configuration will be available for display.</p>
+
+<p style='margin-left:.5in'><img border=0 
+id="_x0000_i1056" src=images/alhDisplayFilter.gif></p>
 
 <h3 style='margin-left:.5in'>ALH Beep Severity</h3>
 
@@ -1534,13 +1579,33 @@ settings. </p>
 <p style='margin-left:.5in'><img border=0 width=76
 height=61 id="_x0000_i1056" src=images/alhBeepSeverity.gif></p>
 
-<h3 style='margin-left:.5in'>New Alarm Log File</h3>
+<h3 style='margin-left:.5in'>Silence Time Interval</h3>
+
+<p style='margin-left:.5in'>The Silence Time Interval menu item allows the user to
+select a silence interval of 5, 10, 15, 30, or 60 minutes. The selected interval
+determines the silence interval for the Silence Time Interval button on the Main 
+Window message area and text for the selected interval appears next to the Silence 
+Time Interval button.
+</p>
+
+<p style='margin-left:.5in'><img border=0 
+id="_x0000_i1056" src=images/alhSilenceIntervalSelections.gif></p>
+
+<h3 style='margin-left:.5in'>Silence Forever</h3>
+
+<p style='margin-left:.5in'>The Silence Forever button toggles On/Off the
+beeping of all current and future unacknowledged alarms. Beeping normally 
+occurs when there are unacknowledged alarms. 
+</p>
+
+<h3 style='margin-left:.5in'>New Alarm Log File</h3> 
 
 <p style='margin-left:.5in'>The alarm log file contains
 the log of alarm changes of states. The Alarm Handler allows the operator to
 specify an alarm log file name that differs from the current setting. If it
 does not exist, it will be automatically created. All new alarm state changes
-will be logged to this file.</p>
+will be logged to this file. A file selection dialog window is used to set a 
+new Alarm Log File name.</p>
 
 <h3 style='margin-left:.5in'>New Operation Modification Log File</h3>
 
@@ -1548,7 +1613,8 @@ will be logged to this file.</p>
 the operator to specify an operation modification log file that differs from
 the current setting. If it does not exist, it will be automatically created by
 ALH. All subsequent operation changes will be logged to this new operation
-modification file.</p>
+modification file.  A file selection dialog window is used to set a new 
+Operation Modification Log File name.</p>
 
 <h2><a name="marker_718330"></a><a name="pgfId_696889"></a>Help Menu</h2>
 
@@ -1635,7 +1701,7 @@ if text guidance is present. </li>
 <h3 style='margin-left:.5in'><u>Heartbeat Process Variable</u></h3>
 
 <p style='margin-left:.5in'>The line starting with $HEARTBEATPV is optional.
-It is required only when a user wants a monitored pv to show weather or not
+It is required only when a user wants a monitored pv to show whether or not
 ALH is running. If the $HEARTBEATPV line is present, ALH will do CA puts of
 the specified value to the specified pv at the specified rate (in seconds). 
 The heartbeatPVName must be an existing PV in the EPICS database and can be
@@ -1651,8 +1717,7 @@ There can be only one top-level Alarm Group and this Alarm Group must have
 NULL as the parent group name. Group or Channel lines must start with the
 keyword GROUP or CHANNEL. The GroupName is the name of a user specified
 Alarm Group. The ChannelName must be the name of a specific record defined 
-in an EPICS database. The length of a GroupName or ChannelName must not
-exceed 28 characters.  The parentName is the name of the parent Alarm
+in an EPICS database. The parentName is the name of the parent Alarm
 Group. There is no restriction on the number of group definitions. </p>
 
 <p style='margin-left:1.0in'>GROUP parentName GroupName</p>
@@ -1825,7 +1890,7 @@ names appears and the related process selected by the user is invoked.
 names and command strings separated by exclamation points, "!", using the 
 following syntax</p>
 <p style='margin-left:1.0in'>$COMMAND&nbsp;&nbsp; 
-cmd 1 name!cmd 1 string!cmd 2 name!cmd 2 string!...cmd n name!cmd n string
+cmd_1_name!cmd_1_string!cmd_2_name!cmd_2_string!...cmd_n_name!cmd_n_string
 </p>
 
 <h3 style='margin-left:.5in'><u>Severity Command</u></h3>
@@ -1867,6 +1932,14 @@ count and seconds required for alarm registration. To register as an alarm, a
 channel must remain in an alarm state for more than inputSeconds seconds or the
 channel must enter into an alarm state from a no-alarm state more than
 inputCount times within inputSeconds seconds.</p>
+
+<p style='margin-left:.5in'> If inputCounts is zero, inputCounts is not used
+in determining alarm/no-alarm states, only inputSeconds is used to filter a
+channel going in and out of alarm state. If inputCounts is -1, inputSeconds
+only is used for filtering a channel going from no-alarm to alarm state, 
+and a change in channel from alarm state to no-alarm state is not filtered.
+
+</p>
 
 <p style='margin-left:1.0in'>$ALARMCOUNTFILTER inputCount inputSeconds </p>
 
