@@ -646,9 +646,11 @@ Wed Apr 24 16:11:47 CDT 2013
 	only are used for channel going from no-alarm to alarm state. Change in
 	channel from alarm to no-alarm state is not filtered.
 
-Thu Apr 25 10:22:57 CDT 2013  ALH_1_2_32
+Thu Apr 25 10:22:57 CDT 2013
 	Changed log file handling on alh startup. Now when error opening alarmLog or
 	opModLog file, an error message popup will be displayed and alh will continue
 	without the file. The file can be opened/created after startup via setup menu.
-	Updated User's Guide text and images.
+
+Tue May 14 11:19:07 CDT 2013  ALH_1_2_32
+	Minor text changes. Updated User's Guide text and images.
 
