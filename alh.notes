@@ -181,7 +181,7 @@ Thu Mar 11 10:12:06 CST 1999
 	                        create/modify alarmLog and alarmOpMod files.
 	-S Passive Mode     --- means that operator can't acknowledge alarms 
 	                        and can't save alarmLog and alarmOpMod files.
-	-T AlarmLogDated    --- 1) alarmLog and OpMod files will have "date" extensions 
+	-T AlarmLogDated    --- 1) alarmLog and OpMod files will have "date" extension
 	                           like YYYY-MM-DD, and automatical switching 
 	                           this files in midnight.
 	
@@ -200,16 +200,17 @@ Thu Mar 11 10:12:06 CST 1999
 	                        and modificate Makefile.Unix.
 	
 	-L locking          --- allow multiple work with the same config files,
-							only one process is real master and write to alhLog
-							other is slave and they wait until master will not killed 
+	                        only one process is real master and write to alhLog
+	                        other is slave and they wait until master will not 
+	                        killed 
 	
-	-0 Database(Oracle) --- simultaneously runtime add Alarm to Database.
-							it works asynchronous, so we add additional task "alh_DB"
+	-0 Database(Oracle) --- simultaneously runtime add Alarm to Database.  It
+	                        works asynchronous, so we add additional task "alh_DB"
 	
-	-B - message broadcasting -- allow send messages between operators work with the
-	                            same config file. Most important case: "REBOOT MESSAGE":
-							    allow don't save alarm during reboot time.
-							   (NOT IMPLEMENTED YET ;)  )	
+	-B - message broadcasting -- allow send messages between operators work with
+	                             same config file. Most important case: "REBOOT 
+	                             MESSAGE": allow don't save alarm during reboot 
+	                             time. (NOT IMPLEMENTED YET ;)  )	
 	                               	
 Mon Mar 15 08:57:01 CST 1999
 	ANSI c changes to eliminate warning messages on Linux build.
@@ -413,7 +414,7 @@ Fri Feb 28 16:38:19 CST 2003 ALH_1_2_11Beta4
 
 Mon Mar  3 09:24:38 CST 2003 ALH_1_2_11Beta5
 	Moved channel beepSevr modified indicators to preceed possible return.	
-	Added code for display of highest existing beepSevr in sub groups and channels. 
+	Added code for display of highest existing beepSevr in sub groups and channels 
 	Modified alarm log file output. Now calculate alarmLogFileStringLength.
 	Changed fopen of alarm log file from r+ to w+(truncate or create).
 	Modified forcePV opMod log messages text.
@@ -464,9 +465,9 @@ Tue Apr  5 10:06:27 CDT 2005
 
 Tue Jun 21 13:23:04 CDT 2005 ALH_1_2_20
 	Silence One Hour:
-		Set color of newly created row widgets to color of parent widget.
-		Change color of ALL widget children except ack button, sevr indicator,
-		and name push button.
+	Set color of newly created row widgets to color of parent widget.
+	Change color of ALL widget children except ack button, sevr indicator,
+	and name push button.
 	Write errMsg text to opMod log file when errors occur.
 	Remove extra carriage returns in opMod log file.
 	Remove group and channel data from opMod log message if they do not exist.
@@ -605,10 +606,10 @@ Tue May 22 16:29:19 CDT 2012 ALH_1_2_28
 	Added following changes and command line options by Andreas Luedeke
  	Changed silenced bg color from lightpink to blue
 	Add file name to config file open error message.
-	-p sound: use wave file for sound instead of alarm beep (OS dependent)
-	-maskcolor: Print mask colored when channel/group contains silencing flag
-		makes it easier to find all canceled/disabled/noAck channels.
-	-Lfile: lockfile Directory for lock files [configdir]
+	-p file     use wave file for sound instead of alarm beep (OS dependent)
+	-maskcolor  Print mask colored when channel/group contains silencing flag
+	            makes it easier to find all canceled/disabled/noAck channels.
+	-Lfile dir  lockfile directory name for lock files [configdir]
 
 Thu Jun 21 15:26:50 CDT 2012 ALH_1_2_29
 	Changed silenced and noack bg color from blue to lightpink.
@@ -625,7 +626,7 @@ Thu Nov 29 15:13:46 CST 2012 ALH_1_2_31
 	USE_XDGOPEN was defined during the build.
 	Fixed bugs in AlarmLogDated (-T option) code.
 
-Mon Apr 22 11:05:07 CDT 201
+Mon Apr 22 11:05:07 CDT 2012
 	Modified text in 2 error messages. Changed alarm bell function from Xbell
 	to XkbBell. Used more modern tools to open default browser. Changed 
 	silenced background color back to blue.
@@ -645,7 +646,9 @@ Wed Apr 24 16:11:47 CDT 2013
 	only are used for channel going from no-alarm to alarm state. Change in
 	channel from alarm to no-alarm state is not filtered.
 
-Thu Apr 25 10:22:57 CDT 2013
+Thu Apr 25 10:22:57 CDT 2013  ALH_1_2_32
 	Changed log file handling on alh startup. Now when error opening alarmLog or
 	opModLog file, an error message popup will be displayed and alh will continue
 	without the file. The file can be opened/created after startup via setup menu.
+	Updated User's Guide text and images.
+
