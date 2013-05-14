@@ -1153,16 +1153,14 @@ static void messBroadcast(Widget widget,XtPointer item,XtPointer cbs)  /* Albert
     if(amIsender)
       {
 	createDialog(area->form_main,XmDIALOG_INFORMATION,
-		     "You send some message before. \n" "\n"
-		     "Please wait a few seconds \n","");
+		     "You send some message before. \n\n Please wait a few seconds \n","");
 	return;
       }
          if ( lockf(messBroadcastDeskriptor, F_TLOCK, 0L) < 0 ) {
 	  if ((errno == EAGAIN || errno == EACCES )) {
 	      if(DEBUG) fprintf(stderr,"file is busy;Deskriptor=%d\n",messBroadcastDeskriptor);
 	      createDialog(area->form_main,XmDIALOG_INFORMATION,
-			   "Some other operator type a message. \n" "\n"
-			   "Please wait a few seconds \n","");
+			   "Some other operator type a message. \n\nPlease wait a few seconds\n","");
 	      return;
 	  }
 	  else {
@@ -1173,7 +1171,7 @@ static void messBroadcast(Widget widget,XtPointer item,XtPointer cbs)  /* Albert
 	  {
 	    if(DEBUG) fprintf(stderr,"file is free;Deskriptor=%d\n",messBroadcastDeskriptor);	    
 
-	    dialog = XmCreatePromptDialog(area->form_main, "dialog", NULL, 0);	    
+	    dialog = XmCreatePromptDialog(area->form_main, "ALH MessageEntryDialog", NULL, 0);	    
 	    XtVaSetValues(dialog,XtVaTypedArg, XmNselectionLabelString, XmRString,
 			  "Type message (See help for detail):", 40,NULL);
 	    
@@ -1280,7 +1278,7 @@ int type;
       }
 
     fprintf(fp,"%ld\n%s",timeID,buff);
-    createDialog(ar->form_main,XmDIALOG_MESSAGE,"Broadcast Message: \n""\n""\n",buff);
+    createDialog(ar->form_main,XmDIALOG_MESSAGE,"Broadcast Message: \n\n\n",buff);
 
     fclose(fp);	    
     amIsender=1;
