@@ -1556,6 +1556,7 @@ void awRowWidgets(struct anyLine *line,void *area)
 				str = XmStringCreateSimple(glink->pgroupData->treeSym);
 				wline->treeSym = XtVaCreateManagedWidget("treeSym",
 				    xmLabelWidgetClass,        wline->row_widget,
+				    XmNbackground,             backgroundColor,
 				    XmNlabelString,            str,
 				    XmNmarginHeight,           0,
 				    NULL);
@@ -1653,7 +1654,7 @@ void awRowWidgets(struct anyLine *line,void *area)
 		    XmNmarginHeight,           0,
 		    XmNuserData,               (XtPointer)line->alias,
 		    XmNx,                      nextX,
-		/*    XmNbackground,             backgroundColor,*/
+		    XmNbackground,             backgroundColor,
 		    NULL);
 
 		if (guidanceExists(link)) {
@@ -1669,7 +1670,7 @@ void awRowWidgets(struct anyLine *line,void *area)
 		    XmNmarginHeight,           0,
 		    XmNuserData,               (XtPointer)area,
 		    XmNx,                      nextX,
-		  /*  XmNbackground,             backgroundColor, */
+		    XmNbackground,             backgroundColor,
 		    NULL);
 
 		if (alProcessExists(link) ){
@@ -1688,7 +1689,7 @@ void awRowWidgets(struct anyLine *line,void *area)
 		    XmNlabelString,            str,
 		    XmNx,                      nextX,
 		    XmNy,                      2,
-	/*	    XmNbackground,             backgroundColor,*/
+		    XmNbackground,             backgroundColor,
 		    NULL);
 		XmStringFree(str);
 		XtVaGetValues(wline->mask,XmNwidth,&width,NULL);
@@ -1717,19 +1718,13 @@ void awRowWidgets(struct anyLine *line,void *area)
 		    XmNlabelString,            str,
 		    XmNx,                      nextX,
 		    XmNy,                      2,
-/*		    XmNbackground,             backgroundColor, */
+		    XmNbackground,             backgroundColor,
 		    NULL);
 		XmStringFree(str);
 		XtVaGetValues(wline->message,XmNwidth,&width,NULL);
 		nextX = nextX + width + 3;
 
 		awUpdateRowWidgets(line);
-
-                if (psetup.silenceSelectedMinutes) {
-                    changeTreeColor(wline->row_widget,silenced_bg_pixel);
-                } else {
-                    changeTreeColor(wline->row_widget,bg_pixel[0]);
-                }
 
 		XtManageChild(wline->row_widget);
 	}
