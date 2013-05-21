@@ -654,3 +654,6 @@ Thu Apr 25 10:22:57 CDT 2013
 Tue May 14 11:19:07 CDT 2013  ALH_1_2_32
 	Minor text changes. Updated User's Guide text and images.
 
+Mon May 20 13:49:51 CDT 2013 ALH_1_2_33
+	Fixed code for the -maskcolor command line option. Accidental commit on May 14
+	broke the -maskcolor code.
