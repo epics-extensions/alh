@@ -23,6 +23,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <signal.h>
 
 #include "alh.h"
 #include "epicsVersion.h"
@@ -64,6 +65,10 @@ int main(int argc,char *argv[])
 #ifdef HP_UX
         _main();
 #endif
+
+
+        /* now I don't have to wait() for child processes (beeps) to finish! */
+        signal(SIGCHLD, SIG_IGN);
  
 	/*  Xt initialize the application */
 	topLevelShell = XtAppInitialize(&appContext, "Alarm", NULL, 0, &argc, argv,
