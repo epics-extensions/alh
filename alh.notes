@@ -660,5 +660,6 @@ Mon May 20 13:49:51 CDT 2013 ALH_1_2_33
 
 Thu Jul 17 14:10:37 CDT 2014 ALH_1_2_34
 	Changed way beeping option -p <fn> works. Used fork() and execlp() to get play 
-	process to run in the background.
+	process to run in the background. Ignore SIGCHLD signals so alh doesn't have to
+	wait for child processes to finish.
 
