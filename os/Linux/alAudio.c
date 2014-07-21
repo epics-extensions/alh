@@ -18,13 +18,11 @@
  *
  */
 
-#include <stdlib.h>
-#include <unistd.h>
-
 #include <X11/Xlib.h>
 #include <X11/XKBlib.h>
 
 #include "alh.h"
+#include <stdlib.h>
 
 /* Audio device not implemented */
 
@@ -33,24 +31,15 @@
 ******************************************************/
 int alBeep(Display *displayBB)
 {
-    pid_t childPID;
-
+    char cmd[NAMEDEFAULT_SIZE+9]="";
     if(strlen(psetup.soundFile)>0 ) {
-        childPID = fork();
-        if (childPID < 0) /* fork failed */
-        {
-            /*printf("\nalh: Fork failed, using default beep\n");*/
-            XkbBell(displayBB,None,0,None);
-        }
-        else /* fork success */
-        {
-            if (childPID == 0) /* child process */
-            {
-	        execlp("play","play","-q",psetup.soundFile,NULL);
-            }
-        }
+        strcat(cmd,"play -q ");
+        strcat(cmd,psetup.soundFile);
+        strcat(cmd," &");
+	system(cmd);
     } else {
         XkbBell(displayBB,None,0,None);
     }
     return 0;
 }
+
