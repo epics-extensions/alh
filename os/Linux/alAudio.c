@@ -22,6 +22,7 @@
 #include <X11/XKBlib.h>
 
 #include "alh.h"
+#include "ax.h"
 #include <stdlib.h>
 
 /* Audio device not implemented */
@@ -29,17 +30,20 @@
 /******************************************************
   alBeep
 ******************************************************/
-int alBeep(Display *displayBB)
+void alBeep(Display *displayBB)
 {
-    char cmd[NAMEDEFAULT_SIZE+9]="";
+    static char cmd[NAMEDEFAULT_SIZE+9]="";
     if(strlen(psetup.soundFile)>0 ) {
-        strcat(cmd,"play -q ");
-        strcat(cmd,psetup.soundFile);
-        strcat(cmd," &");
-	system(cmd);
+        if(strlen(cmd)==0 ) {
+            strcat(cmd,"play -q ");
+            strcat(cmd,psetup.soundFile);
+            strcat(cmd," &");
+            /*strcat(cmd," > /dev/null 2>&1 &");*/
+        }
+        system(cmd);
     } else {
         XkbBell(displayBB,None,0,None);
     }
-    return 0;
+    return;
 }
 
