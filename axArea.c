@@ -598,8 +598,8 @@ void createMainWindowWidgets(ALINK *area)
 	XmStringFree(str);
 
 	/* Create a Silence Selected Minutes Toggle Button in the messageArea */
-	area->silenceMinutes = 60;
-	area->silenceSelectedMinutes = XtVaCreateManagedWidget("Silence 1 hour",
+	area->silenceMinutes = 30;
+	area->silenceSelectedMinutes = XtVaCreateManagedWidget("Silence 30 minutes",
 	    xmToggleButtonGadgetClass, area->messageArea,
 	    XmNtopAttachment,          XmATTACH_WIDGET,
 	    XmNtopWidget,              area->scale,
