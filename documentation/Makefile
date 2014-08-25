@@ -37,15 +37,15 @@ FILES  = ALH.html
 
 # ALHUserGuide.html is name of file in alh/Makefile.Host
 
-all: alhUserGuide.ps.gz alhUserGuide.pdf ALHUserGuide.html
+all: alhUserGuide-$(VERSION).ps.gz alhUserGuide-$(VERSION).pdf ALHUserGuide-$(VERSION).html
 
-alhUserGuide.ps: $(FILES) Makefile  
+alhUserGuide-$(VERSION).ps: $(FILES) Makefile  
 	$(HTMLDOC) $(PSOPTS) -f $@ $(FILES)
 
-alhUserGuide.pdf: $(FILES) Makefile
+alhUserGuide-$(VERSION).pdf: $(FILES) Makefile
 	$(HTMLDOC) $(PDFOPTS) -f $@ $(FILES)
 
-ALHUserGuide.html: $(FILES) Makefile
+ALHUserGuide-$(VERSION).html: $(FILES) Makefile
 	rm -rf $@
 	$(HTMLDOC) $(HTMLOPTS) -f $@ $(FILES)
 
@@ -54,13 +54,13 @@ ALHUserGuide.html: $(FILES) Makefile
 	gzip $<
 
 install: all
-	/bin/cp -f alhUserGuide.ps.gz $(WEBSITE)/alhUserGuide-$(VERSION).ps.gz
-	/bin/cp -f alhUserGuide.pdf $(WEBSITE)/alhUserGuide-$(VERSION).pdf
+	/bin/cp -f alhUserGuide-$(VERSION).ps.gz $(WEBSITE)/alhUserGuide-$(VERSION).ps.gz
+	/bin/cp -f alhUserGuide-$(VERSION).pdf $(WEBSITE)/alhUserGuide-$(VERSION).pdf
 	/bin/cp -rf alhUserGuide $(WEBSITE)/alhUserGuide-$(VERSION)
 	rm -rf $(WEBSITE)/alhUserGuide-$(VERSION)
 	mkdir $(WEBSITE)/alhUserGuide-$(VERSION)
 	/bin/cp -rf . $(WEBSITE)/alhUserGuide-$(VERSION)
 
 clean:
-	rm alhUserGuide.ps alhUserGuide.pdf ALHUserGuide.html \
-	 alhUserGuide.ps.gz alhUserGuide.pdf.gz
+	rm alhUserGuide-$(VERSION).ps alhUserGuide-$(VERSION).pdf ALHUserGuide-$(VERSION).html \
+	 alhUserGuide-$(VERSION).ps.gz alhUserGuide-$(VERSION).pdf.gz
