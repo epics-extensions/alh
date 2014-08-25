@@ -30,11 +30,11 @@
 /******************************************************
   alBeep
 ******************************************************/
-int alBeep(Display *displayBB)
+void alBeep(Display *displayBB)
 {
 	/* system("play /path/to/beep.wav"); */
 	XkbBell(displayBB,None,0,None);
-	return 0;
+	return;
 }
 
 
