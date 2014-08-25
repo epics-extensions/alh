@@ -126,15 +126,13 @@ void awUpdateRowWidgets(line)                 Update line widgets
 #define MENU_SETUP_SILENCE_FOREVER	10512
 #define MENU_SETUP_ALARMLOG		10513
 #define MENU_SETUP_OPMOD		10514
-
-#define MENU_ACTION_BEEP_MINOR	10500
-#define MENU_ACTION_BEEP_MAJOR	10501
-#define MENU_ACTION_BEEP_INVALID	10502
+#define MENU_SETUP_TESTBEEPSOUND	10515
 
 #define MENU_HELP_HELP	10900
 #define MENU_HELP_ABOUT	10906
 
 /* external variables */
+extern Display *display;
 extern Pixel silenced_bg_pixel;
 extern char alhVersionString[100];
 extern char *bg_char[];
@@ -403,21 +401,21 @@ static Widget mkDragIcon (
   unsigned long   gcValueMask;
   char tmpStr[131+1], *str;
 
-  Display *display = XtDisplay(w);
-  int screenNum = DefaultScreen(display);
+  Display *disp = XtDisplay(w);
+  int screenNum = DefaultScreen(disp);
 
   Pixmap sourcePixmap = (Pixmap)NULL;
 
   if ( !g_ddFixedFont_created ) {
     g_ddFixedFont_created = 1;
-    g_ddFixedFont = XLoadQueryFont( display, "fixed" );
+    g_ddFixedFont = XLoadQueryFont( disp, "fixed" );
   }
 
 #define X_SHIFT 8
 #define MARGIN  2
 
-  bg = BlackPixel(display,screenNum);
-  fg = WhitePixel(display,screenNum);
+  bg = BlackPixel(disp,screenNum);
+  fg = WhitePixel(disp,screenNum);
 
   fontHeight = g_ddFixedFont->ascent + g_ddFixedFont->descent;
 
@@ -433,14 +431,14 @@ static Widget mkDragIcon (
   maxWidth = X_SHIFT + ( textWidth + MARGIN );
   maxHeight = fontHeight + 2 * MARGIN;
   
-  sourcePixmap = XCreatePixmap(display,
-   RootWindow(display, screenNum),
+  sourcePixmap = XCreatePixmap(disp,
+   RootWindow(disp, screenNum),
    maxWidth,maxHeight,
-   DefaultDepth(display,screenNum) );
+   DefaultDepth(disp,screenNum) );
 
   if ( !g_ddgc_created ) {
     g_ddgc_created = 1;
-    g_ddgc = XCreateGC( display, sourcePixmap, 0, NULL );
+    g_ddgc = XCreateGC( disp, sourcePixmap, 0, NULL );
   }
   
   gcValueMask = GCForeground|GCBackground|GCFunction|GCFont;
@@ -450,14 +448,14 @@ static Widget mkDragIcon (
   gcValues.function   = GXcopy;
   gcValues.font       = g_ddFixedFont->fid;
   
-  XChangeGC( display, g_ddgc, gcValueMask, &gcValues );
+  XChangeGC( disp, g_ddgc, gcValueMask, &gcValues );
   
-  XFillRectangle( display, sourcePixmap, g_ddgc, 0, 0, maxWidth,
+  XFillRectangle( disp, sourcePixmap, g_ddgc, 0, 0, maxWidth,
    maxHeight);
 
-  XSetForeground( display, g_ddgc, fg );
+  XSetForeground( disp, g_ddgc, fg );
 
-  XDrawString( display, sourcePixmap, g_ddgc,
+  XDrawString( disp, sourcePixmap, g_ddgc,
 	       X_SHIFT, g_ddFixedFont->ascent + MARGIN, 
 	       tmpStr, strlen(tmpStr) );
   
@@ -465,7 +463,7 @@ static Widget mkDragIcon (
   XtSetArg(args[n],XmNpixmap,sourcePixmap); n++;
   XtSetArg(args[n],XmNwidth,maxWidth); n++;
   XtSetArg(args[n],XmNheight,maxHeight); n++;
-  XtSetArg(args[n],XmNdepth,DefaultDepth(display,screenNum)); n++;
+  XtSetArg(args[n],XmNdepth,DefaultDepth(disp,screenNum)); n++;
   sourceIcon = XmCreateDragIcon(XtParent(w),"sourceIcon",args,n);
 
   return sourceIcon;
@@ -707,6 +705,8 @@ static MenuItem action_menuNew[] = {
 		             alhSetupCallback, (XtPointer)MENU_SETUP_ALARMLOG,     (MenuItem *)NULL, 0 },
 		         { "New Oper. Log File Name...",  PushButtonGadgetClass, 'O', NULL, NULL,
 		             alhSetupCallback, (XtPointer)MENU_SETUP_OPMOD,     (MenuItem *)NULL, 0 },
+		         { "Test Beep Sound",  PushButtonGadgetClass, 'B', NULL, NULL,
+		             alhSetupCallback, (XtPointer)MENU_SETUP_TESTBEEPSOUND,(MenuItem *)NULL, 0 },
 		         {NULL},
 		     	};
 
@@ -1472,6 +1472,11 @@ static void alhSetupCallback( Widget widget, XtPointer calldata, XtPointer cbs)
 		    "Operator Modification File", OPMOD_PATTERN,psetup.logDir);
 		break;
 
+	case MENU_SETUP_TESTBEEPSOUND:
+
+		/* Test beep sound */
+                alBeep(display);
+		break;
 	}
 }
 
