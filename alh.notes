@@ -663,3 +663,9 @@ Thu Jul 17 14:10:37 CDT 2014 ALH_1_2_34
 	process to run in the background. Ignore SIGCHLD signals so alh doesn't have to
 	wait for child processes to finish.
 
+Mon Aug 25 14:09:19 CDT 2014 ALH_1_2_35
+	Changed beeping option with -p again. Used system() with '&' at command 
+        end.  Created a "test beep" setup menu item to test the beeping sound. 
+        An error message is displayed if the command line sound file cannot be 
+        opened for read access. Changed default silence interval to .5 hour.
+
