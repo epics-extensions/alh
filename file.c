@@ -796,6 +796,7 @@ static int getCommandLineParms(int argc, char** argv)
 	int i,j;
 	int finished=0;
 	int parm_error=0;
+	FILE  *fp;
 
 	alarmLogFileMaxRecords=commandLine.alarmLogFileMaxRecords=2000; /* Albert */
         
@@ -1010,6 +1011,9 @@ static int getCommandLineParms(int argc, char** argv)
                        else
                        {
                            strncpy(psetup.soundFile,argv[i],NAMEDEFAULT_SIZE-1);
+                           fp = fopen(psetup.soundFile,"r");
+                           if (!fp) perror("Can't open beep file\n");
+                           if (!fp) errMsg("Can't open beep file %s\n",psetup.soundFile);
                            finished=1;
                        }
                    }
