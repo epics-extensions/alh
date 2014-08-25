@@ -1,9 +1,9 @@
 # Makefile for generating published alhUserGuide files
 
-HTMLDOC = "/home/phoebus/ANJ/bin/solaris-sparc/htmldoc"
+HTMLDOC = "/home/phoebus/JBA/bin/solaris-sparc/htmldoc"
 WEBSITE = /net/epics/Public/epics/EpicsDocumentation/ExtensionsManuals/AlarmHandler
 
-VERSION = 1.2.34
+VERSION = 1.2.35
 
 # Content options:
 
