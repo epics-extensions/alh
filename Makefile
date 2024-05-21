@@ -78,6 +78,13 @@ endif
 
 .PHONY:	libcmlog.a
 
+# Some linux systems moved RPC related symbols to libtirpc
+# Define TIRPC in configure/CONFIG_SITE in this case
+ifeq ($(TIRPC),YES)
+  USR_INCLUDES += -I/usr/include/tirpc
+  SYS_PROD_LIBS_Linux += tirpc
+endif
+
 ifeq ($(I_WANT_CDEV),YES)
 
   CDEV_LIB      = $(CDEVLIB)
