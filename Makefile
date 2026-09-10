@@ -120,7 +120,7 @@ USR_INCLUDES += -I../os/$(OS_CLASS) -I../os/default
 USR_INCLUDES += -I$(MOTIF_INC) -I$(X11_INC)
 
 # baseR3.13.0.beta12 and later
-awAlh_CFLAGS += -DALH_HELP_URL="\"http://www.aps.anl.gov/asd/controls/epics/EpicsDocumentation/ExtensionsManuals/AlarmHandler/ALHUserGuide/ALHUserGuide.html\""
+awAlh_CFLAGS += -DALH_HELP_URL="\"https://epics.anl.gov/EpicsDocumentation/ExtensionsManuals/AlarmHandler/current/ALHUserGuide.html\""
 
 USER_VPATH += ../os/$(OS_CLASS)
 USER_VPATH += ../os/default
